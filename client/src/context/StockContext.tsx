@@ -1,0 +1,310 @@
+'use client';
+
+import React, { createContext, useContext, useState } from 'react';
+import {
+  mockStock as initialStock,
+  mockAssets as initialAssets,
+  mockRacks as initialRacks,
+  mockMaintenance as initialMaintenance,
+  mockLocations as initialLocations,
+  MockItem,
+  MockAsset,
+  MockRack,
+  MockMaintenance,
+  MockLocation,
+} from '@/data/mockData';
+
+export type ModalType =
+  | 'none'
+  | 'add_stock'
+  | 'add_asset'
+  | 'add_rack'
+  | 'add_maintenance'
+  | 'add_location';
+
+export type AnyEntity =
+  | MockItem
+  | MockAsset
+  | MockRack
+  | MockMaintenance
+  | MockLocation;
+
+interface StockContextType {
+  stock: MockItem[];
+  assets: MockAsset[];
+  racks: MockRack[];
+  maintenance: MockMaintenance[];
+  locations: MockLocation[];
+  addStockItem: (item: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }) => MockItem;
+  updateStockQuantity: (id: string, delta: number) => void;
+  updateStockItem: (item: MockItem) => void;
+  deleteStockItem: (id: string) => void;
+  addAsset: (asset: Omit<MockAsset, 'id'> & { id?: string }) => void;
+  updateAsset: (asset: MockAsset) => void;
+  deleteAsset: (id: string) => void;
+  addRack: (rack: Omit<MockRack, 'id'> & { id?: string }) => void;
+  updateRack: (rack: MockRack) => void;
+  deleteRack: (id: string) => void;
+  addMaintenance: (rec: Omit<MockMaintenance, 'id'> & { id?: string }) => void;
+  updateMaintenance: (rec: MockMaintenance) => void;
+  deleteMaintenance: (id: string) => void;
+  addLocation: (loc: Omit<MockLocation, 'id'> & { id?: string }) => void;
+  updateLocation: (loc: MockLocation) => void;
+  deleteLocation: (id: string) => void;
+  isScannerOpen: boolean;
+  openScanner: () => void;
+  closeScanner: () => void;
+  activeModal: ModalType;
+  openModal: (type: ModalType) => void;
+  closeModal: () => void;
+  toast: string | null;
+  showToast: (msg: string) => void;
+  isMobileSidebarOpen: boolean;
+  toggleMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
+  detailsItem: AnyEntity | null;
+  openDetails: (item: AnyEntity) => void;
+  closeDetails: () => void;
+  editingItem: AnyEntity | null;
+  openEdit: (item: AnyEntity) => void;
+  closeEdit: () => void;
+}
+
+const StockContext = createContext<StockContextType | undefined>(undefined);
+
+export function StockProvider({ children }: { children: React.ReactNode }) {
+  const [stock, setStock] = useState<MockItem[]>(initialStock);
+  const [assets, setAssets] = useState<MockAsset[]>(initialAssets);
+  const [racks, setRacks] = useState<MockRack[]>(initialRacks);
+  const [maintenance, setMaintenance] = useState<MockMaintenance[]>(initialMaintenance);
+  const [locations, setLocations] = useState<MockLocation[]>(initialLocations);
+
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<ModalType>('none');
+  const [toast, setToast] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const [detailsItem, setDetailsItem] = useState<AnyEntity | null>(null);
+  const [editingItem, setEditingItem] = useState<AnyEntity | null>(null);
+
+  const openDetails = (item: AnyEntity) => setDetailsItem(item);
+  const closeDetails = () => setDetailsItem(null);
+
+  const openEdit = (item: AnyEntity) => setEditingItem(item);
+  const closeEdit = () => setEditingItem(null);
+
+  const toggleMobileSidebar = () => setIsMobileSidebarOpen((prev) => !prev);
+  const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => {
+      setToast(null);
+    }, 3200);
+  };
+
+  const openScanner = () => setIsScannerOpen(true);
+  const closeScanner = () => setIsScannerOpen(false);
+
+  const openModal = (type: ModalType) => setActiveModal(type);
+  const closeModal = () => setActiveModal('none');
+
+  const addStockItem = (itemData: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }): MockItem => {
+    const existingIndex = stock.findIndex((i) => i.code.toLowerCase() === itemData.code.toLowerCase());
+
+    if (existingIndex >= 0) {
+      const updated = [...stock];
+      const existing = updated[existingIndex];
+      const newQty = existing.quantity + (itemData.quantity || 1);
+      updated[existingIndex] = {
+        ...existing,
+        quantity: newQty,
+        status: newQty > 5 ? 'in_stock' : 'low_stock',
+      };
+      setStock(updated);
+      showToast(`Updated quantity for ${existing.name} (+${itemData.quantity || 1})`);
+      return updated[existingIndex];
+    } else {
+      const newItem: MockItem = {
+        id: itemData.id || String(Date.now()),
+        name: itemData.name,
+        code: itemData.code,
+        category: itemData.category || 'Hardware',
+        quantity: itemData.quantity || 1,
+        unit: itemData.unit || 'Units',
+        location: itemData.location || 'Datacenter Server Rm B04',
+        rack: itemData.rack || 'MDF Core Server Rack 42U',
+        status: (itemData.quantity || 1) > 5 ? 'in_stock' : 'low_stock',
+        expiryDate: itemData.expiryDate || 'N/A',
+        imageUrl: itemData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
+        description: itemData.description,
+      };
+      setStock((prev) => [newItem, ...prev]);
+      showToast(`Added ${newItem.name} to stock`);
+      return newItem;
+    }
+  };
+
+  const updateStockItem = (updatedItem: MockItem) => {
+    setStock((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+    showToast(`Updated ${updatedItem.name}`);
+  };
+
+  const updateStockQuantity = (id: string, delta: number) => {
+    setStock((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const newQty = Math.max(0, item.quantity + delta);
+          return {
+            ...item,
+            quantity: newQty,
+            status: newQty === 0 ? 'out_of_stock' : newQty <= 5 ? 'low_stock' : 'in_stock',
+          };
+        }
+        return item;
+      })
+    );
+    showToast(`Quantity adjusted (${delta > 0 ? `+${delta}` : delta})`);
+  };
+
+  const deleteStockItem = (id: string) => {
+    const target = stock.find((i) => i.id === id);
+    setStock((prev) => prev.filter((i) => i.id !== id));
+    showToast(`Removed ${target?.name || 'item'} from inventory`);
+  };
+
+  const addAsset = (assetData: Omit<MockAsset, 'id'> & { id?: string }) => {
+    const newAsset: MockAsset = {
+      id: assetData.id || `A${Date.now()}`,
+      imageUrl: assetData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
+      ...assetData,
+    };
+    setAssets((prev) => [newAsset, ...prev]);
+    showToast(`Registered network asset ${newAsset.name}`);
+  };
+
+  const updateAsset = (updatedAsset: MockAsset) => {
+    setAssets((prev) => prev.map((a) => (a.id === updatedAsset.id ? updatedAsset : a)));
+    showToast(`Updated ${updatedAsset.name}`);
+  };
+
+  const deleteAsset = (id: string) => {
+    const target = assets.find((a) => a.id === id);
+    setAssets((prev) => prev.filter((a) => a.id !== id));
+    showToast(`Deleted asset ${target?.name || ''}`);
+  };
+
+  const addRack = (rackData: Omit<MockRack, 'id'> & { id?: string }) => {
+    const newRack: MockRack = {
+      id: rackData.id || `R${Date.now()}`,
+      ...rackData,
+    };
+    setRacks((prev) => [newRack, ...prev]);
+    showToast(`Added storage rack ${newRack.name}`);
+  };
+
+  const updateRack = (updatedRack: MockRack) => {
+    setRacks((prev) => prev.map((r) => (r.id === updatedRack.id ? updatedRack : r)));
+    showToast(`Updated rack ${updatedRack.name}`);
+  };
+
+  const deleteRack = (id: string) => {
+    const target = racks.find((r) => r.id === id);
+    setRacks((prev) => prev.filter((r) => r.id !== id));
+    showToast(`Deleted rack ${target?.name || ''}`);
+  };
+
+  const addMaintenance = (recData: Omit<MockMaintenance, 'id'> & { id?: string }) => {
+    const newRec: MockMaintenance = {
+      id: recData.id || `M${Date.now()}`,
+      ...recData,
+    };
+    setMaintenance((prev) => [newRec, ...prev]);
+    showToast(`Scheduled maintenance for ${newRec.assetName}`);
+  };
+
+  const updateMaintenance = (updatedRec: MockMaintenance) => {
+    setMaintenance((prev) => prev.map((m) => (m.id === updatedRec.id ? updatedRec : m)));
+    showToast(`Updated service log for ${updatedRec.assetName}`);
+  };
+
+  const deleteMaintenance = (id: string) => {
+    setMaintenance((prev) => prev.filter((m) => m.id !== id));
+    showToast(`Deleted maintenance record`);
+  };
+
+  const addLocation = (locData: Omit<MockLocation, 'id'> & { id?: string }) => {
+    const newLoc: MockLocation = {
+      id: locData.id || `L${Date.now()}`,
+      ...locData,
+    };
+    setLocations((prev) => [newLoc, ...prev]);
+    showToast(`Registered location ${newLoc.name}`);
+  };
+
+  const updateLocation = (updatedLoc: MockLocation) => {
+    setLocations((prev) => prev.map((l) => (l.id === updatedLoc.id ? updatedLoc : l)));
+    showToast(`Updated location ${updatedLoc.name}`);
+  };
+
+  const deleteLocation = (id: string) => {
+    const target = locations.find((l) => l.id === id);
+    setLocations((prev) => prev.filter((l) => l.id !== id));
+    showToast(`Deleted location ${target?.name || ''}`);
+  };
+
+  return (
+    <StockContext.Provider
+      value={{
+        stock,
+        assets,
+        racks,
+        maintenance,
+        locations,
+        addStockItem,
+        updateStockItem,
+        updateStockQuantity,
+        deleteStockItem,
+        addAsset,
+        updateAsset,
+        deleteAsset,
+        addRack,
+        updateRack,
+        deleteRack,
+        addMaintenance,
+        updateMaintenance,
+        deleteMaintenance,
+        addLocation,
+        updateLocation,
+        deleteLocation,
+        isScannerOpen,
+        openScanner,
+        closeScanner,
+        activeModal,
+        openModal,
+        closeModal,
+        toast,
+        showToast,
+        isMobileSidebarOpen,
+        toggleMobileSidebar,
+        closeMobileSidebar,
+        detailsItem,
+        openDetails,
+        closeDetails,
+        editingItem,
+        openEdit,
+        closeEdit,
+      }}
+    >
+      {children}
+    </StockContext.Provider>
+  );
+}
+
+export function useStock() {
+  const context = useContext(StockContext);
+  if (!context) {
+    throw new Error('useStock must be used within a StockProvider');
+  }
+  return context;
+}

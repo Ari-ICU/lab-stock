@@ -1,0 +1,348 @@
+export interface MockItem {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  location: string;
+  rack: string;
+  status: 'in_stock' | 'low_stock' | 'out_of_stock';
+  expiryDate: string; // or warranty/inspection date
+  imageUrl?: string;
+  description?: string;
+}
+
+export const mockStock: MockItem[] = [
+  {
+    id: '1',
+    name: 'Dell 24" FHD IPS Monitors (Student Benches 1-24)',
+    code: 'MON-102B-P2419H',
+    category: 'Monitors',
+    quantity: 24,
+    unit: 'Units',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Student Benches 1-24',
+    status: 'in_stock',
+    expiryDate: 'Warranty 2027',
+    imageUrl: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
+    description: '24-inch Full HD 1080p IPS Dell display monitors connected to the 24 student desktop towers via DisplayPort.',
+  },
+  {
+    id: '2',
+    name: 'Dell Optical USB Mice (Lab 102B In-Use + Spares)',
+    code: 'MS-102B-MS116',
+    category: 'Mice & Keyboards',
+    quantity: 28,
+    unit: 'Pieces',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Benches & Shelf SHF-01',
+    status: 'in_stock',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80',
+    description: 'Standard Dell wired USB optical scroll mice (24 deployed on desks + 4 spare in shelf).',
+  },
+  {
+    id: '3',
+    name: 'Dell Multimedia USB Keyboards (Lab 102B In-Use + Spares)',
+    code: 'KB-102B-KB216',
+    category: 'Mice & Keyboards',
+    quantity: 28,
+    unit: 'Pieces',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Benches & Shelf SHF-01',
+    status: 'in_stock',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    description: 'Quiet-key wired USB English/Khmer keyboards (24 deployed on desks + 4 spare in shelf).',
+  },
+  {
+    id: '4',
+    name: 'Cat6A UTP 2m RJ45 Blue Patch Cords',
+    code: 'CAB-102B-CAT6A',
+    category: 'Cables & Accessories',
+    quantity: 28,
+    unit: 'Cables',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Desk Outlets to PCs',
+    status: 'in_stock',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    description: '10Gbps high-speed Cat6A patch network cables connecting all 24 PCs to floor RJ45 network jacks.',
+  },
+  {
+    id: '5',
+    name: 'High-Speed 4K HDMI 10m Projector Cable',
+    code: 'CAB-102B-HDMI10M',
+    category: 'Cables & Accessories',
+    quantity: 2,
+    unit: 'Cables',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Instructor Podium to Ceiling',
+    status: 'in_stock',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    description: '4K HDMI cable running through ceiling conduit from teacher podium to the Epson projector.',
+  },
+  {
+    id: '6',
+    name: '8-Outlet Bench Power Strips / Surge Protectors',
+    code: 'PWR-102B-PDU-8',
+    category: 'Power & Climate',
+    quantity: 6,
+    unit: 'Units',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Under-Bench Cable Trays',
+    status: 'in_stock',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=600&q=80',
+    description: 'Heavy-duty 8-gang power strips mounted under bench rows powering all 24 PCs and monitors.',
+  },
+  {
+    id: '7',
+    name: 'Daikin AC Remotes & Air Filter Replacements',
+    code: 'AC-102B-REMOTE-FLT',
+    category: 'Power & Climate',
+    quantity: 3,
+    unit: 'Kits',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Instructor Locker',
+    status: 'in_stock',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+    description: 'Daikin wireless remote controls and clean washable titanium filters for the two 2.5HP AC units.',
+  },
+];
+
+export interface MockAsset {
+  id: string;
+  name: string;
+  serialNumber: string;
+  model: string;
+  totalUnits?: number;
+  unitType?: string;
+  location: string;
+  status: 'operational' | 'in_use' | 'maintenance';
+  nextCalibration: string; // firmware audit / cert date
+  imageUrl?: string;
+  description?: string;
+}
+
+export const mockAssets: MockAsset[] = [
+  {
+    id: 'A1',
+    name: 'Dell OptiPlex 7090 Desktop Workstations',
+    serialNumber: 'OPT-102B-01-TO-24',
+    model: 'OptiPlex 7090 MT / Core i7 / 16GB / 512GB SSD',
+    totalUnits: 24,
+    unitType: 'Desktops',
+    location: 'Computer Lab Rm 102B (Student Benches 1-24)',
+    status: 'operational',
+    nextCalibration: '2027-06-01',
+    imageUrl: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=600&q=80',
+    description: 'Student Desktop Workstations featuring 24-inch FHD Dell monitors, dual-boot Ubuntu Linux & Windows 11 Pro, configured for network simulation (Cisco Packet Tracer, GNS3, Wireshark).',
+  },
+  {
+    id: 'A2',
+    name: 'Epson PowerLite 4K Laser Ceiling Projector',
+    serialNumber: 'EPS-L630U-8812',
+    model: 'PowerLite L630U 6200-Lumen WUXGA Laser',
+    totalUnits: 1,
+    unitType: 'Unit',
+    location: 'Computer Lab Rm 102B (Ceiling Center Mount)',
+    status: 'operational',
+    nextCalibration: '2027-02-15',
+    imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
+    description: 'Ultra-bright 6200 lumens laser projector mounted to ceiling with motorized 120-inch projection screen, HDMI 2.1 input, and Miracast wireless screen mirroring for lectures.',
+  },
+  {
+    id: 'A3',
+    name: 'Daikin 2.5 HP Inverter Air Conditioners',
+    serialNumber: 'DKN-FTKC60U-102B',
+    model: 'FTKC60UVM4 Inverter R32 Eco Cooling',
+    totalUnits: 2,
+    unitType: 'AC Units',
+    location: 'Computer Lab Rm 102B (North & South Walls)',
+    status: 'operational',
+    nextCalibration: '2026-12-01',
+    imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+    description: 'Dual 2.5 HP energy-saving split inverter climate control units maintaining constant 21°C - 23°C temperature and moisture protection for the 24 student PCs and lab hardware.',
+  },
+  {
+    id: 'A4',
+    name: 'Cisco Catalyst 9300 48-Port PoE+ Managed Switch',
+    serialNumber: 'FCW2348L09M',
+    model: 'C9300-48P-A Gigabit L3 Managed',
+    totalUnits: 1,
+    unitType: 'Switch',
+    location: 'Computer Lab Rm 102B (Wall Cabinet CAB-102B)',
+    status: 'operational',
+    nextCalibration: '2027-03-15',
+    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    description: 'Core 48-port Gigabit PoE+ switch directly patched to student desks 1 to 24, instructor podium, Wi-Fi AP, and optical uplink to campus MDF.',
+  },
+  {
+    id: 'A5',
+    name: 'Cisco ISR 4331 Enterprise Lab Gateway Router',
+    serialNumber: 'FOC21342X89',
+    model: 'ISR4331/K9 Multi-Service Gateway',
+    totalUnits: 1,
+    unitType: 'Router',
+    location: 'Computer Lab Rm 102B (Wall Cabinet CAB-102B)',
+    status: 'in_use',
+    nextCalibration: '2026-11-20',
+    imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    description: 'Lab gateway router providing NAT, DHCP pools, OSPF routing topologies, and student VPN isolation from main campus network.',
+  },
+];
+
+export interface MockRack {
+  id: string;
+  name: string;
+  code: string;
+  type: '42U Server Rack' | '24U Wall Mount' | 'IDF Distribution' | 'Storage Shelf';
+  temperature?: string;
+  location: string;
+  totalSlots: number;
+  usedSlots: number;
+}
+
+export const mockRacks: MockRack[] = [
+  {
+    id: 'R1',
+    name: 'Lab 102B Wall-Mount Network Cabinet (12U)',
+    code: 'CAB-102B-01',
+    type: '24U Wall Mount',
+    temperature: '21.8°C (Optimal - AC On)',
+    location: 'Computer Lab Rm 102B',
+    totalSlots: 12,
+    usedSlots: 8,
+  },
+  {
+    id: 'R2',
+    name: 'Lab 102B Hardware & Peripherals Shelf',
+    code: 'SHF-102B-01',
+    type: 'Storage Shelf',
+    temperature: '22.0°C',
+    location: 'Computer Lab Rm 102B',
+    totalSlots: 40,
+    usedSlots: 26,
+  },
+  {
+    id: 'R3',
+    name: 'MDF Core Server Enclosure 42U',
+    code: 'RCK-MDF-01',
+    type: '42U Server Rack',
+    temperature: '20.4°C',
+    location: 'Datacenter Server Rm B04',
+    totalSlots: 42,
+    usedSlots: 36,
+  },
+  {
+    id: 'R4',
+    name: 'Central Patch Cord & Cable Depot',
+    code: 'SHF-SPARE-01',
+    type: 'Storage Shelf',
+    location: 'Hardware Prep Rm 102',
+    totalSlots: 80,
+    usedSlots: 54,
+  },
+];
+
+export interface MockMaintenance {
+  id: string;
+  assetName: string;
+  serialNumber: string;
+  type: 'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement';
+  date: string;
+  technician: string;
+  status: 'Completed' | 'Pending' | 'In Progress';
+  notes: string;
+}
+
+export const mockMaintenance: MockMaintenance[] = [
+  {
+    id: 'M1',
+    assetName: 'Dell OptiPlex 7090 (24 Desktops in 102B)',
+    serialNumber: 'OPT-102B-01-TO-24',
+    type: 'Firmware Upgrade',
+    date: '2026-10-25',
+    technician: 'Thoeurn Ratha',
+    status: 'Completed',
+    notes: 'Golden master OS image deployed across all 24 student workstations. Deep Freeze enabled for disk freeze.',
+  },
+  {
+    id: 'M2',
+    assetName: 'Daikin 2.5 HP Air Conditioners (Lab 102B)',
+    serialNumber: 'DKN-FTKC60U-102B',
+    type: 'Port Audit',
+    date: '2026-11-02',
+    technician: 'HVAC Maintenance Team',
+    status: 'In Progress',
+    notes: 'Bimonthly dust filter wash, evaporator coil sanitizing, and refrigerant pressure test for dual units.',
+  },
+  {
+    id: 'M3',
+    assetName: 'Epson PowerLite Laser Projector (Lab 102B)',
+    serialNumber: 'EPS-L630U-8812',
+    date: '2026-10-20',
+    type: 'Port Audit',
+    technician: 'Audio-Visual Staff',
+    status: 'Completed',
+    notes: 'Laser optical engine cleaned, motorized screen limit switches calibrated, HDMI 2.1 signal verified at 4K.',
+  },
+  {
+    id: 'M4',
+    assetName: 'Cisco C9300 48P Switch (Lab 102B)',
+    serialNumber: 'FCW2348L09M',
+    type: 'Firmware Upgrade',
+    date: '2026-11-15',
+    technician: 'Cisco TAC Support',
+    status: 'Pending',
+    notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 24 port VLAN mappings.',
+  },
+];
+
+export interface MockLocation {
+  id: string;
+  name: string;
+  building: string;
+  room: string;
+  totalAssets: number;
+  totalItems: number;
+}
+
+export const mockLocations: MockLocation[] = [
+  {
+    id: 'L1',
+    name: 'Computer & Network Lab 102B',
+    building: 'Engineering Block A',
+    room: 'Rm 102B',
+    totalAssets: 28, // 24 Desktops + 1 Projector + 2 Air Conditioners + 1 Switch
+    totalItems: 77, // cables, power strips, remotes, peripherals
+  },
+  {
+    id: 'L2',
+    name: 'Datacenter Server Room & MDF',
+    building: 'Engineering Block A',
+    room: 'Rm B04',
+    totalAssets: 38,
+    totalItems: 420,
+  },
+  {
+    id: 'L3',
+    name: 'Cybersecurity & Sandbox Lab',
+    building: 'Science Tower',
+    room: 'Rm 208',
+    totalAssets: 16,
+    totalItems: 95,
+  },
+  {
+    id: 'L4',
+    name: 'Hardware Assembly & Staging Prep',
+    building: 'Basement Facility',
+    room: 'Rm 102',
+    totalAssets: 8,
+    totalItems: 510,
+  },
+];

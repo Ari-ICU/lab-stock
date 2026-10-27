@@ -1,0 +1,172 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Header } from '@/components/Header';
+import { useStock } from '@/context/StockContext';
+import { RowActionMenu } from '@/components/RowActionMenu';
+import { Dropdown, DropdownOption } from '@/components/Dropdown';
+import { exportToCsv } from '@/lib/exportCsv';
+import { Image as ImageIcon } from 'lucide-react';
+
+const statusOptions: DropdownOption[] = [
+  { label: 'All Operational Statuses', value: 'all' },
+  { label: 'Operational', value: 'operational' },
+  { label: 'In Production', value: 'in_use' },
+  { label: 'Maintenance / RMA', value: 'maintenance' },
+];
+
+export default function AssetsPage() {
+  const { assets, openModal, deleteAsset, openDetails, openEdit } = useStock();
+  const [filterText, setFilterText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const filteredAssets = assets.filter((asset) => {
+    const matchesQuery =
+      asset.name.toLowerCase().includes(filterText.toLowerCase()) ||
+      asset.serialNumber.toLowerCase().includes(filterText.toLowerCase()) ||
+      asset.model.toLowerCase().includes(filterText.toLowerCase()) ||
+      asset.location.toLowerCase().includes(filterText.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' || asset.status === statusFilter;
+
+    return matchesQuery && matchesStatus;
+  });
+
+  const handleExport = () => {
+    exportToCsv(
+      'netlab_network_devices',
+      filteredAssets.map((a) => ({
+        'Device Name': a.name,
+        Model: a.model,
+        'Serial Number': a.serialNumber,
+        Location: a.location,
+        Status: a.status,
+        'Next Calibration / Audit': a.nextCalibration,
+      }))
+    );
+  };
+
+  return (
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <Header
+        title="Lab 102B Hardware & Assets"
+        subtitle="24 Desktops • Epson Projector • Daikin ACs • Core Switch"
+        actionLabel="Register Asset"
+        onAction={() => openModal('add_asset')}
+        onExport={handleExport}
+      />
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
+        <div className="bg-white border border-neutral-200 rounded">
+          {/* Filters Toolbar with Dropdown */}
+          <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap flex-1">
+              <input
+                type="text"
+                placeholder="Search equipment, serial number or model..."
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="w-full sm:w-72 bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-medium placeholder:text-neutral-400"
+              />
+
+              <Dropdown
+                value={statusFilter}
+                options={statusOptions}
+                onChange={setStatusFilter}
+                placeholder="Filter by Status"
+                className="w-full sm:w-auto"
+              />
+            </div>
+
+            <div className="text-xs text-neutral-500 shrink-0">
+              Showing <span className="font-semibold text-neutral-900">{filteredAssets.length}</span> devices
+            </div>
+          </div>
+
+          {/* Clean Responsive Table with Device Images */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[700px]">
+              <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
+                <tr>
+                  <th className="py-3 px-4 w-12">Image</th>
+                  <th className="py-3 px-4">Equipment Name</th>
+                  <th className="py-3 px-4 text-center">Total Units</th>
+                  <th className="py-3 px-4">Serial / Tag</th>
+                  <th className="py-3 px-4">Model & Specs</th>
+                  <th className="py-3 px-4">Assigned Location</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {filteredAssets.map((asset) => (
+                  <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors group">
+                    {/* Device Image Thumbnail */}
+                    <td className="py-2.5 px-4">
+                      <div
+                        onClick={() => openDetails(asset)}
+                        className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors"
+                        title="Click to view full specifications"
+                      >
+                        {asset.imageUrl ? (
+                          <img
+                            src={asset.imageUrl}
+                            alt={asset.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="w-4 h-4 text-neutral-400" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => openDetails(asset)}
+                        className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
+                      >
+                        {asset.name}
+                      </button>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
+                        {asset.totalUnits ?? 1} {asset.unitType ?? 'Unit'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-neutral-600">{asset.serialNumber}</td>
+                    <td className="py-3 px-4 text-neutral-600 font-mono text-[11px]">{asset.model}</td>
+                    <td className="py-3 px-4 text-neutral-600">{asset.location}</td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                          asset.status === 'operational'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : asset.status === 'in_use'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}
+                      >
+                        {asset.status === 'operational'
+                          ? 'Operational'
+                          : asset.status === 'in_use'
+                          ? 'In Production'
+                          : 'Maintenance'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <RowActionMenu
+                        onViewDetails={() => openDetails(asset)}
+                        onEdit={() => openEdit(asset)}
+                        onDelete={() => deleteAsset(asset.id)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
