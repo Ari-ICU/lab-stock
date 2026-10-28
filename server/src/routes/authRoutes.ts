@@ -5,21 +5,21 @@ import {
   getProfile,
   verifyTokenEndpoint,
   changePassword,
-} from '../controllers/authController.js';
+} from '@/controllers/authController.js';
 import {
   authenticate,
   requireAdmin,
   requireRole,
   requirePermission,
   requireAnyPermission,
-} from '../middleware/auth.js';
-import { authRateLimiter } from '../middleware/security.js';
+} from '@/middleware/auth.js';
+import { authRateLimiter } from '@/middleware/security.js';
 import {
   validateLogin,
   validateRegister,
   validatePasswordChange,
-} from '../middleware/validate.js';
-import { Permission, Role } from '../constants/permissions.js';
+} from '@/middleware/validate.js';
+import { Permission, Role } from '@/constants/permissions.js';
 
 const router = Router();
 

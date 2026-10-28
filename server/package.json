@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && (mkdir -p dist/database && cp src/database/schema.sql dist/database/ 2>/dev/null || true)",
+    "build": "tsc && tsc-alias && (mkdir -p dist/database && cp src/database/schema.sql dist/database/ 2>/dev/null || true)",
     "start": "node dist/server.js",
     "db:init": "tsx src/database/initDb.ts"
   },
@@ -36,6 +36,7 @@
     "@types/pg": "^8.23.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "tsc-alias": "^1.9.9",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

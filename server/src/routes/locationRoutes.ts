@@ -3,10 +3,10 @@ import {
   getLocations,
   getLocationById,
   createLocation,
-} from '../controllers/locationController.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
-import { validateCreateLocation } from '../middleware/validate.js';
-import { Permission } from '../constants/permissions.js';
+} from '@/controllers/locationController.js';
+import { authenticate, requirePermission } from '@/middleware/auth.js';
+import { validateCreateLocation } from '@/middleware/validate.js';
+import { Permission } from '@/constants/permissions.js';
 
 const router = Router();
 

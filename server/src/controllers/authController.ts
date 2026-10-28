@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { authService } from '../services/authService.js';
-import { asyncHandler, UnauthorizedException } from '../exceptions/errorHandler.js';
+import { authService } from '@/services/authService.js';
+import { asyncHandler, UnauthorizedException } from '@/exceptions/errorHandler.js';
 
 /**
  * POST /api/v1/auth/login

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { ValidationException } from '../exceptions/errorHandler.js';
-import { validatePasswordStrength } from '../utils/password.js';
-import { isValidEmail } from './commonValidation.js';
+import { ValidationException } from '@/exceptions/errorHandler.js';
+import { validatePasswordStrength } from '@/utils/password.js';
+import { isValidEmail } from '@/validations/commonValidation.js';
 
 /**
  * Validate user login payload

@@ -5,10 +5,10 @@ import {
   createAsset,
   updateAsset,
   deleteAsset,
-} from '../controllers/assetController.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
-import { validateCreateAsset, validateUpdateAsset } from '../middleware/validate.js';
-import { Permission } from '../constants/permissions.js';
+} from '@/controllers/assetController.js';
+import { authenticate, requirePermission } from '@/middleware/auth.js';
+import { validateCreateAsset, validateUpdateAsset } from '@/middleware/validate.js';
+import { Permission } from '@/constants/permissions.js';
 
 const router = Router();
 

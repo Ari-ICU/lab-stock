@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { assetService } from '../services/assetService.js';
-import { asyncHandler } from '../exceptions/errorHandler.js';
+import { assetService } from '@/services/assetService.js';
+import { asyncHandler } from '@/exceptions/errorHandler.js';
 
 /**
  * GET /api/v1/assets

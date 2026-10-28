@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { loanService } from '../services/loanService.js';
-import { asyncHandler } from '../exceptions/errorHandler.js';
+import { loanService } from '@/services/loanService.js';
+import { asyncHandler } from '@/exceptions/errorHandler.js';
 
 /**
  * GET /api/v1/loans

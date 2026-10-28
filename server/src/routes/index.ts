@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import authRoutes from './authRoutes.js';
-import stockRoutes from './stockRoutes.js';
-import assetRoutes from './assetRoutes.js';
-import loanRoutes from './loanRoutes.js';
-import locationRoutes from './locationRoutes.js';
+import authRoutes from '@/routes/authRoutes.js';
+import stockRoutes from '@/routes/stockRoutes.js';
+import assetRoutes from '@/routes/assetRoutes.js';
+import loanRoutes from '@/routes/loanRoutes.js';
+import locationRoutes from '@/routes/locationRoutes.js';
 
 const router = Router();
 

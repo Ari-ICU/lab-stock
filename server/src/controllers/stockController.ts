@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { stockService } from '../services/stockService.js';
-import { asyncHandler } from '../exceptions/errorHandler.js';
+import { stockService } from '@/services/stockService.js';
+import { asyncHandler } from '@/exceptions/errorHandler.js';
 
 /**
  * GET /api/v1/stock

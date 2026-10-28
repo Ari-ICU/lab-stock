@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { locationService } from '../services/locationService.js';
-import { asyncHandler } from '../exceptions/errorHandler.js';
+import { locationService } from '@/services/locationService.js';
+import { asyncHandler } from '@/exceptions/errorHandler.js';
 
 /**
  * GET /api/v1/locations

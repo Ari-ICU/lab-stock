@@ -5,10 +5,10 @@ import {
   createStockItem,
   updateStockItem,
   deleteStockItem,
-} from '../controllers/stockController.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
-import { validateCreateStock, validateUpdateStock } from '../middleware/validate.js';
-import { Permission } from '../constants/permissions.js';
+} from '@/controllers/stockController.js';
+import { authenticate, requirePermission } from '@/middleware/auth.js';
+import { validateCreateStock, validateUpdateStock } from '@/middleware/validate.js';
+import { Permission } from '@/constants/permissions.js';
 
 const router = Router();
 

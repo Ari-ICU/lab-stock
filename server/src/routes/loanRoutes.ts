@@ -4,10 +4,10 @@ import {
   getLoanById,
   checkoutEquipment,
   checkinEquipment,
-} from '../controllers/loanController.js';
-import { authenticate, requirePermission } from '../middleware/auth.js';
-import { validateCheckoutLoan } from '../middleware/validate.js';
-import { Permission } from '../constants/permissions.js';
+} from '@/controllers/loanController.js';
+import { authenticate, requirePermission } from '@/middleware/auth.js';
+import { validateCheckoutLoan } from '@/middleware/validate.js';
+import { Permission } from '@/constants/permissions.js';
 
 const router = Router();
 

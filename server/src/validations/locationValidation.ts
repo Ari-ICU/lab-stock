@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ValidationException } from '../exceptions/errorHandler.js';
+import { ValidationException } from '@/exceptions/errorHandler.js';
 
 /**
  * Validate laboratory location creation
