@@ -10,6 +10,12 @@ import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Image as ImageIcon, Plus } from 'lucide-react';
 
+const labOptions: DropdownOption[] = [
+  { label: 'All Laboratories', value: 'all' },
+  { label: 'Lab 102B (Rm 102B)', value: '102B' },
+  { label: 'Lab 206 (Rm 206)', value: '206' },
+];
+
 const statusOptions: DropdownOption[] = [
   { label: 'All Operational Statuses', value: 'all' },
   { label: 'Operational', value: 'operational' },
@@ -21,6 +27,7 @@ export default function AssetsPage() {
   const router = useRouter();
   const { assets, deleteAsset } = useStock();
   const [filterText, setFilterText] = useState('');
+  const [labFilter, setLabFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const filteredAssets = assets.filter((asset) => {
@@ -30,10 +37,14 @@ export default function AssetsPage() {
       asset.model.toLowerCase().includes(filterText.toLowerCase()) ||
       asset.location.toLowerCase().includes(filterText.toLowerCase());
 
+    const matchesLab =
+      labFilter === 'all' ||
+      asset.location.toLowerCase().includes(labFilter.toLowerCase());
+
     const matchesStatus =
       statusFilter === 'all' || asset.status === statusFilter;
 
-    return matchesQuery && matchesStatus;
+    return matchesQuery && matchesLab && matchesStatus;
   });
 
   const handleExport = () => {
@@ -73,6 +84,14 @@ export default function AssetsPage() {
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
                 className="w-full sm:w-72 bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-medium placeholder:text-neutral-400"
+              />
+
+              <Dropdown
+                value={labFilter}
+                options={labOptions}
+                onChange={setLabFilter}
+                placeholder="Filter by Lab"
+                className="w-full sm:w-auto"
               />
 
               <Dropdown
