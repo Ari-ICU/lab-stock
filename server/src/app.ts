@@ -1,11 +1,13 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app: Application = express();
 
 // Middlewares
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
