@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
+import { getAssetPath } from '@/lib/basePath';
 import {
   Network,
   LayoutDashboard,
@@ -79,9 +80,18 @@ export function Sidebar() {
           >
             <div className="w-10 h-10 rounded-md bg-neutral-50 border border-neutral-200 flex items-center justify-center p-1 shrink-0">
               <img
-                src="/logo.png"
+                src={getAssetPath('/logo.png')}
                 alt="RUPP University Seal"
                 className="w-full h-full object-contain"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.dataset.tried) {
+                    img.dataset.tried = 'true';
+                    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/lab-stock')) {
+                      img.src = '/lab-stock/logo.png';
+                    }
+                  }
+                }}
               />
             </div>
             <div className="min-w-0">

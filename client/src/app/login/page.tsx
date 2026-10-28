@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, DEMO_ACCOUNTS, DemoAccount } from '@/context/AuthContext';
 import { useStock } from '@/context/StockContext';
+import { getAssetPath } from '@/lib/basePath';
 import {
   Boxes,
   ShieldCheck,
@@ -90,9 +91,18 @@ export default function LoginPage() {
             <div className="flex items-center gap-3.5">
               <div className="w-14 h-14 rounded-xl bg-white border border-neutral-200 p-1.5 shadow-xs shrink-0 flex items-center justify-center">
                 <img
-                  src="/logo.png"
+                  src={getAssetPath('/logo.png')}
                   alt="RUPP University Seal"
                   className="w-full h-full object-contain"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (!img.dataset.tried) {
+                      img.dataset.tried = 'true';
+                      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/lab-stock')) {
+                        img.src = '/lab-stock/logo.png';
+                      }
+                    }
+                  }}
                 />
               </div>
               <div>
