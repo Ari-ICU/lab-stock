@@ -196,6 +196,7 @@ export default function SettingsPage() {
             <Users className="w-3.5 h-3.5" />
             <span>Manage User Roles</span>
             <span
+              suppressHydrationWarning
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 activeTab === 'users'
                   ? 'bg-neutral-800 text-neutral-200'
@@ -218,6 +219,7 @@ export default function SettingsPage() {
             <Radio className="w-3.5 h-3.5" />
             <span>Session Devices</span>
             <span
+              suppressHydrationWarning
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                 activeTab === 'sessions'
                   ? 'bg-neutral-800 text-neutral-200'
@@ -324,7 +326,7 @@ export default function SettingsPage() {
               <div className="px-5 py-3.5 border-b border-neutral-200 bg-neutral-50/70 rounded-t-lg flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-neutral-700" />
-                  <span className="text-xs font-bold text-neutral-900">
+                  <span suppressHydrationWarning className="text-xs font-bold text-neutral-900">
                     Personnel Directory ({managedUsers.length})
                   </span>
                 </div>
@@ -478,7 +480,7 @@ export default function SettingsPage() {
                   </span>
                   <Radio className="w-4 h-4 text-emerald-500" />
                 </div>
-                <div className="text-xl font-bold text-neutral-900 mt-1.5 font-mono">
+                <div suppressHydrationWarning className="text-xl font-bold text-neutral-900 mt-1.5 font-mono">
                   {sessionDevices.length} Connected
                 </div>
                 <div className="text-[11px] text-neutral-400 mt-1">

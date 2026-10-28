@@ -87,6 +87,17 @@ export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
+    name: 'Dr. Heng Sovannarith',
+    email: 'sovannarith@lab.edu',
+    password: 'password123',
+    role: 'Primary Lab Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'HS',
+    permissions: 'Full Read/Write Access & System Config',
+    department: 'Engineering Block A - Room 102B',
+    description: 'Faculty supervisor and laboratory director with full administrative oversight',
+  },
+  {
     name: 'Thoeurn Ratha',
     email: 'admin@lab.edu',
     password: 'password123',
@@ -98,23 +109,12 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     description: 'Full administrator privileges across all hardware, racks, and stock',
   },
   {
-    name: 'Sokha Chan',
-    email: 'tech@lab.edu',
-    password: 'password123',
-    role: 'Network Technician',
-    roleBadge: 'Technician',
-    avatarText: 'SC',
-    permissions: 'Hardware Management & Maintenance Logging',
-    department: 'Engineering Block A - Room 102B',
-    description: 'Hardware maintenance, stock adjustments, and equipment logging',
-  },
-  {
-    name: 'Dara Kim',
-    email: 'student@lab.edu',
+    name: 'Leang Vakhim',
+    email: 'vakhim@lab.edu',
     password: 'password123',
     role: 'Lab Assistant / Student',
     roleBadge: 'Viewer',
-    avatarText: 'DK',
+    avatarText: 'LV',
     permissions: 'Read-Only Catalog & Rack Location Access',
     department: 'Engineering Block A - Room 102B',
     description: 'Inventory search, catalog browsing, and rack location viewing',
@@ -133,6 +133,18 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Active now',
+  },
+  {
+    id: 'user-director',
+    name: 'Dr. Heng Sovannarith',
+    email: 'sovannarith@lab.edu',
+    role: 'Primary Lab Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'HS',
+    permissions: 'Full Read/Write Access & System Config',
+    department: 'Engineering Block A - Room 102B',
+    status: 'active',
+    lastLogin: 'Today, 08:30 AM',
   },
   {
     id: 'user-tech',
@@ -160,11 +172,11 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   },
   {
     id: 'user-student',
-    name: 'Dara Kim',
-    email: 'student@lab.edu',
+    name: 'Leang Vakhim',
+    email: 'vakhim@lab.edu',
     role: 'Lab Assistant / Student',
     roleBadge: 'Viewer',
-    avatarText: 'DK',
+    avatarText: 'LV',
     permissions: 'Read-Only Catalog & Rack Location Access',
     department: 'Engineering Block A - Room 102B',
     status: 'active',
@@ -226,14 +238,13 @@ export function detectCurrentDevice(): {
 }
 
 export function getInitialSessions(): SessionDevice[] {
-  const current = detectCurrentDevice();
   return [
     {
       id: 'sess-current',
-      deviceName: current.deviceName,
-      deviceType: current.deviceType,
-      browser: current.browser,
-      os: current.os,
+      deviceName: 'Engineering Workstation',
+      deviceType: 'desktop',
+      browser: 'Web Browser',
+      os: 'Operating System',
       ip: '192.168.102.15',
       location: 'Room 102B - Workstation 01',
       lastActive: 'Active now',
@@ -361,27 +372,79 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(getInitialUser);
+  // Initialize with deterministic SSR defaults to prevent hydration mismatch
+  const [user, setUser] = useState<User | null>(getDefaultUser);
   const [isLoading, setIsLoading] = useState(false);
-  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(getStoredUsers);
-  const [sessionDevices, setSessionDevices] = useState<SessionDevice[]>(getStoredSessions);
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(INITIAL_MANAGED_USERS);
+  const [sessionDevices, setSessionDevices] = useState<SessionDevice[]>(getInitialSessions);
 
-  // Sync current device on mount
+  // Sync state from localStorage on mount (client-only)
   useEffect(() => {
+    // 1. Sync User
+    try {
+      const storedUser = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Sync Managed Users (ensure Dr. Heng Sovannarith is present)
+    try {
+      const storedUsers = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
+      if (storedUsers) {
+        const parsed: ManagedUser[] = JSON.parse(storedUsers);
+        const hasDrHeng = parsed.some((u) => u.name.includes('Sovannarith') || u.email.includes('sovannarith'));
+        const updated = hasDrHeng
+          ? parsed.map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') }))
+          : [
+              ...parsed.map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') })),
+              INITIAL_MANAGED_USERS[1], // Dr. Heng Sovannarith
+            ];
+        setManagedUsers(updated);
+      }
+    } catch {
+      // ignore
+    }
+
+    // 3. Sync Sessions & Detect Real Hardware/Browser
     const current = detectCurrentDevice();
-    setSessionDevices((prev) =>
-      prev.map((s) =>
-        s.isCurrent
-          ? {
-              ...s,
-              browser: current.browser,
-              os: current.os,
-              deviceName: current.deviceName,
-              deviceType: current.deviceType,
-            }
-          : s
-      )
-    );
+    try {
+      const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY) || localStorage.getItem('netlab_session_devices');
+      if (storedSessions) {
+        const parsed: SessionDevice[] = JSON.parse(storedSessions);
+        setSessionDevices(
+          parsed.map((s) =>
+            s.isCurrent
+              ? {
+                  ...s,
+                  browser: current.browser,
+                  os: current.os,
+                  deviceName: current.deviceName,
+                  deviceType: current.deviceType,
+                }
+              : s
+          )
+        );
+      } else {
+        setSessionDevices((prev) =>
+          prev.map((s) =>
+            s.isCurrent
+              ? {
+                  ...s,
+                  browser: current.browser,
+                  os: current.os,
+                  deviceName: current.deviceName,
+                  deviceType: current.deviceType,
+                }
+              : s
+          )
+        );
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   const saveUsers = (usersList: ManagedUser[]) => {
