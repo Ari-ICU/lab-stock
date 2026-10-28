@@ -89,7 +89,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <div className="font-bold text-slate-900 text-sm sm:text-base tracking-tight leading-tight">
-                  NetLab 102B Management
+                  Lab 102B Management
                 </div>
                 <div className="text-[#2563eb] font-bold text-xs uppercase tracking-wider mt-0.5">
                   NETWORK LABORATORY & ASSETS
@@ -164,15 +164,6 @@ export default function LoginPage() {
                 </div>
               </div>
             </div>
-
-            {/* Left Column Bottom Footer */}
-            <div className="flex items-center justify-between text-xs text-slate-400 pt-6 border-t border-slate-200/60">
-              <div>© 2026 NetLab 102B. All rights reserved.</div>
-              <div className="flex items-center gap-1.5 text-slate-600 font-medium text-xs">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Gateway 192.168.102.1 Online</span>
-              </div>
-            </div>
           </div>
 
           {/* ================= RIGHT COLUMN ================= */}
@@ -198,7 +189,7 @@ export default function LoginPage() {
 
               {/* Title & Subtitle */}
               <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                Sign in to NetLab
+                Sign in to Lab
               </h2>
               <p className="text-xs text-slate-500 mt-1.5 mb-6 leading-relaxed">
                 Use your staff account to continue to inventory and rack management.
@@ -342,16 +333,6 @@ export default function LoginPage() {
                 Privacy Policy
               </span>
               .
-            </div>
-
-            {/* Back to Dashboard Link */}
-            <div className="text-center pt-1">
-              <Link
-                href="/"
-                className="text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors"
-              >
-                ← Back to NetLab Dashboard
-              </Link>
             </div>
           </div>
         </div>
