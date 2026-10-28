@@ -640,7 +640,7 @@ export default function LoansPage() {
                   <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Expected Return Date
                   </label>
-                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} />
+                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} align="right" />
                 </div>
               </div>
 

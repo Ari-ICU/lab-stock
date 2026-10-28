@@ -15,6 +15,7 @@ interface DatePickerProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  align?: 'left' | 'right' | 'auto';
 }
 
 const MONTH_NAMES = [
@@ -40,9 +41,11 @@ export function DatePicker({
   placeholder = 'Select date (YYYY-MM-DD)',
   className = '',
   disabled = false,
+  align = 'auto',
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpwards, setOpenUpwards] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Parse initial selected date
@@ -103,6 +106,16 @@ export function DatePicker({
         const rect = containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
         setOpenUpwards(spaceBelow < 330 && rect.top > 330);
+
+        if (align === 'right') {
+          setAlignRight(true);
+        } else if (align === 'left') {
+          setAlignRight(false);
+        } else {
+          // Auto: check if space to right is less than 310px or element is on the right half of window
+          const spaceRight = window.innerWidth - rect.left;
+          setAlignRight(spaceRight < 310 || rect.left > window.innerWidth / 2);
+        }
       }
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
@@ -285,9 +298,9 @@ export function DatePicker({
       {/* Custom Calendar Popover */}
       {isOpen && (
         <div
-          className={`absolute left-0 bg-white border border-neutral-200 rounded shadow-lg p-3 z-50 select-none w-72 animate-in fade-in duration-100 ${
+          className={`absolute bg-white border border-neutral-200 rounded-lg shadow-xl p-3 z-50 select-none w-72 animate-in fade-in duration-100 ${
             openUpwards ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-          }`}
+          } ${alignRight ? 'right-0' : 'left-0'}`}
         >
           {/* Calendar Header with Month/Year Navigation */}
           <div className="flex items-center justify-between gap-1 pb-2.5 border-b border-neutral-100">

@@ -952,7 +952,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   <label className="block font-semibold text-neutral-700 mb-1">
                     Expected Due Date
                   </label>
-                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} />
+                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} align="right" />
                 </div>
               </div>
 

@@ -207,9 +207,9 @@ export function AddEntityModal() {
         if (e.target === e.currentTarget) closeModal();
       }}
     >
-      <div className="bg-white border border-neutral-200 rounded-md max-w-md w-full overflow-hidden flex flex-col">
+      <div className="bg-white border border-neutral-200 rounded-xl max-w-lg w-full flex flex-col shadow-2xl relative">
         {/* Header */}
-        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0">
+        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 rounded-t-xl bg-white">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded bg-neutral-900 text-white flex items-center justify-center">
               <Plus className="w-4 h-4 text-emerald-400" />
@@ -559,6 +559,7 @@ export function AddEntityModal() {
                   value={maintDate}
                   onChange={setMaintDate}
                   placeholder="Select scheduled date"
+                  align="right"
                 />
               </div>
             </div>

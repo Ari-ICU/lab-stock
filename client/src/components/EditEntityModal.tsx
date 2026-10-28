@@ -230,9 +230,9 @@ export function EditEntityModal() {
         if (e.target === e.currentTarget) closeEdit();
       }}
     >
-      <div className="bg-white border border-neutral-200 rounded-md max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white border border-neutral-200 rounded-xl max-w-lg w-full flex flex-col max-h-[90vh] shadow-2xl relative">
         {/* Header */}
-        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white">
+        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white rounded-t-xl">
           <h2 className="text-xs font-bold text-neutral-900">
             {getModalTitle()}
           </h2>
