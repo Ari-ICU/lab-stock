@@ -94,7 +94,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>('none');
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [detailsItem, setDetailsItem] = useState<AnyEntity | null>(null);
@@ -109,11 +110,54 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const toggleMobileSidebar = () => setIsMobileSidebarOpen((prev) => !prev);
   const closeMobileSidebar = () => setIsMobileSidebarOpen(false);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => {
+  const closeToast = () => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setToast(null);
+  };
+
+  const showToast = (
+    msg: string,
+    options?: ToastType | { type?: ToastType; title?: string }
+  ) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    let type: ToastType = 'success';
+    let title: string | undefined = undefined;
+
+    if (typeof options === 'string') {
+      type = options;
+    } else if (options && typeof options === 'object') {
+      if (options.type) type = options.type;
+      if (options.title) title = options.title;
+    } else {
+      const lower = msg.toLowerCase();
+      if (lower.includes('error') || lower.includes('fail') || lower.includes('denied')) {
+        type = 'error';
+      } else if (lower.includes('deleted') || lower.includes('removed') || lower.includes('signed out')) {
+        type = 'info';
+      } else if (lower.includes('warning') || lower.includes('alert')) {
+        type = 'warning';
+      } else {
+        type = 'success';
+      }
+    }
+
+    setToast({
+      id: Date.now(),
+      message: msg,
+      title,
+      type,
+    });
+
+    toastTimerRef.current = setTimeout(() => {
       setToast(null);
-    }, 3200);
+      toastTimerRef.current = null;
+    }, 3600);
   };
 
   const openScanner = () => setIsScannerOpen(true);
@@ -298,6 +342,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         closeModal,
         toast,
         showToast,
+        closeToast,
         isMobileSidebarOpen,
         toggleMobileSidebar,
         closeMobileSidebar,
