@@ -166,12 +166,11 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       <Header
         title={`Edit: ${asset.name}`}
         subtitle={`Asset ID: ${asset.id} • Room 102B`}
-        actionLabel="View Details"
-        onAction={() => router.push(`/assets/${asset.id}`)}
         showExport={false}
+        showAction={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-6xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
         {/* Navigation Breadcrumb bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           <Link

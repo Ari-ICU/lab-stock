@@ -62,7 +62,7 @@ export default function AssetsPage() {
         onExport={handleExport}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
         <div className="bg-white border border-neutral-200 rounded">
           {/* Filters Toolbar with Dropdown */}
           <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

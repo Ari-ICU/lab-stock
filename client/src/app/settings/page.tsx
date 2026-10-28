@@ -166,7 +166,7 @@ export default function SettingsPage() {
         showAction={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
         {/* Navigation Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-white border border-neutral-200 rounded-lg shadow-xs overflow-x-auto">
           <button

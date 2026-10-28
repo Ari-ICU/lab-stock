@@ -154,14 +154,10 @@ export default function CreateAssetPage() {
         title="Create Lab Hardware Asset"
         subtitle="Lab 102B Equipment Registry"
         showExport={false}
-        actionLabel={isSubmitting ? 'Creating...' : 'Create Asset'}
-        onAction={() => {
-          const form = document.getElementById('new-asset-form') as HTMLFormElement;
-          if (form) form.requestSubmit();
-        }}
+        showAction={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
         {/* Breadcrumb Back Button */}
         <div className="flex items-center justify-between">
           <Link
