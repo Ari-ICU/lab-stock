@@ -23,7 +23,7 @@ export const getLoans = asyncHandler(async (req: Request, res: Response) => {
  * Retrieve a single loan record
  */
 export const getLoanById = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   const loan = await loanService.getById(id);
 
   return res.status(200).json({
@@ -51,7 +51,7 @@ export const checkoutEquipment = asyncHandler(async (req: Request, res: Response
  * Check in returned equipment and record inspection notes
  */
 export const checkinEquipment = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   const { notes } = req.body;
 
   const returnedLoan = await loanService.checkin(id, notes);

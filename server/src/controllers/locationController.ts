@@ -21,7 +21,7 @@ export const getLocations = asyncHandler(async (_req: Request, res: Response) =>
  * Retrieve location by ID
  */
 export const getLocationById = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = String(req.params.id);
   const location = await locationService.getById(id);
 
   return res.status(200).json({
