@@ -53,7 +53,7 @@ export default function SettingsPage() {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserRole, setNewUserRole] = useState('Network Technician');
+  const [newUserRole, setNewUserRole] = useState('Faculty Lecturer');
   const [newUserDept, setNewUserDept] = useState('Engineering Block A - Room 102B');
 
   const roleOptions = Object.keys(ROLE_DEFINITIONS).map((roleName) => ({
@@ -147,13 +147,13 @@ export default function SettingsPage() {
     switch (badge) {
       case 'Admin':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Technician':
+      case 'Lecturer':
+      case 'Lecture':
         return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Operator':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'Viewer':
+      case 'Lab Assistant':
+      case 'Lab Ass':
       default:
-        return 'bg-neutral-100 text-neutral-700 border-neutral-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
     }
   };
 
@@ -163,22 +163,7 @@ export default function SettingsPage() {
         title="Settings & Access Control"
         subtitle="Manage User Roles, Session Devices, and Lab Configuration"
         showExport={false}
-        actionLabel={
-          activeTab === 'users'
-            ? '+ Add Operator'
-            : activeTab === 'sessions'
-            ? 'Scan Devices'
-            : 'Save Changes'
-        }
-        onAction={() => {
-          if (activeTab === 'users') {
-            setIsAddUserModalOpen(true);
-          } else if (activeTab === 'sessions') {
-            handleRefreshDevices();
-          } else {
-            showToast('Configuration changes saved successfully', 'success');
-          }
-        }}
+        showAction={false}
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl">
@@ -349,11 +334,9 @@ export default function SettingsPage() {
                           className={`w-10 h-10 rounded-full font-bold flex items-center justify-center text-xs shrink-0 border ${
                             u.roleBadge === 'Admin'
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : u.roleBadge === 'Technician'
+                              : u.roleBadge === 'Lecturer'
                               ? 'bg-blue-50 text-blue-800 border-blue-200'
-                              : u.roleBadge === 'Operator'
-                              ? 'bg-amber-50 text-amber-800 border-amber-200'
-                              : 'bg-neutral-100 text-neutral-800 border-neutral-200'
+                              : 'bg-amber-50 text-amber-800 border-amber-200'
                           }`}
                         >
                           {u.avatarText}

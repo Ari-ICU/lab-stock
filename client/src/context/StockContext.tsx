@@ -13,30 +13,19 @@ import {
   MockMaintenance,
   MockLocation,
 } from '@/data/mockData';
+import {
+  ModalType,
+  AnyEntity,
+  ToastType,
+  ToastData,
+} from '@/types';
 
-export type ModalType =
-  | 'none'
-  | 'add_stock'
-  | 'add_asset'
-  | 'add_rack'
-  | 'add_maintenance'
-  | 'add_location';
-
-export type AnyEntity =
-  | MockItem
-  | MockAsset
-  | MockRack
-  | MockMaintenance
-  | MockLocation;
-
-export type ToastType = 'success' | 'info' | 'warning' | 'error';
-
-export interface ToastData {
-  id: number;
-  message: string;
-  title?: string;
-  type: ToastType;
-}
+export type {
+  ModalType,
+  AnyEntity,
+  ToastType,
+  ToastData,
+};
 
 interface StockContextType {
   stock: MockItem[];
@@ -48,7 +37,7 @@ interface StockContextType {
   updateStockQuantity: (id: string, delta: number) => void;
   updateStockItem: (item: MockItem) => void;
   deleteStockItem: (id: string) => void;
-  addAsset: (asset: Omit<MockAsset, 'id'> & { id?: string }) => void;
+  addAsset: (asset: Omit<MockAsset, 'id'> & { id?: string }) => MockAsset;
   updateAsset: (asset: MockAsset) => void;
   deleteAsset: (id: string) => void;
   addRack: (rack: Omit<MockRack, 'id'> & { id?: string }) => void;
@@ -230,7 +219,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     showToast(`Removed ${target?.name || 'item'} from inventory`);
   };
 
-  const addAsset = (assetData: Omit<MockAsset, 'id'> & { id?: string }) => {
+  const addAsset = (assetData: Omit<MockAsset, 'id'> & { id?: string }): MockAsset => {
     const newAsset: MockAsset = {
       id: assetData.id || `A${Date.now()}`,
       imageUrl: assetData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
@@ -238,6 +227,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     };
     setAssets((prev) => [newAsset, ...prev]);
     showToast(`Registered network asset ${newAsset.name}`);
+    return newAsset;
   };
 
   const updateAsset = (updatedAsset: MockAsset) => {

@@ -2,12 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
+import { DropdownOption } from '@/types';
 
-export interface DropdownOption {
-  label: string;
-  value: string;
-  count?: number;
-}
+export type { DropdownOption };
 
 interface DropdownProps {
   value: string;

@@ -1,17 +1,18 @@
-export interface MockItem {
-  id: string;
-  name: string;
-  code: string;
-  category: string;
-  quantity: number;
-  unit: string;
-  location: string;
-  rack: string;
-  status: 'in_stock' | 'low_stock' | 'out_of_stock';
-  expiryDate: string; // or warranty/inspection date
-  imageUrl?: string;
-  description?: string;
-}
+import {
+  MockItem,
+  MockAsset,
+  MockRack,
+  MockMaintenance,
+  MockLocation,
+} from '@/types';
+
+export type {
+  MockItem,
+  MockAsset,
+  MockRack,
+  MockMaintenance,
+  MockLocation,
+};
 
 export const mockStock: MockItem[] = [
   {
@@ -114,20 +115,6 @@ export const mockStock: MockItem[] = [
   },
 ];
 
-export interface MockAsset {
-  id: string;
-  name: string;
-  serialNumber: string;
-  model: string;
-  totalUnits?: number;
-  unitType?: string;
-  location: string;
-  status: 'operational' | 'in_use' | 'maintenance';
-  nextCalibration: string; // firmware audit / cert date
-  imageUrl?: string;
-  description?: string;
-}
-
 export const mockAssets: MockAsset[] = [
   {
     id: 'A1',
@@ -196,17 +183,6 @@ export const mockAssets: MockAsset[] = [
   },
 ];
 
-export interface MockRack {
-  id: string;
-  name: string;
-  code: string;
-  type: '42U Server Rack' | '24U Wall Mount' | 'IDF Distribution' | 'Storage Shelf';
-  temperature?: string;
-  location: string;
-  totalSlots: number;
-  usedSlots: number;
-}
-
 export const mockRacks: MockRack[] = [
   {
     id: 'R1',
@@ -248,17 +224,6 @@ export const mockRacks: MockRack[] = [
     usedSlots: 54,
   },
 ];
-
-export interface MockMaintenance {
-  id: string;
-  assetName: string;
-  serialNumber: string;
-  type: 'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement';
-  date: string;
-  technician: string;
-  status: 'Completed' | 'Pending' | 'In Progress';
-  notes: string;
-}
 
 export const mockMaintenance: MockMaintenance[] = [
   {
@@ -302,15 +267,6 @@ export const mockMaintenance: MockMaintenance[] = [
     notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 24 port VLAN mappings.',
   },
 ];
-
-export interface MockLocation {
-  id: string;
-  name: string;
-  building: string;
-  room: string;
-  totalAssets: number;
-  totalItems: number;
-}
 
 export const mockLocations: MockLocation[] = [
   {

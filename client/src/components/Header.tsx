@@ -11,6 +11,7 @@ interface HeaderProps {
   onAction?: () => void;
   onExport?: () => void;
   showExport?: boolean;
+  showAction?: boolean;
 }
 
 export function Header({
@@ -20,6 +21,7 @@ export function Header({
   onAction,
   onExport,
   showExport = true,
+  showAction = true,
 }: HeaderProps) {
   const { toggleMobileSidebar } = useStock();
 
@@ -50,13 +52,15 @@ export function Header({
             <span className="hidden sm:inline">Export</span>
           </button>
         )}
-        <button
-          onClick={onAction}
-          className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>{actionLabel}</span>
-        </button>
+        {showAction && onAction && (
+          <button
+            onClick={onAction}
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{actionLabel}</span>
+          </button>
+        )}
       </div>
     </header>
   );

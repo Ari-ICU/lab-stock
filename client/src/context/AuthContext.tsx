@@ -2,86 +2,42 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  User,
+  DemoAccount,
+  ManagedUser,
+  SessionDevice,
+  RoleDefinition,
+  RoleBadge,
+} from '@/types';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  roleBadge: string;
-  avatarText: string;
-  permissions: string;
-  department: string;
-}
-
-export interface DemoAccount {
-  name: string;
-  email: string;
-  role: string;
-  roleBadge: string;
-  password: string;
-  avatarText: string;
-  permissions: string;
-  department: string;
-  description: string;
-}
-
-export interface ManagedUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  roleBadge: 'Admin' | 'Technician' | 'Operator' | 'Viewer';
-  avatarText: string;
-  permissions: string;
-  department: string;
-  status: 'active' | 'offline' | 'suspended';
-  lastLogin: string;
-}
-
-export interface SessionDevice {
-  id: string;
-  deviceName: string;
-  deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal';
-  browser: string;
-  os: string;
-  ip: string;
-  location: string;
-  lastActive: string;
-  isCurrent: boolean;
-}
-
-export interface RoleDefinition {
-  role: string;
-  badge: 'Admin' | 'Technician' | 'Operator' | 'Viewer';
-  permissions: string;
-  description: string;
-}
+export type {
+  User,
+  DemoAccount,
+  ManagedUser,
+  SessionDevice,
+  RoleDefinition,
+  RoleBadge,
+};
 
 export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
   'Primary Lab Administrator': {
     role: 'Primary Lab Administrator',
     badge: 'Admin',
     permissions: 'Full Read/Write Access & System Config',
-    description: 'Full management over hardware, users, network racks, and stock',
+    description: 'Full administrative authority over lab hardware, access control, and stock',
   },
-  'Network Technician': {
-    role: 'Network Technician',
-    badge: 'Technician',
-    permissions: 'Hardware Management & Maintenance Logging',
-    description: 'Can manage stock, create maintenance logs, and inspect racks',
+  'Faculty Lecturer': {
+    role: 'Faculty Lecturer',
+    badge: 'Lecturer',
+    permissions: 'Course Hardware Allocation & Catalog View',
+    description: 'Course workstation allocation, teaching resource schedule, and inventory review',
   },
-  'Laboratory Operator': {
-    role: 'Laboratory Operator',
-    badge: 'Operator',
-    permissions: 'Inventory Stock Adjustments & Barcode Scanning',
-    description: 'Can check in/out items and adjust stock quantities',
-  },
-  'Lab Assistant / Student': {
-    role: 'Lab Assistant / Student',
-    badge: 'Viewer',
-    permissions: 'Read-Only Catalog & Rack Location Access',
-    description: 'View-only access to catalog, rack locations, and availability',
+  'Lab Assistant': {
+    role: 'Lab Assistant',
+    badge: 'Lab Assistant',
+    permissions: 'Inventory Check-in/Out & Equipment Prep',
+    description: 'Hardware setup, student lab check-in, and inventory maintenance logging',
   },
 };
 
@@ -101,39 +57,27 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     name: 'Thoeurn Ratha',
     email: 'admin@lab.edu',
     password: 'password123',
-    role: 'Primary Lab Administrator',
-    roleBadge: 'Admin',
+    role: 'Faculty Lecturer',
+    roleBadge: 'Lecturer',
     avatarText: 'TR',
-    permissions: 'Full Read/Write Access & System Config',
+    permissions: 'Course Hardware Allocation & Catalog View',
     department: 'Engineering Block A - Room 102B',
-    description: 'Full administrator privileges across all hardware, racks, and stock',
+    description: 'Course lecturer managing student lab stations and curriculum hardware',
   },
   {
     name: 'Leang Vakhim',
     email: 'vakhim@lab.edu',
     password: 'password123',
-    role: 'Lab Assistant / Student',
-    roleBadge: 'Viewer',
+    role: 'Lab Assistant',
+    roleBadge: 'Lab Assistant',
     avatarText: 'LV',
-    permissions: 'Read-Only Catalog & Rack Location Access',
+    permissions: 'Inventory Check-in/Out & Equipment Prep',
     department: 'Engineering Block A - Room 102B',
-    description: 'Inventory search, catalog browsing, and rack location viewing',
+    description: 'Lab assistant managing equipment distribution, inspection, and student check-ins',
   },
 ];
 
 export const INITIAL_MANAGED_USERS: ManagedUser[] = [
-  {
-    id: 'user-admin',
-    name: 'Thoeurn Ratha',
-    email: 'admin@lab.edu',
-    role: 'Primary Lab Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'TR',
-    permissions: 'Full Read/Write Access & System Config',
-    department: 'Engineering Block A - Room 102B',
-    status: 'active',
-    lastLogin: 'Active now',
-  },
   {
     id: 'user-director',
     name: 'Dr. Heng Sovannarith',
@@ -147,40 +91,28 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     lastLogin: 'Today, 08:30 AM',
   },
   {
-    id: 'user-tech',
-    name: 'Sokha Chan',
-    email: 'tech@lab.edu',
-    role: 'Network Technician',
-    roleBadge: 'Technician',
-    avatarText: 'SC',
-    permissions: 'Hardware Management & Maintenance Logging',
+    id: 'user-lecturer',
+    name: 'Thoeurn Ratha',
+    email: 'admin@lab.edu',
+    role: 'Faculty Lecturer',
+    roleBadge: 'Lecturer',
+    avatarText: 'TR',
+    permissions: 'Course Hardware Allocation & Catalog View',
+    department: 'Engineering Block A - Room 102B',
+    status: 'active',
+    lastLogin: 'Active now',
+  },
+  {
+    id: 'user-assistant',
+    name: 'Leang Vakhim',
+    email: 'vakhim@lab.edu',
+    role: 'Lab Assistant',
+    roleBadge: 'Lab Assistant',
+    avatarText: 'LV',
+    permissions: 'Inventory Check-in/Out & Equipment Prep',
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Today, 09:20 AM',
-  },
-  {
-    id: 'user-operator',
-    name: 'Kimleng Heng',
-    email: 'operator@lab.edu',
-    role: 'Laboratory Operator',
-    roleBadge: 'Operator',
-    avatarText: 'KH',
-    permissions: 'Inventory Stock Adjustments & Barcode Scanning',
-    department: 'Engineering Block A - Room 102B',
-    status: 'active',
-    lastLogin: 'Yesterday, 04:15 PM',
-  },
-  {
-    id: 'user-student',
-    name: 'Leang Vakhim',
-    email: 'vakhim@lab.edu',
-    role: 'Lab Assistant / Student',
-    roleBadge: 'Viewer',
-    avatarText: 'LV',
-    permissions: 'Read-Only Catalog & Rack Location Access',
-    department: 'Engineering Block A - Room 102B',
-    status: 'active',
-    lastLogin: 'Oct 26, 02:40 PM',
   },
 ];
 
@@ -390,19 +322,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
 
-    // 2. Sync Managed Users (ensure Dr. Heng Sovannarith is present)
+    // 2. Sync Managed Users (ensure only the 3 authorized accounts or custom registered ones)
     try {
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
       if (storedUsers) {
         const parsed: ManagedUser[] = JSON.parse(storedUsers);
-        const hasDrHeng = parsed.some((u) => u.name.includes('Sovannarith') || u.email.includes('sovannarith'));
-        const updated = hasDrHeng
-          ? parsed.map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') }))
-          : [
-              ...parsed.map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') })),
-              INITIAL_MANAGED_USERS[1], // Dr. Heng Sovannarith
-            ];
+        const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim'];
+        let updated = parsed
+          .filter((u) => !olderDemoNames.includes(u.name))
+          .map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') }));
+
+        // Ensure Dr. Heng Sovannarith is present
+        if (!updated.some((u) => u.name.includes('Sovannarith') || u.email.includes('sovannarith'))) {
+          updated.unshift(INITIAL_MANAGED_USERS[0]);
+        }
+        // Ensure Thoeurn Ratha is present
+        if (!updated.some((u) => u.name.includes('Ratha') || u.email.includes('admin'))) {
+          updated.splice(1, 0, INITIAL_MANAGED_USERS[1]);
+        }
+        // Ensure Leang Vakhim is present
+        if (!updated.some((u) => u.name.includes('Vakhim') || u.email.includes('vakhim'))) {
+          updated.push(INITIAL_MANAGED_USERS[2]);
+        }
+
         setManagedUsers(updated);
+        try {
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+      } else {
+        setManagedUsers(INITIAL_MANAGED_USERS);
       }
     } catch {
       // ignore
@@ -468,7 +418,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUserRole = (userId: string, newRole: string) => {
     const roleDef = ROLE_DEFINITIONS[newRole] || {
       role: newRole,
-      badge: 'Operator',
+      badge: 'Lab Assistant' as RoleBadge,
       permissions: 'Standard Laboratory Access',
       description: 'Standard laboratory user',
     };
