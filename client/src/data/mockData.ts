@@ -4,6 +4,8 @@ import {
   MockRack,
   MockMaintenance,
   MockLocation,
+  MockLoan,
+  MockTransfer,
 } from '@/types';
 
 export type {
@@ -12,6 +14,8 @@ export type {
   MockRack,
   MockMaintenance,
   MockLocation,
+  MockLoan,
+  MockTransfer,
 };
 
 export const mockStock: MockItem[] = [
@@ -205,6 +209,9 @@ export const mockAssets: MockAsset[] = [
     unitType: 'Router',
     location: 'Computer Lab Rm 102B (Wall Cabinet CAB-102B)',
     status: 'in_use',
+    loanStatus: 'on_loan',
+    currentBorrower: 'Sokha Chan (Student)',
+    loanDueDate: '2026-11-05',
     nextCalibration: '2026-11-20',
     imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
     description: 'Lab gateway router providing NAT, DHCP pools, OSPF routing topologies, and student VPN isolation from main campus network.',
@@ -218,9 +225,24 @@ export const mockAssets: MockAsset[] = [
     unitType: 'Switch',
     location: 'Network & Systems Lab Rm 206 (Rack RCK-206-01)',
     status: 'operational',
+    loanStatus: 'available',
     nextCalibration: '2027-04-10',
     imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     description: 'Managed 24-port Gigabit Ethernet switch serving workstations and student patch bays in Lab 206.',
+  },
+  {
+    id: 'A7',
+    name: 'Dell Precision 3660 GPU Workstation (Lab 201)',
+    serialNumber: 'PREC-201-AI-01',
+    model: 'Core i9 / RTX 4080 / 64GB RAM / 2TB NVMe',
+    totalUnits: 12,
+    unitType: 'Workstations',
+    location: 'Software Engineering & AI Lab Rm 201',
+    status: 'operational',
+    loanStatus: 'available',
+    nextCalibration: '2027-08-15',
+    imageUrl: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=600&q=80',
+    description: 'High-performance AI/ML and software engineering workstations configured with PyTorch, CUDA, and Docker.',
   },
 ];
 
@@ -315,15 +337,104 @@ export const mockLocations: MockLocation[] = [
     name: 'Computer & Network Lab 102B',
     building: 'Engineering Block A',
     room: 'Rm 102B',
-    totalAssets: 28, // 24 Desktops + 1 Projector + 2 Air Conditioners + 1 Switch
-    totalItems: 77, // cables, power strips, remotes, peripherals
+    totalAssets: 5,
+    totalItems: 7,
   },
   {
     id: 'L2',
     name: 'Network & Server Lab 206',
     building: 'Engineering Block A',
     room: 'Rm 206',
-    totalAssets: 24,
-    totalItems: 65,
+    totalAssets: 1,
+    totalItems: 2,
+  },
+  {
+    id: 'L3',
+    name: 'Software Engineering & AI Lab 201',
+    building: 'Engineering Block A',
+    room: 'Rm 201',
+    totalAssets: 1,
+    totalItems: 0,
+  },
+  {
+    id: 'L4',
+    name: 'Electronics & Embedded IoT Lab 203',
+    building: 'Engineering Block A',
+    room: 'Rm 203',
+    totalAssets: 0,
+    totalItems: 0,
+  },
+  {
+    id: 'L5',
+    name: 'Cybersecurity & Cloud Lab 305',
+    building: 'Engineering Block B',
+    room: 'Rm 305',
+    totalAssets: 0,
+    totalItems: 0,
+  },
+  {
+    id: 'L6',
+    name: 'Hardware Staging & Maintenance Depot',
+    building: 'Basement Facility',
+    room: 'Rm 102',
+    totalAssets: 0,
+    totalItems: 0,
+  },
+];
+
+export const mockLoans: MockLoan[] = [
+  {
+    id: 'LN-1001',
+    assetId: 'A5',
+    assetName: 'Cisco ISR 4331 Enterprise Lab Gateway Router',
+    serialNumber: 'FOC21342X89',
+    borrowerName: 'Sokha Chan',
+    borrowerRole: 'Student',
+    borrowerContact: 'sokha.chan@student.edu (Tel: 012 345 678)',
+    courseOrClass: 'Advanced Network Routing Capstone (Class CS-Y4)',
+    borrowDate: '2026-10-26',
+    expectedReturnDate: '2026-11-05',
+    status: 'active',
+    notes: 'Checked out for weekend branch-office VPN and OSPF routing topology simulation project.',
+  },
+  {
+    id: 'LN-1002',
+    assetId: 'A2',
+    assetName: 'Epson PowerLite 4K Laser Ceiling Projector',
+    serialNumber: 'EPS-L630U-8812',
+    borrowerName: 'Dr. Heng Sovannarith',
+    borrowerRole: 'Lecturer',
+    borrowerContact: 'sovannarith@lab.edu',
+    courseOrClass: 'Departmental Research Symposium (Rm 201)',
+    borrowDate: '2026-10-20',
+    expectedReturnDate: '2026-10-21',
+    actualReturnDate: '2026-10-21',
+    status: 'returned',
+    notes: 'Used for annual engineering symposium keynote and returned in pristine condition.',
+  },
+];
+
+export const mockTransfers: MockTransfer[] = [
+  {
+    id: 'TR-501',
+    assetId: 'A5',
+    assetName: 'Cisco ISR 4331 Enterprise Lab Gateway Router',
+    serialNumber: 'FOC21342X89',
+    fromLocation: 'Hardware Staging & Maintenance Depot (Rm 102)',
+    toLocation: 'Computer Lab Rm 102B (Wall Cabinet CAB-102B)',
+    transferDate: '2026-10-22',
+    transferredBy: 'Thoeurn Ratha',
+    reason: 'Permanent deployment to Room 102B to support student CCNA practicals.',
+  },
+  {
+    id: 'TR-502',
+    assetId: 'A6',
+    assetName: 'Cisco Catalyst 2960-X 24-Port Switch (Lab 206)',
+    serialNumber: 'FCW2069L24X',
+    fromLocation: 'Computer & Network Lab 102B (Rm 102B)',
+    toLocation: 'Network & Systems Lab Rm 206 (Rack RCK-206-01)',
+    transferDate: '2026-10-24',
+    transferredBy: 'Thoeurn Ratha',
+    reason: 'Relocated switch to Lab 206 for new semester server rack lab sessions.',
   },
 ];

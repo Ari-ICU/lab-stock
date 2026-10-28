@@ -10,12 +10,6 @@ import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Image as ImageIcon, Plus } from 'lucide-react';
 
-const labOptions: DropdownOption[] = [
-  { label: 'All Laboratories', value: 'all' },
-  { label: 'Lab 102B (Rm 102B)', value: '102B' },
-  { label: 'Lab 206 (Rm 206)', value: '206' },
-];
-
 const statusOptions: DropdownOption[] = [
   { label: 'All Operational Statuses', value: 'all' },
   { label: 'Operational', value: 'operational' },
@@ -25,10 +19,18 @@ const statusOptions: DropdownOption[] = [
 
 export default function AssetsPage() {
   const router = useRouter();
-  const { assets, deleteAsset } = useStock();
+  const { assets, deleteAsset, locations } = useStock();
   const [filterText, setFilterText] = useState('');
   const [labFilter, setLabFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const labOptions: DropdownOption[] = [
+    { label: 'All Laboratories', value: 'all' },
+    ...locations.map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: loc.room,
+    })),
+  ];
 
   const filteredAssets = assets.filter((asset) => {
     const matchesQuery =
@@ -66,8 +68,8 @@ export default function AssetsPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
-        title="Lab 102B Hardware & Assets"
-        subtitle="24 Desktops • Epson Projector • Daikin ACs • Core Switch"
+        title="Faculty Lab Hardware & Assets"
+        subtitle="Workstations, Network Switches, Projectors & Infrastructure Across All Labs"
         actionLabel="Create Asset"
         onAction={() => router.push('/assets/create')}
         onExport={handleExport}
@@ -175,21 +177,31 @@ export default function AssetsPage() {
                       <td className="py-3 px-4 text-neutral-600 font-mono text-[11px]">{asset.model}</td>
                       <td className="py-3 px-4 text-neutral-600">{asset.location}</td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
-                            asset.status === 'operational'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                              asset.status === 'operational'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : asset.status === 'in_use'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}
+                          >
+                            {asset.status === 'operational'
+                              ? 'Operational'
                               : asset.status === 'in_use'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200'
-                          }`}
-                        >
-                          {asset.status === 'operational'
-                            ? 'Operational'
-                            : asset.status === 'in_use'
-                            ? 'In Production'
-                            : 'Maintenance'}
-                        </span>
+                              ? 'In Production'
+                              : 'Maintenance'}
+                          </span>
+                          {asset.loanStatus === 'on_loan' && (
+                            <span
+                              title={`Checked out to ${asset.currentBorrower || 'Borrower'}`}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300"
+                            >
+                              On Loan
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-right">
                         <RowActionMenu

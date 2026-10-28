@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Khmer OS Siemreap';
+  src: local('Khmer OS Siemreap'),
+       local('KhmerOS Siemreap'),
+       local('Khmer OS Siemreap Regular'),
+       url('/fonts/KhmerOS_siemreap.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Khmer OS Muol';
+  src: local('Khmer OS Muol'),
+       local('KhmerOS Muol'),
+       local('Khmer OS Muol Regular'),
+       url('/fonts/KhmerOS_muol.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #fbfbfb;
   --foreground: #111111;
@@ -8,8 +30,17 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-geist-sans), var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-khmer: var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", sans-serif;
+}
+
+.font-khmer {
+  font-family: var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", sans-serif !important;
+}
+
+.font-khmer-muol {
+  font-family: "Khmer OS Muol", "Khmer OS Siemreap", sans-serif !important;
 }
 
 * {

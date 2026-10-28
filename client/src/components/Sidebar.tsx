@@ -16,7 +16,8 @@ import {
   LogOut,
   Search,
   Barcode,
-  X
+  X,
+  ArrowLeftRight
 } from 'lucide-react';
 
 interface NavItem {
@@ -28,17 +29,30 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
-  { href: '/assets', label: 'Lab Hardware (PCs, ACs, Switch)', icon: Router, badge: '5' },
-  { href: '/stock', label: 'Inventory (Monitors, Mice, Cables)', icon: Cable, badge: '7' },
-  { href: '/maintenance', label: 'Service & Maintenance', icon: Wrench, badge: '3' },
+  { href: '/assets', label: 'Lab Hardware (PCs, ACs, Switch)', icon: Router },
+  { href: '/stock', label: 'Inventory (Monitors, Mice, Cables)', icon: Cable },
+  { href: '/loans', label: 'Device Loans & Relocations', icon: ArrowLeftRight },
+  { href: '/maintenance', label: 'Service & Maintenance', icon: Wrench },
   { href: '/locations', label: 'Lab Locations', icon: MapPin },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { openScanner, stock, isMobileSidebarOpen, closeMobileSidebar, showToast } = useStock();
+  const {
+    openScanner,
+    stock,
+    assets,
+    maintenance,
+    locations,
+    loans,
+    isMobileSidebarOpen,
+    closeMobileSidebar,
+    showToast,
+  } = useStock();
   const { user, logout } = useAuth();
+
+  const activeLoansCount = loans.filter((l) => l.status === 'active').length;
 
   return (
     <>
@@ -56,27 +70,33 @@ export function Sidebar() {
           isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header with Network Icon */}
-        <div className="h-16 border-b border-neutral-200 px-5 flex items-center justify-between">
+        {/* Brand Header with University Seal Logo */}
+        <div className="h-16 border-b border-neutral-200 px-4 flex items-center justify-between">
           <Link
             href="/"
             onClick={closeMobileSidebar}
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 min-w-0"
           >
-            <div className="w-9 h-9 bg-neutral-900 text-white rounded flex items-center justify-center font-bold">
-              <Network className="w-5 h-5 text-emerald-400" />
+            <div className="w-10 h-10 rounded-md bg-neutral-50 border border-neutral-200 flex items-center justify-center p-1 shrink-0">
+              <img
+                src="/logo.png"
+                alt="RUPP University Seal"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div>
-              <div className="font-semibold text-sm tracking-tight text-neutral-900 leading-none">
-                Lab 102B
+            <div className="min-w-0">
+              <div className="font-bold text-sm tracking-tight text-neutral-900 leading-none truncate font-khmer">
+                RUPP LabStock
               </div>
-              <span className="text-[11px] text-neutral-500 font-medium">Room 102B Inventory</span>
+              <span className="text-[11px] text-neutral-500 font-medium truncate block">
+                Faculty Laboratories
+              </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
-              102B
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
+              ALL LABS
             </span>
             {/* Mobile close button */}
             <button
@@ -127,7 +147,18 @@ export function Sidebar() {
                 ? pathname === '/'
                 : pathname.startsWith(item.href);
 
-            const badgeDisplay = item.href === '/stock' ? stock.length : item.badge;
+            const badgeDisplay =
+              item.href === '/assets'
+                ? assets.length
+                : item.href === '/stock'
+                ? stock.length
+                : item.href === '/loans'
+                ? (activeLoansCount > 0 ? activeLoansCount : undefined)
+                : item.href === '/maintenance'
+                ? maintenance.length
+                : item.href === '/locations'
+                ? locations.length
+                : item.badge;
 
             return (
               <Link
@@ -164,14 +195,16 @@ export function Sidebar() {
         <div className="p-3 border-t border-neutral-100">
           <div className="bg-neutral-50 border border-neutral-200 rounded p-2.5">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold text-neutral-700">Lab Status</span>
+              <span className="text-[11px] font-semibold text-neutral-700">Faculty Lab Fleet</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             </div>
-            <p className="text-[11px] text-neutral-700 font-medium">Computer Lab 102B</p>
-            <div className="mt-1 text-[10px] text-neutral-500">24 Desktops • Projector • 2 ACs</div>
+            <p className="text-[11px] text-neutral-800 font-semibold">{locations.length} Connected Labs</p>
+            <div className="mt-1 text-[10px] text-neutral-500">
+              {assets.length} Hardware Assets • {stock.length} Peripheral Items
+            </div>
             <div className="mt-2 text-[10px] text-neutral-400 flex items-center justify-between">
-              <span>Gateway 192.168.102.1</span>
-              <span className="text-emerald-700 font-medium">Online</span>
+              <span>Campus Backbone</span>
+              <span className="text-emerald-700 font-medium">All Online</span>
             </div>
           </div>
         </div>

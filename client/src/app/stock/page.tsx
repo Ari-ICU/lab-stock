@@ -8,22 +8,10 @@ import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Image as ImageIcon } from 'lucide-react';
 
-const labOptions: DropdownOption[] = [
-  { label: 'All Laboratories', value: 'all' },
-  { label: 'Lab 102B (Rm 102B)', value: '102B' },
-  { label: 'Lab 206 (Rm 206)', value: '206' },
-];
-
-const statusOptions: DropdownOption[] = [
-  { label: 'All Statuses', value: 'all' },
-  { label: 'In Stock', value: 'in_stock' },
-  { label: 'Low Stock', value: 'low_stock' },
-  { label: 'Out of Stock', value: 'out_of_stock' },
-];
-
 export default function StockPage() {
   const {
     stock,
+    locations,
     openModal,
     updateStockQuantity,
     deleteStockItem,
@@ -33,6 +21,21 @@ export default function StockPage() {
   const [filterText, setFilterText] = useState('');
   const [selectedLab, setSelectedLab] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
+  const labOptions: DropdownOption[] = [
+    { label: 'All Laboratories', value: 'all' },
+    ...locations.map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: loc.room,
+    })),
+  ];
+
+  const statusOptions: DropdownOption[] = [
+    { label: 'All Statuses', value: 'all' },
+    { label: 'In Stock', value: 'in_stock' },
+    { label: 'Low Stock', value: 'low_stock' },
+    { label: 'Out of Stock', value: 'out_of_stock' },
+  ];
 
   const filteredStock = stock.filter((item) => {
     const matchesQuery =
@@ -71,7 +74,7 @@ export default function StockPage() {
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
         title="Laboratory Inventory & Peripherals"
-        subtitle="Lab 102B & Lab 206 • Peripherals, Cables & Equipment"
+        subtitle="Multi-Lab Consumables, Cables & Equipment Stock"
         actionLabel="Add Inventory Item"
         onAction={() => openModal('add_stock')}
         onExport={handleExport}

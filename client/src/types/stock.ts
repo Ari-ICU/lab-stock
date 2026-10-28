@@ -13,6 +13,34 @@ export interface MockItem {
   description?: string;
 }
 
+export interface MockLoan {
+  id: string;
+  assetId: string;
+  assetName: string;
+  serialNumber: string;
+  borrowerName: string;
+  borrowerRole: 'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician';
+  borrowerContact: string; // email or phone or student ID
+  courseOrClass?: string;
+  borrowDate: string; // YYYY-MM-DD
+  expectedReturnDate: string; // YYYY-MM-DD
+  actualReturnDate?: string;
+  status: 'active' | 'returned' | 'overdue';
+  notes?: string;
+}
+
+export interface MockTransfer {
+  id: string;
+  assetId: string;
+  assetName: string;
+  serialNumber: string;
+  fromLocation: string;
+  toLocation: string;
+  transferDate: string;
+  transferredBy: string;
+  reason?: string;
+}
+
 export interface MockAsset {
   id: string;
   name: string;
@@ -22,6 +50,9 @@ export interface MockAsset {
   unitType?: string;
   location: string;
   status: 'operational' | 'in_use' | 'maintenance';
+  loanStatus?: 'available' | 'on_loan';
+  currentBorrower?: string;
+  loanDueDate?: string;
   nextCalibration: string; // firmware audit / cert date
   imageUrl?: string;
   description?: string;
@@ -63,7 +94,9 @@ export type AnyEntity =
   | MockAsset
   | MockRack
   | MockMaintenance
-  | MockLocation;
+  | MockLocation
+  | MockLoan
+  | MockTransfer;
 
 export type ModalType =
   | 'none'
@@ -71,5 +104,6 @@ export type ModalType =
   | 'add_asset'
   | 'add_rack'
   | 'add_maintenance'
-  | 'add_location';
-
+  | 'add_location'
+  | 'lend_asset'
+  | 'transfer_asset';

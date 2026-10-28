@@ -13,29 +13,41 @@ export default function LocationsPage() {
 
   const filtered = locations
     .map((loc) => {
+      const roomKey = loc.room.replace(/^Rm\s*/i, '').trim().toLowerCase();
+
       // Calculate total stock items assigned to this room
-      const matchingStock = stock.filter(
-        (s) =>
-          s.location.toLowerCase().includes(loc.room.toLowerCase()) ||
-          s.location.toLowerCase().includes(loc.name.toLowerCase())
-      );
-      const calculatedStock = matchingStock.reduce((acc, s) => acc + (s.quantity || 1), 0);
+      const matchingStock = stock.filter((s) => {
+        const l = s.location.toLowerCase();
+        return (
+          l.includes(roomKey) ||
+          l.includes(loc.room.toLowerCase()) ||
+          l.includes(loc.name.toLowerCase())
+        );
+      });
+      const stockItemsCount = matchingStock.length > 0 ? matchingStock.length : loc.totalItems;
+      const totalStockUnits = matchingStock.reduce((acc, s) => acc + (s.quantity || 1), 0);
 
       // Calculate total hardware units assigned to this room
-      const matchingAssets = assets.filter(
-        (a) =>
-          a.location.toLowerCase().includes(loc.room.toLowerCase()) ||
-          a.location.toLowerCase().includes(loc.name.toLowerCase())
-      );
-      const calculatedHardware = matchingAssets.reduce(
+      const matchingAssets = assets.filter((a) => {
+        const l = a.location.toLowerCase();
+        return (
+          l.includes(roomKey) ||
+          l.includes(loc.room.toLowerCase()) ||
+          l.includes(loc.name.toLowerCase())
+        );
+      });
+      const hardwareAssetsCount = matchingAssets.length > 0 ? matchingAssets.length : loc.totalAssets;
+      const totalHardwareUnits = matchingAssets.reduce(
         (acc, a) => acc + (a.totalUnits ?? 1),
         0
       );
 
       return {
         ...loc,
-        displayStock: calculatedStock > 0 ? calculatedStock : loc.totalItems,
-        displayHardware: calculatedHardware > 0 ? calculatedHardware : loc.totalAssets,
+        stockItemsCount,
+        totalStockUnits: totalStockUnits > 0 ? totalStockUnits : loc.totalItems,
+        hardwareAssetsCount,
+        totalHardwareUnits: totalHardwareUnits > 0 ? totalHardwareUnits : loc.totalAssets,
       };
     })
     .filter(
@@ -52,8 +64,10 @@ export default function LocationsPage() {
         'Facility Name': l.name,
         Building: l.building,
         'Room Number': l.room,
-        'Associated Items': l.displayStock,
-        'Hardware Units': l.displayHardware,
+        'Inventory Item Types': l.stockItemsCount,
+        'Total Inventory Units': l.totalStockUnits,
+        'Hardware Models': l.hardwareAssetsCount,
+        'Total Hardware Units': l.totalHardwareUnits,
       }))
     );
   };
@@ -62,7 +76,7 @@ export default function LocationsPage() {
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
         title="Laboratory Locations"
-        subtitle="Lab 102B & Lab 206 • Engineering Block A"
+        subtitle={`${locations.length} Connected Laboratories • Engineering & Science Classrooms`}
         actionLabel="Add Location"
         onAction={() => openModal('add_location')}
         onExport={handleExport}
@@ -117,18 +131,28 @@ export default function LocationsPage() {
 
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-100">
                 <div className="bg-neutral-50 border border-neutral-100 rounded p-2.5 flex items-center gap-2.5">
-                  <Boxes className="w-4 h-4 text-neutral-400" />
-                  <div>
+                  <Boxes className="w-4 h-4 text-neutral-400 shrink-0" />
+                  <div className="min-w-0">
                     <div className="text-[11px] text-neutral-500">Inventory Items</div>
-                    <div className="text-xs font-bold text-neutral-900">{loc.displayStock} items</div>
+                    <div className="text-xs font-bold text-neutral-900 truncate">
+                      {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
+                      <span className="text-[10px] text-neutral-500 font-normal ml-1">
+                        ({loc.totalStockUnits} units)
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="bg-neutral-50 border border-neutral-100 rounded p-2.5 flex items-center gap-2.5">
-                  <Microscope className="w-4 h-4 text-neutral-400" />
-                  <div>
+                  <Microscope className="w-4 h-4 text-neutral-400 shrink-0" />
+                  <div className="min-w-0">
                     <div className="text-[11px] text-neutral-500">Lab Hardware</div>
-                    <div className="text-xs font-bold text-neutral-900">{loc.displayHardware} units</div>
+                    <div className="text-xs font-bold text-neutral-900 truncate">
+                      {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
+                      <span className="text-[10px] text-neutral-500 font-normal ml-1">
+                        ({loc.totalHardwareUnits} units)
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

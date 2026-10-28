@@ -7,11 +7,15 @@ import {
   mockRacks as initialRacks,
   mockMaintenance as initialMaintenance,
   mockLocations as initialLocations,
+  mockLoans as initialLoans,
+  mockTransfers as initialTransfers,
   MockItem,
   MockAsset,
   MockRack,
   MockMaintenance,
   MockLocation,
+  MockLoan,
+  MockTransfer,
 } from '@/data/mockData';
 import {
   ModalType,
@@ -33,6 +37,8 @@ interface StockContextType {
   racks: MockRack[];
   maintenance: MockMaintenance[];
   locations: MockLocation[];
+  loans: MockLoan[];
+  transfers: MockTransfer[];
   addStockItem: (item: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }) => MockItem;
   updateStockQuantity: (id: string, delta: number) => void;
   updateStockItem: (item: MockItem) => void;
@@ -40,6 +46,9 @@ interface StockContextType {
   addAsset: (asset: Omit<MockAsset, 'id'> & { id?: string }) => MockAsset;
   updateAsset: (asset: MockAsset) => void;
   deleteAsset: (id: string) => void;
+  lendAsset: (data: Omit<MockLoan, 'id' | 'status'> & { id?: string }) => MockLoan;
+  returnAsset: (loanId: string, notes?: string) => void;
+  transferAsset: (assetId: string, toLocation: string, reason?: string, transferredBy?: string) => MockTransfer;
   addRack: (rack: Omit<MockRack, 'id'> & { id?: string }) => void;
   updateRack: (rack: MockRack) => void;
   deleteRack: (id: string) => void;
@@ -80,6 +89,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const [racks, setRacks] = useState<MockRack[]>(initialRacks);
   const [maintenance, setMaintenance] = useState<MockMaintenance[]>(initialMaintenance);
   const [locations, setLocations] = useState<MockLocation[]>(initialLocations);
+  const [loans, setLoans] = useState<MockLoan[]>(initialLoans);
+  const [transfers, setTransfers] = useState<MockTransfer[]>(initialTransfers);
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>('none');
@@ -241,6 +252,101 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     showToast(`Deleted asset ${target?.name || ''}`);
   };
 
+  const lendAsset = (data: Omit<MockLoan, 'id' | 'status'> & { id?: string }): MockLoan => {
+    const newLoan: MockLoan = {
+      id: data.id || `LN-${Date.now().toString().slice(-4)}`,
+      status: 'active',
+      ...data,
+    };
+    setLoans((prev) => [newLoan, ...prev]);
+
+    // Update asset loan status
+    setAssets((prev) =>
+      prev.map((a) =>
+        a.id === data.assetId
+          ? {
+              ...a,
+              loanStatus: 'on_loan',
+              currentBorrower: data.borrowerName,
+              loanDueDate: data.expectedReturnDate,
+            }
+          : a
+      )
+    );
+
+    showToast(`Checked out ${data.assetName} to ${data.borrowerName}`);
+    return newLoan;
+  };
+
+  const returnAsset = (loanId: string, notes?: string) => {
+    const targetLoan = loans.find((l) => l.id === loanId);
+    if (!targetLoan) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    setLoans((prev) =>
+      prev.map((l) =>
+        l.id === loanId
+          ? {
+              ...l,
+              status: 'returned',
+              actualReturnDate: today,
+              notes: notes ? (l.notes ? `${l.notes} | ${notes}` : notes) : l.notes,
+            }
+          : l
+      )
+    );
+
+    // Update asset loan status back to available
+    setAssets((prev) =>
+      prev.map((a) =>
+        a.id === targetLoan.assetId
+          ? {
+              ...a,
+              loanStatus: 'available',
+              currentBorrower: undefined,
+              loanDueDate: undefined,
+            }
+          : a
+      )
+    );
+
+    showToast(`Device ${targetLoan.assetName} returned to lab stock`);
+  };
+
+  const transferAsset = (
+    assetId: string,
+    toLocation: string,
+    reason?: string,
+    transferredBy?: string
+  ): MockTransfer => {
+    const asset = assets.find((a) => a.id === assetId);
+    const fromLoc = asset?.location || 'Unknown';
+
+    const newTransfer: MockTransfer = {
+      id: `TR-${Date.now().toString().slice(-4)}`,
+      assetId,
+      assetName: asset?.name || 'Lab Asset',
+      serialNumber: asset?.serialNumber || 'N/A',
+      fromLocation: fromLoc,
+      toLocation,
+      transferDate: new Date().toISOString().split('T')[0],
+      transferredBy: transferredBy || 'Thoeurn Ratha',
+      reason: reason || 'Location relocation between faculty labs',
+    };
+
+    setTransfers((prev) => [newTransfer, ...prev]);
+
+    // Update asset location
+    if (asset) {
+      setAssets((prev) =>
+        prev.map((a) => (a.id === assetId ? { ...a, location: toLocation } : a))
+      );
+    }
+
+    showToast(`Moved ${asset?.name || 'Device'} to ${toLocation}`);
+    return newTransfer;
+  };
+
   const addRack = (rackData: Omit<MockRack, 'id'> & { id?: string }) => {
     const newRack: MockRack = {
       id: rackData.id || `R${Date.now()}`,
@@ -308,6 +414,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         racks,
         maintenance,
         locations,
+        loans,
+        transfers,
         addStockItem,
         updateStockItem,
         updateStockQuantity,
@@ -315,6 +423,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         addAsset,
         updateAsset,
         deleteAsset,
+        lendAsset,
+        returnAsset,
+        transferAsset,
         addRack,
         updateRack,
         deleteRack,
