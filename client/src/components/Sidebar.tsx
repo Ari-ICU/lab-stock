@@ -9,6 +9,7 @@ import { getAssetPath } from '@/lib/basePath';
 import {
   Network,
   LayoutDashboard,
+  Package,
   Cable,
   Router,
   Wrench,
@@ -30,10 +31,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
-  { href: '/assets', label: 'Lab Hardware (PCs, ACs, Switch)', icon: Router },
-  { href: '/stock', label: 'Inventory (Monitors, Mice, Cables)', icon: Cable },
-  { href: '/loans', label: 'Device Loans & Relocations', icon: ArrowLeftRight },
-  { href: '/maintenance', label: 'Service & Maintenance', icon: Wrench },
+  { href: '/assets', label: 'Hardware Assets', icon: Router },
+  { href: '/stock', label: 'Inventory', icon: Package },
+  { href: '/loans', label: 'Device Loans', icon: ArrowLeftRight },
+  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
   { href: '/locations', label: 'Lab Locations', icon: MapPin },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -189,9 +190,9 @@ export function Sidebar() {
                     : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-neutral-400'}`} />
-                  <span>{item.label}</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-400' : 'text-neutral-400'}`} />
+                  <span className="truncate whitespace-nowrap">{item.label}</span>
                 </div>
                 {badgeDisplay !== undefined && (
                   <span

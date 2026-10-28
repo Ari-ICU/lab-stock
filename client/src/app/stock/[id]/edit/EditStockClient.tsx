@@ -30,21 +30,26 @@ const statusOptions = [
 ];
 
 const categoryOptions = [
+  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
+  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
+  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
   { label: 'Monitors & Displays', value: 'Monitors' },
-  { label: 'Mice & Keyboards', value: 'Mice & Keyboards' },
+  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
   { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate', value: 'Power & Climate' },
+  { label: 'Power & Climate Spares', value: 'Power & Climate' },
   { label: 'Network Spares & Transceivers', value: 'Network Spares' },
-  { label: 'Tools & Lab Consumables', value: 'Tools & Consumables' },
 ];
 
 const unitOptions = [
   { label: 'Units', value: 'Units' },
   { label: 'Pieces', value: 'Pieces' },
+  { label: 'Reams (Paper)', value: 'Reams' },
+  { label: 'Cartridges (Toner/Ink)', value: 'Cartridges' },
+  { label: 'Bottles (Ink Refill)', value: 'Bottles' },
+  { label: 'Sets / Kits (Tools)', value: 'Sets' },
+  { label: 'Boxes / Packs', value: 'Boxes' },
   { label: 'Cables', value: 'Cables' },
-  { label: 'Kits', value: 'Kits' },
   { label: 'Rolls', value: 'Rolls' },
-  { label: 'Boxes', value: 'Boxes' },
 ];
 
 export default function EditStockClient({ id: propId }: { id?: string }) {

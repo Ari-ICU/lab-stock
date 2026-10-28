@@ -9,11 +9,14 @@ import { DatePicker } from '@/components/DatePicker';
 import { ScanCodeModal } from '@/components/ScanCodeModal';
 
 const stockCategoryOptions = [
-  { label: 'Monitors', value: 'Monitors' },
-  { label: 'Mice & Keyboards', value: 'Mice & Keyboards' },
+  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
+  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
+  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
+  { label: 'Monitors & Displays', value: 'Monitors' },
+  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
   { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate', value: 'Power & Climate' },
-  { label: 'Tools & Accessories', value: 'Tools & Accessories' },
+  { label: 'Power & Climate Spares', value: 'Power & Climate' },
+  { label: 'Network Spares & Transceivers', value: 'Network Spares' },
 ];
 
 const stockStatusOptions = [
@@ -228,7 +231,7 @@ export function AddEntityModal() {
               <Plus className="w-4 h-4 text-emerald-400" />
             </div>
             <h2 className="text-xs font-bold text-neutral-900">
-              {activeModal === 'add_stock' && 'Add Network Stock Item'}
+              {activeModal === 'add_stock' && 'Add Inventory Item'}
               {activeModal === 'add_asset' && 'Register Network Device'}
               {activeModal === 'add_rack' && 'Add Server Rack'}
               {activeModal === 'add_maintenance' && 'Schedule Maintenance'}

@@ -31,47 +31,88 @@ const statusOptions = [
 ];
 
 const categoryOptions = [
+  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
+  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
+  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
   { label: 'Monitors & Displays', value: 'Monitors' },
-  { label: 'Mice & Keyboards', value: 'Mice & Keyboards' },
+  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
   { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate', value: 'Power & Climate' },
+  { label: 'Power & Climate Spares', value: 'Power & Climate' },
   { label: 'Network Spares & Transceivers', value: 'Network Spares' },
-  { label: 'Tools & Lab Consumables', value: 'Tools & Consumables' },
 ];
 
 const unitOptions = [
   { label: 'Units', value: 'Units' },
   { label: 'Pieces', value: 'Pieces' },
+  { label: 'Reams (Paper)', value: 'Reams' },
+  { label: 'Cartridges (Toner/Ink)', value: 'Cartridges' },
+  { label: 'Bottles (Ink Refill)', value: 'Bottles' },
+  { label: 'Sets / Kits (Tools)', value: 'Sets' },
+  { label: 'Boxes / Packs', value: 'Boxes' },
   { label: 'Cables', value: 'Cables' },
-  { label: 'Kits', value: 'Kits' },
   { label: 'Rolls', value: 'Rolls' },
-  { label: 'Boxes', value: 'Boxes' },
 ];
 
 const PRESETS = [
   {
-    name: 'Dell 24" FHD IPS Monitors (Student Benches 1-24)',
-    code: 'MON-102B-P2419H',
-    category: 'Monitors',
-    quantity: 24,
-    unit: 'Units',
+    name: 'Double A A4 80gsm Multipurpose Copy Paper (Box of 5 Reams)',
+    code: 'PAP-A4-80GSM-DBLA',
+    category: 'Office Stationery',
+    quantity: 10,
+    unit: 'Boxes',
     location: 'Computer Lab Rm 102B',
-    rack: 'Student Benches 1-24',
-    expiryDate: 'Warranty 2027',
-    imageUrl: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
-    description: '24-inch Full HD 1080p IPS Dell display monitors connected to the 24 student desktop towers via DisplayPort.',
+    rack: 'Faculty Supply Cabinet CAB-01',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=600&q=80',
+    description: 'High-grade 80 GSM smooth white A4 copier paper (500 sheets/ream, 5 reams/box) for student exam sheets and lab syllabus printing.',
   },
   {
-    name: 'Dell Optical USB Mice (Lab In-Use + Spares)',
-    code: 'MS-102B-MS116',
-    category: 'Mice & Keyboards',
-    quantity: 28,
-    unit: 'Pieces',
+    name: 'HP LaserJet 05A (CE505A) High-Yield Black Toner Cartridges',
+    code: 'TNR-HP-05A-BLK',
+    category: 'Printer Ink & Toner',
+    quantity: 4,
+    unit: 'Cartridges',
     location: 'Computer Lab Rm 102B',
-    rack: 'Benches & Shelf SHF-01',
+    rack: 'Supply Cabinet CAB-02',
+    expiryDate: 'Mfg 2026',
+    imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
+    description: 'Original HP LaserJet monochrome toner cartridges for faculty lab report printer (HP LaserJet P2055dn).',
+  },
+  {
+    name: 'Canon GI-790 Genuine Ink Bottle 4-Pack (BK/C/M/Y)',
+    code: 'INK-CANON-GI790',
+    category: 'Printer Ink & Toner',
+    quantity: 2,
+    unit: 'Sets',
+    location: 'Computer Lab Rm 102B',
+    rack: 'Supply Cabinet CAB-02',
+    expiryDate: 'Exp 2028',
+    imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
+    description: 'Genuine high-yield ink bottles for continuous tank printer; pigment black (135ml) and dye color bottles (70ml each).',
+  },
+  {
+    name: 'iFixit Pro Tech Electronics & Computer Repair Tool Kit',
+    code: 'TOOL-IFIX-PRO',
+    category: 'Tools & Equipment',
+    quantity: 3,
+    unit: 'Kits',
+    location: 'Hardware Staging & Maintenance Depot Rm 102',
+    rack: 'Technician Workbench',
     expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80',
-    description: 'Standard Dell wired USB optical scroll mice (24 deployed on desks + 4 spare in shelf).',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    description: 'Precision 64-bit screwdriver set with anti-static wrist strap, spudgers, suction handle, and reverse tweezers for PC/laptop disassembly.',
+  },
+  {
+    name: 'Klein Tools Ratcheting Modular RJ45 Crimper Toolkits',
+    code: 'TOOL-102-CRIMP',
+    category: 'Tools & Equipment',
+    quantity: 4,
+    unit: 'Kits',
+    location: 'Hardware Staging & Maintenance Depot Rm 102',
+    rack: 'Technician Workbench',
+    expiryDate: 'Active',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    description: 'Professional field toolkits with wire strippers, flush cutters, and pass-through RJ45 crimpers.',
   },
   {
     name: 'Cat6A UTP 2m RJ45 Blue Patch Cords',
@@ -84,30 +125,6 @@ const PRESETS = [
     expiryDate: 'Active',
     imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     description: 'High-speed 10Gbps factory-crimped Cat6A patch cords connecting student bench RJ45 jacks to workstation NICs.',
-  },
-  {
-    name: '8-Outlet Bench Power Strips / Surge Protectors',
-    code: 'PMR-102B-PDU-8',
-    category: 'Power & Climate',
-    quantity: 6,
-    unit: 'Units',
-    location: 'Computer Lab Rm 102B',
-    rack: 'Under-Bench Cable Trays',
-    expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
-    description: 'Heavy duty grounded 8-way power distribution units mounted under student bench cable management channels.',
-  },
-  {
-    name: 'Cisco Console RJ45 to DB9 Rollover Cables',
-    code: 'CAB-206-CONS',
-    category: 'Cables & Accessories',
-    quantity: 12,
-    unit: 'Cables',
-    location: 'Network & Systems Lab Rm 206',
-    rack: 'Lab 206 Router Benches',
-    expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-    description: 'Serial console rollover cables for out-of-band management configuration of Cisco switches and routers.',
   },
 ];
 
@@ -132,14 +149,16 @@ function CreateStockForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
-  // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal)
+  // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
     const paramCode = searchParams.get('code');
     const paramName = searchParams.get('name');
     const paramCategory = searchParams.get('category');
+    const paramLocation = searchParams.get('location');
     if (paramCode) setCode(paramCode);
     if (paramName) setName(paramName);
     if (paramCategory) setCategory(paramCategory);
+    if (paramLocation) setLocation(paramLocation);
   }, [searchParams]);
 
   const locationOptions = locations.map((loc) => ({
@@ -210,10 +229,10 @@ function CreateStockForm() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title="Add Inventory & Stock Item"
-        subtitle="Multi-Lab Consumables, Cables & Equipment Stock"
+        title="Add Inventory Item"
+        subtitle="Stationery, Printer Ink, Hardware Tools, Consumables & Spares"
         backHref="/stock"
-        backLabel="Stock"
+        backLabel="Inventory"
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
@@ -299,14 +318,14 @@ function CreateStockForm() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
                       <span>Item / Equipment Name *</span>
-                      <span className="text-[11px] text-neutral-400 font-normal">e.g. Cat6A Patch Cord</span>
+                      <span className="text-[11px] text-neutral-400 font-normal">e.g. A4 Paper, HP Toner, RJ45 Crimper</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Cat6A UTP 2m RJ45 Blue Patch Cords"
+                      placeholder="e.g. Double A A4 80gsm Copy Paper"
                       className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
                   </div>

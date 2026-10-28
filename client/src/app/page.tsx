@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import {
+  Package,
   Cable,
   Router,
   AlertTriangle,
@@ -65,7 +66,7 @@ export default function DashboardPage() {
     }));
 
     const stockRows = stock.map((s) => ({
-      'Record Category': 'Inventory Peripheral',
+      'Record Category': 'Inventory Item',
       'Item / Equipment Name': s.name,
       'Model / SKU': s.code,
       'Serial / Identifier': s.code,
@@ -173,20 +174,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Metric 4: Inventory & Consumables */}
+          {/* Metric 4: Inventory & Supplies */}
           <div className="bg-white border border-neutral-200 rounded p-4 hover:border-neutral-300 transition-colors">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                Inventory & Spares
+                Inventory & Supplies
               </span>
-              <Cable className="w-4 h-4 text-neutral-600" />
+              <Package className="w-4 h-4 text-neutral-600" />
             </div>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
               {stock.length} <span className="text-sm font-normal text-neutral-500">SKUs</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-1 flex items-center justify-between">
               <span>{totalStockUnits} Total Stock Items</span>
-              <span className="text-emerald-700 font-semibold">Healthy</span>
+              <span className="text-emerald-700 font-semibold">Stationery & Tools</span>
             </div>
           </div>
         </section>
@@ -406,9 +407,9 @@ export default function DashboardPage() {
               <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
                 <div>
                   <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                    Consumables & Peripheral Stock
+                    Inventory, Stationery & Consumables
                   </h2>
-                  <p className="text-[11px] text-neutral-500">Monitors, keyboards, patch cables & climate kits</p>
+                  <p className="text-[11px] text-neutral-500">Office paper, printer ink, hardware tools, cables & peripherals</p>
                 </div>
                 <Link
                   href="/stock"

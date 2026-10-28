@@ -91,14 +91,16 @@ function CreateAssetForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
-  // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal)
+  // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
     const paramSerial = searchParams.get('serial');
     const paramModel = searchParams.get('model');
     const paramName = searchParams.get('name');
+    const paramLocation = searchParams.get('location');
     if (paramSerial) setSerialNumber(paramSerial);
     if (paramModel) setModel(paramModel);
     if (paramName) setName(paramName);
+    if (paramLocation) setLocation(paramLocation);
   }, [searchParams]);
 
   const locationOptions = locations.map((loc) => ({

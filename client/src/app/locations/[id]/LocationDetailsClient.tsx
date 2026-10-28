@@ -211,7 +211,9 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         title={loc.name}
         subtitle={`${loc.building} • ${loc.room} • Complete Lab Equipment & Inventory Specification`}
         actionLabel="Register Device"
-        onAction={() => openModal('add_asset')}
+        onAction={() =>
+          router.push(`/assets/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+        }
         onExport={handleExportRoomFleet}
       />
 
@@ -244,11 +246,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             </button>
             <button
               type="button"
-              onClick={() => openModal('add_stock')}
+              onClick={() =>
+                router.push(`/stock/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+              }
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-neutral-300 rounded hover:bg-neutral-50 text-neutral-800 transition-colors shadow-2xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-blue-600" />
-              <span>Add Stock Item</span>
+              <span>Add Inventory Item</span>
             </button>
             <button
               type="button"
@@ -420,7 +424,9 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <p>No hardware devices matching current query in this room.</p>
                 <button
                   type="button"
-                  onClick={() => openModal('add_asset')}
+                  onClick={() =>
+                    router.push(`/assets/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+                  }
                   className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -530,11 +536,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <p>No inventory peripherals matching current query in this room.</p>
                 <button
                   type="button"
-                  onClick={() => openModal('add_stock')}
+                  onClick={() =>
+                    router.push(`/stock/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+                  }
                   className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add stock items to {loc.room}
+                  Add inventory items to {loc.room}
                 </button>
               </div>
             ) : (

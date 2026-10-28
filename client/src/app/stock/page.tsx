@@ -74,9 +74,9 @@ export default function StockPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
-        title="Laboratory Inventory & Peripherals"
-        subtitle="Multi-Lab Consumables, Cables & Equipment Stock"
-        actionLabel="Add Stock Item"
+        title="Laboratory Inventory"
+        subtitle="Stationery, Printer Ink, Hardware Tools, Consumables & Peripherals"
+        actionLabel="Add Inventory Item"
         onAction={() => router.push('/stock/create')}
         onExport={handleExport}
       />
@@ -88,7 +88,7 @@ export default function StockPage() {
             <div className="flex items-center gap-2.5 flex-wrap flex-1">
               <input
                 type="text"
-                placeholder="Search cables, transceivers, racks..."
+                placeholder="Search paper, printer ink, tools, cables, peripherals..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
                 className="w-full sm:w-64 bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium"
