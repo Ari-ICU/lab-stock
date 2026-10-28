@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
 import { QRScannerModal } from '@/components/QRScannerModal';
+import { GlobalSearchModal } from '@/components/GlobalSearchModal';
 import { AddEntityModal } from '@/components/AddEntityModal';
 import { ItemDetailsModal } from '@/components/ItemDetailsModal';
 import { EditEntityModal } from '@/components/EditEntityModal';
@@ -31,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <QRScannerModal />
+      <GlobalSearchModal />
       <AddEntityModal />
       <ItemDetailsModal />
       <EditEntityModal />

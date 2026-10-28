@@ -45,6 +45,7 @@ export function AddEntityModal() {
   const {
     activeModal,
     closeModal,
+    prefillData,
     addStockItem,
     addAsset,
     addRack,
@@ -82,6 +83,15 @@ export function AddEntityModal() {
   const [assetStatus, setAssetStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [assetImageUrl, setAssetImageUrl] = useState('');
   const [assetDescription, setAssetDescription] = useState('');
+
+  // Sync prefillData when opening with barcode/serial prefilled
+  React.useEffect(() => {
+    if (prefillData) {
+      if (prefillData.serial) setAssetSerial(prefillData.serial);
+      if (prefillData.model) setAssetModel(prefillData.model);
+      if (prefillData.code) setStockCode(prefillData.code);
+    }
+  }, [prefillData]);
 
   // Rack Form State
   const [rackName, setRackName] = useState('');

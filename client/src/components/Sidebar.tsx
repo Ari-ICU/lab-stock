@@ -42,6 +42,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const {
     openScanner,
+    openSearch,
     stock,
     assets,
     maintenance,
@@ -133,16 +134,23 @@ export function Sidebar() {
           </button>
         </div>
 
-        {/* Quick Search */}
+        {/* Global Fleet Quick Search (Cmd+K) */}
         <div className="px-3 py-2 border-b border-neutral-100">
-          <div className="relative">
-            <Search className="w-4 h-4 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search IP, MAC, switch..."
-              className="w-full bg-white text-xs text-neutral-900 placeholder:text-neutral-400 pl-8 pr-3 py-1.5 border border-neutral-300 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              openSearch();
+              closeMobileSidebar();
+            }}
+            className="w-full bg-white hover:bg-neutral-50 active:bg-neutral-100 text-xs text-neutral-400 pl-8 pr-2 py-1.5 border border-neutral-300 hover:border-neutral-400 rounded focus:outline-none focus:border-neutral-900 transition-all flex items-center justify-between cursor-pointer relative group text-left shadow-2xs"
+            title="Global search across devices, serials, IPs, and rooms (⌘K)"
+          >
+            <Search className="w-4 h-4 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 group-hover:text-neutral-700 transition-colors" />
+            <span className="truncate group-hover:text-neutral-600 transition-colors">Search IP, MAC, switch...</span>
+            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-neutral-400 bg-neutral-100 border border-neutral-200 rounded shrink-0">
+              ⌘K
+            </kbd>
+          </button>
         </div>
 
         {/* Navigation Links */}

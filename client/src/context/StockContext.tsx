@@ -61,8 +61,13 @@ interface StockContextType {
   isScannerOpen: boolean;
   openScanner: () => void;
   closeScanner: () => void;
+  isSearchOpen: boolean;
+  openSearch: () => void;
+  closeSearch: () => void;
+  prefillData: Record<string, any> | null;
   activeModal: ModalType;
   openModal: (type: ModalType) => void;
+  openModalWithPrefill: (type: ModalType, prefill?: Record<string, any>) => void;
   closeModal: () => void;
   toast: ToastData | null;
   showToast: (
@@ -93,6 +98,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const [transfers, setTransfers] = useState<MockTransfer[]>(initialTransfers);
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [prefillData, setPrefillData] = useState<Record<string, any> | null>(null);
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [toast, setToast] = useState<ToastData | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -171,11 +178,35 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('csd-stock-toast', handleCustomToast);
   }, []);
 
+  useEffect(() => {
+    function handleGlobalKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   const openScanner = () => setIsScannerOpen(true);
   const closeScanner = () => setIsScannerOpen(false);
 
-  const openModal = (type: ModalType) => setActiveModal(type);
-  const closeModal = () => setActiveModal('none');
+  const openSearch = () => setIsSearchOpen(true);
+  const closeSearch = () => setIsSearchOpen(false);
+
+  const openModal = (type: ModalType) => {
+    setPrefillData(null);
+    setActiveModal(type);
+  };
+  const openModalWithPrefill = (type: ModalType, prefill?: Record<string, any>) => {
+    setPrefillData(prefill || null);
+    setActiveModal(type);
+  };
+  const closeModal = () => {
+    setActiveModal('none');
+    setPrefillData(null);
+  };
 
   const addStockItem = (itemData: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }): MockItem => {
     const existingIndex = stock.findIndex((i) => i.code.toLowerCase() === itemData.code.toLowerCase());
@@ -449,8 +480,13 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         isScannerOpen,
         openScanner,
         closeScanner,
+        isSearchOpen,
+        openSearch,
+        closeSearch,
+        prefillData,
         activeModal,
         openModal,
+        openModalWithPrefill,
         closeModal,
         toast,
         showToast,
