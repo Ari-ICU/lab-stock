@@ -18,7 +18,11 @@ import {
   X,
   Search,
   ExternalLink,
-  Laptop
+  Laptop,
+  User,
+  Calendar,
+  FileText,
+  Sparkles
 } from 'lucide-react';
 import { MockLoan } from '@/types';
 
@@ -572,9 +576,11 @@ export default function LoansPage() {
                   onChange={(val) => setSelectedAssetId(val)}
                   options={assets.map((a) => ({
                     value: a.id,
-                    label: `${a.name} (${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
+                    label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
                   }))}
                   placeholder="Select device to check out"
+                  searchable={true}
+                  searchPlaceholder="Search device by name, model or serial number..."
                 />
               </div>
 
@@ -718,7 +724,9 @@ export default function LoansPage() {
                     value: a.id,
                     label: `${a.name} (SN: ${a.serialNumber})`,
                   }))}
-                  placeholder="Select device"
+                  placeholder="Select device to relocate"
+                  searchable={true}
+                  searchPlaceholder="Search by device name, model, or serial..."
                 />
               </div>
 
@@ -757,6 +765,8 @@ export default function LoansPage() {
                     };
                   })}
                   placeholder="Select target lab room"
+                  searchable={true}
+                  searchPlaceholder="Search room by name, number, or building..."
                 />
               </div>
 
@@ -785,10 +795,30 @@ export default function LoansPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Reason for Relocation
-                </label>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-neutral-700">
+                    Reason for Relocation
+                  </label>
+                  <span className="text-[10px] text-neutral-400">Click preset or type</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 pb-1">
+                  {[
+                    'Lab Workshop Setup',
+                    'Routine Maintenance & Service',
+                    'Student Project Allocation',
+                    'Permanent Room Relocation',
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setTransferReason(preset)}
+                      className="text-[11px] font-medium px-2 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-colors cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   rows={2}
                   placeholder="e.g. Reallocated for Network Security lab workshop"
@@ -822,60 +852,149 @@ export default function LoansPage() {
 
       {/* Return Device Confirmation Modal */}
       {returningLoan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded border border-neutral-300 shadow-2xl max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <h3 className="font-semibold text-sm text-neutral-900">Confirm Return to Lab</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl border border-neutral-200 shadow-2xl max-w-lg w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-neutral-900 leading-tight">Confirm Equipment Return</h3>
+                  <p className="text-[11px] text-neutral-500">Record check-in inspection & return to active lab stock</p>
+                </div>
               </div>
               <button
                 onClick={() => setReturningLoan(null)}
-                className="p-1 text-neutral-400 hover:text-neutral-700 rounded cursor-pointer"
+                className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg cursor-pointer transition-colors"
+                title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="text-xs text-neutral-600 space-y-1">
-              <p>
-                <span className="font-semibold text-neutral-900">Device:</span> {returningLoan.assetName}
-              </p>
-              <p>
-                <span className="font-semibold text-neutral-900">Borrower:</span> {returningLoan.borrowerName} ({returningLoan.borrowerRole})
-              </p>
-              <p>
-                <span className="font-semibold text-neutral-900">Checked out:</span> {returningLoan.borrowDate}
-              </p>
+            {/* Body */}
+            <div className="p-5 space-y-4">
+              {/* Device & Borrower Summary Card */}
+              <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3.5 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded bg-white border border-neutral-200 flex items-center justify-center shrink-0 mt-0.5 text-neutral-700 shadow-2xs">
+                      <Laptop className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-neutral-900 truncate">
+                        {returningLoan.assetName}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="font-mono text-[10px] bg-white border border-neutral-200 px-1.5 py-0.5 rounded text-neutral-600 font-semibold">
+                          SN: {returningLoan.serialNumber}
+                        </span>
+                        {returningLoan.courseOrClass && (
+                          <span className="text-[11px] text-neutral-500 truncate">
+                            • {returningLoan.courseOrClass}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-200/80 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-neutral-600 min-w-0">
+                    <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span className="truncate">
+                      <strong className="text-neutral-800">{returningLoan.borrowerName}</strong> ({returningLoan.borrowerRole})
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-neutral-600">
+                    <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span>
+                      Out: <strong className="text-neutral-800">{returningLoan.borrowDate}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Inspection Presets */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Quick Inspection Presets</span>
+                  </label>
+                  <span className="text-[10px] text-neutral-400">Click to insert note</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    '✓ Tested & Fully Functional',
+                    '✓ Power Adapter & Cables Returned',
+                    '✓ No Physical Damage',
+                    '⚠ Minor Surface Wear',
+                    '⚠ Requires Software Reset',
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => {
+                        setReturnNotes((prev) => {
+                          if (!prev.trim()) return chip;
+                          if (prev.includes(chip)) return prev;
+                          return `${prev}\n${chip}`;
+                        });
+                      }}
+                      className="text-[11px] font-medium px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-colors cursor-pointer active:scale-98"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Inspection Notes Textarea */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-neutral-600" />
+                    <span>Inspection & Condition Notes</span>
+                  </label>
+                  {returnNotes && (
+                    <button
+                      type="button"
+                      onClick={() => setReturnNotes('')}
+                      className="text-[10px] text-neutral-400 hover:text-neutral-700 underline cursor-pointer"
+                    >
+                      Clear Notes
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. Device examined in student presence, verified working, all accessories intact..."
+                  value={returnNotes}
+                  onChange={(e) => setReturnNotes(e.target.value)}
+                  className="w-full bg-white text-xs border border-neutral-300 rounded-lg p-2.5 text-neutral-900 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 placeholder:text-neutral-400 transition-all shadow-2xs resize-none"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Inspection & Return Notes
-              </label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Device examined, no physical damage, power adapter returned"
-                value={returnNotes}
-                onChange={(e) => setReturnNotes(e.target.value)}
-                className="w-full bg-white text-xs border border-neutral-300 rounded p-2.5 text-neutral-900 focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <div className="pt-2 flex justify-end gap-2">
+            {/* Footer */}
+            <div className="px-5 py-3.5 bg-neutral-50/70 border-t border-neutral-200 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setReturningLoan(null)}
-                className="px-3 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg cursor-pointer transition-colors shadow-2xs"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReturn}
-                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-lg cursor-pointer transition-colors shadow-xs"
               >
-                Confirm Return
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Confirm Return & Check-in</span>
               </button>
             </div>
           </div>

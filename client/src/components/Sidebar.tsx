@@ -97,10 +97,10 @@ export function Sidebar() {
               />
             </div>
             <div className="min-w-0">
-              <div className="font-bold text-sm tracking-tight text-neutral-900 leading-none truncate font-khmer">
+              <div className="font-extrabold text-[15px] text-neutral-900 tracking-tight leading-tight truncate">
                 CSD Stock
               </div>
-              <span className="text-[11px] text-neutral-500 font-medium truncate block">
+              <span className="text-[11px] text-neutral-500 font-medium truncate block mt-0.5">
                 Faculty Laboratories
               </span>
             </div>

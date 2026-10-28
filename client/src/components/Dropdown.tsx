@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Search, X } from 'lucide-react';
 import { DropdownOption } from '@/types';
 
 export type { DropdownOption };
@@ -14,6 +14,8 @@ interface DropdownProps {
   className?: string;
   buttonClassName?: string;
   align?: 'left' | 'right';
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
 
 export function Dropdown({
@@ -24,10 +26,17 @@ export function Dropdown({
   className = '',
   buttonClassName = '',
   align = 'left',
+  searchable,
+  searchPlaceholder = 'Search options...',
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [openUpwards, setOpenUpwards] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Auto-enable search if there are 6 or more options, unless explicitly turned off
+  const isSearchable = searchable ?? options.length >= 6;
 
   const selectedOption = options.find((o) => o.value === value);
 
@@ -38,6 +47,16 @@ export function Dropdown({
     }
     return options;
   }, [value, options]);
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery.trim()) return effectiveOptions;
+    const q = searchQuery.toLowerCase().trim();
+    return effectiveOptions.filter(
+      (opt) =>
+        opt.label.toLowerCase().includes(q) ||
+        opt.value.toLowerCase().includes(q)
+    );
+  }, [effectiveOptions, searchQuery]);
 
   const displayLabel = selectedOption
     ? selectedOption.label
@@ -60,16 +79,24 @@ export function Dropdown({
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
-        setOpenUpwards(spaceBelow < 240 && rect.top > 240);
+        setOpenUpwards(spaceBelow < 280 && rect.top > 280);
       }
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
+
+      if (isSearchable) {
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 30);
+      }
+    } else {
+      setSearchQuery('');
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open]);
+  }, [open, isSearchable]);
 
   // Determine width
   const hasCustomWidth =
@@ -107,51 +134,85 @@ export function Dropdown({
       {open && (
         <div
           role="listbox"
-          className={`absolute bg-white border border-neutral-200 rounded shadow-lg z-50 py-1 text-xs max-h-60 overflow-y-auto ${
+          className={`absolute bg-white border border-neutral-200 rounded-lg shadow-xl z-50 text-xs max-h-72 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
             openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
           } ${
             align === 'right' ? 'right-0' : 'left-0'
           }`}
-          style={{ minWidth: '100%', maxWidth: 'max(100%, 360px)' }}
+          style={{ minWidth: '100%', maxWidth: 'max(100%, 420px)' }}
         >
-          {effectiveOptions.length === 0 ? (
-            <div className="px-3 py-2 text-neutral-400 text-center italic">
-              No options available
+          {isSearchable && (
+            <div className="p-2 border-b border-neutral-100 bg-neutral-50/80 shrink-0">
+              <div className="relative flex items-center">
+                <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full text-xs pl-8 pr-7 py-1.5 bg-white border border-neutral-200 rounded text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchQuery('');
+                      searchInputRef.current?.focus();
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5 rounded cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            effectiveOptions.map((option) => {
-              const isSelected = option.value === value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    onChange(option.value);
-                    setOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-1.5 text-left transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-neutral-100 text-neutral-900 font-semibold'
-                      : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
-                  }`}
-                >
-                  <span className="truncate">{option.label}</span>
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    {option.count !== undefined && (
-                      <span className="text-[10px] text-neutral-400 font-mono">
-                        {option.count}
-                      </span>
-                    )}
-                    {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    )}
-                  </div>
-                </button>
-              );
-            })
           )}
+
+          <div className="overflow-y-auto flex-1 py-1">
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-4 text-neutral-400 text-center italic text-xs">
+                No matching options found
+              </div>
+            ) : (
+              filteredOptions.map((option) => {
+                const isSelected = option.value === value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onChange(option.value);
+                      setOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-neutral-100 text-neutral-900 font-semibold'
+                        : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                    }`}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {option.count !== undefined && (
+                        <span className="text-[10px] text-neutral-400 font-mono">
+                          {option.count}
+                        </span>
+                      )}
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
