@@ -122,7 +122,7 @@ export function QRScannerModal() {
         category: 'Hardware',
         specs: `Hardware unit registered via barcode ${code}`,
         formFactor: 'Standard Unit',
-        defaultLocation: 'Datacenter Server Rm B04',
+        defaultLocation: 'Network & Systems Lab Rm 206',
         defaultRack: 'MDF Core Server Rack 42U',
         inStockQuantity: 1,
         unit: 'Units',

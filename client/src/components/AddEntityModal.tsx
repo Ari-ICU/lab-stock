@@ -5,6 +5,7 @@ import { useStock } from '@/context/StockContext';
 import { X, Plus } from 'lucide-react';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
+import { DatePicker } from '@/components/DatePicker';
 
 const stockCategoryOptions = [
   { label: 'Monitors', value: 'Monitors' },
@@ -86,7 +87,7 @@ export function AddEntityModal() {
   const [rackCode, setRackCode] = useState('');
   const [rackType, setRackType] = useState<'42U Server Rack' | '24U Wall Mount' | 'IDF Distribution' | 'Storage Shelf'>('42U Server Rack');
   const [rackSlots, setRackSlots] = useState(42);
-  const [rackLocation, setRackLocation] = useState('Datacenter Server Rm B04');
+  const [rackLocation, setRackLocation] = useState('Computer Lab Rm 102B');
 
   // Maintenance Form State
   const [maintAsset, setMaintAsset] = useState('');
@@ -541,11 +542,10 @@ export function AddEntityModal() {
 
               <div>
                 <label className="block font-semibold text-neutral-800 mb-1">Scheduled Date</label>
-                <input
-                  type="date"
+                <DatePicker
                   value={maintDate}
-                  onChange={(e) => setMaintDate(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  onChange={setMaintDate}
+                  placeholder="Select scheduled date"
                 />
               </div>
             </div>

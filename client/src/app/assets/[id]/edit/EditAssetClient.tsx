@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
+import { DatePicker } from '@/components/DatePicker';
 import {
   ArrowLeft,
   Save,
@@ -166,41 +167,33 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       <Header
         title={`Edit: ${asset.name}`}
         subtitle={`Asset ID: ${asset.id} • Room 102B`}
+        backHref={`/assets/${asset.id}`}
+        backLabel="Details"
         showExport={false}
-        showAction={false}
-      />
-
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* Navigation Breadcrumb bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <Link
-            href={`/assets/${asset.id}`}
-            className="inline-flex items-center gap-1.5 text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Cancel and Back to Details</span>
-          </Link>
-
+        actions={
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleReset}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 text-neutral-700 rounded font-semibold hover:bg-neutral-50 transition-colors cursor-pointer text-xs shadow-sm"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Reset Changes</span>
+              <span className="hidden sm:inline">Reset</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 rounded font-semibold hover:bg-rose-50 transition-colors cursor-pointer text-xs shadow-sm"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Equipment</span>
+              <span className="hidden sm:inline">Delete</span>
             </button>
           </div>
-        </div>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
 
         {/* Delete Confirmation Alert Banner */}
         {showDeleteConfirm && (
@@ -354,11 +347,10 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
                   <Calendar className="w-3.5 h-3.5 text-neutral-500" />
                   <span>Next Audit / Firmware Recertification Date</span>
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={nextCalibration}
-                  onChange={(e) => setNextCalibration(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                  onChange={setNextCalibration}
+                  placeholder="Select audit / calibration date"
                 />
               </div>
 

@@ -178,7 +178,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         category: itemData.category || 'Hardware',
         quantity: itemData.quantity || 1,
         unit: itemData.unit || 'Units',
-        location: itemData.location || 'Datacenter Server Rm B04',
+        location: itemData.location || 'Computer Lab Rm 102B',
         rack: itemData.rack || 'MDF Core Server Rack 42U',
         status: (itemData.quantity || 1) > 5 ? 'in_stock' : 'low_stock',
         expiryDate: itemData.expiryDate || 'N/A',

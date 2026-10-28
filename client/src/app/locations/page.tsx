@@ -62,7 +62,7 @@ export default function LocationsPage() {
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
         title="Laboratory Locations"
-        subtitle="Facilities & Assigned Rooms"
+        subtitle="Lab 102B & Lab 206 • Engineering Block A"
         actionLabel="Add Location"
         onAction={() => openModal('add_location')}
         onExport={handleExport}

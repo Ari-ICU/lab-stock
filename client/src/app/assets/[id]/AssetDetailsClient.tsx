@@ -145,43 +145,36 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
-      {/* Top Header */}
+      {/* Top Header with Integrated Back Navigation & Action Controls */}
       <Header
         title={asset.name}
         subtitle={`Serial: ${asset.serialNumber} • ${asset.location}`}
+        backHref="/assets"
+        backLabel="Assets"
         showExport={false}
-        showAction={false}
-      />
-
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* Navigation Breadcrumb bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <Link
-            href="/assets"
-            className="inline-flex items-center gap-1.5 text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Hardware Directory</span>
-          </Link>
-
+        actions={
           <div className="flex items-center gap-2">
             <Link
               href={`/assets/${asset.id}/edit`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 text-neutral-800 rounded font-semibold hover:bg-neutral-50 hover:border-neutral-400 transition-colors cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
-              <Edit3 className="w-3.5 h-3.5 text-neutral-600" />
+              <Edit3 className="w-3.5 h-3.5 text-neutral-300" />
               <span>Edit Equipment</span>
             </Link>
 
             <button
+              type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 rounded font-semibold hover:bg-rose-50 transition-colors cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Delete</span>
             </button>
           </div>
-        </div>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
 
         {/* Delete Confirmation Alert Banner */}
         {showDeleteConfirm && (

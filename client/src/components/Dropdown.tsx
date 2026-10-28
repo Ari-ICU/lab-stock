@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { DropdownOption } from '@/types';
 
@@ -13,6 +13,7 @@ interface DropdownProps {
   placeholder?: string;
   className?: string;
   buttonClassName?: string;
+  align?: 'left' | 'right';
 }
 
 export function Dropdown({
@@ -22,6 +23,7 @@ export function Dropdown({
   placeholder = 'Select option',
   className = '',
   buttonClassName = '',
+  align = 'left',
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [openUpwards, setOpenUpwards] = useState(false);
@@ -29,9 +31,28 @@ export function Dropdown({
 
   const selectedOption = options.find((o) => o.value === value);
 
+  // If the passed value doesn't match an option directly, include it as an effective option
+  const effectiveOptions = useMemo(() => {
+    if (value && value.trim().length > 0 && !options.some((o) => o.value === value)) {
+      return [{ label: value, value }, ...options];
+    }
+    return options;
+  }, [value, options]);
+
+  const displayLabel = selectedOption
+    ? selectedOption.label
+    : value && value.trim().length > 0
+    ? value
+    : placeholder;
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
         setOpen(false);
       }
     }
@@ -39,32 +60,42 @@ export function Dropdown({
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const spaceBelow = window.innerHeight - rect.bottom;
-        // If less than 260px below, flip upwards
-        setOpenUpwards(spaceBelow < 260 && rect.top > 260);
+        setOpenUpwards(spaceBelow < 240 && rect.top > 240);
       }
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [open]);
 
-  const isFullWidth = className.includes('w-full');
+  // Determine width
+  const hasCustomWidth =
+    className.includes('w-') || className.includes('inline-') || className.includes('max-w-');
+  const widthClass = hasCustomWidth ? '' : 'w-full';
 
   return (
     <div
-      className={`relative ${open ? 'z-30' : 'z-auto'} ${
-        isFullWidth ? 'w-full' : 'inline-block'
-      } ${className}`}
+      className={`relative ${open ? 'z-50' : 'z-20'} ${widthClass} ${className}`}
       ref={containerRef}
     >
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 text-xs font-medium text-neutral-900 bg-white border border-neutral-300 rounded hover:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900 transition-colors cursor-pointer select-none ${buttonClassName}`}
+        className={`w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-xs font-medium text-neutral-900 bg-white border border-neutral-300 rounded hover:border-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors cursor-pointer select-none text-left ${buttonClassName}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
       >
-        <span className="truncate">
-          {selectedOption ? selectedOption.label : placeholder}
+        <span
+          className={`truncate ${
+            !selectedOption && (!value || value.trim().length === 0)
+              ? 'text-neutral-400 font-normal'
+              : 'text-neutral-900'
+          }`}
+        >
+          {displayLabel}
         </span>
         <ChevronDown
           className={`w-3.5 h-3.5 text-neutral-500 transition-transform shrink-0 ${
@@ -75,21 +106,27 @@ export function Dropdown({
 
       {open && (
         <div
-          className={`absolute bg-white border border-neutral-200 rounded shadow-lg z-50 py-1 text-xs divide-y divide-neutral-100 max-h-60 overflow-y-auto ${
+          role="listbox"
+          className={`absolute bg-white border border-neutral-200 rounded shadow-lg z-50 py-1 text-xs max-h-60 overflow-y-auto ${
             openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
           } ${
-            isFullWidth
-              ? 'left-0 right-0 w-full'
-              : 'left-0 sm:left-auto sm:right-0 min-w-[160px] w-max max-w-xs'
+            align === 'right' ? 'right-0' : 'left-0'
           }`}
+          style={{ minWidth: '100%', maxWidth: 'max(100%, 360px)' }}
         >
-          <div className="py-0.5">
-            {options.map((option) => {
+          {effectiveOptions.length === 0 ? (
+            <div className="px-3 py-2 text-neutral-400 text-center italic">
+              No options available
+            </div>
+          ) : (
+            effectiveOptions.map((option) => {
               const isSelected = option.value === value;
               return (
                 <button
                   key={option.value}
                   type="button"
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={() => {
                     onChange(option.value);
                     setOpen(false);
@@ -107,12 +144,14 @@ export function Dropdown({
                         {option.count}
                       </span>
                     )}
-                    {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    )}
                   </div>
                 </button>
               );
-            })}
-          </div>
+            })
+          )}
         </div>
       )}
     </div>

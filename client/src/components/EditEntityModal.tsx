@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/data/mockData';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
+import { DatePicker } from '@/components/DatePicker';
 
 export function EditEntityModal() {
   const {
@@ -408,11 +409,10 @@ export function EditEntityModal() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-neutral-800 mb-1">Date</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={maintDate}
-                    onChange={(e) => setMaintDate(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    onChange={setMaintDate}
+                    placeholder="Select date"
                   />
                 </div>
 

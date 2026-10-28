@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
+import { DatePicker } from '@/components/DatePicker';
 import {
   ArrowLeft,
   Router,
@@ -153,24 +154,13 @@ export default function CreateAssetPage() {
       <Header
         title="Create Lab Hardware Asset"
         subtitle="Lab 102B Equipment Registry"
+        backHref="/assets"
+        backLabel="Assets"
         showExport={false}
         showAction={false}
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* Breadcrumb Back Button */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/assets"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Hardware Directory</span>
-          </Link>
-          <span className="text-[11px] text-neutral-400">
-            Room 102B • Engineering Block A
-          </span>
-        </div>
 
         {/* Quick Autofill Presets Bar */}
         <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-xs">
@@ -328,14 +318,14 @@ export default function CreateAssetPage() {
 
             {/* Next Calibration Audit Date */}
             <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
-                Next Calibration / Firmware Audit Due Date
+              <label className="block text-xs font-semibold text-neutral-800 mb-1.5 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+                <span>Next Calibration / Firmware Audit Due Date</span>
               </label>
-              <input
-                type="date"
+              <DatePicker
                 value={nextCalibration}
-                onChange={(e) => setNextCalibration(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
+                onChange={setNextCalibration}
+                placeholder="Select calibration / audit date"
               />
             </div>
 
