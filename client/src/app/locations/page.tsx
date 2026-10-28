@@ -47,7 +47,7 @@ export default function LocationsPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'netlab_locations',
+      'lab_locations',
       filtered.map((l) => ({
         'Facility Name': l.name,
         Building: l.building,

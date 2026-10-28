@@ -149,7 +149,7 @@ export const productCatalog: ProductModelInfo[] = [
     altCodes: ['CAB-CAT6A-2M', 'CAT6A-BLU-2M'],
     modelNumber: 'CAT6A-10G-BLU-2M',
     productName: 'Cat6A UTP 10-Gigabit Snagless RJ45 Patch Cable 2m (Blue)',
-    brand: 'NetLab ProSeries',
+    brand: 'Lab ProSeries',
     category: 'Network Copper Cabling',
     ports: '2x Gold-Plated 50µm RJ45 Modular Connectors',
     specs: '500 MHz transmission frequency, 10GBase-T certified, 26 AWG Stranded Bare Copper, CM Flammability rated',

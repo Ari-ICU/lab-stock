@@ -194,7 +194,7 @@ export function Sidebar() {
           <button
             onClick={() => {
               logout();
-              showToast('Signed out of NetLab');
+              showToast('Signed out of Lab');
             }}
             title="Sign out"
             className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"

@@ -24,7 +24,7 @@ export default function LoginPage() {
   const { login, switchAccount } = useAuth();
   const { showToast } = useStock();
 
-  const [email, setEmail] = useState('admin@netlab.edu');
+  const [email, setEmail] = useState('admin@lab.edu');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -220,7 +220,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@netlab.edu"
+                      placeholder="admin@lab.edu"
                       required
                       disabled={isLoading}
                       className="bg-transparent text-xs text-slate-900 w-full outline-none placeholder:text-slate-400 font-normal"

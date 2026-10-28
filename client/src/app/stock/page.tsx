@@ -54,7 +54,7 @@ export default function StockPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'netlab_stock_inventory',
+      'lab_stock_inventory',
       filteredStock.map((i) => ({
         'Item Name': i.name,
         'Part Code': i.code,

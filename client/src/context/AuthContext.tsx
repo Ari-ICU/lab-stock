@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export interface User {
@@ -26,10 +26,69 @@ export interface DemoAccount {
   description: string;
 }
 
+export interface ManagedUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  roleBadge: 'Admin' | 'Technician' | 'Operator' | 'Viewer';
+  avatarText: string;
+  permissions: string;
+  department: string;
+  status: 'active' | 'offline' | 'suspended';
+  lastLogin: string;
+}
+
+export interface SessionDevice {
+  id: string;
+  deviceName: string;
+  deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal';
+  browser: string;
+  os: string;
+  ip: string;
+  location: string;
+  lastActive: string;
+  isCurrent: boolean;
+}
+
+export interface RoleDefinition {
+  role: string;
+  badge: 'Admin' | 'Technician' | 'Operator' | 'Viewer';
+  permissions: string;
+  description: string;
+}
+
+export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
+  'Primary Lab Administrator': {
+    role: 'Primary Lab Administrator',
+    badge: 'Admin',
+    permissions: 'Full Read/Write Access & System Config',
+    description: 'Full management over hardware, users, network racks, and stock',
+  },
+  'Network Technician': {
+    role: 'Network Technician',
+    badge: 'Technician',
+    permissions: 'Hardware Management & Maintenance Logging',
+    description: 'Can manage stock, create maintenance logs, and inspect racks',
+  },
+  'Laboratory Operator': {
+    role: 'Laboratory Operator',
+    badge: 'Operator',
+    permissions: 'Inventory Stock Adjustments & Barcode Scanning',
+    description: 'Can check in/out items and adjust stock quantities',
+  },
+  'Lab Assistant / Student': {
+    role: 'Lab Assistant / Student',
+    badge: 'Viewer',
+    permissions: 'Read-Only Catalog & Rack Location Access',
+    description: 'View-only access to catalog, rack locations, and availability',
+  },
+};
+
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     name: 'Thoeurn Ratha',
-    email: 'admin@netlab.edu',
+    email: 'admin@lab.edu',
     password: 'password123',
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
@@ -38,7 +97,183 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     department: 'Engineering Block A - Room 102B',
     description: 'Full administrator privileges across all hardware, racks, and stock',
   },
+  {
+    name: 'Sokha Chan',
+    email: 'tech@lab.edu',
+    password: 'password123',
+    role: 'Network Technician',
+    roleBadge: 'Technician',
+    avatarText: 'SC',
+    permissions: 'Hardware Management & Maintenance Logging',
+    department: 'Engineering Block A - Room 102B',
+    description: 'Hardware maintenance, stock adjustments, and equipment logging',
+  },
+  {
+    name: 'Dara Kim',
+    email: 'student@lab.edu',
+    password: 'password123',
+    role: 'Lab Assistant / Student',
+    roleBadge: 'Viewer',
+    avatarText: 'DK',
+    permissions: 'Read-Only Catalog & Rack Location Access',
+    department: 'Engineering Block A - Room 102B',
+    description: 'Inventory search, catalog browsing, and rack location viewing',
+  },
 ];
+
+export const INITIAL_MANAGED_USERS: ManagedUser[] = [
+  {
+    id: 'user-admin',
+    name: 'Thoeurn Ratha',
+    email: 'admin@lab.edu',
+    role: 'Primary Lab Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'TR',
+    permissions: 'Full Read/Write Access & System Config',
+    department: 'Engineering Block A - Room 102B',
+    status: 'active',
+    lastLogin: 'Active now',
+  },
+  {
+    id: 'user-tech',
+    name: 'Sokha Chan',
+    email: 'tech@lab.edu',
+    role: 'Network Technician',
+    roleBadge: 'Technician',
+    avatarText: 'SC',
+    permissions: 'Hardware Management & Maintenance Logging',
+    department: 'Engineering Block A - Room 102B',
+    status: 'active',
+    lastLogin: 'Today, 09:20 AM',
+  },
+  {
+    id: 'user-operator',
+    name: 'Kimleng Heng',
+    email: 'operator@lab.edu',
+    role: 'Laboratory Operator',
+    roleBadge: 'Operator',
+    avatarText: 'KH',
+    permissions: 'Inventory Stock Adjustments & Barcode Scanning',
+    department: 'Engineering Block A - Room 102B',
+    status: 'active',
+    lastLogin: 'Yesterday, 04:15 PM',
+  },
+  {
+    id: 'user-student',
+    name: 'Dara Kim',
+    email: 'student@lab.edu',
+    role: 'Lab Assistant / Student',
+    roleBadge: 'Viewer',
+    avatarText: 'DK',
+    permissions: 'Read-Only Catalog & Rack Location Access',
+    department: 'Engineering Block A - Room 102B',
+    status: 'active',
+    lastLogin: 'Oct 26, 02:40 PM',
+  },
+];
+
+export function detectCurrentDevice(): {
+  browser: string;
+  os: string;
+  deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal';
+  deviceName: string;
+} {
+  if (typeof window === 'undefined') {
+    return {
+      browser: 'Web Browser',
+      os: 'Operating System',
+      deviceType: 'desktop',
+      deviceName: 'Lab Workstation',
+    };
+  }
+
+  const ua = navigator.userAgent;
+  let browser = 'Chrome';
+  if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Edg')) browser = 'Microsoft Edge';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+  else if (ua.includes('Chrome')) browser = 'Chrome';
+
+  let os = 'macOS';
+  let deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal' = 'desktop';
+  let deviceName = 'Engineering Workstation';
+
+  if (ua.includes('Mac OS') || ua.includes('Macintosh')) {
+    os = 'macOS Sonoma';
+    deviceName = 'Apple Mac Workstation';
+  } else if (ua.includes('Windows')) {
+    os = 'Windows 11 Pro';
+    deviceName = 'Windows PC Workstation';
+  } else if (ua.includes('Linux')) {
+    os = 'Ubuntu Linux 24.04';
+    deviceType = 'terminal';
+    deviceName = 'Linux Lab Terminal';
+  } else if (ua.includes('iPad')) {
+    os = 'iPadOS 17.5';
+    deviceType = 'tablet';
+    deviceName = 'Lab Audit iPad';
+  } else if (ua.includes('iPhone')) {
+    os = 'iOS 17.5';
+    deviceType = 'mobile';
+    deviceName = 'iPhone Scanner Handheld';
+  } else if (ua.includes('Android')) {
+    os = 'Android 14';
+    deviceType = 'mobile';
+    deviceName = 'Android Terminal Scanner';
+  }
+
+  return { browser, os, deviceType, deviceName };
+}
+
+export function getInitialSessions(): SessionDevice[] {
+  const current = detectCurrentDevice();
+  return [
+    {
+      id: 'sess-current',
+      deviceName: current.deviceName,
+      deviceType: current.deviceType,
+      browser: current.browser,
+      os: current.os,
+      ip: '192.168.102.15',
+      location: 'Room 102B - Workstation 01',
+      lastActive: 'Active now',
+      isCurrent: true,
+    },
+    {
+      id: 'sess-rack-console',
+      deviceName: 'Rack A Management Terminal',
+      deviceType: 'terminal',
+      browser: 'Chromium 122',
+      os: 'Debian GNU/Linux 12',
+      ip: '192.168.102.40',
+      location: 'Rack Cabinet A - Console Port',
+      lastActive: '12 minutes ago',
+      isCurrent: false,
+    },
+    {
+      id: 'sess-tablet-scanner',
+      deviceName: 'Mobile Barcode Scanner Tablet',
+      deviceType: 'tablet',
+      browser: 'Mobile Safari 17.5',
+      os: 'iPadOS 17.5',
+      ip: '192.168.102.88',
+      location: 'Room 102B Inventory Cart',
+      lastActive: '2 hours ago',
+      isCurrent: false,
+    },
+    {
+      id: 'sess-faculty-pc',
+      deviceName: 'Instructor Teaching Podium',
+      deviceType: 'desktop',
+      browser: 'Microsoft Edge 124',
+      os: 'Windows 11 Education',
+      ip: '192.168.102.10',
+      location: 'Room 102B Faculty Desk',
+      lastActive: 'Yesterday',
+      isCurrent: false,
+    },
+  ];
+}
 
 interface AuthContextType {
   user: User | null;
@@ -47,9 +282,21 @@ interface AuthContextType {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   switchAccount: (account: DemoAccount) => void;
+  // User & Role Management
+  managedUsers: ManagedUser[];
+  updateUserRole: (userId: string, newRole: string) => void;
+  addUser: (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => void;
+  deleteUser: (userId: string) => boolean;
+  // Session Devices
+  sessionDevices: SessionDevice[];
+  refreshSessionDevices: () => void;
+  revokeSession: (sessionId: string) => void;
+  revokeAllOtherSessions: () => void;
 }
 
-const STORAGE_KEY = 'netlab_auth_user';
+const STORAGE_KEY = 'lab_auth_user';
+const USERS_STORAGE_KEY = 'lab_managed_users';
+const SESSIONS_STORAGE_KEY = 'lab_session_devices';
 
 const getDefaultUser = (): User => ({
   id: 'user-admin',
@@ -67,7 +314,7 @@ const getInitialUser = (): User | null => {
     return getDefaultUser();
   }
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
     if (stored) {
       return JSON.parse(stored);
     }
@@ -79,12 +326,168 @@ const getInitialUser = (): User | null => {
   }
 };
 
+const getStoredUsers = (): ManagedUser[] => {
+  if (typeof window === 'undefined') return INITIAL_MANAGED_USERS;
+  try {
+    const stored = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
+    if (stored) {
+      const parsed: ManagedUser[] = JSON.parse(stored);
+      // Migrate email from @netlab.edu to @lab.edu if stored
+      return parsed.map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') }));
+    }
+  } catch {
+    // fallback
+  }
+  return INITIAL_MANAGED_USERS;
+};
+
+const getStoredSessions = (): SessionDevice[] => {
+  if (typeof window === 'undefined') return getInitialSessions();
+  try {
+    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY) || localStorage.getItem('netlab_session_devices');
+    if (stored) {
+      const parsed: SessionDevice[] = JSON.parse(stored);
+      // Keep current device up to date
+      const current = detectCurrentDevice();
+      return parsed.map((s) => (s.isCurrent ? { ...s, browser: current.browser, os: current.os, deviceName: current.deviceName } : s));
+    }
+  } catch {
+    // fallback
+  }
+  return getInitialSessions();
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(getInitialUser);
   const [isLoading, setIsLoading] = useState(false);
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(getStoredUsers);
+  const [sessionDevices, setSessionDevices] = useState<SessionDevice[]>(getStoredSessions);
+
+  // Sync current device on mount
+  useEffect(() => {
+    const current = detectCurrentDevice();
+    setSessionDevices((prev) =>
+      prev.map((s) =>
+        s.isCurrent
+          ? {
+              ...s,
+              browser: current.browser,
+              os: current.os,
+              deviceName: current.deviceName,
+              deviceType: current.deviceType,
+            }
+          : s
+      )
+    );
+  }, []);
+
+  const saveUsers = (usersList: ManagedUser[]) => {
+    setManagedUsers(usersList);
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(usersList));
+    } catch {
+      // ignore
+    }
+  };
+
+  const saveSessions = (sessionsList: SessionDevice[]) => {
+    setSessionDevices(sessionsList);
+    try {
+      localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessionsList));
+    } catch {
+      // ignore
+    }
+  };
+
+  const updateUserRole = (userId: string, newRole: string) => {
+    const roleDef = ROLE_DEFINITIONS[newRole] || {
+      role: newRole,
+      badge: 'Operator',
+      permissions: 'Standard Laboratory Access',
+      description: 'Standard laboratory user',
+    };
+
+    const updated = managedUsers.map((u) => {
+      if (u.id === userId) {
+        return {
+          ...u,
+          role: roleDef.role,
+          roleBadge: roleDef.badge,
+          permissions: roleDef.permissions,
+        };
+      }
+      return u;
+    });
+
+    saveUsers(updated);
+
+    // If updated user is the currently logged in user, update their session
+    if (user && (user.id === userId || user.email === updated.find((u) => u.id === userId)?.email)) {
+      const updatedCurrentUser: User = {
+        ...user,
+        role: roleDef.role,
+        roleBadge: roleDef.badge,
+        permissions: roleDef.permissions,
+      };
+      setUser(updatedCurrentUser);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCurrentUser));
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => {
+    const id = `user-${Date.now()}`;
+    const userToAdd: ManagedUser = {
+      ...newUser,
+      id,
+      lastLogin: 'Never (Invited)',
+    };
+    saveUsers([...managedUsers, userToAdd]);
+  };
+
+  const deleteUser = (userId: string): boolean => {
+    // Prevent deleting the currently active user or deleting all admins
+    if (user && user.id === userId) {
+      return false;
+    }
+    const filtered = managedUsers.filter((u) => u.id !== userId);
+    saveUsers(filtered);
+    return true;
+  };
+
+  const refreshSessionDevices = () => {
+    const current = detectCurrentDevice();
+    const updated = sessionDevices.map((s) => {
+      if (s.isCurrent) {
+        return {
+          ...s,
+          browser: current.browser,
+          os: current.os,
+          deviceName: current.deviceName,
+          deviceType: current.deviceType,
+          lastActive: 'Active now',
+        };
+      }
+      return s;
+    });
+    saveSessions(updated);
+  };
+
+  const revokeSession = (sessionId: string) => {
+    const filtered = sessionDevices.filter((s) => s.id !== sessionId);
+    saveSessions(filtered);
+  };
+
+  const revokeAllOtherSessions = () => {
+    const remaining = sessionDevices.filter((s) => s.isCurrent);
+    saveSessions(remaining);
+  };
 
   const login = async (
     email: string,
@@ -92,14 +495,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     rememberMe = true
   ): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    // Artificial network delay for realistic responsive feedback
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const cleanEmail = email.trim().toLowerCase();
+    const normalizedEmail = cleanEmail.replace('@netlab.edu', '@lab.edu');
 
-    // Check if it matches any demo account
+    // Check against managed users first
+    const matchedManaged = managedUsers.find(
+      (acc) =>
+        acc.email.toLowerCase() === cleanEmail ||
+        acc.email.toLowerCase().replace('@netlab.edu', '@lab.edu') === normalizedEmail
+    );
+
+    if (matchedManaged) {
+      if (password !== 'password123' && password !== 'admin123') {
+        setIsLoading(false);
+        return { success: false, error: 'Incorrect password. Demo password is: password123' };
+      }
+
+      const loggedUser: User = {
+        id: matchedManaged.id,
+        name: matchedManaged.name,
+        email: matchedManaged.email,
+        role: matchedManaged.role,
+        roleBadge: matchedManaged.roleBadge,
+        avatarText: matchedManaged.avatarText,
+        permissions: matchedManaged.permissions,
+        department: matchedManaged.department,
+      };
+
+      setUser(loggedUser);
+      if (rememberMe) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedUser));
+        } catch {
+          // ignore
+        }
+      }
+      setIsLoading(false);
+      return { success: true };
+    }
+
+    // Check demo accounts
     const matchedAccount = DEMO_ACCOUNTS.find(
-      (acc) => acc.email.toLowerCase() === cleanEmail
+      (acc) =>
+        acc.email.toLowerCase() === cleanEmail ||
+        acc.email.toLowerCase().replace('@netlab.edu', '@lab.edu') === normalizedEmail
     );
 
     if (matchedAccount) {
@@ -166,7 +607,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
     return {
       success: false,
-      error: 'Invalid credentials. Please enter a valid NetLab email and password (min 6 characters).',
+      error: 'Invalid credentials. Please enter a valid Lab email and password (min 6 characters).',
     };
   };
 
@@ -208,6 +649,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         switchAccount,
+        managedUsers,
+        updateUserRole,
+        addUser,
+        deleteUser,
+        sessionDevices,
+        refreshSessionDevices,
+        revokeSession,
+        revokeAllOtherSessions,
       }}
     >
       {children}
@@ -222,4 +671,3 @@ export function useAuth() {
   }
   return context;
 }
-

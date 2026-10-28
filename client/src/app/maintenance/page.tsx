@@ -20,7 +20,7 @@ export default function MaintenancePage() {
 
   const handleExport = () => {
     exportToCsv(
-      'netlab_maintenance_logs',
+      'lab_maintenance_logs',
       filtered.map((m) => ({
         Instrument: m.assetName,
         'Serial Number': m.serialNumber,

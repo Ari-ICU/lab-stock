@@ -20,7 +20,7 @@ export default function RacksPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'netlab_server_racks',
+      'lab_server_racks',
       filteredRacks.map((r) => ({
         'Rack Name': r.name,
         Code: r.code,

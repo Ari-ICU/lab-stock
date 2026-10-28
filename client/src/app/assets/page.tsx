@@ -35,7 +35,7 @@ export default function AssetsPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'netlab_network_devices',
+      'lab_network_devices',
       filteredAssets.map((a) => ({
         'Device Name': a.name,
         Model: a.model,
