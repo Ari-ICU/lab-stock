@@ -33,7 +33,7 @@ export default function DashboardPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
-        title="Lab 102B - Network & Computer Systems"
+        title="Lab 102B - Network & Computer"
         subtitle="24 Desktops • Projector • Daikin ACs • Core Network Infrastructure"
         actionLabel="Add Stock Item"
         onAction={() => openModal('add_stock')}
