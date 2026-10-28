@@ -324,7 +324,7 @@ export default function LoginPage() {
 
             {/* Terms Notice */}
             <div className="text-[11px] text-slate-400 text-center px-4 leading-normal">
-              By signing in, you agree to the NetLab{' '}
+              By signing in, you agree to the Lab{' '}
               <span className="hover:underline cursor-pointer text-slate-500">
                 Terms of Service
               </span>{' '}

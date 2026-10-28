@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef } from 'react';
 import {
   mockStock as initialStock,
   mockAssets as initialAssets,
@@ -28,6 +28,15 @@ export type AnyEntity =
   | MockRack
   | MockMaintenance
   | MockLocation;
+
+export type ToastType = 'success' | 'info' | 'warning' | 'error';
+
+export interface ToastData {
+  id: number;
+  message: string;
+  title?: string;
+  type: ToastType;
+}
 
 interface StockContextType {
   stock: MockItem[];
@@ -57,8 +66,12 @@ interface StockContextType {
   activeModal: ModalType;
   openModal: (type: ModalType) => void;
   closeModal: () => void;
-  toast: string | null;
-  showToast: (msg: string) => void;
+  toast: ToastData | null;
+  showToast: (
+    msg: string,
+    options?: ToastType | { type?: ToastType; title?: string }
+  ) => void;
+  closeToast: () => void;
   isMobileSidebarOpen: boolean;
   toggleMobileSidebar: () => void;
   closeMobileSidebar: () => void;
