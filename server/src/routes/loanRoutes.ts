@@ -42,3 +42,4 @@ router.post('/checkout', requirePermission(Permission.LOAN_CHECKOUT), checkoutEq
 router.post('/:id/return', requirePermission(Permission.LOAN_RETURN), checkinEquipment);
 
 export default router;
+

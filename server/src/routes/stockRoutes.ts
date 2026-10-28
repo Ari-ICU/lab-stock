@@ -50,3 +50,4 @@ router.put('/:id', requirePermission(Permission.STOCK_UPDATE), updateStockItem);
 router.delete('/:id', requirePermission(Permission.STOCK_DELETE), deleteStockItem);
 
 export default router;
+

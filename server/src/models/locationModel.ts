@@ -51,3 +51,4 @@ export const locationModel = {
     return res.rows[0];
   },
 };
+

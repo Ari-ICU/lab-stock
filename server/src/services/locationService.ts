@@ -27,3 +27,4 @@ export const locationService = {
     return locationModel.create(data);
   },
 };
+

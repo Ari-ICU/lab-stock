@@ -50,3 +50,4 @@ router.put('/:id', requirePermission(Permission.ASSET_UPDATE), updateAsset);
 router.delete('/:id', requirePermission(Permission.ASSET_DELETE), deleteAsset);
 
 export default router;
+

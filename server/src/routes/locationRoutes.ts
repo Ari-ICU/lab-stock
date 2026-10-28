@@ -34,3 +34,4 @@ router.get('/:id', requirePermission(Permission.LOCATION_READ), getLocationById)
 router.post('/', requirePermission(Permission.LOCATION_MANAGE), createLocation);
 
 export default router;
+
