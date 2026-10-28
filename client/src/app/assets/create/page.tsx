@@ -157,7 +157,29 @@ export default function CreateAssetPage() {
         backHref="/assets"
         backLabel="Assets"
         showExport={false}
-        showAction={false}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/assets"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+            >
+              Cancel
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                const form = document.getElementById('new-asset-form') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+            >
+              <Save className="w-3.5 h-3.5 text-neutral-300" />
+              <span>{isSubmitting ? 'Creating...' : 'Create Asset'}</span>
+            </button>
+          </div>
+        }
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">

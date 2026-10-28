@@ -183,6 +183,19 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
 
             <button
               type="button"
+              onClick={() => {
+                const form = document.getElementById('edit-asset-form') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+            >
+              <Save className="w-3.5 h-3.5 text-neutral-300" />
+              <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setShowDeleteConfirm(true)}
               className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
             >
@@ -227,7 +240,11 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
         )}
 
         {/* Two-Column Form Layout */}
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <form
+          id="edit-asset-form"
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        >
           {/* Main 2 Cols: Form Fields */}
           <div className="lg:col-span-2 space-y-6">
             {/* Primary Details Card */}
