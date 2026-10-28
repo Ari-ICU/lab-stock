@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
+import { ScanCodeModal } from '@/components/ScanCodeModal';
 import {
   ArrowLeft,
   Router,
@@ -22,6 +23,7 @@ import {
   FileText,
   AlertCircle,
   HelpCircle,
+  QrCode,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -69,8 +71,9 @@ const PRESETS = [
   },
 ];
 
-export default function CreateAssetPage() {
+function CreateAssetForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addAsset, locations, showToast } = useStock();
 
   const [name, setName] = useState('');
@@ -86,6 +89,17 @@ export default function CreateAssetPage() {
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+
+  // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal)
+  useEffect(() => {
+    const paramSerial = searchParams.get('serial');
+    const paramModel = searchParams.get('model');
+    const paramName = searchParams.get('name');
+    if (paramSerial) setSerialNumber(paramSerial);
+    if (paramModel) setModel(paramModel);
+    if (paramName) setName(paramName);
+  }, [searchParams]);
 
   const locationOptions = locations.map((loc) => ({
     label: `${loc.name} (${loc.room})`,
@@ -261,22 +275,42 @@ export default function CreateAssetPage() {
                   <label className="block text-xs font-semibold text-neutral-800">
                     Serial Number / Tag <span className="text-rose-500">*</span>
                   </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsScanModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors shadow-2xs"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Scan Barcode / QR</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGenerateTag}
+                      className="text-[11px] text-neutral-600 hover:text-neutral-900 hover:underline font-medium cursor-pointer"
+                    >
+                      Generate Tag
+                    </button>
+                  </div>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. FCW2348L09M or OPT-102B-01"
+                    value={serialNumber}
+                    onChange={(e) => setSerialNumber(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 pr-10 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono uppercase transition-colors"
+                  />
                   <button
                     type="button"
-                    onClick={handleGenerateTag}
-                    className="text-[11px] text-emerald-700 hover:text-emerald-900 hover:underline font-medium cursor-pointer"
+                    onClick={() => setIsScanModalOpen(true)}
+                    title="Scan Tag with Camera or Barcode"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 p-1 rounded cursor-pointer transition-colors"
                   >
-                    Generate Tag
+                    <QrCode className="w-4 h-4" />
                   </button>
                 </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. FCW2348L09M or OPT-102B-01"
-                  value={serialNumber}
-                  onChange={(e) => setSerialNumber(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono uppercase transition-colors"
-                />
               </div>
             </div>
 
@@ -467,7 +501,34 @@ export default function CreateAssetPage() {
           </div>
         </form>
       </div>
+
+      <ScanCodeModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        title="Scan Hardware Serial / Asset Tag"
+        targetFieldLabel="Asset Serial Number / Tag"
+        onScan={(scannedCode, meta) => {
+          setSerialNumber(scannedCode);
+          if (meta?.model && !model) setModel(meta.model);
+          if (meta?.name && !name) setName(meta.name);
+          showToast(`Scanned tag inserted: ${scannedCode}`, 'success');
+        }}
+      />
     </div>
+  );
+}
+
+export default function CreateAssetPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-8 text-neutral-500 text-xs">
+          Loading equipment form...
+        </div>
+      }
+    >
+      <CreateAssetForm />
+    </Suspense>
   );
 }
 

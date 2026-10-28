@@ -572,7 +572,7 @@ export function QRScannerModal() {
                         onClick={() => {
                           const code = scannedResult.code;
                           closeScanner();
-                          openModalWithPrefill('add_asset', { serial: code, model: code });
+                          router.push(`/assets/create?serial=${encodeURIComponent(code)}&model=${encodeURIComponent(code)}`);
                         }}
                         className="w-full sm:flex-1 py-2 px-3 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                       >
@@ -584,7 +584,7 @@ export function QRScannerModal() {
                         onClick={() => {
                           const code = scannedResult.code;
                           closeScanner();
-                          openModalWithPrefill('add_stock', { code });
+                          router.push(`/stock/create?code=${encodeURIComponent(code)}`);
                         }}
                         className="w-full sm:flex-1 py-2 px-3 text-xs font-semibold bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                       >

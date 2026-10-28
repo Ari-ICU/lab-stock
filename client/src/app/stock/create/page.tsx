@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
+import { ScanCodeModal } from '@/components/ScanCodeModal';
 import {
   ArrowLeft,
   Save,
@@ -20,6 +21,7 @@ import {
   FileText,
   AlertCircle,
   HelpCircle,
+  QrCode,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -109,8 +111,9 @@ const PRESETS = [
   },
 ];
 
-export default function CreateStockPage() {
+function CreateStockForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addStockItem, locations, showToast } = useStock();
 
   const [name, setName] = useState('');
@@ -127,6 +130,17 @@ export default function CreateStockPage() {
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+
+  // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal)
+  useEffect(() => {
+    const paramCode = searchParams.get('code');
+    const paramName = searchParams.get('name');
+    const paramCategory = searchParams.get('category');
+    if (paramCode) setCode(paramCode);
+    if (paramName) setName(paramName);
+    if (paramCategory) setCategory(paramCategory);
+  }, [searchParams]);
 
   const locationOptions = locations.map((loc) => ({
     label: `${loc.name} (${loc.room})`,
@@ -299,17 +313,29 @@ export default function CreateStockPage() {
 
                   {/* SKU / Part Code */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                      <span>Part Number / SKU Code *</span>
-                      <button
-                        type="button"
-                        onClick={handleGenerateSKU}
-                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-medium hover:underline flex items-center gap-1"
-                      >
-                        <Hash className="w-3 h-3" />
-                        Generate SKU
-                      </button>
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-neutral-900">
+                        Part Number / SKU Code <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsScanModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors shadow-2xs"
+                        >
+                          <QrCode className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Scan Barcode / QR</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleGenerateSKU}
+                          className="text-[11px] text-neutral-600 hover:text-neutral-900 font-medium hover:underline flex items-center gap-1"
+                        >
+                          <Hash className="w-3 h-3" />
+                          Generate SKU
+                        </button>
+                      </div>
+                    </div>
                     <div className="relative">
                       <input
                         type="text"
@@ -317,8 +343,16 @@ export default function CreateStockPage() {
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         placeholder="e.g. CAB-102B-CAT6A"
-                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 pr-9 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setIsScanModalOpen(true)}
+                        title="Scan Barcode or QR Code"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 p-1 rounded cursor-pointer transition-colors"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
@@ -508,7 +542,34 @@ export default function CreateStockPage() {
           </div>
         </form>
       </div>
+
+      <ScanCodeModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        title="Scan Peripheral Item / SKU Code"
+        targetFieldLabel="Part Number / SKU Code"
+        onScan={(scannedCode, meta) => {
+          setCode(scannedCode);
+          if (meta?.name && !name) setName(meta.name);
+          if (meta?.category && !category) setCategory(meta.category);
+          showToast(`Scanned SKU inserted: ${scannedCode}`, 'success');
+        }}
+      />
     </div>
+  );
+}
+
+export default function CreateStockPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-8 text-neutral-500 text-xs">
+          Loading inventory form...
+        </div>
+      }
+    >
+      <CreateStockForm />
+    </Suspense>
   );
 }
 
