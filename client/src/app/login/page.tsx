@@ -7,17 +7,13 @@ import { useAuth, DEMO_ACCOUNTS, DemoAccount } from '@/context/AuthContext';
 import { useStock } from '@/context/StockContext';
 import { getAssetPath } from '@/lib/basePath';
 import {
-  Boxes,
   ShieldCheck,
-  CheckCircle2,
   Mail,
   Lock,
   Eye,
   EyeOff,
   Loader2,
   AlertCircle,
-  ArrowRight,
-  Laptop,
   ArrowLeftRight,
   Server
 } from 'lucide-react';

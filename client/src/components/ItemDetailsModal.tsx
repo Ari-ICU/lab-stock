@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useStock } from '@/context/StockContext';
 import {
   X,
@@ -10,10 +11,15 @@ import {
   Trash2,
   Image as ImageIcon,
   Thermometer,
+  Microscope,
+  Boxes,
+  ExternalLink,
+  ArrowRight,
 } from 'lucide-react';
 import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/data/mockData';
 
 export function ItemDetailsModal() {
+  const router = useRouter();
   const {
     detailsItem,
     closeDetails,
@@ -23,6 +29,8 @@ export function ItemDetailsModal() {
     deleteRack,
     deleteMaintenance,
     deleteLocation,
+    assets,
+    stock,
   } = useStock();
 
   if (!detailsItem) return null;
@@ -205,26 +213,128 @@ export function ItemDetailsModal() {
               </>
             )}
 
-            {locItem && (
-              <>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Campus Building:</span>
-                  <span className="font-medium text-neutral-800">{locItem.building}</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Room Designation:</span>
-                  <span className="font-bold text-neutral-900">{locItem.room}</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Associated Stock SKUs:</span>
-                  <span className="font-medium text-neutral-800">{locItem.totalItems} items</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Mounted Hardware Units:</span>
-                  <span className="font-medium text-neutral-800">{locItem.totalAssets} units</span>
-                </div>
-              </>
-            )}
+            {locItem && (() => {
+              const roomKey = locItem.room.replace(/^Rm\s*/i, '').trim().toLowerCase();
+              const locAssets = assets.filter((a) => {
+                const l = a.location.toLowerCase();
+                return (
+                  l.includes(roomKey) ||
+                  l.includes(locItem.room.toLowerCase()) ||
+                  l.includes(locItem.name.toLowerCase())
+                );
+              });
+              const locStock = stock.filter((s) => {
+                const l = s.location.toLowerCase();
+                return (
+                  l.includes(roomKey) ||
+                  l.includes(locItem.room.toLowerCase()) ||
+                  l.includes(locItem.name.toLowerCase())
+                );
+              });
+              const totalHUnits = locAssets.reduce((s, a) => s + (a.totalUnits ?? 1), 0);
+              const totalSUnits = locStock.reduce((s, st) => s + (st.quantity || 1), 0);
+
+              return (
+                <>
+                  <div className="p-3 flex justify-between items-center">
+                    <span className="text-neutral-500">Campus Facility:</span>
+                    <span className="font-medium text-neutral-800">{locItem.building}</span>
+                  </div>
+                  <div className="p-3 flex justify-between items-center">
+                    <span className="text-neutral-500">Room Designation:</span>
+                    <span className="font-bold text-neutral-900 font-mono">{locItem.room}</span>
+                  </div>
+                  <div className="p-3 flex justify-between items-center">
+                    <span className="text-neutral-500">Hardware Devices:</span>
+                    <span className="font-bold text-blue-700">
+                      {locAssets.length} models ({totalHUnits} units)
+                    </span>
+                  </div>
+                  <div className="p-3 flex justify-between items-center">
+                    <span className="text-neutral-500">Inventory Consumables:</span>
+                    <span className="font-bold text-emerald-700">
+                      {locStock.length} SKUs ({totalSUnits} units)
+                    </span>
+                  </div>
+
+                  {/* Quick Preview List */}
+                  <div className="p-3 bg-neutral-50 border-t border-neutral-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Microscope className="w-3.5 h-3.5 text-blue-600" />
+                        Hardware Equipment in {locItem.room} ({locAssets.length})
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {locAssets.length === 0 ? (
+                        <div className="text-[11px] text-neutral-400 italic">No hardware models assigned to this room yet.</div>
+                      ) : (
+                        locAssets.map((a) => (
+                          <div
+                            key={a.id}
+                            onClick={() => {
+                              closeDetails();
+                              router.push(`/assets/${a.id}`);
+                            }}
+                            className="flex items-center justify-between p-1.5 bg-white border border-neutral-200 rounded text-[11px] hover:border-neutral-400 cursor-pointer transition-colors"
+                          >
+                            <span className="font-semibold text-neutral-900 truncate max-w-[220px]">
+                              {a.name}
+                            </span>
+                            <span className="font-mono text-neutral-500 text-[10px]">
+                              {a.totalUnits ?? 1} units
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Boxes className="w-3.5 h-3.5 text-emerald-600" />
+                        Peripherals & Stock in {locItem.room} ({locStock.length})
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {locStock.length === 0 ? (
+                        <div className="text-[11px] text-neutral-400 italic">No peripherals assigned to this room yet.</div>
+                      ) : (
+                        locStock.map((s) => (
+                          <div
+                            key={s.id}
+                            onClick={() => {
+                              closeDetails();
+                              router.push(`/stock/${s.id}`);
+                            }}
+                            className="flex items-center justify-between p-1.5 bg-white border border-neutral-200 rounded text-[11px] hover:border-neutral-400 cursor-pointer transition-colors"
+                          >
+                            <span className="font-semibold text-neutral-900 truncate max-w-[220px]">
+                              {s.name}
+                            </span>
+                            <span className="font-mono text-neutral-500 text-[10px]">
+                              {s.quantity} {s.unit}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetId = locItem.id;
+                        closeDetails();
+                        router.push(`/locations/${targetId}`);
+                      }}
+                      className="w-full py-2 px-3 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
+                    >
+                      <span>Open Full Room Fleet Specification Page</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
 
             {rackItem && (
               <>

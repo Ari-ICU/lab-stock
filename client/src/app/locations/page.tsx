@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
-import { Boxes, Microscope, Building } from 'lucide-react';
+import { Boxes, Microscope, Building, ArrowRight } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 
 export default function LocationsPage() {
+  const router = useRouter();
   const { stock, assets, locations, openModal, showToast, openDetails, openEdit, deleteLocation } = useStock();
   const [filterText, setFilterText] = useState('');
 
@@ -100,41 +103,44 @@ export default function LocationsPage() {
         {/* Flat Location Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((loc) => (
-            <div key={loc.id} className="bg-white border border-neutral-200 rounded p-5 space-y-4">
+            <div key={loc.id} className="bg-white border border-neutral-200 rounded-xl p-5 space-y-4 hover:border-neutral-300 transition-all shadow-2xs hover:shadow-xs">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div
-                    onClick={() => openDetails(loc)}
-                    className="w-10 h-10 bg-neutral-100 rounded flex items-center justify-center text-neutral-700 cursor-pointer hover:bg-neutral-200 transition-colors"
-                    title="Click to view details"
+                  <Link
+                    href={`/locations/${loc.id}`}
+                    className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-700 cursor-pointer hover:bg-neutral-900 hover:text-white transition-colors shrink-0 shadow-2xs"
+                    title="Click to view lab equipment and inventory"
                   >
                     <Building className="w-5 h-5" />
-                  </div>
+                  </Link>
                   <div>
-                    <button
-                      onClick={() => openDetails(loc)}
-                      className="text-sm font-bold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
+                    <Link
+                      href={`/locations/${loc.id}`}
+                      className="text-sm font-bold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
                     >
                       {loc.name}
-                    </button>
+                    </Link>
                     <div className="text-xs text-neutral-500 mt-0.5">
-                      {loc.building} • <span className="font-semibold text-neutral-700">{loc.room}</span>
+                      {loc.building} • <span className="font-semibold text-neutral-700 font-mono">{loc.room}</span>
                     </div>
                   </div>
                 </div>
 
                 <RowActionMenu
-                  onViewDetails={() => openDetails(loc)}
+                  onViewDetails={() => router.push(`/locations/${loc.id}`)}
                   onEdit={() => openEdit(loc)}
                   onDelete={() => deleteLocation(loc.id)}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-100">
-                <div className="bg-neutral-50 border border-neutral-100 rounded p-2.5 flex items-center gap-2.5">
-                  <Boxes className="w-4 h-4 text-neutral-400 shrink-0" />
+                <Link
+                  href={`/locations/${loc.id}`}
+                  className="bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/70 rounded-lg p-2.5 flex items-center gap-2.5 transition-colors cursor-pointer group"
+                >
+                  <Boxes className="w-4 h-4 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
                   <div className="min-w-0">
-                    <div className="text-[11px] text-neutral-500">Inventory Items</div>
+                    <div className="text-[11px] text-neutral-500 font-medium">Inventory Items</div>
                     <div className="text-xs font-bold text-neutral-900 truncate">
                       {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
                       <span className="text-[10px] text-neutral-500 font-normal ml-1">
@@ -142,12 +148,15 @@ export default function LocationsPage() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
 
-                <div className="bg-neutral-50 border border-neutral-100 rounded p-2.5 flex items-center gap-2.5">
-                  <Microscope className="w-4 h-4 text-neutral-400 shrink-0" />
+                <Link
+                  href={`/locations/${loc.id}`}
+                  className="bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/70 rounded-lg p-2.5 flex items-center gap-2.5 transition-colors cursor-pointer group"
+                >
+                  <Microscope className="w-4 h-4 text-blue-600 shrink-0 group-hover:scale-110 transition-transform" />
                   <div className="min-w-0">
-                    <div className="text-[11px] text-neutral-500">Lab Hardware</div>
+                    <div className="text-[11px] text-neutral-500 font-medium">Lab Hardware</div>
                     <div className="text-xs font-bold text-neutral-900 truncate">
                       {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
                       <span className="text-[10px] text-neutral-500 font-normal ml-1">
@@ -155,7 +164,20 @@ export default function LocationsPage() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs">
+                <span className="text-[11px] text-neutral-400 font-mono">
+                  Room Key: {loc.room}
+                </span>
+                <Link
+                  href={`/locations/${loc.id}`}
+                  className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+                >
+                  <span>View Lab Equipment</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
           ))}

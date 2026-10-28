@@ -539,8 +539,8 @@ export default function LoansPage() {
       {/* Lend Device Modal */}
       {isLendModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded border border-neutral-300 shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50">
+          <div className="bg-white rounded-xl border border-neutral-200 shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50/80">
               <div className="flex items-center gap-2">
                 <Laptop className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-semibold text-sm text-neutral-900">Check-Out / Lend Device</h3>
@@ -553,7 +553,7 @@ export default function LoansPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateLoan} className="flex-1 overflow-y-auto p-5 space-y-4">
+            <form id="lend-device-form" onSubmit={handleCreateLoan} className="flex-1 overflow-y-auto p-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Select Equipment / Device <span className="text-rose-500">*</span>
@@ -641,7 +641,7 @@ export default function LoansPage() {
                   <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Expected Return Date
                   </label>
-                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} align="right" />
+                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} align="right" openDirection="auto" />
                 </div>
               </div>
 
@@ -657,23 +657,25 @@ export default function LoansPage() {
                   className="w-full bg-white text-xs border border-neutral-300 rounded p-2.5 text-neutral-900 focus:outline-none focus:border-neutral-900"
                 />
               </div>
-
-              <div className="pt-3 border-t border-neutral-200 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsLendModalOpen(false)}
-                  className="px-3 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded cursor-pointer"
-                >
-                  Confirm Check-Out
-                </button>
-              </div>
             </form>
+
+            {/* Pinned Action Footer */}
+            <div className="h-14 px-5 border-t border-neutral-200 bg-neutral-50/90 flex items-center justify-end gap-2 shrink-0 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => setIsLendModalOpen(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="lend-device-form"
+                className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded cursor-pointer transition-colors shadow-2xs"
+              >
+                Confirm Check-Out
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -681,8 +683,8 @@ export default function LoansPage() {
       {/* Relocate Device Modal */}
       {isTransferModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded border border-neutral-300 shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50">
+          <div className="bg-white rounded-xl border border-neutral-200 shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50/80">
               <div className="flex items-center gap-2">
                 <ArrowLeftRight className="w-4 h-4 text-blue-600" />
                 <h3 className="font-semibold text-sm text-neutral-900">Relocate Device to Another Lab</h3>
@@ -695,7 +697,7 @@ export default function LoansPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateTransfer} className="flex-1 overflow-y-auto p-5 space-y-4">
+            <form id="transfer-device-form" onSubmit={handleCreateTransfer} className="flex-1 overflow-y-auto p-5 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Select Equipment to Relocate <span className="text-rose-500">*</span>
@@ -757,23 +759,25 @@ export default function LoansPage() {
                   className="w-full bg-white text-xs border border-neutral-300 rounded p-2.5 text-neutral-900 focus:outline-none focus:border-neutral-900"
                 />
               </div>
-
-              <div className="pt-3 border-t border-neutral-200 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsTransferModalOpen(false)}
-                  className="px-3 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded cursor-pointer"
-                >
-                  Confirm Movement
-                </button>
-              </div>
             </form>
+
+            {/* Pinned Action Footer */}
+            <div className="h-14 px-5 border-t border-neutral-200 bg-neutral-50/90 flex items-center justify-end gap-2 shrink-0 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => setIsTransferModalOpen(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="transfer-device-form"
+                className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded cursor-pointer transition-colors shadow-2xs"
+              >
+                Confirm Movement
+              </button>
+            </div>
           </div>
         </div>
       )}
