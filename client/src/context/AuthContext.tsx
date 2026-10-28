@@ -28,6 +28,17 @@ export interface DemoAccount {
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
+    name: 'Heng Sovannarith',
+    email: 'heng.sovannarith@rupp.edu.kh',
+    password: 'password123',
+    role: 'Faculty Lecturer',
+    roleBadge: 'Lecturer',
+    avatarText: 'HS',
+    permissions: 'Faculty Course & Lab Management',
+    department: 'Computer Science Department - Faculty of Science',
+    description: 'Lecturer portal access for attendance and laboratory management',
+  },
+  {
     name: 'Thoeurn Ratha',
     email: 'admin@netlab.edu',
     password: 'password123',
@@ -35,7 +46,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     roleBadge: 'Admin',
     avatarText: 'TR',
     permissions: 'Full Read/Write Access & System Config',
-    department: 'Engineering Block A - Room 102B',
+    department: 'Computer Science Department - Room 102B',
     description: 'Full administrator privileges across all hardware, racks, and stock',
   },
   {
@@ -46,7 +57,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     roleBadge: 'Technician',
     avatarText: 'SC',
     permissions: 'Maintenance & Hardware Management',
-    department: 'Engineering Block A - Room 102B',
+    department: 'Computer Science Department - Room 102B',
     description: 'Hardware maintenance, stock adjustments, and equipment logging',
   },
   {

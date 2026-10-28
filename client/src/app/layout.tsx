@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NetLab Stock - Network Laboratory Inventory & Assets",
+  title: "Lab Stock - Network Laboratory Inventory & Assets",
   description: "Network lab stock, Cisco switches, fiber optics, cables, and rack asset management.",
 };
 
