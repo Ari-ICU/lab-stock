@@ -72,6 +72,7 @@ export function AddEntityModal() {
   );
   const [stockImageUrl, setStockImageUrl] = useState('');
   const [stockDescription, setStockDescription] = useState('');
+  const [stockExpiryDate, setStockExpiryDate] = useState('Active');
 
   // Asset Form State
   const [assetName, setAssetName] = useState('');

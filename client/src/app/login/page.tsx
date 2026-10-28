@@ -109,8 +109,8 @@ export default function LoginPage() {
                 <div className="font-bold text-base sm:text-lg text-neutral-900 tracking-tight leading-tight font-khmer">
                   សាកលវិទ្យាល័យភូមិន្ទភ្នំពេញ
                 </div>
-                <div className="text-xs font-semibold text-neutral-600 tracking-wide mt-0.5">
-                  Faculty of Science 
+                <div className="text-xs sm:text-sm font-bold text-neutral-900 tracking-wide mt-0.5">
+                  Faculty of Science
                 </div>
               </div>
             </div>
