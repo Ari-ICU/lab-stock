@@ -100,7 +100,9 @@ export default function SettingsPage() {
   }, []);
 
   // System & API Configuration State
-  const [apiBaseUrl, setApiBaseUrl] = useState('http://localhost:5001/api/v1');
+  const [apiBaseUrl, setApiBaseUrl] = useState(
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1'
+  );
   const [apiEnvironment, setApiEnvironment] = useState('Development (Local Faculty Fleet)');
   const [apiStatus, setApiStatus] = useState<'idle' | 'testing' | 'connected' | 'error'>('idle');
   const [apiLatency, setApiLatency] = useState<number | null>(null);
