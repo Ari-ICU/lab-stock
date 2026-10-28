@@ -6,6 +6,7 @@ import {
   checkinEquipment,
 } from '../controllers/loanController.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
+import { validateCheckoutLoan } from '../middleware/validate.js';
 import { Permission } from '../constants/permissions.js';
 
 const router = Router();
@@ -29,17 +30,25 @@ router.get('/:id', requirePermission(Permission.LOAN_READ), getLoanById);
 
 /**
  * @route   POST /api/v1/loans/checkout
- * @desc    Check out equipment device to borrower
+ * @desc    Check out equipment device to borrower with DTO validation
  * @access  Protected (Requires loans:checkout)
  */
-router.post('/checkout', requirePermission(Permission.LOAN_CHECKOUT), checkoutEquipment);
+router.post(
+  '/checkout',
+  requirePermission(Permission.LOAN_CHECKOUT),
+  validateCheckoutLoan,
+  checkoutEquipment
+);
 
 /**
  * @route   POST /api/v1/loans/:id/return
  * @desc    Check in returned device and log condition inspection notes
  * @access  Protected (Requires loans:return)
  */
-router.post('/:id/return', requirePermission(Permission.LOAN_RETURN), checkinEquipment);
+router.post(
+  '/:id/return',
+  requirePermission(Permission.LOAN_RETURN),
+  checkinEquipment
+);
 
 export default router;
-

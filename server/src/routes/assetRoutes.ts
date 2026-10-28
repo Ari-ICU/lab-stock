@@ -7,6 +7,7 @@ import {
   deleteAsset,
 } from '../controllers/assetController.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
+import { validateCreateAsset, validateUpdateAsset } from '../middleware/validate.js';
 import { Permission } from '../constants/permissions.js';
 
 const router = Router();
@@ -30,17 +31,27 @@ router.get('/:id', requirePermission(Permission.ASSET_READ), getAssetById);
 
 /**
  * @route   POST /api/v1/assets
- * @desc    Register a new hardware asset
+ * @desc    Register a new hardware asset with DTO validation
  * @access  Protected (Requires assets:create)
  */
-router.post('/', requirePermission(Permission.ASSET_CREATE), createAsset);
+router.post(
+  '/',
+  requirePermission(Permission.ASSET_CREATE),
+  validateCreateAsset,
+  createAsset
+);
 
 /**
  * @route   PUT /api/v1/assets/:id
- * @desc    Update hardware asset details
+ * @desc    Update hardware asset details with DTO validation
  * @access  Protected (Requires assets:update)
  */
-router.put('/:id', requirePermission(Permission.ASSET_UPDATE), updateAsset);
+router.put(
+  '/:id',
+  requirePermission(Permission.ASSET_UPDATE),
+  validateUpdateAsset,
+  updateAsset
+);
 
 /**
  * @route   DELETE /api/v1/assets/:id
@@ -50,4 +61,3 @@ router.put('/:id', requirePermission(Permission.ASSET_UPDATE), updateAsset);
 router.delete('/:id', requirePermission(Permission.ASSET_DELETE), deleteAsset);
 
 export default router;
-

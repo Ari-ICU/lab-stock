@@ -7,6 +7,7 @@ import {
   deleteStockItem,
 } from '../controllers/stockController.js';
 import { authenticate, requirePermission } from '../middleware/auth.js';
+import { validateCreateStock, validateUpdateStock } from '../middleware/validate.js';
 import { Permission } from '../constants/permissions.js';
 
 const router = Router();
@@ -30,17 +31,27 @@ router.get('/:id', requirePermission(Permission.STOCK_READ), getStockItemById);
 
 /**
  * @route   POST /api/v1/stock
- * @desc    Create a new stock item
+ * @desc    Create a new stock item with DTO validation
  * @access  Protected (Requires stock:create)
  */
-router.post('/', requirePermission(Permission.STOCK_CREATE), createStockItem);
+router.post(
+  '/',
+  requirePermission(Permission.STOCK_CREATE),
+  validateCreateStock,
+  createStockItem
+);
 
 /**
  * @route   PUT /api/v1/stock/:id
- * @desc    Update an existing stock item
+ * @desc    Update an existing stock item with DTO validation
  * @access  Protected (Requires stock:update)
  */
-router.put('/:id', requirePermission(Permission.STOCK_UPDATE), updateStockItem);
+router.put(
+  '/:id',
+  requirePermission(Permission.STOCK_UPDATE),
+  validateUpdateStock,
+  updateStockItem
+);
 
 /**
  * @route   DELETE /api/v1/stock/:id
@@ -50,4 +61,3 @@ router.put('/:id', requirePermission(Permission.STOCK_UPDATE), updateStockItem);
 router.delete('/:id', requirePermission(Permission.STOCK_DELETE), deleteStockItem);
 
 export default router;
-
