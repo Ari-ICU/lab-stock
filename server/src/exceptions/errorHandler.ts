@@ -124,11 +124,19 @@ export function errorHandler(
     console.error('💥 [CRITICAL SERVER ERROR]:', err);
   }
 
+  // Protect against information disclosure: only expose field validation details in production
+  const safeDetails =
+    errorCode === 'VALIDATION_ERROR'
+      ? err.details
+      : !isProduction
+      ? err.details
+      : undefined;
+
   return res.status(statusCode).json({
     status: 'error',
     code: errorCode,
     message: responseMessage,
-    ...(err.details && { details: err.details }),
+    ...(safeDetails && { details: safeDetails }),
     ...(!isProduction && { stack: err.stack }),
   });
 }
