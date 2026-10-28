@@ -6,7 +6,7 @@
        local('KhmerOS Siemreap'),
        local('Khmer OS Siemreap Regular'),
        url('/fonts/KhmerOS_siemreap.ttf') format('truetype');
-  font-weight: 100 900;
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -37,6 +37,13 @@
 
 .font-khmer {
   font-family: var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", sans-serif !important;
+}
+
+.font-khmer-bold {
+  font-family: var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", sans-serif !important;
+  font-weight: 800 !important;
+  -webkit-text-stroke: 0.5px currentColor;
+  text-shadow: 0 0 0.5px currentColor;
 }
 
 .font-khmer-muol {
