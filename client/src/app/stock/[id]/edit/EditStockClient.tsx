@@ -232,12 +232,12 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-5xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         <form id="edit-stock-form" onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Left 2 Cols: Form fields */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* Left Column: Form fields */}
+            <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-6">
               
               {/* Core Details */}
               <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
@@ -412,7 +412,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
             </div>
 
             {/* Right Column: Visual & Save Card */}
-            <div className="space-y-6">
+            <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 space-y-6">
               <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <Layers className="w-4 h-4 text-neutral-700" />

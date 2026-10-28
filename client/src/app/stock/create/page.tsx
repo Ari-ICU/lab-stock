@@ -226,7 +226,7 @@ export default function CreateStockPage() {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-5xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Quick Presets Carousel / Cards */}
         <div className="bg-white border border-neutral-200 rounded p-4 sm:p-5 space-y-3">
           <div className="flex items-center justify-between">
@@ -241,7 +241,7 @@ export default function CreateStockPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 pt-1">
             {PRESETS.map((p, idx) => (
               <button
                 key={idx}
@@ -268,10 +268,10 @@ export default function CreateStockPage() {
 
         {/* Main Creation Form */}
         <form id="new-stock-form" onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Left 2 Cols: Item Details */}
-            <div className="lg:col-span-2 space-y-6">
+            {/* Left Column: Item Details */}
+            <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-6">
               <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <Cable className="w-4 h-4 text-neutral-700" />
@@ -445,7 +445,7 @@ export default function CreateStockPage() {
             </div>
 
             {/* Right Column: Image & Summary Card */}
-            <div className="space-y-6">
+            <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 space-y-6">
               {/* Product Visual */}
               <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">

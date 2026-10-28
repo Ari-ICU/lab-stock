@@ -139,7 +139,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
       />
 
       {/* Main Content Body */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         
         {/* Top Summary / Status Banner */}
         <div className="bg-white border border-neutral-200 rounded p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -247,11 +247,11 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
           </div>
         </div>
 
-        {/* 2-Column Detail Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Full-width Responsive Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left Column: Visual & Storage Location */}
-          <div className="space-y-6">
+          <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 space-y-6">
             {/* Visual Card */}
             <div className="bg-white border border-neutral-200 rounded p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
@@ -328,8 +328,8 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
             </div>
           </div>
 
-          {/* Right 2 Columns: Specifications & Technical Description */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Right Column: Specifications & Technical Description */}
+          <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-6">
             
             {/* Specifications Card */}
             <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
@@ -340,7 +340,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 text-xs pt-1">
                 <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
                   <div className="text-neutral-400 text-[11px] font-medium">Item Name</div>
                   <div className="font-semibold text-neutral-900">{item.name}</div>
