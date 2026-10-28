@@ -95,34 +95,35 @@ export default function LoansPage() {
   const handleExport = () => {
     if (activeTab === 'transfers') {
       exportToCsv(
-        'device_relocation_logs',
-        transfers.map((t) => ({
-          ID: t.id,
-          Device: t.assetName,
+        'csd_stock_relocation_logs',
+        filteredTransfers.map((t) => ({
+          'Relocation ID': t.id,
+          'Equipment Name': t.assetName,
           'Serial Number': t.serialNumber,
-          'From Location': t.fromLocation,
-          'To Location': t.toLocation,
-          Date: t.transferDate,
-          'Transferred By': t.transferredBy,
-          Reason: t.reason || '',
+          'From Lab Room': t.fromLocation,
+          'To Lab Room': t.toLocation,
+          'Transfer Date': t.transferDate,
+          'Authorized By': t.transferredBy,
+          'Relocation Reason': t.reason || 'Laboratory Reconfiguration',
         }))
       );
     } else {
+      const targetLoans = activeTab === 'history' ? filteredHistoryLoans : filteredActiveLoans;
       exportToCsv(
-        'device_loan_records',
-        loans.map((l) => ({
-          ID: l.id,
-          Device: l.assetName,
+        'csd_stock_device_loans',
+        targetLoans.map((l) => ({
+          'Loan ID': l.id,
+          'Equipment Name': l.assetName,
           'Serial Number': l.serialNumber,
-          Borrower: l.borrowerName,
-          Role: l.borrowerRole,
-          Contact: l.borrowerContact,
-          Course: l.courseOrClass || '',
-          'Borrow Date': l.borrowDate,
-          'Expected Return': l.expectedReturnDate,
-          'Actual Return': l.actualReturnDate || '',
-          Status: l.status,
-          Notes: l.notes || '',
+          'Borrower Name': l.borrowerName,
+          'Borrower Role': l.borrowerRole,
+          'Contact / Student ID': l.borrowerContact,
+          'Course / Practical Class': l.courseOrClass || '',
+          'Checkout Date': l.borrowDate,
+          'Expected Due Date': l.expectedReturnDate,
+          'Actual Return Date': l.actualReturnDate || 'Pending Return',
+          'Loan Status': l.status,
+          'Supervisor / Staff Notes': l.notes || '',
         }))
       );
     }

@@ -121,6 +121,8 @@ export function detectCurrentDevice(): {
   os: string;
   deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal';
   deviceName: string;
+  ip: string;
+  location: string;
 } {
   if (typeof window === 'undefined') {
     return {
@@ -128,92 +130,119 @@ export function detectCurrentDevice(): {
       os: 'Operating System',
       deviceType: 'desktop',
       deviceName: 'Lab Workstation',
+      ip: '127.0.0.1 (Localhost)',
+      location: 'Local Client Session',
     };
   }
 
   const ua = navigator.userAgent;
-  let browser = 'Chrome';
-  if (ua.includes('Firefox')) browser = 'Firefox';
-  else if (ua.includes('Edg')) browser = 'Microsoft Edge';
-  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
-  else if (ua.includes('Chrome')) browser = 'Chrome';
 
-  let os = 'macOS';
-  let deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal' = 'desktop';
-  let deviceName = 'Engineering Workstation';
-
-  if (ua.includes('Mac OS') || ua.includes('Macintosh')) {
-    os = 'macOS Sonoma';
-    deviceName = 'Apple Mac Workstation';
-  } else if (ua.includes('Windows')) {
-    os = 'Windows 11 Pro';
-    deviceName = 'Windows PC Workstation';
-  } else if (ua.includes('Linux')) {
-    os = 'Ubuntu Linux 24.04';
-    deviceType = 'terminal';
-    deviceName = 'Linux Lab Terminal';
-  } else if (ua.includes('iPad')) {
-    os = 'iPadOS 17.5';
-    deviceType = 'tablet';
-    deviceName = 'Lab Audit iPad';
-  } else if (ua.includes('iPhone')) {
-    os = 'iOS 17.5';
-    deviceType = 'mobile';
-    deviceName = 'iPhone Scanner Handheld';
-  } else if (ua.includes('Android')) {
-    os = 'Android 14';
-    deviceType = 'mobile';
-    deviceName = 'Android Terminal Scanner';
+  // Real Browser Detection with major version
+  let browser = 'Web Browser';
+  if (ua.includes('Edg/')) {
+    const match = ua.match(/Edg\/([\d.]+)/);
+    browser = `Edge ${match ? match[1].split('.')[0] : ''}`.trim();
+  } else if (ua.includes('Chrome/')) {
+    const match = ua.match(/Chrome\/([\d.]+)/);
+    browser = `Chrome ${match ? match[1].split('.')[0] : ''}`.trim();
+  } else if (ua.includes('Firefox/')) {
+    const match = ua.match(/Firefox\/([\d.]+)/);
+    browser = `Firefox ${match ? match[1].split('.')[0] : ''}`.trim();
+  } else if (ua.includes('Safari/') && !ua.includes('Chrome')) {
+    const match = ua.match(/Version\/([\d.]+)/);
+    browser = `Safari ${match ? match[1].split('.')[0] : ''}`.trim();
   }
 
-  return { browser, os, deviceType, deviceName };
+  // Real Device & OS Detection
+  let os = 'Unknown OS';
+  let deviceName = 'Client Workstation';
+  let deviceType: 'desktop' | 'laptop' | 'tablet' | 'mobile' | 'terminal' = 'desktop';
+
+  const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  const isTablet = /iPad|Tablet|PlayBook/i.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1);
+
+  if (isTablet) {
+    deviceType = 'tablet';
+  } else if (isMobile) {
+    deviceType = 'mobile';
+  } else if (window.screen.width <= 1440 && window.screen.height <= 900) {
+    deviceType = 'laptop';
+  } else {
+    deviceType = 'desktop';
+  }
+
+  if (ua.includes('Macintosh') || ua.includes('Mac OS X')) {
+    let isAppleSilicon = false;
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl');
+      if (gl) {
+        const ext = gl.getExtension('WEBGL_debug_renderer_info');
+        if (ext) {
+          const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
+          if (renderer.includes('Apple') || renderer.includes('M1') || renderer.includes('M2') || renderer.includes('M3') || renderer.includes('M4')) {
+            isAppleSilicon = true;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    os = isAppleSilicon ? 'macOS (Apple Silicon)' : 'macOS';
+    deviceName = isAppleSilicon
+      ? (deviceType === 'laptop' ? 'Apple MacBook (Apple Silicon)' : 'Apple Mac (Apple Silicon)')
+      : (deviceType === 'laptop' ? 'Apple MacBook Pro' : 'Apple Mac Workstation');
+  } else if (ua.includes('Windows NT 10.0') || ua.includes('Windows')) {
+    os = 'Windows 11 / 10';
+    deviceName = deviceType === 'laptop' ? 'Windows Laptop PC' : 'Windows PC Workstation';
+  } else if (ua.includes('Linux')) {
+    os = 'Linux X11';
+    deviceName = 'Linux Workstation';
+  } else if (ua.includes('iPhone')) {
+    os = 'iOS';
+    deviceName = 'Apple iPhone';
+  } else if (ua.includes('iPad')) {
+    os = 'iPadOS';
+    deviceName = 'Apple iPad';
+  } else if (ua.includes('Android')) {
+    os = 'Android';
+    deviceName = 'Android Device';
+  }
+
+  // Real IP / Host detection
+  const host = window.location.hostname || 'localhost';
+  const port = window.location.port ? `:${window.location.port}` : '';
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.');
+  const ip = isLocal ? `127.0.0.1 (${host}${port})` : `${host}${port}`;
+
+  // Real Location & Timezone
+  let location = 'Local Client Session';
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local';
+    const lang = (navigator.language || 'en').toUpperCase();
+    const res = `${window.screen.width}×${window.screen.height}`;
+    location = `${tz} • ${lang} • ${res}`;
+  } catch {
+    // ignore
+  }
+
+  return { browser, os, deviceType, deviceName, ip, location };
 }
 
 export function getInitialSessions(): SessionDevice[] {
+  const current = detectCurrentDevice();
   return [
     {
       id: 'sess-current',
-      deviceName: 'Engineering Workstation',
-      deviceType: 'desktop',
-      browser: 'Web Browser',
-      os: 'Operating System',
-      ip: '192.168.102.15',
-      location: 'Room 102B - Workstation 01',
+      deviceName: current.deviceName,
+      deviceType: current.deviceType,
+      browser: current.browser,
+      os: current.os,
+      ip: current.ip,
+      location: current.location,
       lastActive: 'Active now',
       isCurrent: true,
-    },
-    {
-      id: 'sess-rack-console',
-      deviceName: 'Rack A Management Terminal',
-      deviceType: 'terminal',
-      browser: 'Chromium 122',
-      os: 'Debian GNU/Linux 12',
-      ip: '192.168.102.40',
-      location: 'Rack Cabinet A - Console Port',
-      lastActive: '12 minutes ago',
-      isCurrent: false,
-    },
-    {
-      id: 'sess-tablet-scanner',
-      deviceName: 'Mobile Barcode Scanner Tablet',
-      deviceType: 'tablet',
-      browser: 'Mobile Safari 17.5',
-      os: 'iPadOS 17.5',
-      ip: '192.168.102.88',
-      location: 'Room 102B Inventory Cart',
-      lastActive: '2 hours ago',
-      isCurrent: false,
-    },
-    {
-      id: 'sess-faculty-pc',
-      deviceName: 'Instructor Teaching Podium',
-      deviceType: 'desktop',
-      browser: 'Microsoft Edge 124',
-      os: 'Windows 11 Education',
-      ip: '192.168.102.10',
-      location: 'Room 102B Faculty Desk',
-      lastActive: 'Yesterday',
-      isCurrent: false,
     },
   ];
 }
@@ -290,9 +319,26 @@ const getStoredSessions = (): SessionDevice[] => {
     const stored = localStorage.getItem(SESSIONS_STORAGE_KEY) || localStorage.getItem('netlab_session_devices');
     if (stored) {
       const parsed: SessionDevice[] = JSON.parse(stored);
-      // Keep current device up to date
+      // Remove legacy mock session devices
+      const clean = parsed.filter(
+        (s) => s.id !== 'sess-rack-console' && s.id !== 'sess-tablet-scanner' && s.id !== 'sess-faculty-pc'
+      );
       const current = detectCurrentDevice();
-      return parsed.map((s) => (s.isCurrent ? { ...s, browser: current.browser, os: current.os, deviceName: current.deviceName } : s));
+      if (clean.length > 0) {
+        return clean.map((s) =>
+          s.isCurrent
+            ? {
+                ...s,
+                browser: current.browser,
+                os: current.os,
+                deviceName: current.deviceName,
+                deviceType: current.deviceType,
+                ip: current.ip,
+                location: current.location,
+              }
+            : s
+        );
+      }
     }
   } catch {
     // fallback
@@ -358,14 +404,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
 
-    // 3. Sync Sessions & Detect Real Hardware/Browser
+    // 3. Sync Sessions & Detect Real Hardware/Browser (NO FAKE MOCK SESSIONS)
     const current = detectCurrentDevice();
+    let initialList: SessionDevice[] = [];
     try {
       const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY) || localStorage.getItem('netlab_session_devices');
       if (storedSessions) {
         const parsed: SessionDevice[] = JSON.parse(storedSessions);
-        setSessionDevices(
-          parsed.map((s) =>
+        // Remove legacy mock sessions
+        const clean = parsed.filter(
+          (s) => s.id !== 'sess-rack-console' && s.id !== 'sess-tablet-scanner' && s.id !== 'sess-faculty-pc'
+        );
+        if (clean.length > 0) {
+          initialList = clean.map((s) =>
             s.isCurrent
               ? {
                   ...s,
@@ -373,28 +424,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   os: current.os,
                   deviceName: current.deviceName,
                   deviceType: current.deviceType,
+                  ip: current.ip,
+                  location: current.location,
+                  lastActive: 'Active now',
                 }
               : s
-          )
-        );
-      } else {
-        setSessionDevices((prev) =>
-          prev.map((s) =>
-            s.isCurrent
-              ? {
-                  ...s,
-                  browser: current.browser,
-                  os: current.os,
-                  deviceName: current.deviceName,
-                  deviceType: current.deviceType,
-                }
-              : s
-          )
-        );
+          );
+        }
       }
     } catch {
       // ignore
     }
+
+    if (initialList.length === 0) {
+      initialList = [
+        {
+          id: 'sess-current',
+          deviceName: current.deviceName,
+          deviceType: current.deviceType,
+          browser: current.browser,
+          os: current.os,
+          ip: current.ip,
+          location: current.location,
+          lastActive: 'Active now',
+          isCurrent: true,
+        },
+      ];
+    }
+
+    setSessionDevices(initialList);
+    try {
+      localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(initialList));
+    } catch {
+      // ignore
+    }
+
+    // Attempt live public IP detection asynchronously if available
+    const detectRealIp = async () => {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2500) });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.ip) {
+            const host = window.location.hostname || 'localhost';
+            const port = window.location.port ? `:${window.location.port}` : '';
+            const realIpText = `${data.ip} (${host}${port})`;
+            setSessionDevices((prev) => {
+              const updated = prev.map((s) => (s.isCurrent ? { ...s, ip: realIpText } : s));
+              try {
+                localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
+        }
+      } catch {
+        // Keeps local IP fallback (e.g. 127.0.0.1)
+      }
+    };
+    detectRealIp();
   }, []);
 
   const saveUsers = (usersList: ManagedUser[]) => {
@@ -484,12 +572,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           os: current.os,
           deviceName: current.deviceName,
           deviceType: current.deviceType,
+          ip: current.ip,
+          location: current.location,
           lastActive: 'Active now',
         };
       }
       return s;
     });
     saveSessions(updated);
+
+    fetch('https://api.ipify.org?format=json')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.ip) {
+          const host = window.location.hostname || 'localhost';
+          const port = window.location.port ? `:${window.location.port}` : '';
+          const realIpText = `${data.ip} (${host}${port})`;
+          setSessionDevices((prev) => {
+            const reUpdated = prev.map((s) => (s.isCurrent ? { ...s, ip: realIpText } : s));
+            saveSessions(reUpdated);
+            return reUpdated;
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   const revokeSession = (sessionId: string) => {

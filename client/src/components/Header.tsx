@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Download, Menu, ArrowLeft } from 'lucide-react';
+import { Plus, Download, Menu, ArrowLeft, Check } from 'lucide-react';
 import { useStock } from '@/context/StockContext';
 
 interface HeaderProps {
@@ -31,6 +31,17 @@ export function Header({
   actions,
 }: HeaderProps) {
   const { toggleMobileSidebar } = useStock();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportClick = () => {
+    if (!onExport) return;
+    setIsExporting(true);
+    try {
+      onExport();
+    } finally {
+      setTimeout(() => setIsExporting(false), 1200);
+    }
+  };
 
   return (
     <header className="h-16 bg-white border-b border-neutral-200 px-4 sm:px-8 flex items-center justify-between shrink-0 gap-3">
@@ -81,11 +92,21 @@ export function Header({
 
         {showExport && onExport && (
           <button
-            onClick={onExport}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-200 rounded hover:bg-neutral-50 transition-colors cursor-pointer"
+            type="button"
+            onClick={handleExportClick}
+            disabled={isExporting}
+            className="group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-50 active:bg-neutral-100 border border-neutral-200 hover:border-neutral-300 rounded shadow-2xs hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            title="Download formatted CSV dataset"
           >
-            <Download className="w-3.5 h-3.5 text-neutral-500" />
-            <span className="hidden sm:inline">Export</span>
+            {isExporting ? (
+              <Check className="w-3.5 h-3.5 text-emerald-600 animate-in zoom-in duration-150" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-neutral-500 group-hover:text-neutral-900 group-hover:translate-y-0.5 transition-all" />
+            )}
+            <span className="hidden sm:inline">{isExporting ? 'Exported!' : 'Export'}</span>
+            <span className="font-mono text-[9px] uppercase font-bold text-neutral-400 bg-neutral-100 px-1 py-0.5 rounded border border-neutral-200 group-hover:text-neutral-600 transition-colors">
+              CSV
+            </span>
           </button>
         )}
 

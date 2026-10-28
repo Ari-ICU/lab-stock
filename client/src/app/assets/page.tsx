@@ -51,16 +51,21 @@ export default function AssetsPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'lab_102b_assets',
+      'csd_stock_hardware_assets',
       filteredAssets.map((a) => ({
-        'Device Name': a.name,
-        Model: a.model,
+        'Asset ID': a.id,
+        'Equipment Name': a.name,
+        'Model / Specification': a.model,
         'Serial / Asset Tag': a.serialNumber,
         'Total Units': a.totalUnits ?? 1,
         'Unit Type': a.unitType ?? 'Units',
-        Location: a.location,
-        Status: a.status,
-        'Next Calibration / Audit': a.nextCalibration,
+        'Laboratory Location': a.location,
+        'Operational Status': a.status,
+        'Loan Status': a.loanStatus === 'on_loan' ? 'Checked Out' : 'Available',
+        'Current Borrower': a.currentBorrower || 'None',
+        'Due Date': a.loanDueDate || '',
+        'Next Calibration / Audit': a.nextCalibration || '',
+        'Description / Notes': a.description || '',
       }))
     );
   };

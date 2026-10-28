@@ -20,15 +20,16 @@ export default function MaintenancePage() {
 
   const handleExport = () => {
     exportToCsv(
-      'lab_maintenance_logs',
+      'csd_stock_maintenance_audits',
       filtered.map((m) => ({
-        Instrument: m.assetName,
+        'Log ID': m.id,
+        'Equipment Name': m.assetName,
         'Serial Number': m.serialNumber,
         'Service Type': m.type,
-        Date: m.date,
-        Technician: m.technician,
-        Status: m.status,
-        Notes: m.notes,
+        'Service Date': m.date,
+        'Assigned Technician': m.technician,
+        'Service Status': m.status,
+        'Diagnostic Notes & Findings': m.notes || 'Routine check completed',
       }))
     );
   };

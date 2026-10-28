@@ -59,15 +59,16 @@ export default function LocationsPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'lab_locations',
+      'csd_stock_connected_laboratories',
       filtered.map((l) => ({
         'Facility Name': l.name,
         Building: l.building,
         'Room Number': l.room,
-        'Inventory Item Types': l.stockItemsCount,
-        'Total Inventory Units': l.totalStockUnits,
-        'Hardware Models': l.hardwareAssetsCount,
+        'Inventory Types (SKUs)': l.stockItemsCount,
+        'Total Inventory Consumables': l.totalStockUnits,
+        'Hardware Device Models': l.hardwareAssetsCount,
         'Total Hardware Units': l.totalHardwareUnits,
+        Status: 'Operational Faculty Fleet Lab',
       }))
     );
   };

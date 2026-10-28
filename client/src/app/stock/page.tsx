@@ -55,16 +55,18 @@ export default function StockPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'lab_stock_inventory',
+      'csd_stock_inventory_peripherals',
       filteredStock.map((i) => ({
         'Item Name': i.name,
-        'Part Code': i.code,
+        'Part / SKU Code': i.code,
         Category: i.category,
-        Quantity: i.quantity,
-        Unit: i.unit,
-        Location: i.location,
-        Rack: i.rack,
-        Status: i.status,
+        'Quantity in Stock': i.quantity,
+        'Unit Measure': i.unit,
+        'Laboratory Location': i.location,
+        'Storage Shelf / Rack': i.rack,
+        'Stock Status': i.status,
+        'Warranty / Note': i.expiryDate || 'Active',
+        'Technical Description': i.description || '',
       }))
     );
   };

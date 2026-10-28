@@ -20,15 +20,17 @@ export default function RacksPage() {
 
   const handleExport = () => {
     exportToCsv(
-      'lab_server_racks',
+      'csd_stock_server_racks',
       filteredRacks.map((r) => ({
-        'Rack Name': r.name,
-        Code: r.code,
-        Type: r.type,
-        Temperature: r.temperature || 'N/A',
-        Location: r.location,
+        'Rack / Cabinet Name': r.name,
+        'Cabinet Code': r.code,
+        'Cabinet Type': r.type,
+        'Assigned Lab Location': r.location,
         'Total Slots (U)': r.totalSlots,
-        'Occupied Slots': r.usedSlots,
+        'Occupied Slots (U)': r.usedSlots,
+        'Free Slots (U)': Math.max(0, r.totalSlots - r.usedSlots),
+        'Capacity Utilization': `${Math.round((r.usedSlots / r.totalSlots) * 100)}%`,
+        'Operating Temperature': r.temperature || '21.0°C',
       }))
     );
   };

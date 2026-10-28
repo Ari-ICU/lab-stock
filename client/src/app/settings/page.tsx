@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
@@ -55,6 +55,33 @@ export default function SettingsPage() {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState('Faculty Lecturer');
   const [newUserDept, setNewUserDept] = useState('Engineering Block A - Room 102B');
+
+  const [telemetry, setTelemetry] = useState<{
+    host: string;
+    protocol: string;
+    isOnline: boolean;
+    timezone: string;
+    screen: string;
+  }>({
+    host: 'localhost:3000',
+    protocol: 'HTTP',
+    isOnline: true,
+    timezone: 'Asia/Phnom_Penh',
+    screen: '1920 × 1080',
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const port = window.location.port ? `:${window.location.port}` : '';
+      setTelemetry({
+        host: `${window.location.hostname}${port}`,
+        protocol: window.location.protocol.replace(':', '').toUpperCase(),
+        isOnline: navigator.onLine,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Phnom_Penh',
+        screen: `${window.screen.width} × ${window.screen.height} (${window.devicePixelRatio || 1}x)`,
+      });
+    }
+  }, []);
 
   const roleOptions = Object.keys(ROLE_DEFINITIONS).map((roleName) => ({
     label: `${roleName} (${ROLE_DEFINITIONS[roleName].badge})`,
@@ -459,7 +486,7 @@ export default function SettingsPage() {
               <div className="bg-white border border-neutral-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-500 font-medium">
-                    Total Active Sessions
+                    Active Client Sessions
                   </span>
                   <Radio className="w-4 h-4 text-emerald-500" />
                 </div>
@@ -467,38 +494,38 @@ export default function SettingsPage() {
                   {sessionDevices.length} Connected
                 </div>
                 <div className="text-[11px] text-neutral-400 mt-1">
-                  1 Current • {sessionDevices.length - 1} Remote Terminals
+                  1 Current Device • {Math.max(0, sessionDevices.length - 1)} Remote Terminals
                 </div>
               </div>
 
               <div className="bg-white border border-neutral-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-500 font-medium">
-                    Laboratory Gateway
+                    Host & Network Gateway
                   </span>
                   <Wifi className="w-4 h-4 text-blue-500" />
                 </div>
-                <div className="text-xl font-bold text-neutral-900 mt-1.5 font-mono">
-                  192.168.102.1
+                <div suppressHydrationWarning className="text-xl font-bold text-neutral-900 mt-1.5 font-mono truncate" title={telemetry.host}>
+                  {telemetry.host}
                 </div>
-                <div className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>Subnet 255.255.255.0 Online</span>
+                <div suppressHydrationWarning className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${telemetry.isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  <span>{telemetry.isOnline ? 'Online' : 'Offline'} • {telemetry.protocol} • {telemetry.timezone}</span>
                 </div>
               </div>
 
               <div className="bg-white border border-neutral-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-neutral-500 font-medium">
-                    Security Policy
+                    Session Security
                   </span>
                   <Lock className="w-4 h-4 text-neutral-700" />
                 </div>
-                <div className="text-xl font-bold text-neutral-900 mt-1.5">
-                  WPA3-Enterprise
+                <div suppressHydrationWarning className="text-xl font-bold text-neutral-900 mt-1.5 truncate">
+                  {telemetry.protocol === 'HTTPS' ? 'HTTPS / TLS Encrypted' : 'HTTP Local Session'}
                 </div>
-                <div className="text-[11px] text-neutral-400 mt-1">
-                  MAC-Filtered Switch Access
+                <div className="text-[11px] text-neutral-400 mt-1 truncate" title={user?.email}>
+                  Operator: <span className="text-neutral-700 font-medium">{user?.name || 'Administrator'}</span> ({user?.role || 'Staff'})
                 </div>
               </div>
             </div>

@@ -51,19 +51,33 @@ export default function DashboardPage() {
   const totalStockUnits = stock.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleExport = () => {
-    exportToCsv(
-      'faculty_laboratory_overview',
-      assets.map((a) => ({
-        'Asset ID': a.id,
-        'Device Name': a.name,
-        Model: a.model,
-        'Serial Number': a.serialNumber,
-        Location: a.location,
-        Status: a.status,
-        'Loan Status': a.loanStatus || 'available',
-        Borrower: a.currentBorrower || 'None',
-      }))
-    );
+    const hardwareRows = assets.map((a) => ({
+      'Record Category': 'Hardware Asset',
+      'Item / Equipment Name': a.name,
+      'Model / SKU': a.model,
+      'Serial / Identifier': a.serialNumber,
+      'Total Count': a.totalUnits ?? 1,
+      'Unit Type': a.unitType ?? 'Units',
+      'Assigned Location': a.location,
+      'Operational Status': a.status,
+      'Loan Status': a.loanStatus === 'on_loan' ? `Checked out (${a.currentBorrower || 'Borrower'})` : 'Available',
+      'Audit / Warranty Date': a.nextCalibration || '',
+    }));
+
+    const stockRows = stock.map((s) => ({
+      'Record Category': 'Inventory Peripheral',
+      'Item / Equipment Name': s.name,
+      'Model / SKU': s.code,
+      'Serial / Identifier': s.code,
+      'Total Count': s.quantity,
+      'Unit Type': s.unit,
+      'Assigned Location': s.location,
+      'Operational Status': s.status,
+      'Loan Status': 'In Shelf / Storage',
+      'Audit / Warranty Date': s.expiryDate || 'Active',
+    }));
+
+    exportToCsv('csd_stock_department_fleet_overview', [...hardwareRows, ...stockRows]);
   };
 
   return (

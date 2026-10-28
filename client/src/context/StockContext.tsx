@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import {
   mockStock as initialStock,
   mockAssets as initialAssets,
@@ -159,6 +159,17 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       toastTimerRef.current = null;
     }, 3600);
   };
+
+  useEffect(() => {
+    function handleCustomToast(e: Event) {
+      const customEvent = e as CustomEvent<{ message: string; type?: ToastType }>;
+      if (customEvent.detail?.message) {
+        showToast(customEvent.detail.message, customEvent.detail.type || 'success');
+      }
+    }
+    window.addEventListener('csd-stock-toast', handleCustomToast);
+    return () => window.removeEventListener('csd-stock-toast', handleCustomToast);
+  }, []);
 
   const openScanner = () => setIsScannerOpen(true);
   const closeScanner = () => setIsScannerOpen(false);
