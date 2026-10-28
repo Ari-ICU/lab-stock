@@ -126,7 +126,7 @@ export default function StockPage() {
                   <th className="py-3 px-4">Item Name</th>
                   <th className="py-3 px-4">Part / SKU</th>
                   <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Quantity</th>
+                  <th className="py-3 px-4 text-center">Quantity</th>
                   <th className="py-3 px-4">Assigned Location</th>
                   <th className="py-3 px-4">Warranty / Note</th>
                   <th className="py-3 px-4">Status</th>
@@ -176,28 +176,10 @@ export default function StockPage() {
                           {item.category}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-bold text-neutral-900">
-                        <div className="flex items-center gap-1.5">
-                          <span>
-                            {item.quantity} {item.unit}
-                          </span>
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
-                            <button
-                              onClick={() => updateStockQuantity(item.id, 1)}
-                              className="w-4 h-4 flex items-center justify-center bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded text-[10px] font-bold"
-                              title="Increase quantity (+1)"
-                            >
-                              +
-                            </button>
-                            <button
-                              onClick={() => updateStockQuantity(item.id, -1)}
-                              className="w-4 h-4 flex items-center justify-center bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded text-[10px] font-bold"
-                              title="Decrease quantity (-1)"
-                            >
-                              -
-                            </button>
-                          </div>
-                        </div>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
+                          {item.quantity}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-neutral-600">
                         <div>{item.location}</div>

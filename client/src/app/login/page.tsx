@@ -7,7 +7,6 @@ import { useAuth, DEMO_ACCOUNTS, DemoAccount } from '@/context/AuthContext';
 import { useStock } from '@/context/StockContext';
 import {
   Boxes,
-  BarChart2,
   ShieldCheck,
   CheckCircle2,
   Mail,
@@ -16,7 +15,10 @@ import {
   EyeOff,
   Loader2,
   AlertCircle,
-  Network
+  ArrowRight,
+  Laptop,
+  ArrowLeftRight,
+  Server
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -35,7 +37,7 @@ export default function LoginPage() {
     setError(null);
 
     if (!email.trim()) {
-      setError('Please enter your laboratory email.');
+      setError('Please enter your laboratory account email.');
       return;
     }
     if (!password) {
@@ -68,153 +70,146 @@ export default function LoginPage() {
 
   const handleQuickSignIn = (acc: DemoAccount) => {
     switchAccount(acc);
-    showToast(`Signed in as ${acc.name}`);
+    showToast(`Signed in as ${acc.name} (${acc.role})`);
     router.push('/');
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] text-slate-900 font-sans relative flex flex-col justify-between selection:bg-blue-600 selection:text-white">
-      {/* Blueprint grid background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e150_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e150_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+    <div className="min-h-screen w-full bg-neutral-50/70 text-neutral-900 font-sans relative flex flex-col justify-between selection:bg-neutral-900 selection:text-white">
+      {/* Subtle modern dot-grid background */}
+      <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none opacity-80" />
 
       {/* Main Container */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-8 sm:py-12 my-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
-          {/* ================= LEFT COLUMN ================= */}
-          <div className="lg:col-span-7 flex flex-col space-y-6 sm:space-y-7">
-            {/* Brand Header */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-8 sm:py-12 my-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+          
+          {/* ================= LEFT COLUMN: INSTITUTIONAL BRANDING ================= */}
+          <div className="lg:col-span-7 flex flex-col space-y-6">
+            
+            {/* University Seal & Nomenclature */}
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 p-0.5 shadow-xs shrink-0 flex items-center justify-center">
-                <Network className="w-6 h-6 text-emerald-400" />
+              <div className="w-14 h-14 rounded-xl bg-white border border-neutral-200 p-1.5 shadow-xs shrink-0 flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="RUPP University Seal"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <div className="font-bold text-slate-900 text-sm sm:text-base tracking-tight leading-tight">
-                  Lab 102B Management
+                <div className="font-bold text-base sm:text-lg text-neutral-900 tracking-tight leading-tight font-khmer">
+                  សាកលវិទ្យាល័យភូមិន្ទភ្នំពេញ
                 </div>
-                <div className="text-[#2563eb] font-bold text-xs uppercase tracking-wider mt-0.5">
-                  NETWORK LABORATORY & ASSETS
+                <div className="text-xs font-semibold text-neutral-600 tracking-wide mt-0.5">
+                  Faculty of Science 
                 </div>
               </div>
             </div>
 
             {/* Department Tag Pill */}
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-[11px] font-bold text-slate-700 tracking-wider">
-                <span className="font-mono text-slate-500 font-bold">&lt;/&gt;</span>
-                <span>COMPUTER LAB 102B</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-900 text-[10px] font-bold text-white uppercase tracking-wider font-mono">
+                RUPP LABSTOCK
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-50 text-[11px] font-semibold text-emerald-800 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                6 Connected Lab Classrooms
+              </span>
             </div>
 
             {/* Main Headline */}
-            <div className="space-y-0.5">
-              <h1 className="text-4xl sm:text-5xl lg:text-[58px] font-black text-slate-900 tracking-tight leading-[1.08]">
-                Laboratory
+            <div className="space-y-1">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neutral-900 tracking-tight leading-[1.15]">
+                Laboratory Inventory &
               </h1>
-              <h1 className="text-4xl sm:text-5xl lg:text-[58px] font-black text-slate-900 tracking-tight leading-[1.08]">
-                Inventory
-              </h1>
-              <h1 className="text-4xl sm:text-5xl lg:text-[58px] font-black text-[#2563eb] tracking-tight leading-[1.08]">
-                Stock Portal
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neutral-900 tracking-tight leading-[1.15]">
+                Asset Management System
               </h1>
             </div>
 
             {/* Paragraph Subtitle */}
-            <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-xl">
-              A focused workspace for lab administrators and technicians to track network hardware, manage switch racks, and monitor room 102B inventory with confidence.
+            <p className="text-neutral-600 text-xs sm:text-sm leading-relaxed max-w-xl">
+              Centralized platform for faculty administrators, lecturers, and technicians. Monitor PC workstations, manage student device lending, track inter-room relocations, and oversee network infrastructure with full auditability.
             </p>
 
             {/* 3 Feature Highlights Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
-              {/* Card 1: Live stock */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 p-4.5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-colors">
-                <div className="text-[#2563eb] mb-2">
-                  <Boxes className="w-4.5 h-4.5 stroke-[2.2]" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
+                  <Server className="w-4 h-4 text-emerald-600" />
                 </div>
-                <div className="text-xs font-bold text-slate-900">
-                  Live stock
+                <div className="text-xs font-bold text-neutral-900">
+                  Multi-Lab Fleet
                 </div>
-                <div className="text-[11px] text-slate-500 leading-normal mt-1">
-                  Track switch units and cables quickly.
-                </div>
-              </div>
-
-              {/* Card 2: Clear reports */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 p-4.5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-colors">
-                <div className="text-[#2563eb] mb-2">
-                  <BarChart2 className="w-4.5 h-4.5 stroke-[2.2]" />
-                </div>
-                <div className="text-xs font-bold text-slate-900">
-                  Clear reports
-                </div>
-                <div className="text-[11px] text-slate-500 leading-normal mt-1">
-                  See progress by rack, item, and category.
+                <div className="text-[11px] text-neutral-500 leading-normal mt-1">
+                  Manage Rm 102B, 206, 201, 203, 305 & 102 Depot.
                 </div>
               </div>
 
-              {/* Card 3: Secure access */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 p-4.5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-colors">
-                <div className="text-[#2563eb] mb-2">
-                  <ShieldCheck className="w-4.5 h-4.5 stroke-[2.2]" />
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
+                  <ArrowLeftRight className="w-4 h-4 text-blue-600" />
                 </div>
-                <div className="text-xs font-bold text-slate-900">
-                  Secure access
+                <div className="text-xs font-bold text-neutral-900">
+                  Loans & Relocations
                 </div>
-                <div className="text-[11px] text-slate-500 leading-normal mt-1">
-                  Protected sign-in for lab staff.
+                <div className="text-[11px] text-neutral-500 leading-normal mt-1">
+                  Student practical checkout and room transfer history.
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="text-xs font-bold text-neutral-900">
+                  Audit & Barcodes
+                </div>
+                <div className="text-[11px] text-neutral-500 leading-normal mt-1">
+                  Code128 barcode tags, calibration & maintenance logs.
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ================= RIGHT COLUMN ================= */}
+          {/* ================= RIGHT COLUMN: SIGN IN FORM ================= */}
           <div className="lg:col-span-5 w-full max-w-md mx-auto lg:ml-auto space-y-4">
-            {/* Top Notification Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)]">
-              <div className="text-xs font-bold text-slate-900">
-                Sign in required
-              </div>
-              <div className="text-xs text-slate-500 mt-1 leading-normal">
-                You cannot take action without logging in. Please sign in to continue.
-              </div>
-            </div>
-
+            
             {/* Main Sign In Form Card */}
-            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-              {/* Pill Header */}
-              <div className="mb-3">
-                <span className="inline-block px-3 py-1 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                  LABORATORY ACCESS
+            <div className="bg-white rounded-xl border border-neutral-200 p-6 sm:p-7 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 uppercase tracking-wider bg-neutral-100 border border-neutral-200 font-mono">
+                  STAFF & TECHNICIAN ACCESS
                 </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
               </div>
 
-              {/* Title & Subtitle */}
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                Sign in to Lab
+              <h2 className="text-xl font-bold text-neutral-900 tracking-tight">
+                Sign in to Laboratory Portal
               </h2>
-              <p className="text-xs text-slate-500 mt-1.5 mb-6 leading-relaxed">
-                Use your staff account to continue to inventory and rack management.
+              <p className="text-xs text-neutral-500 mt-1 mb-5 leading-relaxed">
+                Enter your university credentials or select a verified lab role below.
               </p>
 
               {/* Error Message */}
               {error && (
-                <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5">
+                <div className="mb-4 p-3 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                   <div className="flex-1">{error}</div>
                 </div>
               )}
 
               {/* Sign In Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3.5">
                 {/* Email Input */}
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-xs font-semibold text-slate-800 mb-1.5"
+                    className="block text-xs font-semibold text-neutral-700 mb-1"
                   >
-                    Email
+                    University Email / Account ID
                   </label>
-                  <div className="flex items-center gap-3 bg-[#f1f5f9] rounded-xl px-3.5 py-2.5 border border-transparent focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                    <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       id="email"
                       type="email"
@@ -223,7 +218,7 @@ export default function LoginPage() {
                       placeholder="admin@lab.edu"
                       required
                       disabled={isLoading}
-                      className="bg-transparent text-xs text-slate-900 w-full outline-none placeholder:text-slate-400 font-normal"
+                      className="w-full bg-neutral-50/50 text-xs text-neutral-900 pl-9 pr-3 py-2 border border-neutral-300 rounded focus:outline-none focus:border-neutral-900 focus:bg-white focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
                   </div>
                 </div>
@@ -232,12 +227,12 @@ export default function LoginPage() {
                 <div>
                   <label
                     htmlFor="password"
-                    className="block text-xs font-semibold text-slate-800 mb-1.5"
+                    className="block text-xs font-semibold text-neutral-700 mb-1"
                   >
                     Password
                   </label>
-                  <div className="flex items-center gap-3 bg-[#f1f5f9] rounded-xl px-3.5 py-2.5 border border-transparent focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                    <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -246,19 +241,19 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       required
                       disabled={isLoading}
-                      className="bg-transparent text-xs text-slate-900 w-full outline-none placeholder:text-slate-400 font-normal"
+                      className="w-full bg-neutral-50/50 text-xs text-neutral-900 pl-9 pr-9 py-2 border border-neutral-300 rounded focus:outline-none focus:border-neutral-900 focus:bg-white focus:ring-1 focus:ring-neutral-900 transition-colors font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0 transition-colors"
+                      className="text-neutral-400 hover:text-neutral-700 cursor-pointer absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors p-1"
                       tabIndex={-1}
                       title={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
+                        <EyeOff className="w-3.5 h-3.5" />
                       ) : (
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5" />
                       )}
                     </button>
                   </div>
@@ -268,41 +263,41 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] text-white font-semibold text-sm py-2.5 px-4 rounded-xl shadow-xs transition-colors mt-2 cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full bg-neutral-900 hover:bg-neutral-800 active:bg-black text-white font-semibold text-xs py-2.5 px-4 rounded shadow-xs transition-colors mt-2 cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>Signing in...</span>
+                      <span>Verifying Credentials...</span>
                     </>
                   ) : (
-                    <span>Sign In</span>
+                    <span>Sign In to Faculty Fleet</span>
                   )}
                 </button>
               </form>
 
               {/* Demo Account Quick Switcher */}
-              <div className="mt-5 pt-4 border-t border-slate-100">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Quick Demo Accounts
+              <div className="mt-5 pt-4 border-t border-neutral-100">
+                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
+                  One-Click Demo Roles
                 </div>
                 <div className="space-y-1.5">
                   {DEMO_ACCOUNTS.map((acc) => (
                     <div
                       key={acc.email}
                       onClick={() => handleSelectDemo(acc)}
-                      className="flex items-center justify-between p-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-left cursor-pointer transition-colors border border-slate-100"
+                      className="flex items-center justify-between p-2 rounded bg-neutral-50 hover:bg-neutral-100 text-left cursor-pointer transition-colors border border-neutral-200/80 group"
                     >
-                      <div className="min-w-0 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-100 text-[#2563eb] text-[9px] font-bold flex items-center justify-center shrink-0">
+                      <div className="min-w-0 flex items-center gap-2.5">
+                        <span className="w-6 h-6 rounded bg-neutral-900 text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0">
                           {acc.avatarText}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-[11px] font-semibold text-slate-800 truncate">
+                          <p className="text-xs font-semibold text-neutral-900 truncate">
                             {acc.name}
                           </p>
-                          <p className="text-[10px] text-slate-400 truncate">
-                            {acc.email}
+                          <p className="text-[10px] text-neutral-500 truncate">
+                            {acc.role} • {acc.email}
                           </p>
                         </div>
                       </div>
@@ -312,7 +307,7 @@ export default function LoginPage() {
                           e.stopPropagation();
                           handleQuickSignIn(acc);
                         }}
-                        className="px-2 py-0.5 text-[10px] font-medium bg-white hover:bg-blue-600 hover:text-white text-slate-600 rounded border border-slate-200 transition-colors"
+                        className="px-2.5 py-1 text-[10px] font-semibold bg-white group-hover:bg-neutral-900 group-hover:text-white text-neutral-700 rounded border border-neutral-300 transition-colors shadow-2xs"
                       >
                         Sign in
                       </button>
@@ -322,17 +317,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Terms Notice */}
-            <div className="text-[11px] text-slate-400 text-center px-4 leading-normal">
-              By signing in, you agree to the Lab{' '}
-              <span className="hover:underline cursor-pointer text-slate-500">
-                Terms of Service
-              </span>{' '}
-              and{' '}
-              <span className="hover:underline cursor-pointer text-slate-500">
-                Privacy Policy
-              </span>
-              .
+            {/* University Institutional Notice */}
+            <div className="text-[11px] text-neutral-500 text-center px-4 leading-normal">
+              Royal University of Phnom Penh (RUPP) • Laboratory Management System.
+              <br />
+              Authorized staff and student access only.
             </div>
           </div>
         </div>
