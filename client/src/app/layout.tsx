@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { AuthProvider } from "@/context/AuthContext";
 import { StockProvider } from "@/context/StockContext";
-import { QRScannerModal } from "@/components/QRScannerModal";
-import { AddEntityModal } from "@/components/AddEntityModal";
-import { ItemDetailsModal } from "@/components/ItemDetailsModal";
-import { EditEntityModal } from "@/components/EditEntityModal";
-import { Toast } from "@/components/Toast";
+import { AppShell } from "@/components/AppShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,17 +35,11 @@ export default function RootLayout({
         suppressHydrationWarning
         className="h-full flex overflow-hidden bg-neutral-100 text-neutral-900 font-sans"
       >
-        <StockProvider>
-          <Sidebar />
-          <main className="flex-1 flex flex-col min-w-0 bg-neutral-50 overflow-hidden">
-            {children}
-          </main>
-          <QRScannerModal />
-          <AddEntityModal />
-          <ItemDetailsModal />
-          <EditEntityModal />
-          <Toast />
-        </StockProvider>
+        <AuthProvider>
+          <StockProvider>
+            <AppShell>{children}</AppShell>
+          </StockProvider>
+        </AuthProvider>
       </body>
     </html>
   );

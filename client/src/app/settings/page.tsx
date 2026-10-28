@@ -3,10 +3,12 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { Shield, Bell, Server } from 'lucide-react';
 
 export default function SettingsPage() {
   const { showToast } = useStock();
+  const { user } = useAuth();
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -98,13 +100,14 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex items-center gap-4 pt-2">
-            <div className="w-11 h-11 rounded bg-neutral-900 text-white font-bold flex items-center justify-center text-xs">
-              TR
+            <div className="w-11 h-11 rounded bg-neutral-900 text-emerald-400 font-bold flex items-center justify-center text-xs">
+              {user?.avatarText || 'TR'}
             </div>
             <div>
-              <div className="text-xs font-bold text-neutral-900">Thoeurn Ratha</div>
-              <div className="text-[11px] text-neutral-500 mt-0.5">Role: Primary Lab Administrator</div>
-              <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">Permissions: Full Read/Write Access</div>
+              <div className="text-xs font-bold text-neutral-900">{user?.name || 'Thoeurn Ratha'}</div>
+              <div className="text-[11px] text-neutral-500 mt-0.5">Role: {user?.role || 'Primary Lab Administrator'}</div>
+              <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">Permissions: {user?.permissions || 'Full Read/Write Access'}</div>
+              <div className="text-[10px] text-neutral-400 mt-0.5">Workstation: {user?.department || 'Engineering Block A - Room 102B'}</div>
             </div>
           </div>
         </section>

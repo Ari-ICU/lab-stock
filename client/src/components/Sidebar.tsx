@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   Network,
   LayoutDashboard,
@@ -36,7 +37,8 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { openScanner, stock, isMobileSidebarOpen, closeMobileSidebar } = useStock();
+  const { openScanner, stock, isMobileSidebarOpen, closeMobileSidebar, showToast } = useStock();
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -66,7 +68,7 @@ export function Sidebar() {
             </div>
             <div>
               <div className="font-semibold text-sm tracking-tight text-neutral-900 leading-none">
-                NetLab 102B
+                Lab 102B
               </div>
               <span className="text-[11px] text-neutral-500 font-medium">Room 102B Inventory</span>
             </div>
@@ -177,17 +179,25 @@ export function Sidebar() {
         {/* User Footer */}
         <div className="p-3 border-t border-neutral-200 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded bg-neutral-200 text-neutral-700 font-bold flex items-center justify-center text-xs shrink-0">
-              TR
+            <div className="w-8 h-8 rounded bg-neutral-900 text-emerald-400 font-bold flex items-center justify-center text-xs shrink-0">
+              {user?.avatarText || 'TR'}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-neutral-900 truncate">Thoeurn Ratha</p>
-              <p className="text-[11px] text-neutral-500 truncate">Network Lab Admin</p>
+              <p className="text-xs font-semibold text-neutral-900 truncate">
+                {user?.name || 'Thoeurn Ratha'}
+              </p>
+              <p className="text-[11px] text-neutral-500 truncate">
+                {user?.role || 'Network Lab Admin'}
+              </p>
             </div>
           </div>
           <button
+            onClick={() => {
+              logout();
+              showToast('Signed out of NetLab');
+            }}
             title="Sign out"
-            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>
