@@ -16,3 +16,4 @@ export function isValidDateFormat(dateStr: string): boolean {
   if (!dateStr || typeof dateStr !== 'string') return false;
   return DATE_REGEX.test(dateStr.trim());
 }
+

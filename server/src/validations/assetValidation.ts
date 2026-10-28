@@ -67,3 +67,4 @@ export function validateUpdateAsset(req: Request, _res: Response, next: NextFunc
 
   next();
 }
+

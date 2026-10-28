@@ -89,3 +89,4 @@ export function validatePasswordChange(req: Request, _res: Response, next: NextF
 
   next();
 }
+

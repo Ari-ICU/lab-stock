@@ -41,3 +41,4 @@ export function validateCreateLocation(req: Request, _res: Response, next: NextF
   req.body.building = building.trim();
   next();
 }
+
