@@ -68,7 +68,7 @@ const PRESETS = [
   },
 ];
 
-export default function NewAssetPage() {
+export default function CreateAssetPage() {
   const router = useRouter();
   const { addAsset, locations, showToast } = useStock();
 
@@ -151,10 +151,10 @@ export default function NewAssetPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title="Register New Lab Hardware Asset"
+        title="Create Lab Hardware Asset"
         subtitle="Lab 102B Equipment Registry"
         showExport={false}
-        actionLabel={isSubmitting ? 'Registering...' : 'Save & Register Asset'}
+        actionLabel={isSubmitting ? 'Creating...' : 'Create Asset'}
         onAction={() => {
           const form = document.getElementById('new-asset-form') as HTMLFormElement;
           if (form) form.requestSubmit();
@@ -371,7 +371,7 @@ export default function NewAssetPage() {
                 className="flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>{isSubmitting ? 'Registering...' : 'Register Equipment'}</span>
+                <span>{isSubmitting ? 'Creating...' : 'Create Asset'}</span>
               </button>
             </div>
           </div>

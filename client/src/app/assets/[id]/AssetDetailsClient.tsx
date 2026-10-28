@@ -576,12 +576,12 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 </button>
 
                 <Link
-                  href="/assets/new"
+                  href="/assets/create"
                   className="w-full flex items-center justify-between p-2.5 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors text-xs font-medium text-neutral-800"
                 >
                   <span className="flex items-center gap-2">
                     <Plus className="w-3.5 h-3.5 text-neutral-600" />
-                    Register Another Asset
+                    Create Another Asset
                   </span>
                   <ExternalLink className="w-3 h-3 text-neutral-400" />
                 </Link>

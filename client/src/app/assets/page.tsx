@@ -57,7 +57,7 @@ export default function AssetsPage() {
       <Header
         title="Lab 102B Hardware & Assets"
         subtitle="24 Desktops • Epson Projector • Daikin ACs • Core Switch"
-        actionLabel="Register Asset"
+        actionLabel="Create Asset"
         onAction={() => router.push('/assets/create')}
         onExport={handleExport}
       />
