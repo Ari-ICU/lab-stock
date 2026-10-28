@@ -25,9 +25,9 @@ export const corsSecurity = cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 });
 
-// 2. Helmet Security Headers
+// 2. Helmet Security Headers (Relaxed CSP so Swagger UI assets load smoothly)
 export const helmetSecurity = helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 });
 

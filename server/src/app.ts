@@ -1,6 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import routes from './routes/index.js';
 import { requestLogger } from './utils/requestLogger.js';
+import { setupSwagger } from './config/swagger.js';
 import {
   helmetSecurity,
   corsSecurity,
@@ -36,28 +37,40 @@ app.get('/favicon.ico', (_req: Request, res: Response) => {
   res.status(204).end();
 });
 
-// 7. Root Information Route
+// 7. Interactive Swagger API Documentation
+setupSwagger(app);
+
+// 8. Root Information Route
 app.get('/', (_req: Request, res: Response) => {
   res.json({
     name: 'Lab Stock Management API',
     status: 'online',
     version: '1.0.0',
+    documentation: '/api/docs',
     endpoints: {
       health: '/api/v1/health',
+      auth: '/api/v1/auth',
+      swagger: '/api/docs',
+      swaggerJson: '/api/docs.json',
+    },
+    database: {
+      engine: 'PostgreSQL',
+      configured: true,
     },
     security: {
       helmet: 'enabled',
       rateLimit: 'enabled',
       cors: 'enabled',
       sanitization: 'enabled',
+      jwt: 'enabled',
     },
   });
 });
 
-// 8. API Routes
+// 9. API Routes
 app.use('/api/v1', routes);
 
-// 9. 404 Route Handler for undefined endpoints
+// 10. 404 Route Handler for undefined endpoints
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
     status: 'error',
@@ -65,7 +78,7 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-// 10. Global Error Handler
+// 11. Global Error Handler
 app.use(errorHandler);
 
 export default app;
