@@ -116,13 +116,14 @@ export function AddEntityModal() {
       unit: stockUnit,
       location: stockLocation,
       rack: stockLocation,
-      expiryDate: 'Warranty Active',
+      expiryDate: stockExpiryDate.trim() || 'Active',
       imageUrl: stockImageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
       description: stockDescription,
     });
     setStockName('');
     setStockCode('');
     setStockQuantity(1);
+    setStockExpiryDate('Active');
     setStockImageUrl('');
     setStockDescription('');
     closeModal();
@@ -299,6 +300,17 @@ export function AddEntityModal() {
                 options={locationOptions}
                 onChange={setStockLocation}
                 className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-neutral-800 mb-1">Warranty / Note</label>
+              <input
+                type="text"
+                placeholder="e.g. Warranty 2027, Active, 3-Year Coverage"
+                value={stockExpiryDate}
+                onChange={(e) => setStockExpiryDate(e.target.value)}
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
               />
             </div>
 

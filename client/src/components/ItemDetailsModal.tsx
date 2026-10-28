@@ -161,6 +161,12 @@ export function ItemDetailsModal() {
                   </span>
                 </div>
                 <div className="p-3 flex justify-between items-center">
+                  <span className="text-neutral-500">Warranty / Note:</span>
+                  <span className="font-semibold text-neutral-900 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded text-[11px]">
+                    {stockItem.expiryDate || 'Active'}
+                  </span>
+                </div>
+                <div className="p-3 flex justify-between items-center">
                   <span className="text-neutral-500">Status:</span>
                   <span className="font-semibold text-neutral-800 uppercase">
                     {stockItem.status.replace('_', ' ')}

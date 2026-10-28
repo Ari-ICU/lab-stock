@@ -42,6 +42,7 @@ export function EditEntityModal() {
   const [status, setStatus] = useState<any>('in_stock');
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
 
   // Location fields
   const [building, setBuilding] = useState('Engineering Block A');
@@ -105,6 +106,7 @@ export function EditEntityModal() {
       setRack(item.rack);
       setLocation(item.location);
       setStatus(item.status);
+      setExpiryDate(item.expiryDate || 'Active');
       setImageUrl(item.imageUrl || '');
       setDescription(item.description || '');
     } else if (isAsset) {
@@ -159,6 +161,7 @@ export function EditEntityModal() {
         rack,
         location,
         status,
+        expiryDate: expiryDate.trim() || 'Active',
         imageUrl,
         description,
       });
@@ -540,6 +543,19 @@ export function EditEntityModal() {
                   className="w-full"
                 />
               </div>
+
+              {isStock && (
+                <div>
+                  <label className="block font-semibold text-neutral-800 mb-1">Warranty / Note</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Warranty 2027, Active, 3-Year Coverage"
+                    value={expiryDate}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  />
+                </div>
+              )}
 
               <ImageUpload
                 value={imageUrl}
