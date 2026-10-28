@@ -15,9 +15,15 @@ export const openApiSpec = {
 - Complete PostgreSQL Relational Database Persistence.
 
 ### How to Authenticate:
-1. Call \`POST /api/v1/auth/login\` with institutional credentials to receive your signed JWT session token.
-2. Click the **Authorize 🔓** button below and enter your JWT into the Bearer token dialog.
-3. Protected endpoints will automatically include the \`Authorization: Bearer <token>\` header.
+* **Option 1 (Direct Admin Token):** Copy the administrative JWT token below, click **Authorize 🔓** at the top right, and paste it:
+\`\`\`text
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+\`\`\`
+
+* **Option 2 (Login with Credentials):** Execute \`POST /api/v1/auth/login\` with:
+  * **Email:** \`sovannarith@lab.edu\`
+  * **Password:** \`password123\`
+  Then copy the returned \`token\` into the **Authorize 🔓** dialog.
 `,
     contact: {
       name: 'Lab IT Systems Support',

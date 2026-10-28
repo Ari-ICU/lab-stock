@@ -38,6 +38,25 @@ const logStyles = {
 };
 
 /**
+ * Helper: Identifies whether the active user has administrative authority
+ */
+export function isUserAdmin(user?: JwtUserPayload): boolean {
+  if (!user) return false;
+  if (user.admin === true) return true;
+
+  const roleLower = String(user.role || '').trim().toLowerCase();
+  if (roleLower === 'admin' || roleLower === 'primary lab administrator') return true;
+
+  if (Array.isArray(user.permissions)) {
+    if (user.permissions.includes('*') || user.permissions.includes('ALL')) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Helper to log RBAC diagnostic events in development or when DEBUG_AUTH=true
  */
 function logRbacDebug(params: {
@@ -112,7 +131,7 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
     const userPermissions = user.permissions || [];
 
     // Admins bypass granular checks
-    if (user.admin === true) {
+    if (isUserAdmin(user)) {
       logRbacDebug({
         action: 'GRANTED',
         path: req.originalUrl || req.path,
@@ -178,7 +197,15 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
     const user = req.user;
 
     // Admins bypass
-    if (user.admin === true) {
+    if (isUserAdmin(user)) {
+      logRbacDebug({
+        action: 'GRANTED',
+        path: req.originalUrl || req.path,
+        method: req.method,
+        userName: user.name,
+        userRole: user.role,
+        required: permissions,
+      });
       return next();
     }
 
@@ -233,11 +260,22 @@ export function requireRole(...allowedRoles: string[]) {
     const user = req.user;
 
     // Admin role or flag satisfies role requirements
-    if (user.admin === true || user.role === Role.ADMIN) {
+    if (isUserAdmin(user)) {
+      logRbacDebug({
+        action: 'GRANTED',
+        path: req.originalUrl || req.path,
+        method: req.method,
+        userName: user.name,
+        userRole: user.role,
+        required: allowedRoles,
+      });
       return next();
     }
 
-    if (!allowedRoles.includes(user.role)) {
+    const userRoleLower = String(user.role || '').trim().toLowerCase();
+    const hasRole = allowedRoles.some((r) => r.trim().toLowerCase() === userRoleLower);
+
+    if (!hasRole) {
       logRbacDebug({
         action: 'DENIED',
         path: req.originalUrl || req.path,
@@ -259,19 +297,28 @@ export function requireRole(...allowedRoles: string[]) {
       );
     }
 
+    logRbacDebug({
+      action: 'GRANTED',
+      path: req.originalUrl || req.path,
+      method: req.method,
+      userName: user.name,
+      userRole: user.role,
+      required: allowedRoles,
+    });
+
     return next();
   };
 }
 
 /**
- * Enforce Administrator status (admin === true)
+ * Enforce Administrator status (admin === true or Role.ADMIN)
  */
 export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
   if (!req.user) {
     return next(new UnauthorizedException('Authentication required before checking permissions'));
   }
 
-  if (req.user.admin !== true && req.user.role !== Role.ADMIN) {
+  if (!isUserAdmin(req.user)) {
     logRbacDebug({
       action: 'DENIED',
       path: req.originalUrl || req.path,
@@ -288,6 +335,15 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
       })
     );
   }
+
+  logRbacDebug({
+    action: 'GRANTED',
+    path: req.originalUrl || req.path,
+    method: req.method,
+    userName: req.user.name,
+    userRole: req.user.role,
+    required: ['Administrator'],
+  });
 
   return next();
 }

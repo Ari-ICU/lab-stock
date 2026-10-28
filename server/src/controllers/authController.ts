@@ -42,11 +42,19 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
     throw new UnauthorizedException('Authentication session expired or missing');
   }
 
-  const user = await authService.getUserProfile(req.user.sub);
+  const dbUser = await authService.getUserProfile(req.user.sub, req.user.email);
 
   return res.status(200).json({
     status: 'ok',
-    user,
+    user: dbUser || {
+      id: req.user.sub,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      is_admin: req.user.admin,
+      permissions: req.user.permissions,
+      department: req.user.department,
+    },
   });
 });
 

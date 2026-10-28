@@ -42,10 +42,18 @@ export const userModel = {
    * Find a user by their primary UUID
    */
   async findById(id: string): Promise<User | null> {
+    if (!id || typeof id !== 'string') return null;
+
+    // Check if id matches UUID syntax before querying PostgreSQL uuid column
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id.trim());
+    if (!isUuid) {
+      return null;
+    }
+
     try {
       const res = await query(
         'SELECT id, name, email, password_hash, role, is_admin, department, created_at, updated_at FROM users WHERE id = $1 LIMIT 1',
-        [id]
+        [id.trim()]
       );
       return res.rows[0] || null;
     } catch (err: any) {
