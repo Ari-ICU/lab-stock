@@ -106,7 +106,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <div className="text-base sm:text-lg text-neutral-900 tracking-tight leading-tight font-khmer-bold font-bold">
+                <div className="text-base sm:text-lg text-neutral-900 tracking-tight leading-tight font-khmer-muol font-bold">
                   សាកលវិទ្យាល័យភូមិន្ទភ្នំពេញ
                 </div>
                 <div className="text-xs sm:text-sm font-extrabold text-neutral-900 tracking-wide mt-0.5">

@@ -33,6 +33,7 @@
   --font-sans: var(--font-geist-sans), var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-khmer: var(--font-khmer-siemreap), "Khmer OS Siemreap", "Siemreap", sans-serif;
+  --font-khmer-muol: var(--font-khmer-muol), "Khmer OS Muol", "Khmer OS Muol Light", serif;
 }
 
 .font-khmer {
@@ -47,8 +48,9 @@
 }
 
 .font-khmer-muol {
-  font-family: "Khmer OS Muol", "Khmer OS Siemreap", sans-serif !important;
+  font-family: var(--font-khmer-muol), "Khmer OS Muol", "Khmer OS Muol Light", serif !important;
 }
+
 
 * {
   -webkit-font-smoothing: antialiased;

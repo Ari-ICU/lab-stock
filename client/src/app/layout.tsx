@@ -22,6 +22,12 @@ const khmerSiemreap = localFont({
   display: "swap",
 });
 
+const khmerMuol = localFont({
+  src: "../../public/fonts/KhmerOS_muol.ttf",
+  variable: "--font-khmer-muol",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Lab Stock - Network Laboratory Inventory & Assets",
   description: "Network lab stock, Cisco switches, fiber optics, cables, and rack asset management.",
@@ -36,7 +42,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${khmerSiemreap.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${khmerSiemreap.variable} ${khmerMuol.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning
