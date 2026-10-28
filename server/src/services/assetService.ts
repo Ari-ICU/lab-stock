@@ -14,20 +14,35 @@ export const assetService = {
     return asset;
   },
 
-  async create(data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>): Promise<Asset> {
-    if (!data.serial_number || !data.name) {
-      throw new ValidationException('Serial number and equipment name are required');
+  async create(data: any): Promise<Asset> {
+    const serial = (data.serial_number || data.serialNumber || data.serial)?.trim();
+    const name = data.name?.trim();
+    const model = data.model?.trim();
+
+    if (!serial || !name || !model) {
+      throw new ValidationException('Serial number, equipment name, and model are required');
     }
 
-    const existing = await assetModel.findBySerial(data.serial_number);
+    const existing = await assetModel.findBySerial(serial);
     if (existing) {
-      throw new ConflictException(`Device with serial number '${data.serial_number}' is already registered`);
+      throw new ConflictException(`Device with serial number '${serial}' is already registered`);
     }
 
     return assetModel.create({
-      ...data,
+      serial_number: serial,
+      name,
+      model,
+      total_units: Number(data.total_units || data.totalUnits) || 1,
+      unit_type: data.unit_type || data.unitType || 'Units',
+      location_id: data.location_id || data.locationId || null,
+      placement_rack: data.placement_rack || data.placementRack || data.rack || data.location || null,
       status: data.status || 'operational',
-      loan_status: data.loan_status || 'available',
+      loan_status: data.loan_status || data.loanStatus || 'available',
+      current_borrower: data.current_borrower || data.currentBorrower || null,
+      loan_due_date: data.loan_due_date || data.loanDueDate || null,
+      next_calibration: data.next_calibration || data.nextCalibration || null,
+      image_url: data.image_url || data.imageUrl || null,
+      description: data.description || null,
     });
   },
 

@@ -18,14 +18,18 @@ export const loanService = {
   /**
    * Check out equipment to student or faculty borrower
    */
-  async checkout(data: Omit<Loan, 'id' | 'status' | 'actual_return_date' | 'created_at'>): Promise<Loan> {
-    if (!data.asset_id || !data.borrower_name || !data.expected_return_date) {
+  async checkout(data: any): Promise<Loan> {
+    const assetId = data.asset_id || data.assetId;
+    const borrowerName = data.borrower_name || data.borrowerName;
+    const expectedReturnDate = data.expected_return_date || data.expectedReturnDate;
+
+    if (!assetId || !borrowerName || !expectedReturnDate) {
       throw new ValidationException('Asset ID, borrower name, and expected return date are required');
     }
 
-    const asset = await assetModel.findById(data.asset_id);
+    const asset = await assetModel.findById(assetId);
     if (!asset) {
-      throw new NotFoundException(`Equipment device with ID ${data.asset_id}`);
+      throw new NotFoundException(`Equipment device with ID ${assetId}`);
     }
 
     if (asset.loan_status === 'on_loan') {
@@ -34,17 +38,26 @@ export const loanService = {
       );
     }
 
+    const borrowerRole = data.borrower_role || data.borrowerRole || 'Student';
+
     // 1. Create loan record
     const loan = await loanModel.create({
-      ...data,
+      asset_id: assetId,
+      borrower_name: borrowerName,
+      borrower_role: borrowerRole,
+      borrower_contact: data.borrower_contact || data.borrowerContact || null,
+      course_or_class: data.course_or_class || data.courseOrClass || null,
+      borrow_date: data.borrow_date || data.borrowDate || new Date().toISOString().split('T')[0],
+      expected_return_date: expectedReturnDate,
       status: 'active',
+      notes: data.notes || null,
     });
 
     // 2. Transition asset state to on_loan
     await assetModel.update(asset.id, {
       loan_status: 'on_loan',
-      current_borrower: `${data.borrower_name} (${data.borrower_role})`,
-      loan_due_date: data.expected_return_date,
+      current_borrower: `${borrowerName} (${borrowerRole})`,
+      loan_due_date: expectedReturnDate,
     });
 
     return loan;

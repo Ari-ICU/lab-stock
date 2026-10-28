@@ -23,21 +23,36 @@ export const stockService = {
     return item;
   },
 
-  async create(data: Omit<StockItem, 'id' | 'status' | 'created_at' | 'updated_at'> & { status?: StockItem['status'] }): Promise<StockItem> {
-    if (!data.code || !data.name) {
-      throw new ValidationException('Item code and name are required');
+  async create(data: any): Promise<StockItem> {
+    const code = data.code?.trim();
+    const name = data.name?.trim();
+
+    if (!code || !name) {
+      throw new ValidationException('Item code/SKU and name are required');
     }
 
-    const existing = await stockModel.findByCode(data.code);
+    const existing = await stockModel.findByCode(code);
     if (existing) {
-      throw new ConflictException(`Item code / SKU '${data.code}' is already registered in inventory`);
+      throw new ConflictException(`Item code / SKU '${code}' is already registered in inventory`);
     }
 
-    const calculatedStatus = data.status || this.calculateStatus(data.quantity, data.min_threshold || 10);
+    const quantity = Number(data.quantity) || 0;
+    const threshold = Number(data.min_threshold ?? data.minThreshold ?? 10);
+    const calculatedStatus = data.status || this.calculateStatus(quantity, threshold);
 
     return stockModel.create({
-      ...data,
+      code,
+      name,
+      category: data.category || 'Office Stationery',
+      quantity,
+      unit: data.unit || 'Units',
+      location_id: data.location_id || data.locationId || null,
+      rack: data.rack || data.location || null,
       status: calculatedStatus,
+      min_threshold: threshold,
+      expiry_date: data.expiry_date || data.expiryDate || 'Active',
+      image_url: data.image_url || data.imageUrl || null,
+      description: data.description || null,
     });
   },
 
