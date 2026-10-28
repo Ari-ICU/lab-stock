@@ -1,5 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 
+export class AppException extends Error {
+  public statusCode: number;
+  public isOperational: boolean;
+
+  constructor(message: string, statusCode = 500, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
 export function errorHandler(
   err: any,
   _req: Request,

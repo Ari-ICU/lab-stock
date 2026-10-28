@@ -71,3 +71,4 @@ export const requestLogger = morgan((tokens, req: Request, res: Response) => {
 
   return ` ${time}  ${method} ${url} ${c.gray}→${c.reset} ${status} ${c.gray}(${latency}${c.gray})${c.reset}`;
 });
+

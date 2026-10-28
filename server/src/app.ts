@@ -7,7 +7,7 @@ import {
   globalRateLimiter,
   sanitizeRequest,
 } from './middleware/security.js';
-import { errorHandler } from './middleware/errorHandler.js';
+import { errorHandler } from './exceptions/errorHandler.js';
 
 const app: Application = express();
 
