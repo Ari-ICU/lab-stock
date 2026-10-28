@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLoginPage) {
     return (
-      <div className="min-h-screen w-full flex flex-col bg-neutral-100 text-neutral-900 font-sans">
+      <div className="min-h-screen w-full flex flex-col bg-[#f8fafc] text-slate-900 font-sans">
         <main className="flex-1 flex flex-col min-h-0">
           {children}
         </main>

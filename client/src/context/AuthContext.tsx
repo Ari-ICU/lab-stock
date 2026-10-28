@@ -49,28 +49,6 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     department: 'Computer Science Department - Room 102B',
     description: 'Full administrator privileges across all hardware, racks, and stock',
   },
-  {
-    name: 'Sokha Chan',
-    email: 'tech@netlab.edu',
-    password: 'password123',
-    role: 'Network Technician',
-    roleBadge: 'Technician',
-    avatarText: 'SC',
-    permissions: 'Maintenance & Hardware Management',
-    department: 'Computer Science Department - Room 102B',
-    description: 'Hardware maintenance, stock adjustments, and equipment logging',
-  },
-  {
-    name: 'Dara Kim',
-    email: 'student@netlab.edu',
-    password: 'password123',
-    role: 'Lab Assistant / Student',
-    roleBadge: 'Viewer',
-    avatarText: 'DK',
-    permissions: 'Read-Only Catalog Access',
-    department: 'Engineering Block A - Room 102B',
-    description: 'Inventory search, catalog browsing, and rack location viewing',
-  },
 ];
 
 interface AuthContextType {
