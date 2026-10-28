@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
@@ -9,14 +11,11 @@ import { exportToCsv } from '@/lib/exportCsv';
 import { Image as ImageIcon } from 'lucide-react';
 
 export default function StockPage() {
+  const router = useRouter();
   const {
     stock,
     locations,
-    openModal,
-    updateStockQuantity,
     deleteStockItem,
-    openDetails,
-    openEdit,
   } = useStock();
   const [filterText, setFilterText] = useState('');
   const [selectedLab, setSelectedLab] = useState<string>('all');
@@ -75,8 +74,8 @@ export default function StockPage() {
       <Header
         title="Laboratory Inventory & Peripherals"
         subtitle="Multi-Lab Consumables, Cables & Equipment Stock"
-        actionLabel="Add Inventory Item"
-        onAction={() => openModal('add_stock')}
+        actionLabel="Add Stock Item"
+        onAction={() => router.push('/stock/create')}
         onExport={handleExport}
       />
 
@@ -145,9 +144,9 @@ export default function StockPage() {
                     <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
                       {/* Product Image Thumbnail */}
                       <td className="py-2.5 px-4">
-                        <div
-                          onClick={() => openDetails(item)}
-                          className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors"
+                        <Link
+                          href={`/stock/${item.id}`}
+                          className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
                           title="Click to view details"
                         >
                           {item.imageUrl ? (
@@ -159,18 +158,25 @@ export default function StockPage() {
                           ) : (
                             <ImageIcon className="w-4 h-4 text-neutral-400" />
                           )}
-                        </div>
+                        </Link>
                       </td>
 
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => openDetails(item)}
-                          className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
+                        <Link
+                          href={`/stock/${item.id}`}
+                          className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
                         >
                           {item.name}
-                        </button>
+                        </Link>
                       </td>
-                      <td className="py-3 px-4 font-mono text-neutral-600">{item.code}</td>
+                      <td className="py-3 px-4 font-mono text-neutral-600">
+                        <Link
+                          href={`/stock/${item.id}`}
+                          className="hover:text-neutral-900 transition-colors"
+                        >
+                          {item.code}
+                        </Link>
+                      </td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700">
                           {item.category}
@@ -205,8 +211,8 @@ export default function StockPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <RowActionMenu
-                          onViewDetails={() => openDetails(item)}
-                          onEdit={() => openEdit(item)}
+                          onViewDetails={() => router.push(`/stock/${item.id}`)}
+                          onEdit={() => router.push(`/stock/${item.id}/edit`)}
                           onDelete={() => deleteStockItem(item.id)}
                         />
                       </td>
