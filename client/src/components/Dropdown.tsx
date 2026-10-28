@@ -14,6 +14,7 @@ interface DropdownProps {
   className?: string;
   buttonClassName?: string;
   align?: 'left' | 'right';
+  direction?: 'auto' | 'up' | 'down';
   searchable?: boolean;
   searchPlaceholder?: string;
 }
@@ -26,6 +27,7 @@ export function Dropdown({
   className = '',
   buttonClassName = '',
   align = 'left',
+  direction = 'auto',
   searchable,
   searchPlaceholder = 'Search options...',
 }: DropdownProps) {
@@ -77,9 +79,39 @@ export function Dropdown({
     }
     if (open) {
       if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom;
-        setOpenUpwards(spaceBelow < 280 && rect.top > 280);
+        if (direction === 'up') {
+          setOpenUpwards(true);
+        } else if (direction === 'down') {
+          setOpenUpwards(false);
+        } else {
+          const rect = containerRef.current.getBoundingClientRect();
+          let availableBelow = window.innerHeight - rect.bottom;
+          let availableAbove = rect.top;
+
+          // Check inside parent modal or scroll container to prevent clipped overflow
+          let el = containerRef.current.parentElement;
+          while (el && el !== document.body) {
+            const style = window.getComputedStyle(el);
+            const isScrollable = /(auto|scroll)/.test(style.overflowY || style.overflow);
+            const isModal =
+              (el.hasAttribute('role') && el.getAttribute('role') === 'dialog') ||
+              el.classList.contains('shadow-2xl') ||
+              el.classList.contains('shadow-xl') ||
+              el.tagName === 'FORM';
+
+            if (isScrollable || isModal) {
+              const pRect = el.getBoundingClientRect();
+              availableBelow = Math.min(availableBelow, pRect.bottom - rect.bottom);
+              availableAbove = Math.min(availableAbove, rect.top - pRect.top);
+              break;
+            }
+            el = el.parentElement;
+          }
+
+          // If space below is restricted (< 210px) and there's more room above, flip upwards
+          const shouldFlipUp = availableBelow < 210 && availableAbove > availableBelow;
+          setOpenUpwards(shouldFlipUp);
+        }
       }
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleKeyDown);
@@ -96,7 +128,7 @@ export function Dropdown({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, isSearchable]);
+  }, [open, direction, isSearchable]);
 
   // Determine width
   const hasCustomWidth =
@@ -134,7 +166,7 @@ export function Dropdown({
       {open && (
         <div
           role="listbox"
-          className={`absolute bg-white border border-neutral-200 rounded-lg shadow-xl z-50 text-xs max-h-72 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
+          className={`absolute bg-white border border-neutral-200 rounded-lg shadow-xl z-50 text-xs max-h-52 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
             openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
           } ${
             align === 'right' ? 'right-0' : 'left-0'
@@ -197,7 +229,9 @@ export function Dropdown({
                         : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
                     }`}
                   >
-                    <span className="truncate">{option.label}</span>
+                    <span className="truncate pr-2" title={option.label}>
+                      {option.label}
+                    </span>
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                       {option.count !== undefined && (
                         <span className="text-[10px] text-neutral-400 font-mono">

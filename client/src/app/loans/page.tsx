@@ -566,7 +566,7 @@ export default function LoansPage() {
               </button>
             </div>
 
-            <form id="lend-device-form" onSubmit={handleCreateLoan} className="flex-1 overflow-y-auto p-5 space-y-4">
+            <form id="lend-device-form" onSubmit={handleCreateLoan} className="flex-1 overflow-y-auto p-5 pb-12 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Select Equipment / Device <span className="text-rose-500">*</span>
@@ -712,7 +712,7 @@ export default function LoansPage() {
               </button>
             </div>
 
-            <form id="transfer-device-form" onSubmit={handleCreateTransfer} className="flex-1 overflow-y-auto p-5 space-y-4">
+            <form id="transfer-device-form" onSubmit={handleCreateTransfer} className="flex-1 overflow-y-auto p-5 pb-12 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
                   Select Equipment to Relocate <span className="text-rose-500">*</span>
