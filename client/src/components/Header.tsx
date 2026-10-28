@@ -104,8 +104,8 @@ export function Header({
               <Download className="w-3.5 h-3.5 text-neutral-500 group-hover:text-neutral-900 group-hover:translate-y-0.5 transition-all" />
             )}
             <span className="hidden sm:inline">{isExporting ? 'Exported!' : 'Export'}</span>
-            <span className="font-mono text-[9px] uppercase font-bold text-neutral-400 bg-neutral-100 px-1 py-0.5 rounded border border-neutral-200 group-hover:text-neutral-600 transition-colors">
-              CSV
+            <span className="font-mono text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 transition-colors">
+              XLSX
             </span>
           </button>
         )}
