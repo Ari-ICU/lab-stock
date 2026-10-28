@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import {
   ArrowLeftRight,
@@ -22,6 +23,7 @@ import {
 import { MockLoan } from '@/types';
 
 export default function LoansPage() {
+  const { user } = useAuth();
   const {
     loans,
     transfers,
@@ -60,7 +62,13 @@ export default function LoansPage() {
   const [transferAssetId, setTransferAssetId] = useState('');
   const [toLocation, setToLocation] = useState('');
   const [transferReason, setTransferReason] = useState('');
-  const [transferredBy, setTransferredBy] = useState('Thoeurn Ratha');
+  const [transferredBy, setTransferredBy] = useState(() => user?.name || 'Dr. Heng Sovannarith');
+
+  useEffect(() => {
+    if (user?.name) {
+      setTransferredBy(user.name);
+    }
+  }, [user]);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -194,7 +202,8 @@ export default function LoansPage() {
             <button
               onClick={() => {
                 if (assets.length > 0) setTransferAssetId(assets[0].id);
-                if (locations.length > 0) setToLocation(locations[0].name);
+                setToLocation('');
+                if (user?.name) setTransferredBy(user.name);
                 setIsTransferModalOpen(true);
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded transition-colors cursor-pointer"
@@ -714,9 +723,22 @@ export default function LoansPage() {
               </div>
 
               {selectedTransferAsset && (
-                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded text-xs">
-                  <span className="text-neutral-500">Current Placement:</span>{' '}
-                  <span className="font-semibold text-neutral-900">{selectedTransferAsset.location}</span>
+                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
+                      Selected Device Physical Placement
+                    </span>
+                    <span className="text-[10px] font-mono text-neutral-500">
+                      SN: {selectedTransferAsset.serialNumber}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+                    <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>{selectedTransferAsset.location}</span>
+                  </div>
+                  <div className="text-[11px] text-neutral-500 leading-normal">
+                    This indicates where this specific equipment is currently stationed. Choose a different target lab below to relocate it.
+                  </div>
                 </div>
               )}
 
@@ -727,22 +749,38 @@ export default function LoansPage() {
                 <Dropdown
                   value={toLocation}
                   onChange={(val) => setToLocation(val)}
-                  options={locations.map((l) => ({
-                    value: `${l.name} (${l.room})`,
-                    label: `${l.name} — ${l.room} (${l.building})`,
-                  }))}
+                  options={locations.map((l) => {
+                    const isSameRoom = selectedTransferAsset?.location.toLowerCase().includes(l.room.toLowerCase());
+                    return {
+                      value: `${l.name} (${l.room})`,
+                      label: `${l.name} — ${l.room} (${l.building})${isSameRoom ? ' (CURRENT ROOM)' : ''}`,
+                    };
+                  })}
                   placeholder="Select target lab room"
                 />
               </div>
 
+              {selectedTransferAsset && toLocation && selectedTransferAsset.location.toLowerCase().includes(toLocation.toLowerCase().split('(')[1]?.replace(')', '') || '___') && (
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-800 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>The selected target room is identical to where this device is already stationed. Please choose a different destination room.</span>
+                </div>
+              )}
+
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Transferred By
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-neutral-700">
+                    Transferred By
+                  </label>
+                  <span className="text-[10px] text-neutral-400">
+                    Active Session: {user?.name || 'Dr. Heng Sovannarith'} ({user?.role || 'Faculty Lecturer'})
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={transferredBy}
                   onChange={(e) => setTransferredBy(e.target.value)}
+                  placeholder={user?.name || 'Operator Name'}
                   className="w-full bg-white text-xs border border-neutral-300 rounded px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
                 />
               </div>
