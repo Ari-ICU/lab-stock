@@ -92,7 +92,7 @@ export default function LoginPage() {
               <div className="w-14 h-14 rounded-xl bg-white border border-neutral-200 p-1.5 shadow-xs shrink-0 flex items-center justify-center">
                 <img
                   src={getAssetPath('/logo.png')}
-                  alt="RUPP University Seal"
+                  alt="CSD Stock Emblem"
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     const img = e.currentTarget;
@@ -118,7 +118,7 @@ export default function LoginPage() {
             {/* Department Tag Pill */}
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-900 text-[10px] font-bold text-white uppercase tracking-wider font-mono">
-                RUPP LABSTOCK
+                CSD STOCK
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-50 text-[11px] font-semibold text-emerald-800 border border-emerald-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -329,7 +329,7 @@ export default function LoginPage() {
 
             {/* University Institutional Notice */}
             <div className="text-[11px] text-neutral-500 text-center px-4 leading-normal">
-              Royal University of Phnom Penh (RUPP) • Laboratory Management System.
+              CSD Stock • Faculty of Science Laboratory Management System.
               <br />
               Authorized staff and student access only.
             </div>

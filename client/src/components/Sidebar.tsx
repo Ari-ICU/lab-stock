@@ -81,7 +81,7 @@ export function Sidebar() {
             <div className="w-10 h-10 rounded-md bg-neutral-50 border border-neutral-200 flex items-center justify-center p-1 shrink-0">
               <img
                 src={getAssetPath('/logo.png')}
-                alt="RUPP University Seal"
+                alt="CSD Stock Emblem"
                 className="w-full h-full object-contain"
                 onError={(e) => {
                   const img = e.currentTarget;
@@ -96,7 +96,7 @@ export function Sidebar() {
             </div>
             <div className="min-w-0">
               <div className="font-bold text-sm tracking-tight text-neutral-900 leading-none truncate font-khmer">
-                RUPP LabStock
+                CSD Stock
               </div>
               <span className="text-[11px] text-neutral-500 font-medium truncate block">
                 Faculty Laboratories
