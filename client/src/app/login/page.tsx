@@ -27,8 +27,8 @@ export default function LoginPage() {
   const { login, switchAccount } = useAuth();
   const { showToast } = useStock();
 
-  const [email, setEmail] = useState('admin@lab.edu');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
