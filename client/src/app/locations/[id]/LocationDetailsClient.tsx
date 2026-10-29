@@ -26,6 +26,12 @@ import {
   ArrowLeftRight,
   ShieldCheck,
   FileSpreadsheet,
+  Copy,
+  Check,
+  ChevronRight,
+  X,
+  Server,
+  Radio,
 } from 'lucide-react';
 
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
@@ -39,7 +45,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     stock,
     loans,
     maintenance,
-    openModal,
     openEdit,
     deleteLocation,
     showToast,
@@ -48,6 +53,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [activeTab, setActiveTab] = useState<'all' | 'hardware' | 'stock'>('all');
   const [filterText, setFilterText] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const loc = locations.find((l) => l.id === id);
 
@@ -130,6 +136,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     );
   }, [matchingStock, filterText]);
 
+  const copyToClipboard = (text: string, label: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    showToast(`Copied ${label} to clipboard`);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
   if (!loc) {
     return (
       <div className="flex-1 flex flex-col min-w-0">
@@ -141,17 +154,17 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           onAction={() => router.push('/locations')}
         />
         <div className="flex-1 flex items-center justify-center p-8">
-          <div className="bg-white border border-neutral-200 rounded-lg p-8 max-w-md w-full text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-500">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
+          <div className="bg-white border border-neutral-200 rounded-xl p-8 max-w-md w-full text-center space-y-4 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
             </div>
             <h2 className="text-base font-bold text-neutral-900">Laboratory Room Not Found</h2>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-neutral-500 leading-relaxed">
               The laboratory record with ID <span className="font-mono font-semibold text-neutral-800">{id}</span> does not exist or has been relocated.
             </p>
             <Link
               href="/locations"
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded hover:bg-neutral-800 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Return to Locations Directory
@@ -205,273 +218,361 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/40">
-      {/* Top Header */}
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
+      {/* 1. Unified Clean Navigation Header (No duplication!) */}
       <Header
         title={loc.name}
-        subtitle={`${loc.building} • ${loc.room} • Complete Lab Equipment & Inventory Specification`}
-        actionLabel="Register Device"
-        onAction={() =>
-          router.push(`/assets/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
-        }
-        onExport={handleExportRoomFleet}
-      />
-
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* Breadcrumb Navigation Bar */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2 text-xs">
-            <Link
-              href="/locations"
-              className="inline-flex items-center gap-1.5 font-semibold text-neutral-600 hover:text-neutral-900 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Laboratory Locations</span>
-            </Link>
-            <span className="text-neutral-300">/</span>
-            <span className="font-bold text-neutral-900">{loc.name}</span>
-            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-neutral-200 text-neutral-700 font-bold ml-1">
-              {loc.room}
-            </span>
-          </div>
-
+        subtitle={`${loc.building} • Rm ${loc.room}`}
+        backHref="/locations"
+        backLabel="Laboratory Locations"
+        showAction={false}
+        showExport={false}
+        actions={
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() =>
-                router.push(`/stock/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
-              }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-neutral-300 rounded hover:bg-neutral-50 text-neutral-800 transition-colors shadow-2xs cursor-pointer"
+              onClick={handleExportRoomFleet}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 active:bg-neutral-100 transition-colors shadow-2xs cursor-pointer"
+              title="Download room inventory dataset as CSV"
             >
-              <Plus className="w-3.5 h-3.5 text-blue-600" />
-              <span>Add Inventory Item</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Export</span>
+              <span className="font-mono text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">
+                CSV
+              </span>
             </button>
+
             <button
               type="button"
               onClick={() => openEdit(loc)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-neutral-300 rounded hover:bg-neutral-50 text-neutral-800 transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 active:bg-neutral-100 transition-colors shadow-2xs cursor-pointer"
+              title="Edit laboratory parameters"
             >
-              <Edit3 className="w-3.5 h-3.5 text-neutral-600" />
-              <span>Edit Lab</span>
+              <Edit3 className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="hidden sm:inline">Edit Room</span>
             </button>
+
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded transition-colors shadow-2xs cursor-pointer"
+              className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-lg transition-colors cursor-pointer"
+              title="Delete laboratory"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-              <span>Delete</span>
+              <Trash2 className="w-4 h-4" />
+            </button>
+
+            <div className="h-4 w-px bg-neutral-200 mx-1 hidden sm:block" />
+
+            <button
+              type="button"
+              onClick={() =>
+                router.push(`/assets/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Register Device</span>
+            </button>
+          </div>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+        {/* 2. Hero Telemetry & Status Overview */}
+        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 flex items-center justify-center shrink-0 shadow-2xs">
+                <Building className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Operational Fleet
+                  </span>
+                  <span className="text-xs font-mono text-neutral-400 font-medium">ID: {loc.id}</span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
+                  {loc.name}
+                </h1>
+                <div className="flex items-center gap-3 text-xs text-neutral-500 flex-wrap pt-0.5">
+                  <span className="inline-flex items-center gap-1 text-neutral-700 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-neutral-400" />
+                    {loc.building} • Room <span className="font-bold text-neutral-900">{loc.room}</span>
+                  </span>
+                  <span className="text-neutral-300">•</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard('192.168.102.0/24', 'Lab Subnet', 'subnet')}
+                    className="inline-flex items-center gap-1 font-mono text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer group"
+                    title="Click to copy IP subnet"
+                  >
+                    <span>Subnet: 192.168.102.0/24</span>
+                    {copiedKey === 'subnet' ? (
+                      <Check className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-neutral-400 group-hover:text-neutral-600" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Add Buttons */}
+            <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(`/stock/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+                }
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
+              >
+                <Boxes className="w-3.5 h-3.5 text-emerald-600" />
+                <span>+ Add Inventory Item</span>
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(`/assets/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
+                }
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
+              >
+                <Microscope className="w-3.5 h-3.5 text-emerald-400" />
+                <span>+ Add Hardware</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Micro KPI Metric Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-neutral-100">
+            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
+                <span className="text-[11px] font-medium">Hardware Fleet</span>
+                <div className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Microscope className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="text-xl font-bold text-neutral-900">
+                {totalHardwareUnits} <span className="text-xs font-normal text-neutral-500">units</span>
+              </div>
+              <p className="text-[10px] text-neutral-400 mt-0.5">{matchingAssets.length} device models</p>
+            </div>
+
+            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
+                <span className="text-[11px] font-medium">Inventory Stock</span>
+                <div className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Boxes className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="text-xl font-bold text-neutral-900">
+                {totalStockUnits} <span className="text-xs font-normal text-neutral-500">units</span>
+              </div>
+              <p className="text-[10px] text-neutral-400 mt-0.5">{matchingStock.length} consumable SKUs</p>
+            </div>
+
+            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
+                <span className="text-[11px] font-medium">Active Loans</span>
+                <div className="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Laptop className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="text-xl font-bold text-neutral-900">
+                {activeLoansCount} <span className="text-xs font-normal text-neutral-500">active</span>
+              </div>
+              <p className="text-[10px] text-neutral-400 mt-0.5">Checked out to students</p>
+            </div>
+
+            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
+                <span className="text-[11px] font-medium">Room Health</span>
+                <div className="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="text-xl font-bold text-neutral-900">
+                {maintenanceCount > 0 ? `${maintenanceCount} Pending` : '100%'}
+              </div>
+              <p className="text-[10px] text-neutral-400 mt-0.5">
+                {maintenanceCount > 0 ? 'Maintenance service required' : 'All equipment operational'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Integrated Search & Segmented Filter Bar */}
+        <div className="bg-white border border-neutral-200/90 rounded-xl p-3.5 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Filter by name, serial number, SKU, or model..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className="w-full bg-neutral-50/70 border border-neutral-200 text-neutral-900 text-xs pl-9 pr-8 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white focus:ring-1 focus:ring-neutral-900 font-medium transition-all placeholder:text-neutral-400"
+            />
+            {filterText && (
+              <button
+                type="button"
+                onClick={() => setFilterText('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5"
+                title="Clear filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Segmented Control Tabs */}
+          <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200/80 text-xs font-semibold shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('all')}
+              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all ${
+                activeTab === 'all'
+                  ? 'bg-white text-neutral-900 shadow-2xs font-bold'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              All Fleet ({matchingAssets.length + matchingStock.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('hardware')}
+              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
+                activeTab === 'hardware'
+                  ? 'bg-white text-neutral-900 shadow-2xs font-bold'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <Microscope className="w-3.5 h-3.5 text-blue-600" />
+              <span>Hardware ({matchingAssets.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('stock')}
+              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
+                activeTab === 'stock'
+                  ? 'bg-white text-neutral-900 shadow-2xs font-bold'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <Boxes className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Peripherals ({matchingStock.length})</span>
             </button>
           </div>
         </div>
 
-        {/* Hero Telemetry Card */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-xl bg-neutral-900 text-white flex items-center justify-center shrink-0 shadow-sm">
-              <Building className="w-7 h-7 text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">
-                  Connected Laboratory Classroom
-                </span>
-                <span className="text-xs text-neutral-400 font-mono">ID: {loc.id}</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
-                {loc.name}
-              </h1>
-              <div className="flex items-center gap-4 text-xs text-neutral-500 mt-1 flex-wrap">
-                <span className="flex items-center gap-1 font-medium text-neutral-700">
-                  <MapPin className="w-3.5 h-3.5 text-neutral-400" />
-                  {loc.building} • Room <span className="font-bold text-neutral-900">{loc.room}</span>
-                </span>
-                <span>•</span>
-                <span>Subnet: <code className="font-mono text-neutral-800 font-semibold">192.168.102.0/24</code></span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Operational Fleet
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stat Highlights */}
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 min-w-[130px]">
-              <div className="text-[11px] text-neutral-500 font-medium flex items-center gap-1.5">
-                <Microscope className="w-3.5 h-3.5 text-blue-500" />
-                Hardware Fleet
-              </div>
-              <div className="text-xl font-bold text-neutral-900 mt-1">
-                {totalHardwareUnits} <span className="text-xs font-normal text-neutral-500">units</span>
-              </div>
-              <div className="text-[10px] text-neutral-400 mt-0.5">
-                {matchingAssets.length} device models
-              </div>
-            </div>
-
-            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 min-w-[130px]">
-              <div className="text-[11px] text-neutral-500 font-medium flex items-center gap-1.5">
-                <Boxes className="w-3.5 h-3.5 text-emerald-500" />
-                Inventory Stock
-              </div>
-              <div className="text-xl font-bold text-neutral-900 mt-1">
-                {totalStockUnits} <span className="text-xs font-normal text-neutral-500">units</span>
-              </div>
-              <div className="text-[10px] text-neutral-400 mt-0.5">
-                {matchingStock.length} peripheral SKUs
-              </div>
-            </div>
-
-            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 min-w-[130px]">
-              <div className="text-[11px] text-neutral-500 font-medium flex items-center gap-1.5">
-                <Laptop className="w-3.5 h-3.5 text-amber-500" />
-                Checked Out
-              </div>
-              <div className="text-xl font-bold text-neutral-900 mt-1">
-                {activeLoansCount} <span className="text-xs font-normal text-neutral-500">active</span>
-              </div>
-              <div className="text-[10px] text-neutral-400 mt-0.5">
-                Student lending
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Search & Tabs Filter Section */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search equipment, serial numbers, SKUs, or models in this room..."
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className="w-full bg-neutral-50 border border-neutral-300 text-neutral-900 text-xs pl-9 pr-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:bg-white focus:ring-1 focus:ring-neutral-900 font-medium transition-colors placeholder:text-neutral-400"
-              />
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setActiveTab('all')}
-                className={`px-3 py-1.5 rounded cursor-pointer transition-colors ${
-                  activeTab === 'all'
-                    ? 'bg-white text-neutral-900 shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                All Room Fleet ({matchingAssets.length + matchingStock.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('hardware')}
-                className={`px-3 py-1.5 rounded cursor-pointer transition-colors flex items-center gap-1.5 ${
-                  activeTab === 'hardware'
-                    ? 'bg-white text-neutral-900 shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                <Microscope className="w-3.5 h-3.5 text-blue-600" />
-                Hardware ({matchingAssets.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('stock')}
-                className={`px-3 py-1.5 rounded cursor-pointer transition-colors flex items-center gap-1.5 ${
-                  activeTab === 'stock'
-                    ? 'bg-white text-neutral-900 shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                <Boxes className="w-3.5 h-3.5 text-emerald-600" />
-                Peripherals ({matchingStock.length})
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 1. Lab Hardware Section */}
+        {/* 4. Hardware Fleet Table */}
         {(activeTab === 'all' || activeTab === 'hardware') && (
-          <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-xs space-y-0">
-            <div className="p-4 border-b border-neutral-200 bg-neutral-50/70 flex items-center justify-between">
+          <div className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden shadow-xs space-y-0">
+            <div className="p-4 border-b border-neutral-100 bg-neutral-50/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Microscope className="w-4 h-4 text-blue-600" />
-                <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
-                  Lab Hardware Assets & Network Infrastructure ({filteredAssets.length})
+                <div className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Microscope className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
+                  Hardware Assets & Network Infrastructure ({filteredAssets.length})
                 </h2>
               </div>
-              <span className="text-[11px] text-neutral-500">
+              <span className="text-[11px] font-medium text-neutral-500">
                 {filteredAssets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0)} deployed units in {loc.room}
               </span>
             </div>
 
             {filteredAssets.length === 0 ? (
-              <div className="p-8 text-center text-xs text-neutral-500 space-y-2">
-                <p>No hardware devices matching current query in this room.</p>
+              <div className="py-12 px-4 text-center space-y-3">
+                <div className="w-10 h-10 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
+                  <Microscope className="w-5 h-5" />
+                </div>
+                <p className="text-xs text-neutral-500">
+                  {filterText
+                    ? `No hardware devices matching "${filterText}" in this room.`
+                    : 'No hardware devices currently registered in this room.'}
+                </p>
                 <button
                   type="button"
                   onClick={() =>
                     router.push(`/assets/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
                   }
-                  className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Register a device to {loc.room}
+                  Register First Device
                 </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[760px]">
-                  <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
-                    <tr>
-                      <th className="py-3 px-4">Equipment / Host</th>
-                      <th className="py-3 px-4">Model & SKU</th>
+                <table className="w-full text-left text-xs min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
+                      <th className="py-3 px-4">Equipment / Device</th>
+                      <th className="py-3 px-4">Model & Specification</th>
                       <th className="py-3 px-4">Serial Number</th>
                       <th className="py-3 px-4">Total Units</th>
                       <th className="py-3 px-4">Placement / Rack</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Operational Status</th>
                       <th className="py-3 px-4">Lending State</th>
                       <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
                     {filteredAssets.map((asset) => (
-                      <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors">
-                        <td className="py-3 px-4">
+                      <tr key={asset.id} className="hover:bg-neutral-50/80 transition-colors group">
+                        <td className="py-3.5 px-4">
                           <Link
                             href={`/assets/${asset.id}`}
-                            className="font-bold text-neutral-900 hover:text-emerald-700 transition-colors flex items-center gap-2"
+                            className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5"
                           >
                             <span>{asset.name}</span>
-                            <ExternalLink className="w-3 h-3 text-neutral-400" />
+                            <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </Link>
                         </td>
-                        <td className="py-3 px-4 text-neutral-600 font-medium">{asset.model}</td>
-                        <td className="py-3 px-4 font-mono text-neutral-800 text-[11px]">
-                          {asset.serialNumber}
+                        <td className="py-3.5 px-4 text-neutral-600 font-medium">{asset.model}</td>
+                        <td className="py-3.5 px-4">
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(asset.serialNumber, 'Serial Number', asset.id)}
+                            className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-0.5 rounded transition-colors cursor-pointer"
+                            title="Click to copy serial number"
+                          >
+                            <span>{asset.serialNumber}</span>
+                            {copiedKey === asset.id ? (
+                              <Check className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-neutral-400" />
+                            )}
+                          </button>
                         </td>
-                        <td className="py-3 px-4 font-semibold text-neutral-900">
-                          {asset.totalUnits ?? 1} <span className="text-[11px] font-normal text-neutral-500">{asset.unitType ?? 'Units'}</span>
+                        <td className="py-3.5 px-4 font-semibold text-neutral-900">
+                          {asset.totalUnits ?? 1}{' '}
+                          <span className="text-[11px] font-normal text-neutral-500">{asset.unitType ?? 'Units'}</span>
                         </td>
-                        <td className="py-3 px-4 text-neutral-600 max-w-xs truncate">
+                        <td className="py-3.5 px-4 text-neutral-600 max-w-xs truncate">
                           {asset.location}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                               asset.status === 'operational'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : asset.status === 'maintenance'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
                             }`}
                           >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                asset.status === 'operational'
+                                  ? 'bg-emerald-500'
+                                  : asset.status === 'maintenance'
+                                  ? 'bg-amber-500'
+                                  : 'bg-blue-500'
+                              }`}
+                            />
                             {asset.status === 'operational'
                               ? 'Operational'
                               : asset.status === 'maintenance'
@@ -479,24 +580,23 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                               : 'In Use'}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           {asset.loanStatus === 'on_loan' ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                              <Laptop className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                              <Laptop className="w-3 h-3 text-amber-600" />
                               Lent to {asset.currentBorrower || 'Student'}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-neutral-500 font-medium">
-                              In Room Bench
-                            </span>
+                            <span className="text-[11px] text-neutral-500 font-medium">In Room Bench</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3.5 px-4 text-right">
                           <Link
                             href={`/assets/${asset.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-800 hover:text-emerald-700 bg-white border border-neutral-200 px-2.5 py-1 rounded hover:bg-neutral-50 shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:border-neutral-300 px-2.5 py-1 rounded-lg hover:bg-neutral-50 shadow-2xs transition-all"
                           >
                             <span>Inspect</span>
+                            <ChevronRight className="w-3 h-3 text-neutral-400" />
                           </Link>
                         </td>
                       </tr>
@@ -508,40 +608,49 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           </div>
         )}
 
-        {/* 2. Inventory & Peripherals Section */}
+        {/* 5. Inventory & Peripherals Table */}
         {(activeTab === 'all' || activeTab === 'stock') && (
-          <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-xs space-y-0">
-            <div className="p-4 border-b border-neutral-200 bg-neutral-50/70 flex items-center justify-between">
+          <div className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden shadow-xs space-y-0">
+            <div className="p-4 border-b border-neutral-100 bg-neutral-50/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Boxes className="w-4 h-4 text-emerald-600" />
-                <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+                <div className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Boxes className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
                   Peripherals, Monitors & Accessories ({filteredStock.length})
                 </h2>
               </div>
-              <span className="text-[11px] text-neutral-500">
-                {filteredStock.reduce((sum, s) => sum + (s.quantity || 1), 0)} total consumable/peripheral items in {loc.room}
+              <span className="text-[11px] font-medium text-neutral-500">
+                {filteredStock.reduce((sum, s) => sum + (s.quantity || 1), 0)} consumable units in {loc.room}
               </span>
             </div>
 
             {filteredStock.length === 0 ? (
-              <div className="p-8 text-center text-xs text-neutral-500 space-y-2">
-                <p>No inventory peripherals matching current query in this room.</p>
+              <div className="py-12 px-4 text-center space-y-3">
+                <div className="w-10 h-10 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
+                  <Boxes className="w-5 h-5" />
+                </div>
+                <p className="text-xs text-neutral-500">
+                  {filterText
+                    ? `No inventory items matching "${filterText}" in this room.`
+                    : 'No inventory peripherals currently assigned to this room.'}
+                </p>
                 <button
                   type="button"
                   onClick={() =>
                     router.push(`/stock/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
                   }
-                  className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add inventory items to {loc.room}
+                  Add First Consumable
                 </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[760px]">
-                  <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
-                    <tr>
+                <table className="w-full text-left text-xs min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
                       <th className="py-3 px-4">Item Name</th>
                       <th className="py-3 px-4">Part / SKU</th>
                       <th className="py-3 px-4">Category</th>
@@ -554,41 +663,62 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
                     {filteredStock.map((item) => (
-                      <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors">
-                        <td className="py-3 px-4">
+                      <tr key={item.id} className="hover:bg-neutral-50/80 transition-colors group">
+                        <td className="py-3.5 px-4">
                           <Link
                             href={`/stock/${item.id}`}
-                            className="font-bold text-neutral-900 hover:text-emerald-700 transition-colors flex items-center gap-2"
+                            className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5"
                           >
                             <span>{item.name}</span>
-                            <ExternalLink className="w-3 h-3 text-neutral-400" />
+                            <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </Link>
                         </td>
-                        <td className="py-3 px-4 font-mono text-neutral-700 text-[11px]">
-                          {item.code}
+                        <td className="py-3.5 px-4">
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(item.code, 'Part SKU', item.id)}
+                            className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-0.5 rounded transition-colors cursor-pointer"
+                            title="Click to copy SKU"
+                          >
+                            <span>{item.code}</span>
+                            {copiedKey === item.id ? (
+                              <Check className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-neutral-400" />
+                            )}
+                          </button>
                         </td>
-                        <td className="py-3 px-4">
-                          <span className="bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded text-[11px] font-medium">
+                        <td className="py-3.5 px-4">
+                          <span className="bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded text-[11px] font-medium border border-neutral-200">
                             {item.category}
                           </span>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <span className="font-bold text-neutral-900 text-sm">{item.quantity}</span>{' '}
                           <span className="text-[11px] text-neutral-500 font-normal">{item.unit}</span>
                         </td>
-                        <td className="py-3 px-4 text-neutral-600 max-w-xs truncate">
+                        <td className="py-3.5 px-4 text-neutral-600 max-w-xs truncate">
                           {item.rack || item.location}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                               item.status === 'in_stock'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                 : item.status === 'low_stock'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
                             }`}
                           >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                item.status === 'in_stock'
+                                  ? 'bg-emerald-500'
+                                  : item.status === 'low_stock'
+                                  ? 'bg-amber-500'
+                                  : 'bg-rose-500'
+                              }`}
+                            />
                             {item.status === 'in_stock'
                               ? 'In Stock'
                               : item.status === 'low_stock'
@@ -596,13 +726,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                               : 'Out of Stock'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-neutral-500">{item.expiryDate || 'Active'}</td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3.5 px-4 text-neutral-500">{item.expiryDate || 'Active'}</td>
+                        <td className="py-3.5 px-4 text-right">
                           <Link
                             href={`/stock/${item.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-800 hover:text-emerald-700 bg-white border border-neutral-200 px-2.5 py-1 rounded hover:bg-neutral-50 shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 hover:border-neutral-300 px-2.5 py-1 rounded-lg hover:bg-neutral-50 shadow-2xs transition-all"
                           >
                             <span>Inspect</span>
+                            <ChevronRight className="w-3 h-3 text-neutral-400" />
                           </Link>
                         </td>
                       </tr>
@@ -615,40 +746,40 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* 6. Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-neutral-200 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-neutral-900">
                   Delete Laboratory Record?
                 </h3>
-                <p className="text-xs text-neutral-500 mt-0.5">
-                  This will remove <span className="font-semibold text-neutral-800">{loc.name}</span> ({loc.room}) from your active fleet.
+                <p className="text-xs text-neutral-500 mt-1">
+                  This will remove <span className="font-semibold text-neutral-800">{loc.name}</span> ({loc.room}) from active faculty operations.
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-600 bg-neutral-50 p-3 rounded border border-neutral-200">
-              Note: Assets and inventory previously assigned to this room will remain in the database, but may need to be reallocated to another room.
-            </p>
+            <div className="text-xs text-neutral-600 bg-neutral-50 p-3.5 rounded-xl border border-neutral-200/80 leading-relaxed">
+              <strong>Notice:</strong> Hardware assets and consumable inventory registered to this room will remain preserved in the database, but may need to be reallocated.
+            </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-3.5 py-2 text-xs font-semibold border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+                className="px-3.5 py-2 text-xs font-semibold border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded cursor-pointer transition-colors shadow-2xs"
+                className="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-2xs cursor-pointer"
               >
                 Delete Laboratory
               </button>
@@ -659,4 +790,3 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     </div>
   );
 }
-

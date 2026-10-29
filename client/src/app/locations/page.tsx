@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
-import { Boxes, Microscope, Building, ArrowRight } from 'lucide-react';
+import { Boxes, Microscope, Building, ArrowRight, Search, Plus } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 
 export default function LocationsPage() {
@@ -87,16 +87,19 @@ export default function LocationsPage() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        <div className="flex items-center justify-between">
-          <input
-            type="text"
-            placeholder="Search by lab name, room or building..."
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-            className="w-72 bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400"
-          />
-          <div className="text-xs text-neutral-500">
-            Total <span className="font-semibold text-neutral-900">{locations.length}</span> lab zones
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by lab name, room or building..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs transition-all"
+            />
+          </div>
+          <div className="text-xs text-neutral-500 font-medium">
+            Total <span className="font-bold text-neutral-900">{filtered.length}</span> connected {filtered.length === 1 ? 'room' : 'rooms'}
           </div>
         </div>
 
