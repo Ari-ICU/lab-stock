@@ -140,5 +140,26 @@ export const stockModel = {
     const res = await query('DELETE FROM stock_items WHERE id = $1', [id]);
     return (res.rowCount ?? 0) > 0;
   },
+
+  /**
+   * Concurrency-safe atomic quantity increment or decrement.
+   * Guarantees quantity never drops below 0 when multiple users act simultaneously.
+   */
+  async adjustQuantity(id: string, delta: number): Promise<StockItem | null> {
+    const sql = `
+      UPDATE stock_items
+      SET quantity = quantity + $1,
+          status = CASE
+            WHEN (quantity + $1) <= 0 THEN 'out_of_stock'
+            WHEN (quantity + $1) <= min_threshold THEN 'low_stock'
+            ELSE 'in_stock'
+          END,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2 AND (quantity + $1) >= 0
+      RETURNING *
+    `;
+    const res = await query(sql, [delta, id]);
+    return res.rows[0] || null;
+  },
 };
 

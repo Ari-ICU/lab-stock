@@ -1,5 +1,6 @@
 import { stockModel, StockItem } from '../models/stockModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
+import { cache } from '../utils/cache.js';
 
 export const stockService = {
   /**
@@ -11,8 +12,13 @@ export const stockService = {
     return 'in_stock';
   },
 
+  /**
+   * Fetch stock list with ultra-fast sub-millisecond in-memory caching.
+   * Auto-invalidated whenever any user inserts, updates, or deletes an item.
+   */
   async getAll(filters?: { category?: string; status?: string; search?: string }): Promise<StockItem[]> {
-    return stockModel.findAll(filters);
+    const cacheKey = `stock:list:${filters?.category || 'all'}:${filters?.status || 'all'}:${filters?.search || 'none'}`;
+    return cache.getOrSet(cacheKey, () => stockModel.findAll(filters), 60000); // 60s TTL
   },
 
   async getById(id: string): Promise<StockItem> {
@@ -40,7 +46,7 @@ export const stockService = {
     const threshold = Number(data.min_threshold ?? data.minThreshold ?? 10);
     const calculatedStatus = data.status || this.calculateStatus(quantity, threshold);
 
-    return stockModel.create({
+    const created = await stockModel.create({
       code,
       name,
       category: data.category || 'Office Stationery',
@@ -54,6 +60,11 @@ export const stockService = {
       image_url: data.image_url || data.imageUrl || null,
       description: data.description || null,
     });
+
+    // Invalidate stock caches so all users immediately see the new item
+    cache.invalidatePattern('stock:');
+
+    return created;
   },
 
   async update(id: string, data: Partial<StockItem>): Promise<StockItem> {
@@ -71,11 +82,37 @@ export const stockService = {
     if (!updated) {
       throw new NotFoundException(`Inventory item ${id}`);
     }
+
+    // Invalidate stock caches
+    cache.invalidatePattern('stock:');
+
+    return updated;
+  },
+
+  /**
+   * Concurrency-safe atomic adjustment (e.g. usage, restock, checkout)
+   */
+  async adjustQuantity(id: string, delta: number): Promise<StockItem> {
+    const updated = await stockModel.adjustQuantity(id, delta);
+    if (!updated) {
+      // Check if item exists or if stock was insufficient
+      const item = await stockModel.findById(id);
+      if (!item) {
+        throw new NotFoundException(`Inventory item ${id}`);
+      }
+      throw new ConflictException(`Insufficient stock. Cannot reduce quantity by ${Math.abs(delta)} (available: ${item.quantity}).`);
+    }
+
+    cache.invalidatePattern('stock:');
     return updated;
   },
 
   async delete(id: string): Promise<boolean> {
     await this.getById(id); // ensure exists
-    return stockModel.delete(id);
+    const deleted = await stockModel.delete(id);
+    if (deleted) {
+      cache.invalidatePattern('stock:');
+    }
+    return deleted;
   },
 };

@@ -1,9 +1,10 @@
 import { locationModel, Location } from '../models/locationModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
+import { cache } from '../utils/cache.js';
 
 export const locationService = {
   async getAll(): Promise<Location[]> {
-    return locationModel.findAll();
+    return cache.getOrSet('location:list:all', () => locationModel.findAll(), 120000); // 2-min TTL
   },
 
   async getById(id: string): Promise<Location> {
@@ -24,7 +25,8 @@ export const locationService = {
       throw new ConflictException(`Location with code '${data.code}' already exists`);
     }
 
-    return locationModel.create(data);
+    const created = await locationModel.create(data);
+    cache.invalidatePattern('location:');
+    return created;
   },
 };
-

@@ -4,6 +4,7 @@ import {
   getStockItemById,
   createStockItem,
   updateStockItem,
+  adjustStockQuantity,
   deleteStockItem,
 } from '@/controllers/stockController.js';
 import { authenticate, requirePermission } from '@/middleware/auth.js';
@@ -51,6 +52,17 @@ router.put(
   requirePermission(Permission.STOCK_UPDATE),
   validateUpdateStock,
   updateStockItem
+);
+
+/**
+ * @route   PATCH /api/v1/stock/:id/adjust
+ * @desc    Atomic quantity adjustment (+delta / -delta) safe for concurrent users
+ * @access  Protected (Requires stock:update)
+ */
+router.patch(
+  '/:id/adjust',
+  requirePermission(Permission.STOCK_UPDATE),
+  adjustStockQuantity
 );
 
 /**

@@ -1,9 +1,14 @@
 import { assetModel, Asset } from '../models/assetModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
+import { cache } from '../utils/cache.js';
 
 export const assetService = {
+  /**
+   * Fast retrieval with in-memory cache and 60-second TTL
+   */
   async getAll(filters?: { status?: string; search?: string }): Promise<Asset[]> {
-    return assetModel.findAll(filters);
+    const cacheKey = `asset:list:${filters?.status || 'all'}:${filters?.search || 'none'}`;
+    return cache.getOrSet(cacheKey, () => assetModel.findAll(filters), 60000);
   },
 
   async getById(id: string): Promise<Asset> {
@@ -28,7 +33,7 @@ export const assetService = {
       throw new ConflictException(`Device with serial number '${serial}' is already registered`);
     }
 
-    return assetModel.create({
+    const created = await assetModel.create({
       serial_number: serial,
       name,
       model,
@@ -44,6 +49,11 @@ export const assetService = {
       image_url: data.image_url || data.imageUrl || null,
       description: data.description || null,
     });
+
+    // Invalidate asset cache instantly
+    cache.invalidatePattern('asset:');
+
+    return created;
   },
 
   async update(id: string, data: Partial<Asset>): Promise<Asset> {
@@ -52,11 +62,19 @@ export const assetService = {
     if (!updated) {
       throw new NotFoundException(`Asset ${id}`);
     }
+
+    // Invalidate asset cache
+    cache.invalidatePattern('asset:');
+
     return updated;
   },
 
   async delete(id: string): Promise<boolean> {
     await this.getById(id);
-    return assetModel.delete(id);
+    const deleted = await assetModel.delete(id);
+    if (deleted) {
+      cache.invalidatePattern('asset:');
+    }
+    return deleted;
   },
 };

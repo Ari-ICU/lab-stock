@@ -238,14 +238,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleExportRoomFleet}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-neutral-300 rounded hover:bg-neutral-50 text-neutral-800 transition-colors shadow-2xs cursor-pointer"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Export Room CSV</span>
-            </button>
-            <button
-              type="button"
               onClick={() =>
                 router.push(`/stock/create?location=${encodeURIComponent(`${loc.name} (${loc.room})`)}`)
               }

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { stockService } from '@/services/stockService.js';
-import { asyncHandler } from '@/exceptions/errorHandler.js';
+import { asyncHandler, ValidationException } from '@/exceptions/errorHandler.js';
 
 /**
  * GET /api/v1/stock
@@ -61,6 +61,27 @@ export const updateStockItem = asyncHandler(async (req: Request, res: Response) 
   return res.status(200).json({
     status: 'ok',
     message: 'Stock item updated successfully',
+    data: updated,
+  });
+});
+
+/**
+ * PATCH /api/v1/stock/:id/adjust
+ * Concurrency-safe atomic quantity increment/decrement (+5 or -1)
+ */
+export const adjustStockQuantity = asyncHandler(async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const delta = Number(req.body.delta ?? req.body.amount);
+
+  if (isNaN(delta) || delta === 0) {
+    throw new ValidationException('Field "delta" or "amount" is required and must be a non-zero number');
+  }
+
+  const updated = await stockService.adjustQuantity(id, delta);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: `Stock quantity adjusted successfully by ${delta > 0 ? '+' : ''}${delta}`,
     data: updated,
   });
 });

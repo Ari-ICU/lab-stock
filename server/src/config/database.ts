@@ -3,18 +3,23 @@ import { config } from './index.js';
 
 const { Pool, Client } = pg;
 
-// Create PostgreSQL connection pool
-export const pool = new Pool(
-  config.db.url
-    ? { connectionString: config.db.url }
-    : {
-        host: config.db.host,
-        port: config.db.port,
-        user: config.db.user,
-        password: config.db.password,
-        database: config.db.database,
-      }
-);
+// Create PostgreSQL connection pool optimized for concurrent multi-user load
+const poolConfig: pg.PoolConfig = config.db.url
+  ? { connectionString: config.db.url }
+  : {
+      host: config.db.host,
+      port: config.db.port,
+      user: config.db.user,
+      password: config.db.password,
+      database: config.db.database,
+    };
+
+export const pool = new Pool({
+  ...poolConfig,
+  max: 20, // Support up to 20 concurrent DB connections per worker
+  idleTimeoutMillis: 30000, // Close idle connections after 30s
+  connectionTimeoutMillis: 5000, // Fail fast after 5s if pool is exhausted
+});
 
 pool.on('error', (err) => {
   console.error('⚠️ Unexpected error on idle PostgreSQL client:', err.message);
@@ -26,6 +31,29 @@ pool.on('error', (err) => {
 export async function query(text: string, params?: any[]) {
   const res = await pool.query(text, params);
   return res;
+}
+
+/**
+ * Execute operations within an atomic PostgreSQL transaction with automatic rollback on error.
+ * Critical for preventing race conditions and partial writes in multi-user concurrent operations.
+ */
+export async function withTransaction<T>(
+  callback: (client: pg.PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**
