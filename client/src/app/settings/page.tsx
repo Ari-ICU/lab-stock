@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
 import { usePersistentTab } from '@/hooks/usePersistentTab';
+import { systemService } from '@/services';
 import { useStock } from '@/context/StockContext';
 import {
   useAuth,
@@ -80,7 +81,7 @@ export default function SettingsPage() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState('Faculty Lecturer');
-  const [newUserDept, setNewUserDept] = useState('Engineering Block A - Room 102B');
+  const [newUserPrimaryLocation, setNewUserPrimaryLocation] = useState<string>('Rm 102B');
   const [newUserAssignedLabs, setNewUserAssignedLabs] = useState<string[]>(['Rm 102B']);
 
   // Assign Labs Modal State
@@ -156,56 +157,24 @@ export default function SettingsPage() {
 
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
 
-  const resolveHealthUrl = (input: string): string => {
-    let url = (input || 'http://localhost:5001/api/v1').trim();
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = `http://${url}`;
-    }
-    url = url.replace(/\/+$/, '');
-
-    // If user explicitly typed full path ending with /health (e.g. http://localhost:5001/api/v1/health or http://localhost:5001/health)
-    if (url.endsWith('/health')) {
-      return url;
-    }
-
-    // If user typed .../api/v1 or .../api/v1/
-    if (url.endsWith('/api/v1')) {
-      return `${url}/health`;
-    }
-
-    // If user typed http://localhost:5001 or domain:port
-    return `${url}/api/v1/health`;
-  };
-
   const handleTestApi = async () => {
     setApiStatus('testing');
     setApiErrorMessage(null);
-    const start = performance.now();
     try {
-      const healthUrl = resolveHealthUrl(apiBaseUrl);
+      const result = await systemService.testConnection(apiBaseUrl);
 
-      const res = await fetch(healthUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server returned HTTP ${res.status}: ${res.statusText}`);
+      if (result.ok) {
+        setApiLatency(result.latencyMs);
+        setApiStatus('connected');
+        showToast(`Gateway ping healthy: ${result.latencyMs}ms RTT (${result.message})`, 'success');
+      } else {
+        setApiStatus('error');
+        setApiErrorMessage(result.message);
+        showToast(`Gateway connection error: ${result.message}`, 'error');
       }
-
-      const data = await res.json();
-      const rtt = Math.max(2, Math.round(performance.now() - start));
-      setApiLatency(rtt);
-      setApiStatus('connected');
-      showToast(`Gateway ping healthy: ${rtt}ms RTT (${data.message || 'API Online'})`, 'success');
     } catch (err: any) {
       setApiStatus('error');
-      const errorMsg = err.name === 'TimeoutError'
-        ? 'Connection timed out after 5s'
-        : (err.message || 'Failed to reach API gateway');
+      const errorMsg = err.message || 'Failed to reach API gateway';
       setApiErrorMessage(errorMsg);
       showToast(`Gateway connection error: ${errorMsg}`, 'error');
     }
@@ -305,6 +274,29 @@ export default function SettingsPage() {
     value: roleName,
   }));
 
+  const locationOptions = React.useMemo(() => {
+    const opts = [
+      {
+        label: 'All Laboratories (Universal Access)',
+        value: 'all',
+      },
+    ];
+
+    locations.forEach((loc) => {
+      opts.push({
+        label: `${loc.name} (${loc.room}) • ${loc.building}`,
+        value: loc.room,
+      });
+    });
+
+    opts.push({
+      label: '+ Custom Multi-Room Scope...',
+      value: 'custom',
+    });
+
+    return opts;
+  }, [locations]);
+
   const handleRoleChange = (userId: string, newRole: string) => {
     if (!isAdmin) {
       showToast('Permission denied: Only Primary Administrators can change user roles.', 'error');
@@ -338,12 +330,23 @@ export default function SettingsPage() {
 
     const roleDef = ROLE_DEFINITIONS[newUserRole] || ROLE_DEFINITIONS['Laboratory Operator'];
 
-    const assignedLabsToSave =
-      newUserRole === 'Primary Lab Administrator' || roleDef.badge === 'Admin'
-        ? ['all']
-        : newUserAssignedLabs.length > 0
-        ? newUserAssignedLabs
-        : ['Rm 102B'];
+    let targetDept = 'Engineering Block A - Room 102B';
+    let assignedLabsToSave: string[] = ['Rm 102B'];
+
+    if (newUserRole === 'Primary Lab Administrator' || roleDef.badge === 'Admin' || newUserPrimaryLocation === 'all') {
+      assignedLabsToSave = ['all'];
+      targetDept = 'Faculty Fleet Administration (All Labs)';
+    } else if (newUserPrimaryLocation === 'custom') {
+      assignedLabsToSave = newUserAssignedLabs.length > 0 ? newUserAssignedLabs : ['Rm 102B'];
+      const matched = locations.filter((l) => assignedLabsToSave.includes(l.room));
+      targetDept = matched.length > 0
+        ? matched.map((l) => `${l.building} • ${l.room}`).join(', ')
+        : 'Engineering Block A - Room 102B';
+    } else {
+      assignedLabsToSave = [newUserPrimaryLocation];
+      const matched = locations.find((l) => l.room === newUserPrimaryLocation);
+      targetDept = matched ? `${matched.building} - ${matched.room}` : 'Engineering Block A - Room 102B';
+    }
 
     addUser({
       name: newUserName.trim(),
@@ -352,7 +355,7 @@ export default function SettingsPage() {
       roleBadge: roleDef.badge,
       avatarText: initials,
       permissions: roleDef.permissions,
-      department: newUserDept,
+      department: targetDept,
       status: 'active',
       assignedLabs: assignedLabsToSave,
     });
@@ -360,6 +363,7 @@ export default function SettingsPage() {
     showToast(`Added ${newUserName.trim()} as ${roleDef.badge} (${assignedLabsToSave.join(', ')})`, 'success');
     setNewUserName('');
     setNewUserEmail('');
+    setNewUserPrimaryLocation('Rm 102B');
     setNewUserAssignedLabs(['Rm 102B']);
     setIsAddUserModalOpen(false);
   };
@@ -1507,7 +1511,16 @@ export default function SettingsPage() {
                 <Dropdown
                   value={newUserRole}
                   options={roleOptions}
-                  onChange={(newRole) => setNewUserRole(newRole)}
+                  onChange={(newRole) => {
+                    setNewUserRole(newRole);
+                    if (newRole === 'Primary Lab Administrator') {
+                      setNewUserPrimaryLocation('all');
+                      setNewUserAssignedLabs(['all']);
+                    } else if (newUserPrimaryLocation === 'all') {
+                      setNewUserPrimaryLocation('Rm 102B');
+                      setNewUserAssignedLabs(['Rm 102B']);
+                    }
+                  }}
                   className="w-full"
                   buttonClassName="py-2 px-3 text-xs font-semibold text-neutral-900 bg-white border-neutral-300 rounded hover:border-neutral-900"
                 />
@@ -1518,47 +1531,65 @@ export default function SettingsPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                  Department / Workstation
+                  Assigned Laboratory Location
                 </label>
-                <input
-                  type="text"
-                  value={newUserDept}
-                  onChange={(e) => setNewUserDept(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                <Dropdown
+                  value={newUserPrimaryLocation}
+                  options={locationOptions}
+                  onChange={(locVal) => {
+                    setNewUserPrimaryLocation(locVal);
+                    if (locVal !== 'custom') {
+                      setNewUserAssignedLabs([locVal]);
+                    }
+                  }}
+                  className="w-full"
+                  buttonClassName="py-2 px-3 text-xs font-semibold text-neutral-900 bg-white border-neutral-300 rounded hover:border-neutral-900"
                 />
+                <p className="text-[10px] text-neutral-500 mt-1">
+                  {newUserPrimaryLocation === 'all'
+                    ? 'Universal access across all faculty laboratories.'
+                    : newUserPrimaryLocation === 'custom'
+                    ? 'Multiple authorized laboratories selected below.'
+                    : `Scoped exclusively to ${
+                        locations.find((l) => l.room === newUserPrimaryLocation)?.name || newUserPrimaryLocation
+                      }.`}
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
-                  Authorized Laboratories Scope
-                </label>
-                <div className="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-neutral-50 rounded border border-neutral-200">
-                  {locations.map((loc) => {
-                    const checked = newUserAssignedLabs.includes(loc.room);
-                    return (
-                      <label
-                        key={loc.id}
-                        className="flex items-center gap-2 text-xs text-neutral-800 cursor-pointer hover:text-neutral-900"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            if (checked) {
-                              setNewUserAssignedLabs(newUserAssignedLabs.filter((r) => r !== loc.room));
-                            } else {
-                              setNewUserAssignedLabs([...newUserAssignedLabs, loc.room]);
-                            }
-                          }}
-                          className="rounded text-neutral-900 focus:ring-neutral-900"
-                        />
-                        <span className="font-medium">{loc.name}</span>
-                        <span className="text-[10px] text-neutral-400 font-mono">({loc.room})</span>
-                      </label>
-                    );
-                  })}
+              {newUserPrimaryLocation === 'custom' && (
+                <div className="animate-in fade-in duration-150">
+                  <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
+                    Select Authorized Laboratory Rooms
+                  </label>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto p-2.5 bg-neutral-50 rounded border border-neutral-200">
+                    {locations.map((loc) => {
+                      const checked = newUserAssignedLabs.includes(loc.room);
+                      return (
+                        <label
+                          key={loc.id}
+                          className="flex items-center gap-2 text-xs text-neutral-800 cursor-pointer hover:text-neutral-900"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              if (checked) {
+                                const next = newUserAssignedLabs.filter((r) => r !== loc.room);
+                                setNewUserAssignedLabs(next.length > 0 ? next : [loc.room]);
+                              } else {
+                                setNewUserAssignedLabs([...newUserAssignedLabs, loc.room]);
+                              }
+                            }}
+                            className="rounded text-neutral-900 focus:ring-neutral-900 cursor-pointer"
+                          />
+                          <span className="font-medium">{loc.name}</span>
+                          <span className="text-[10px] text-neutral-400 font-mono">({loc.room})</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
                 <button
