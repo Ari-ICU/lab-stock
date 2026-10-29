@@ -88,27 +88,31 @@ export default function DashboardPage() {
         subtitle={`${locations.length} Connected Lab Classrooms • ${assets.length} Deployed Hardware Assets • Student & Staff Loans`}
         onExport={handleExport}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={openScanner}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              title="Scan Barcode / QR Tag"
+              className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
             >
               <QrCode className="w-3.5 h-3.5 text-neutral-600" />
-              <span className="hidden sm:inline">Scan Barcode</span>
+              <span className="hidden md:inline">Scan</span>
             </button>
             <Link
               href="/loans"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              title="Lend Equipment"
+              className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
             >
               <Laptop className="w-3.5 h-3.5 text-amber-600" />
-              <span>Lend Device</span>
+              <span className="hidden sm:inline">Lend Device</span>
             </Link>
             <Link
               href="/assets/create"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              title="Register New Hardware"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Create Asset</span>
+              <span className="hidden sm:inline">Create Asset</span>
+              <span className="sm:hidden text-xs">Asset</span>
             </Link>
           </div>
         }
@@ -200,38 +204,38 @@ export default function DashboardPage() {
             </span>
             <span className="text-[11px] text-neutral-400">Multi-Lab Control Hub</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
             <Link
               href="/loans"
-              className="flex items-center gap-3 p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group"
+              className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group"
             >
-              <div className="w-9 h-9 rounded bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-100 transition-colors">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-100 transition-colors">
                 <Laptop className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-neutral-900 truncate">Lend Device</div>
-                <div className="text-[10px] text-neutral-500 truncate">Check-out to student</div>
+                <div className="text-[10px] text-neutral-500 truncate">Check-out equipment</div>
               </div>
             </Link>
 
             <Link
               href="/loans"
-              className="flex items-center gap-3 p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group"
+              className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group"
             >
-              <div className="w-9 h-9 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0 group-hover:bg-blue-100 transition-colors">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0 group-hover:bg-blue-100 transition-colors">
                 <ArrowLeftRight className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-neutral-900 truncate">Relocate Hardware</div>
-                <div className="text-[10px] text-neutral-500 truncate">Move PC to other lab</div>
+                <div className="text-xs font-bold text-neutral-900 truncate">Relocate Device</div>
+                <div className="text-[10px] text-neutral-500 truncate">Move to other lab</div>
               </div>
             </Link>
 
             <button
               onClick={openScanner}
-              className="flex items-center gap-3 p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group cursor-pointer"
+              className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group cursor-pointer"
             >
-              <div className="w-9 h-9 rounded bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-800 shrink-0 group-hover:bg-neutral-200 transition-colors">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-800 shrink-0 group-hover:bg-neutral-200 transition-colors">
                 <QrCode className="w-4 h-4" />
               </div>
               <div className="min-w-0">
@@ -242,14 +246,14 @@ export default function DashboardPage() {
 
             <Link
               href="/assets/create"
-              className="flex items-center gap-3 p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group"
+              className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50/80 transition-colors text-left group"
             >
-              <div className="w-9 h-9 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0 group-hover:bg-emerald-100 transition-colors">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0 group-hover:bg-emerald-100 transition-colors">
                 <Plus className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-neutral-900 truncate">Add Asset</div>
-                <div className="text-[10px] text-neutral-500 truncate">Register new device</div>
+                <div className="text-[10px] text-neutral-500 truncate">Register hardware</div>
               </div>
             </Link>
           </div>

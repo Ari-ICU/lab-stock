@@ -11,6 +11,10 @@ export default function MaintenancePage() {
   const { maintenance, openModal, showToast, openDetails, openEdit, deleteMaintenance } = useStock();
   const [filterText, setFilterText] = useState('');
 
+  const inProgressCount = maintenance.filter((m) => m.status === 'In Progress').length;
+  const pendingCount = maintenance.filter((m) => m.status === 'Pending').length;
+  const completedCount = maintenance.filter((m) => m.status === 'Completed').length;
+
   const filtered = maintenance.filter(
     (item) =>
       item.assetName.toLowerCase().includes(filterText.toLowerCase()) ||
@@ -52,8 +56,10 @@ export default function MaintenancePage() {
               <span className="text-xs font-medium text-neutral-500">In Progress</span>
               <Clock className="w-4 h-4 text-blue-500" />
             </div>
-            <div className="text-2xl font-bold text-neutral-900 mt-2">1 Active</div>
-            <div className="text-[11px] text-neutral-500 mt-1">Cisco 4451 PSU diagnosis</div>
+            <div className="text-2xl font-bold text-neutral-900 mt-2">
+              {inProgressCount} <span className="text-xs font-normal text-neutral-500">{inProgressCount === 1 ? 'Active' : 'Active'}</span>
+            </div>
+            <div className="text-[11px] text-neutral-500 mt-1">Active diagnostics & hardware work</div>
           </div>
 
           <div className="bg-white border border-neutral-200 rounded p-4">
@@ -61,17 +67,21 @@ export default function MaintenancePage() {
               <span className="text-xs font-medium text-neutral-500">Scheduled Firmware</span>
               <Wrench className="w-4 h-4 text-amber-500" />
             </div>
-            <div className="text-2xl font-bold text-neutral-900 mt-2">1 Pending</div>
-            <div className="text-[11px] text-neutral-500 mt-1">C9300 IOS-XE 17.9.4a release</div>
+            <div className="text-2xl font-bold text-neutral-900 mt-2">
+              {pendingCount} <span className="text-xs font-normal text-neutral-500">{pendingCount === 1 ? 'Pending' : 'Pending'}</span>
+            </div>
+            <div className="text-[11px] text-neutral-500 mt-1">Scheduled calibrations & OS patches</div>
           </div>
 
           <div className="bg-white border border-neutral-200 rounded p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-neutral-500">Completed (Last 30d)</span>
+              <span className="text-xs font-medium text-neutral-500">Completed (Audited)</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
-            <div className="text-2xl font-bold text-neutral-900 mt-2">1 Verified</div>
-            <div className="text-[11px] text-neutral-500 mt-1">Fluke DSX-8000 calibrated</div>
+            <div className="text-2xl font-bold text-neutral-900 mt-2">
+              {completedCount} <span className="text-xs font-normal text-neutral-500">{completedCount === 1 ? 'Verified' : 'Verified'}</span>
+            </div>
+            <div className="text-[11px] text-neutral-500 mt-1">All service logs signed off</div>
           </div>
         </div>
 
