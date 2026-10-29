@@ -67,7 +67,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     permissions: 'Course Hardware Allocation & Catalog View',
     department: 'Engineering Block A - Room 102B',
     description: 'Course lecturer managing student lab stations in Computer Lab 102B',
-    assignedLabs: ['Rm 102B'],
+    assignedLabs: ['Room 102B'],
   },
   {
     name: 'Leang Vakhim',
@@ -79,7 +79,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     permissions: 'Inventory Check-in/Out & Equipment Prep',
     department: 'Engineering Block A - Room 102B',
     description: 'Lab assistant managing equipment distribution for Lab 102B & Networking Lab 206',
-    assignedLabs: ['Rm 102B', 'Rm 206'],
+    assignedLabs: ['Room 102B', 'Room 206'],
   },
 ];
 
@@ -108,7 +108,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Active now',
-    assignedLabs: ['Rm 102B'],
+    assignedLabs: ['Room 102B'],
   },
   {
     id: 'user-assistant',
@@ -121,7 +121,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Today, 09:20 AM',
-    assignedLabs: ['Rm 102B', 'Rm 206'],
+    assignedLabs: ['Room 102B', 'Room 206'],
   },
 ];
 
@@ -293,13 +293,16 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
   }
 
   let assignedLabs = u.assignedLabs;
+  if (assignedLabs && Array.isArray(assignedLabs)) {
+    assignedLabs = assignedLabs.map((r) => (typeof r === 'string' ? r.replace(/^Rm\s+/i, 'Room ') : r));
+  }
   if (roleBadge !== 'Admin') {
     // Non-admin accounts must NEVER have universal 'all' scope
     if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all') || assignedLabs.includes('*')) {
       if (u.name.includes('Vakhim') || u.email.includes('vakhim')) {
-        assignedLabs = ['Rm 102B', 'Rm 206'];
+        assignedLabs = ['Room 102B', 'Room 206'];
       } else {
-        assignedLabs = ['Rm 102B'];
+        assignedLabs = ['Room 102B'];
       }
     }
   } else {
@@ -655,7 +658,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastLogin: 'Never (Invited)',
       assignedLabs: newUser.assignedLabs && newUser.assignedLabs.length > 0
         ? newUser.assignedLabs
-        : (newUser.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
+        : (newUser.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
     };
     saveUsers([...managedUsers, userToAdd]);
   };
@@ -752,7 +755,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: matchedManaged.avatarText,
         permissions: matchedManaged.permissions,
         department: matchedManaged.department,
-        assignedLabs: matchedManaged.assignedLabs || (matchedManaged.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
+        assignedLabs: matchedManaged.assignedLabs || (matchedManaged.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
       };
 
       setUser(loggedUser);
@@ -789,7 +792,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: matchedAccount.avatarText,
         permissions: matchedAccount.permissions,
         department: matchedAccount.department,
-        assignedLabs: matchedAccount.assignedLabs || (matchedAccount.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
+        assignedLabs: matchedAccount.assignedLabs || (matchedAccount.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
       };
 
       setUser(loggedUser);
@@ -822,7 +825,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: initials,
         permissions: 'Standard Laboratory Access',
         department: 'Engineering Block A - Room 102B',
-        assignedLabs: ['Rm 102B'],
+        assignedLabs: ['Room 102B'],
       };
 
       setUser(customUser);
@@ -864,7 +867,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       avatarText: account.avatarText,
       permissions: account.permissions,
       department: account.department,
-      assignedLabs: account.assignedLabs || (account.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
+      assignedLabs: account.assignedLabs || (account.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
     };
     setUser(newUser);
     try {

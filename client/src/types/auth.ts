@@ -65,7 +65,13 @@ export function canUserManageLocation(
   return user.assignedLabs.some((assigned) => {
     const a = assigned.toLowerCase().trim();
     if (a === 'all' || a === '*') return true;
-    return target.includes(a);
+    const normA = a.replace(/^(rm|room)\s*/i, '').trim();
+    return (
+      target.includes(a) ||
+      target.includes(a.replace(/^rm\s*/i, 'room ')) ||
+      target.includes(a.replace(/^room\s*/i, 'rm ')) ||
+      (normA.length > 0 && target.includes(normA))
+    );
   });
 }
 
