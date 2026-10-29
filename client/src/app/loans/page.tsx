@@ -36,7 +36,7 @@ import { MockLoan, MockTransfer } from '@/types';
 
 export default function LoansPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, canManageLocation } = useAuth();
   const {
     loans,
     transfers,
@@ -171,6 +171,11 @@ export default function LoansPage() {
     const asset = assets.find((a) => a.id === selectedAssetId);
     if (!asset) return;
 
+    if (!canManageLocation(asset.location)) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
+
     lendAsset({
       assetId: asset.id,
       assetName: asset.name,
@@ -199,6 +204,14 @@ export default function LoansPage() {
       return;
     }
 
+    const asset = assets.find((a) => a.id === transferAssetId);
+    if (!asset) return;
+
+    if (!canManageLocation(asset.location)) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
+
     transferAsset(transferAssetId, toLocation, transferReason.trim(), transferredBy.trim());
     setIsTransferModalOpen(false);
     setTransferAssetId('');
@@ -208,6 +221,12 @@ export default function LoansPage() {
 
   const handleConfirmReturn = () => {
     if (!returningLoan) return;
+    const loanAsset = assets.find((a) => a.id === returningLoan.assetId);
+    if (loanAsset && !canManageLocation(loanAsset.location)) {
+      showToast('Action restricted: equipment belongs to a room outside your assigned laboratory scope.', 'error');
+      return;
+    }
+
     returnAsset(returningLoan.id, returnNotes.trim() || undefined);
     // If the details modal is showing this loan, update or close it
     if (selectedLoanDetails && selectedLoanDetails.id === returningLoan.id) {
@@ -1038,10 +1057,12 @@ export default function LoansPage() {
                 <Dropdown
                   value={selectedAssetId}
                   onChange={(val) => setSelectedAssetId(val)}
-                  options={assets.map((a) => ({
-                    value: a.id,
-                    label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
-                  }))}
+                  options={assets
+                    .filter((a) => canManageLocation(a.location))
+                    .map((a) => ({
+                      value: a.id,
+                      label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
+                    }))}
                   placeholder="Select device to check out"
                   searchable={true}
                   searchPlaceholder="Search device by name, model or serial number..."
@@ -1183,10 +1204,12 @@ export default function LoansPage() {
                 <Dropdown
                   value={transferAssetId}
                   onChange={(val) => setTransferAssetId(val)}
-                  options={assets.map((a) => ({
-                    value: a.id,
-                    label: `${a.name} (SN: ${a.serialNumber})`,
-                  }))}
+                  options={assets
+                    .filter((a) => canManageLocation(a.location))
+                    .map((a) => ({
+                      value: a.id,
+                      label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}`,
+                    }))}
                   placeholder="Select device to relocate"
                   searchable={true}
                   searchPlaceholder="Search by device name, model, or serial..."

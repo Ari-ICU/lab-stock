@@ -9,6 +9,7 @@ import {
   SessionDevice,
   RoleDefinition,
   RoleBadge,
+  canUserManageLocation,
 } from '@/types';
 
 export type {
@@ -19,6 +20,8 @@ export type {
   RoleDefinition,
   RoleBadge,
 };
+
+export { canUserManageLocation };
 
 export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
   'Primary Lab Administrator': {
@@ -51,7 +54,8 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarText: 'HS',
     permissions: 'Full Read/Write Access & System Config',
     department: 'Engineering Block A - Room 102B',
-    description: 'Faculty supervisor and laboratory director with full administrative oversight',
+    description: 'Faculty supervisor and laboratory director with full administrative oversight across all lab rooms',
+    assignedLabs: ['all'],
   },
   {
     name: 'Thoeurn Ratha',
@@ -62,7 +66,8 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
     department: 'Engineering Block A - Room 102B',
-    description: 'Course lecturer managing student lab stations and curriculum hardware',
+    description: 'Course lecturer managing student lab stations in Computer Lab 102B',
+    assignedLabs: ['Rm 102B'],
   },
   {
     name: 'Leang Vakhim',
@@ -73,7 +78,8 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarText: 'LV',
     permissions: 'Inventory Check-in/Out & Equipment Prep',
     department: 'Engineering Block A - Room 102B',
-    description: 'Lab assistant managing equipment distribution, inspection, and student check-ins',
+    description: 'Lab assistant managing equipment distribution for Lab 102B & Networking Lab 206',
+    assignedLabs: ['Rm 102B', 'Rm 206'],
   },
 ];
 
@@ -89,6 +95,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Today, 08:30 AM',
+    assignedLabs: ['all'],
   },
   {
     id: 'user-lecturer',
@@ -101,6 +108,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Active now',
+    assignedLabs: ['Rm 102B'],
   },
   {
     id: 'user-assistant',
@@ -113,6 +121,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Today, 09:20 AM',
+    assignedLabs: ['Rm 102B', 'Rm 206'],
   },
 ];
 
@@ -257,8 +266,11 @@ interface AuthContextType {
   // User & Role Management
   managedUsers: ManagedUser[];
   updateUserRole: (userId: string, newRole: string) => void;
+  updateUserAssignedLabs: (userId: string, assignedLabs: string[]) => void;
   addUser: (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => void;
   deleteUser: (userId: string) => boolean;
+  // Location Permissions Guard
+  canManageLocation: (locationStr: string) => boolean;
   // Session Devices
   sessionDevices: SessionDevice[];
   refreshSessionDevices: () => void;
@@ -279,6 +291,7 @@ const getDefaultUser = (): User => ({
   avatarText: DEMO_ACCOUNTS[0].avatarText,
   permissions: DEMO_ACCOUNTS[0].permissions,
   department: DEMO_ACCOUNTS[0].department,
+  assignedLabs: DEMO_ACCOUNTS[0].assignedLabs,
 });
 
 const getInitialUser = (): User | null => {
@@ -288,7 +301,11 @@ const getInitialUser = (): User | null => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
     if (stored) {
-      return JSON.parse(stored);
+      const parsed: User = JSON.parse(stored);
+      if (!parsed.assignedLabs) {
+        parsed.assignedLabs = parsed.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B'];
+      }
+      return parsed;
     }
     const defaultUser = getDefaultUser();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUser));
@@ -304,8 +321,12 @@ const getStoredUsers = (): ManagedUser[] => {
     const stored = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
     if (stored) {
       const parsed: ManagedUser[] = JSON.parse(stored);
-      // Migrate email from @netlab.edu to @lab.edu if stored
-      return parsed.map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') }));
+      // Migrate email from @netlab.edu to @lab.edu if stored and ensure assignedLabs exists
+      return parsed.map((u) => ({
+        ...u,
+        email: u.email.replace('@netlab.edu', '@lab.edu'),
+        assignedLabs: u.assignedLabs || (u.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
+      }));
     }
   } catch {
     // fallback
@@ -542,12 +563,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserAssignedLabs = (userId: string, assignedLabs: string[]) => {
+    const updated = managedUsers.map((u) => {
+      if (u.id === userId) {
+        return { ...u, assignedLabs };
+      }
+      return u;
+    });
+    saveUsers(updated);
+
+    // If updated user is the currently logged in user, update active session state
+    if (user && (user.id === userId || user.email === updated.find((u) => u.id === userId)?.email)) {
+      const updatedCurrentUser: User = {
+        ...user,
+        assignedLabs,
+      };
+      setUser(updatedCurrentUser);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCurrentUser));
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const canManageLocation = (locationStr: string): boolean => {
+    return canUserManageLocation(user, locationStr);
+  };
+
   const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => {
     const id = `user-${Date.now()}`;
     const userToAdd: ManagedUser = {
       ...newUser,
       id,
       lastLogin: 'Never (Invited)',
+      assignedLabs: newUser.assignedLabs && newUser.assignedLabs.length > 0
+        ? newUser.assignedLabs
+        : (newUser.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
     };
     saveUsers([...managedUsers, userToAdd]);
   };
@@ -641,6 +693,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: matchedManaged.avatarText,
         permissions: matchedManaged.permissions,
         department: matchedManaged.department,
+        assignedLabs: matchedManaged.assignedLabs || (matchedManaged.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
       };
 
       setUser(loggedUser);
@@ -677,6 +730,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: matchedAccount.avatarText,
         permissions: matchedAccount.permissions,
         department: matchedAccount.department,
+        assignedLabs: matchedAccount.assignedLabs || (matchedAccount.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
       };
 
       setUser(loggedUser);
@@ -709,6 +763,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: initials,
         permissions: 'Standard Laboratory Access',
         department: 'Engineering Block A - Room 102B',
+        assignedLabs: ['Rm 102B'],
       };
 
       setUser(customUser);
@@ -750,6 +805,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       avatarText: account.avatarText,
       permissions: account.permissions,
       department: account.department,
+      assignedLabs: account.assignedLabs || (account.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
     };
     setUser(newUser);
     try {
@@ -770,8 +826,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         switchAccount,
         managedUsers,
         updateUserRole,
+        updateUserAssignedLabs,
         addUser,
         deleteUser,
+        canManageLocation,
         sessionDevices,
         refreshSessionDevices,
         revokeSession,

@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
-import { Image as ImageIcon, Search } from 'lucide-react';
+import { Image as ImageIcon, Search, Shield } from 'lucide-react';
 
 export default function StockPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function StockPage() {
     locations,
     deleteStockItem,
   } = useStock();
+  const { canManageLocation } = useAuth();
   const [filterText, setFilterText] = useState('');
   const [selectedLab, setSelectedLab] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -145,84 +147,98 @@ export default function StockPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredStock.map((item) => (
-                    <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
-                      {/* Product Image Thumbnail */}
-                      <td className="py-2.5 px-4">
-                        <Link
-                          href={`/stock/${item.id}`}
-                          className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
-                          title="Click to view details"
-                        >
-                          {item.imageUrl ? (
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ImageIcon className="w-4 h-4 text-neutral-400" />
-                          )}
-                        </Link>
-                      </td>
+                  filteredStock.map((item) => {
+                    const isAllowed = canManageLocation(item.location);
+                    return (
+                      <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
+                        {/* Product Image Thumbnail */}
+                        <td className="py-2.5 px-4">
+                          <Link
+                            href={`/stock/${item.id}`}
+                            className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
+                            title="Click to view details"
+                          >
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-neutral-400" />
+                            )}
+                          </Link>
+                        </td>
 
-                      <td className="py-3 px-4">
-                        <Link
-                          href={`/stock/${item.id}`}
-                          className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
-                        >
-                          {item.name}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-neutral-600">
-                        <Link
-                          href={`/stock/${item.id}`}
-                          className="hover:text-neutral-900 transition-colors"
-                        >
-                          {item.code}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700">
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
-                          {item.quantity}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-neutral-600">
-                        <div>{item.location}</div>
-                        <div className="text-[11px] text-neutral-400 font-mono">{item.rack}</div>
-                      </td>
-                      <td className="py-3 px-4 text-neutral-500 text-[11px]">{item.expiryDate}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
-                            item.status === 'in_stock'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        <td className="py-3 px-4">
+                          <Link
+                            href={`/stock/${item.id}`}
+                            className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
+                          >
+                            {item.name}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-neutral-600">
+                          <Link
+                            href={`/stock/${item.id}`}
+                            className="hover:text-neutral-900 transition-colors"
+                          >
+                            {item.code}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700">
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
+                            {item.quantity}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-neutral-600">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{item.location}</span>
+                            {!isAllowed && (
+                              <span
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 shrink-0"
+                                title="Outside your assigned lab room scope"
+                              >
+                                <Shield className="w-2.5 h-2.5 text-neutral-400" />
+                                Read-only
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-neutral-400 font-mono">{item.rack}</div>
+                        </td>
+                        <td className="py-3 px-4 text-neutral-500 text-[11px]">{item.expiryDate}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                              item.status === 'in_stock'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : item.status === 'low_stock'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}
+                          >
+                            {item.status === 'in_stock'
+                              ? 'In Stock'
                               : item.status === 'low_stock'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}
-                        >
-                          {item.status === 'in_stock'
-                            ? 'In Stock'
-                            : item.status === 'low_stock'
-                            ? 'Low Stock'
-                            : 'Out of Stock'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <RowActionMenu
-                          onViewDetails={() => router.push(`/stock/${item.id}`)}
-                          onEdit={() => router.push(`/stock/${item.id}/edit`)}
-                          onDelete={() => deleteStockItem(item.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))
+                              ? 'Low Stock'
+                              : 'Out of Stock'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <RowActionMenu
+                            onViewDetails={() => router.push(`/stock/${item.id}`)}
+                            onEdit={isAllowed ? () => router.push(`/stock/${item.id}/edit`) : undefined}
+                            onDelete={isAllowed ? () => deleteStockItem(item.id) : undefined}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

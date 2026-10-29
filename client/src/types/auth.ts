@@ -7,6 +7,7 @@ export interface User {
   avatarText: string;
   permissions: string;
   department: string;
+  assignedLabs: string[]; // ['all'] or specific room codes e.g. ['Rm 102B', 'Rm 206']
 }
 
 export interface DemoAccount {
@@ -19,6 +20,7 @@ export interface DemoAccount {
   permissions: string;
   department: string;
   description: string;
+  assignedLabs: string[]; // ['all'] or specific room codes
 }
 
 export type RoleBadge = 'Admin' | 'Lecturer' | 'Lab Assistant';
@@ -34,6 +36,37 @@ export interface ManagedUser {
   department: string;
   status: 'active' | 'offline' | 'suspended';
   lastLogin: string;
+  assignedLabs: string[]; // ['all'] or specific room codes
+}
+
+/**
+ * Checks whether a user has administrative or assigned authority over a given laboratory location.
+ */
+export function canUserManageLocation(
+  user: User | ManagedUser | DemoAccount | null | undefined,
+  locationStr: string
+): boolean {
+  if (!user) return false;
+  // Super Admins have universal authority over all labs
+  if (
+    user.role === 'Primary Lab Administrator' ||
+    user.roleBadge === 'Admin' ||
+    user.assignedLabs?.includes('all') ||
+    user.assignedLabs?.includes('*')
+  ) {
+    return true;
+  }
+
+  if (!user.assignedLabs || user.assignedLabs.length === 0) {
+    return false;
+  }
+
+  const target = locationStr.toLowerCase();
+  return user.assignedLabs.some((assigned) => {
+    const a = assigned.toLowerCase().trim();
+    if (a === 'all' || a === '*') return true;
+    return target.includes(a);
+  });
 }
 
 export interface SessionDevice {

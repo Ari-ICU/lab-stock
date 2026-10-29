@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
-import { Image as ImageIcon, Plus, Search } from 'lucide-react';
+import { Image as ImageIcon, Plus, Search, Shield } from 'lucide-react';
 
 const statusOptions: DropdownOption[] = [
   { label: 'All Operational Statuses', value: 'all' },
@@ -20,6 +21,7 @@ const statusOptions: DropdownOption[] = [
 export default function AssetsPage() {
   const router = useRouter();
   const { assets, deleteAsset, locations } = useStock();
+  const { canManageLocation } = useAuth();
   const [filterText, setFilterText] = useState('');
   const [labFilter, setLabFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -141,85 +143,101 @@ export default function AssetsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredAssets.map((asset) => (
-                    <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors group">
-                      {/* Device Image Thumbnail with Direct Link */}
-                      <td className="py-2.5 px-4">
-                        <Link
-                          href={`/assets/${asset.id}`}
-                          className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
-                          title="Click to view full specifications"
-                        >
-                          {asset.imageUrl ? (
-                            <img
-                              src={asset.imageUrl}
-                              alt={asset.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ImageIcon className="w-4 h-4 text-neutral-400" />
-                          )}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Link
-                          href={`/assets/${asset.id}`}
-                          className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
-                        >
-                          {asset.name}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
-                          {asset.totalUnits ?? 1} {asset.unitType ?? 'Unit'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-neutral-600">
-                        <Link
-                          href={`/assets/${asset.id}`}
-                          className="hover:text-neutral-900 transition-colors"
-                        >
-                          {asset.serialNumber}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-neutral-600 font-mono text-[11px]">{asset.model}</td>
-                      <td className="py-3 px-4 text-neutral-600">{asset.location}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
-                              asset.status === 'operational'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : asset.status === 'in_use'
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}
+                  filteredAssets.map((asset) => {
+                    const isAllowed = canManageLocation(asset.location);
+                    return (
+                      <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors group">
+                        {/* Device Image Thumbnail with Direct Link */}
+                        <td className="py-2.5 px-4">
+                          <Link
+                            href={`/assets/${asset.id}`}
+                            className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
+                            title="Click to view full specifications"
                           >
-                            {asset.status === 'operational'
-                              ? 'Operational'
-                              : asset.status === 'in_use'
-                              ? 'In Production'
-                              : 'Maintenance'}
+                            {asset.imageUrl ? (
+                              <img
+                                src={asset.imageUrl}
+                                alt={asset.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-neutral-400" />
+                            )}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Link
+                            href={`/assets/${asset.id}`}
+                            className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
+                          >
+                            {asset.name}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
+                            {asset.totalUnits ?? 1} {asset.unitType ?? 'Unit'}
                           </span>
-                          {asset.loanStatus === 'on_loan' && (
+                        </td>
+                        <td className="py-3 px-4 font-mono text-neutral-600">
+                          <Link
+                            href={`/assets/${asset.id}`}
+                            className="hover:text-neutral-900 transition-colors"
+                          >
+                            {asset.serialNumber}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4 text-neutral-600 font-mono text-[11px]">{asset.model}</td>
+                        <td className="py-3 px-4 text-neutral-600">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{asset.location}</span>
+                            {!isAllowed && (
+                              <span
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 shrink-0"
+                                title="Outside your assigned lab room scope"
+                              >
+                                <Shield className="w-2.5 h-2.5 text-neutral-400" />
+                                Read-only
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span
-                              title={`Checked out to ${asset.currentBorrower || 'Borrower'}`}
-                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300"
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                                asset.status === 'operational'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : asset.status === 'in_use'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}
                             >
-                              On Loan
+                              {asset.status === 'operational'
+                                ? 'Operational'
+                                : asset.status === 'in_use'
+                                ? 'In Production'
+                                : 'Maintenance'}
                             </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <RowActionMenu
-                          onViewDetails={() => router.push(`/assets/${asset.id}`)}
-                          onEdit={() => router.push(`/assets/${asset.id}/edit`)}
-                          onDelete={() => deleteAsset(asset.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))
+                            {asset.loanStatus === 'on_loan' && (
+                              <span
+                                title={`Checked out to ${asset.currentBorrower || 'Borrower'}`}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300"
+                              >
+                                On Loan
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <RowActionMenu
+                            onViewDetails={() => router.push(`/assets/${asset.id}`)}
+                            onEdit={isAllowed ? () => router.push(`/assets/${asset.id}/edit`) : undefined}
+                            onDelete={isAllowed ? () => deleteAsset(asset.id) : undefined}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

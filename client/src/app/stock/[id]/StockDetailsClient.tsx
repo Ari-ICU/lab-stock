@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   ArrowLeft,
   Edit3,
@@ -20,6 +21,7 @@ import {
   AlertTriangle,
   QrCode,
   ShieldCheck,
+  Shield,
   Plus,
   Minus,
   X,
@@ -39,11 +41,13 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
     deleteStockItem,
     showToast,
   } = useStock();
+  const { user, canManageLocation } = useAuth();
 
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const item = stock.find((s) => s.id === id);
+  const isAllowed = item ? canManageLocation(item.location) : false;
 
   if (!item) {
     return (
@@ -85,6 +89,10 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
   };
 
   const handleDelete = () => {
+    if (!isAllowed) {
+      showToast('Action restricted: item is stored outside your assigned laboratory room.', 'error');
+      return;
+    }
     deleteStockItem(item.id);
     router.push('/stock');
   };
@@ -117,29 +125,51 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
         backLabel="Inventory"
         showExport={false}
         actions={
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/stock/${item.id}/edit`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors shadow-xs"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-neutral-600" />
-              <span>Edit Item</span>
-            </Link>
+          !isAllowed ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-600 rounded text-xs font-semibold border border-neutral-200">
+              <Shield className="w-3.5 h-3.5 text-neutral-500" />
+              <span>Read-Only Lab Access</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/stock/${item.id}/edit`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors shadow-xs"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-neutral-600" />
+                <span>Edit Item</span>
+              </Link>
 
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-neutral-200 hover:border-rose-300 hover:bg-rose-50 text-rose-700 rounded text-xs font-medium transition-colors"
-              title="Delete item"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-neutral-200 hover:border-rose-300 hover:bg-rose-50 text-rose-700 rounded text-xs font-medium transition-colors"
+                title="Delete item"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )
         }
       />
 
       {/* Main Content Body */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
+
+        {/* Lab Scope Restriction Banner */}
+        {!isAllowed && (
+          <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-lg flex items-start gap-3 shadow-xs">
+            <Shield className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-amber-950">
+                Restricted Laboratory Inventory
+              </div>
+              <div className="text-xs text-amber-800 leading-relaxed">
+                This item is stored in <span className="font-semibold text-neutral-900">{item.location}</span>. Your account is assigned to manage: <span className="font-semibold text-neutral-900">{user?.assignedLabs?.includes('all') ? 'All Laboratories' : user?.assignedLabs?.join(', ') || 'No Assigned Labs'}</span>. Quantity adjustments, editing, and deletion are disabled.
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Top Summary / Status Banner */}
         <div className="bg-white border border-neutral-200 rounded p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -220,26 +250,46 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => updateStockQuantity(item.id, -1)}
-                disabled={item.quantity <= 0}
+                disabled={!isAllowed || item.quantity <= 0}
+                onClick={() => {
+                  if (!isAllowed) {
+                    showToast('Action restricted: item is stored outside your assigned laboratory room.', 'error');
+                    return;
+                  }
+                  updateStockQuantity(item.id, -1);
+                }}
                 className="w-7 h-7 flex items-center justify-center rounded bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 transition-colors cursor-pointer text-xs"
-                title="Decrease 1"
+                title={isAllowed ? "Decrease 1" : "Read-only laboratory scope"}
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
-                onClick={() => updateStockQuantity(item.id, 1)}
-                className="w-7 h-7 flex items-center justify-center rounded bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer text-xs"
-                title="Increase 1"
+                disabled={!isAllowed}
+                onClick={() => {
+                  if (!isAllowed) {
+                    showToast('Action restricted: item is stored outside your assigned laboratory room.', 'error');
+                    return;
+                  }
+                  updateStockQuantity(item.id, 1);
+                }}
+                className="w-7 h-7 flex items-center justify-center rounded bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 transition-colors cursor-pointer text-xs"
+                title={isAllowed ? "Increase 1" : "Read-only laboratory scope"}
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
-                onClick={() => updateStockQuantity(item.id, 5)}
-                className="px-2 h-7 flex items-center justify-center rounded bg-neutral-900 text-white hover:bg-neutral-800 transition-colors cursor-pointer text-[11px] font-bold font-mono"
-                title="Add batch +5"
+                disabled={!isAllowed}
+                onClick={() => {
+                  if (!isAllowed) {
+                    showToast('Action restricted: item is stored outside your assigned laboratory room.', 'error');
+                    return;
+                  }
+                  updateStockQuantity(item.id, 5);
+                }}
+                className="px-2 h-7 flex items-center justify-center rounded bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-40 transition-colors cursor-pointer text-[11px] font-bold font-mono"
+                title={isAllowed ? "Add batch +5" : "Read-only laboratory scope"}
               >
                 +5
               </button>

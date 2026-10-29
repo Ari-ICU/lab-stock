@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import {
@@ -24,6 +25,7 @@ import {
   AlertTriangle,
   QrCode,
   ShieldCheck,
+  Shield,
   Cpu,
   Share2,
   ExternalLink,
@@ -52,6 +54,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     transferAsset,
     showToast,
   } = useStock();
+  const { user, canManageLocation } = useAuth();
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddLogModal, setShowAddLogModal] = useState(false);
@@ -83,6 +86,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   const [logNotes, setLogNotes] = useState('');
 
   const asset = assets.find((a) => a.id === id);
+  const isAllowed = asset ? canManageLocation(asset.location) : false;
 
   if (!asset) {
     return (
@@ -124,6 +128,10 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   };
 
   const handleStatusChange = (newStatus: string) => {
+    if (!isAllowed) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
     if (newStatus === 'operational' || newStatus === 'in_use' || newStatus === 'maintenance') {
       updateAsset({
         ...asset,
@@ -133,12 +141,20 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   };
 
   const handleDelete = () => {
+    if (!isAllowed) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
     deleteAsset(asset.id);
     router.push('/assets');
   };
 
   const handleAddMaintenanceLog = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAllowed) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
     addMaintenance({
       assetName: asset.name,
       serialNumber: asset.serialNumber,
@@ -155,6 +171,10 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
   const handleLend = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAllowed) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
     if (!borrowerName.trim()) {
       showToast('Please enter borrower name', 'error');
       return;
@@ -179,6 +199,10 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   };
 
   const handleReturnFromDetails = () => {
+    if (!isAllowed) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
     const activeLoan = loans.find((l) => l.assetId === asset.id && l.status === 'active');
     if (activeLoan) {
       returnAsset(activeLoan.id, 'Returned directly via asset control panel');
@@ -195,6 +219,10 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAllowed) {
+      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
+      return;
+    }
     if (!targetLocation) {
       showToast('Please select a destination lab room', 'error');
       return;
@@ -241,60 +269,82 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
         backLabel="Assets"
         showExport={false}
         actions={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (locations.length > 0) setTargetLocation(`${locations[0].name} (${locations[0].room})`);
-                setShowTransferModal(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
-              <span className="hidden sm:inline">Relocate</span>
-            </button>
-
-            {asset.loanStatus === 'on_loan' ? (
+          !isAllowed ? (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 text-neutral-600 rounded text-xs font-semibold border border-neutral-200">
+              <Shield className="w-3.5 h-3.5 text-neutral-500" />
+              <span>Read-Only Lab Access</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleReturnFromDetails}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                onClick={() => {
+                  if (locations.length > 0) setTargetLocation(`${locations[0].name} (${locations[0].room})`);
+                  setShowTransferModal(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Return to Lab</span>
+                <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="hidden sm:inline">Relocate</span>
               </button>
-            ) : (
+
+              {asset.loanStatus === 'on_loan' ? (
+                <button
+                  type="button"
+                  onClick={handleReturnFromDetails}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Return to Lab</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowLendModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                >
+                  <Laptop className="w-3.5 h-3.5 text-neutral-600" />
+                  <span>Lend Out</span>
+                </button>
+              )}
+
+              <Link
+                href={`/assets/${asset.id}/edit`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-neutral-300" />
+                <span>Edit</span>
+              </Link>
+
               <button
                 type="button"
-                onClick={() => setShowLendModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
-                <Laptop className="w-3.5 h-3.5 text-neutral-600" />
-                <span>Lend Out</span>
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete</span>
               </button>
-            )}
-
-            <Link
-              href={`/assets/${asset.id}/edit`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-neutral-300" />
-              <span>Edit</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Delete</span>
-            </button>
-          </div>
+            </div>
+          )
         }
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+
+        {/* Lab Scope Restriction Banner */}
+        {!isAllowed && (
+          <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-lg flex items-start gap-3 shadow-xs">
+            <Shield className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-amber-950">
+                Restricted Laboratory Equipment
+              </div>
+              <div className="text-xs text-amber-800 leading-relaxed">
+                This equipment is stationed in <span className="font-semibold text-neutral-900">{asset.location}</span>. Your account is assigned to manage: <span className="font-semibold text-neutral-900">{user?.assignedLabs?.includes('all') ? 'All Laboratories' : user?.assignedLabs?.join(', ') || 'No Assigned Labs'}</span>. You have read-only visibility; relocation, status toggling, loans, and deletion are reserved for assigned lab operators or administrators.
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Alert Banner */}
         {showDeleteConfirm && (
@@ -462,33 +512,42 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 <span className="text-neutral-500 font-medium">Quick Status:</span>
                 <button
                   type="button"
+                  disabled={!isAllowed}
                   onClick={() => handleStatusChange('operational')}
                   className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                    asset.status === 'operational'
-                      ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    !isAllowed
+                      ? 'opacity-50 cursor-not-allowed bg-neutral-100 text-neutral-400'
+                      : asset.status === 'operational'
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm cursor-pointer'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 cursor-pointer'
                   }`}
                 >
                   Operational
                 </button>
                 <button
                   type="button"
+                  disabled={!isAllowed}
                   onClick={() => handleStatusChange('in_use')}
                   className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                    asset.status === 'in_use'
-                      ? 'bg-blue-600 text-white font-semibold shadow-sm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    !isAllowed
+                      ? 'opacity-50 cursor-not-allowed bg-neutral-100 text-neutral-400'
+                      : asset.status === 'in_use'
+                      ? 'bg-blue-600 text-white font-semibold shadow-sm cursor-pointer'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 cursor-pointer'
                   }`}
                 >
                   In Production
                 </button>
                 <button
                   type="button"
+                  disabled={!isAllowed}
                   onClick={() => handleStatusChange('maintenance')}
                   className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                    asset.status === 'maintenance'
-                      ? 'bg-amber-600 text-white font-semibold shadow-sm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    !isAllowed
+                      ? 'opacity-50 cursor-not-allowed bg-neutral-100 text-neutral-400'
+                      : asset.status === 'maintenance'
+                      ? 'bg-amber-600 text-white font-semibold shadow-sm cursor-pointer'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 cursor-pointer'
                   }`}
                 >
                   Under Maintenance
