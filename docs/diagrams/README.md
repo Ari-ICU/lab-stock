@@ -21,27 +21,27 @@
 
 ```mermaid
 flowchart TD
-    Start([🟢 START: Student / Faculty Requests Equipment]) --> Scan[🔍 Identify Equipment<br/>Scan Barcode / QR with Camera<br/>or Search Serial / SKU]
-    Scan --> DecideAvail{Is Equipment<br/>Available in Lab?}
+    Start(["🟢 START: Student or Faculty Requests Equipment"]) --> Scan["🔍 Identify Equipment<br/>Scan Barcode or QR with Camera<br/>or Search Serial or SKU"]
+    Scan --> DecideAvail{"Is Equipment<br/>Available in Lab?"}
     
-    DecideAvail -- No --> AlertLoaned[⚠️ Alert: Already On Loan<br/>Display Active Borrower Dossier<br/>and Scheduled Due Date]
-    AlertLoaned --> EndReject([🔴 END: Check-Out Denied])
+    DecideAvail -- No --> AlertLoaned["⚠️ Alert: Already On Loan<br/>Display Active Borrower Dossier<br/>and Scheduled Due Date"]
+    AlertLoaned --> EndReject(["🔴 END: Check-Out Denied"])
     
-    DecideAvail -- Yes --> FillForm[📝 Fill Check-Out Form<br/>Borrower Name, Student ID, Role,<br/>Course / Class, and Return Due Date]
-    FillForm --> DispatchAPI[📡 Client Dispatches Request<br/>POST /api/v1/loans/checkout]
-    DispatchAPI --> GuardAuth{Valid JWT &<br/>loan:checkout Permission?}
+    DecideAvail -- Yes --> FillForm["📝 Fill Check-Out Form<br/>Borrower Name, Student ID, Role,<br/>Course or Class, and Return Due Date"]
+    FillForm --> DispatchAPI["📡 Client Dispatches Request<br/>POST /api/v1/loans/checkout"]
+    DispatchAPI --> GuardAuth{"Valid JWT and<br/>loan:checkout Permission?"}
     
-    GuardAuth -- No --> AuthErr[⛔ 401 / 403 Forbidden<br/>Unauthorized Session]
-    GuardAuth -- Yes --> DBTx["🔒 PostgreSQL Transaction BEGIN<br/>SELECT * FROM assets WHERE id = $1 FOR UPDATE<br/>(Pessimistic Row-Level Lock)"]
+    GuardAuth -- No --> AuthErr["⛔ 401 or 403 Forbidden<br/>Unauthorized Session"]
+    GuardAuth -- Yes --> DBTx["🔒 PostgreSQL Transaction BEGIN<br/>SELECT * FROM assets WHERE id = $1 FOR UPDATE<br/>Pessimistic Row-Level Lock"]
     
-    DBTx --> RaceCheck{Status<br/>Still Available?}
-    RaceCheck -- Conflict --> Rollback[⏪ ROLLBACK Transaction<br/>409 Conflict: Double-booking avoided]
+    DBTx --> RaceCheck{"Status<br/>Still Available?"}
+    RaceCheck -- Conflict --> Rollback["⏪ ROLLBACK Transaction<br/>409 Conflict: Double-booking avoided"]
     
-    RaceCheck -- Verified --> Commit["💾 INSERT INTO loans (...)<br/>UPDATE assets SET loan_status = 'on_loan'<br/>COMMIT Transaction"]
+    RaceCheck -- Verified --> Commit["💾 INSERT INTO loans<br/>UPDATE assets SET loan_status = 'on_loan'<br/>COMMIT Transaction"]
     
-    Commit --> EvictCache["⚡ In-Memory Cache Invalidation<br/>Evict keys matching 'loans:*' and 'assets:*'"]
-    EvictCache --> UIUpdate["📱 Client UI Update<br/>201 Created • Toast Alert<br/>Auto-redirect to /loans/[id] Dossier"]
-    UIUpdate --> Success([🟢 SUCCESS: Equipment Issued & In Custody])
+    Commit --> EvictCache["⚡ In-Memory Cache Invalidation<br/>Evict keys matching loans and assets"]
+    EvictCache --> UIUpdate["📱 Client UI Update<br/>201 Created and Toast Alert<br/>Auto-redirect to /loans/id Dossier"]
+    UIUpdate --> Success(["🟢 SUCCESS: Equipment Issued and In Custody"])
 
     classDef green fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46;
     classDef amber fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e;
@@ -62,28 +62,28 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    ClientReq([🌐 Client Request: POST /api/v1/auth/login]) --> RateLimit{IP Under Rate Limit?<br/>10 attempts / 15 min}
-    RateLimit -- Exceeded --> BlockIP[⛔ 429 Too Many Requests<br/>Brute-Force Lockout]
+    ClientReq(["🌐 Client Request: POST /api/v1/auth/login"]) --> RateLimit{"IP Under Rate Limit?<br/>10 attempts per 15 min"}
+    RateLimit -- Exceeded --> BlockIP["⛔ 429 Too Many Requests<br/>Brute-Force Lockout"]
     
-    RateLimit -- Allowed --> LookupUser[🔍 PostgreSQL Query<br/>SELECT * FROM users WHERE email = $1]
-    LookupUser --> UserExists{User Found &<br/>Status == 'active'?}
-    UserExists -- No --> ErrCreds[❌ 401 Unauthorized<br/>Invalid Credentials]
+    RateLimit -- Allowed --> LookupUser["🔍 PostgreSQL Query<br/>SELECT * FROM users WHERE email = $1"]
+    LookupUser --> UserExists{"User Found and<br/>Status == 'active'?"}
+    UserExists -- No --> ErrCreds["❌ 401 Unauthorized<br/>Invalid Credentials"]
     
-    UserExists -- Yes --> CheckPwd[🔐 Bcrypt Password Verification<br/>bcrypt.compare with Salted Hash]
-    CheckPwd --> PwdMatch{Password Matches?}
+    UserExists -- Yes --> CheckPwd["🔐 Bcrypt Password Verification<br/>bcrypt.compare with Salted Hash"]
+    CheckPwd --> PwdMatch{"Password Matches?"}
     PwdMatch -- No --> ErrCreds
     
-    PwdMatch -- Yes --> SignJWT["🔑 Generate HS256 JWT Token<br/>Payload: { id, email, role, permissions }<br/>Expires In: 24 Hours"]
-    SignJWT --> AuditLogin[📝 Write Audit Log: user:login]
-    AuditLogin --> ReturnToken[📦 Return 200 OK + JWT Token + User Profile]
+    PwdMatch -- Yes --> SignJWT["🔑 Generate HS256 JWT Token<br/>Payload: id, email, role, permissions<br/>Expires In: 24 Hours"]
+    SignJWT --> AuditLogin["📝 Write Audit Log: user:login"]
+    AuditLogin --> ReturnToken["📦 Return 200 OK + JWT Token + User Profile"]
     
-    ReturnToken --> APIReq([📡 Next API Request: Bearer Token in Header])
-    APIReq --> VerifyJWT{Valid Signature &<br/>Not Expired?}
-    VerifyJWT -- Invalid --> Err401[⛔ 401 Unauthorized]
+    ReturnToken --> APIReq(["📡 Next API Request: Bearer Token in Header"])
+    APIReq --> VerifyJWT{"Valid Signature and<br/>Not Expired?"}
+    VerifyJWT -- Invalid --> Err401["⛔ 401 Unauthorized"]
     
-    VerifyJWT -- Valid --> CheckRole{Has Required<br/>Permission Flag?}
-    CheckRole -- Missing --> Err403[⛔ 403 Forbidden: Insufficient Privileges]
-    CheckRole -- Authorized --> ExecRoute[🟢 Route Handler Executes]
+    VerifyJWT -- Valid --> CheckRole{"Has Required<br/>Permission Flag?"}
+    CheckRole -- Missing --> Err403["⛔ 403 Forbidden: Insufficient Privileges"]
+    CheckRole -- Authorized --> ExecRoute(["🟢 Route Handler Executes"])
 
     classDef green fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46;
     classDef amber fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e;
@@ -102,20 +102,20 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    StartReturn([🟢 START: Borrower Returns Equipment to Lab]) --> IdentifyLoan[🔍 Lookup Active Loan Record<br/>Scan Barcode on Device or Enter Loan ID]
-    IdentifyLoan --> InspectHW[🔬 Physical Condition Inspection<br/>Check Power Cable, Display, Ports, Accessories]
+    StartReturn(["🟢 START: Borrower Returns Equipment to Lab"]) --> IdentifyLoan["🔍 Lookup Active Loan Record<br/>Scan Barcode on Device or Enter Loan ID"]
+    IdentifyLoan --> InspectHW["🔬 Physical Condition Inspection<br/>Check Power Cable, Display, Ports, Accessories"]
     
-    InspectHW --> ConditionDecision{Equipment Condition<br/>Satisfactory?}
+    InspectHW --> ConditionDecision{"Equipment Condition<br/>Satisfactory?"}
     
-    ConditionDecision -- Damaged / Faulty --> LogDefect["⚠️ Flag for Maintenance<br/>Select Defect Preset: RMA / Repair Needed<br/>Schedule Service in /maintenance"]
-    LogDefect --> CloseLoanMaint["💾 Database Transaction<br/>UPDATE loans SET status = 'returned', notes = $notes<br/>UPDATE assets SET status = 'maintenance', loan_status = 'available'<br/>COMMIT"]
+    ConditionDecision -- Damaged or Faulty --> LogDefect["⚠️ Flag for Maintenance<br/>Select Defect Preset: RMA or Repair Needed<br/>Schedule Service in /maintenance"]
+    LogDefect --> CloseLoanMaint["💾 Database Transaction<br/>UPDATE loans SET status = 'returned'<br/>UPDATE assets SET status = 'maintenance', loan_status = 'available'<br/>COMMIT"]
     
     ConditionDecision -- Operational --> CloseLoanGood["💾 Database Transaction<br/>UPDATE loans SET status = 'returned', actual_return_date = NOW()<br/>UPDATE assets SET loan_status = 'available', current_borrower = NULL<br/>COMMIT"]
     
-    CloseLoanMaint --> EvictReturnCache["⚡ Cache Eviction: loans:*, assets:*"]
+    CloseLoanMaint --> EvictReturnCache["⚡ Cache Eviction: loans and assets"]
     CloseLoanGood --> EvictReturnCache
     
-    EvictReturnCache --> ReturnSuccess([🟢 SUCCESS: Custody Closed • Stock Restored to Room])
+    EvictReturnCache --> ReturnSuccess(["🟢 SUCCESS: Custody Closed and Stock Restored to Room"])
 
     classDef green fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46;
     classDef amber fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e;
@@ -134,22 +134,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    StartStock([🟢 Inventory Adjustment Request: PATCH /api/v1/stock/:id/adjust]) --> ValidatePayload{Valid delta quantity?<br/>(e.g. +5 or -2)}
-    ValidatePayload -- Invalid --> ErrBadPayload[❌ 400 Bad Request]
+    StartStock(["🟢 Inventory Adjustment Request: PATCH /api/v1/stock/id/adjust"]) --> ValidatePayload{"Valid delta quantity?<br/>Example: +5 or -2"}
+    ValidatePayload -- Invalid --> ErrBadPayload["❌ 400 Bad Request"]
     
-    ValidatePayload -- Valid --> CheckAuth{Has stock:update<br/>Permission?}
-    CheckAuth -- No --> ErrStockAuth[⛔ 403 Forbidden]
+    ValidatePayload -- Valid --> CheckAuth{"Has stock:update<br/>Permission?"}
+    CheckAuth -- No --> ErrStockAuth["⛔ 403 Forbidden"]
     
     CheckAuth -- Yes --> AtomicQuery["🔒 PostgreSQL Atomic UPDATE<br/>UPDATE stock_items<br/>SET quantity = quantity + $delta<br/>WHERE id = $id AND (quantity + $delta) >= 0<br/>RETURNING quantity, min_threshold"]
     
-    AtomicQuery --> ResultCheck{Rows Affected == 1?}
-    ResultCheck -- 0 Rows --> ErrNegative[⚠️ 400 Conflict: Insufficient Stock<br/>Prevents negative consumable balance]
+    AtomicQuery --> ResultCheck{"Rows Affected == 1?"}
+    ResultCheck -- 0 Rows --> ErrNegative["⚠️ 400 Conflict: Insufficient Stock<br/>Prevents negative consumable balance"]
     
-    ResultCheck -- 1 Row --> StatusUpdate["🔄 Dynamic Status Evaluation<br/>qty <= 0: out_of_stock<br/>qty <= min_threshold: low_stock<br/>qty > min_threshold: in_stock"]
+    ResultCheck -- 1 Row --> StatusUpdate["🔄 Dynamic Status Evaluation<br/>qty is 0: out of stock<br/>qty below threshold: low stock<br/>qty above threshold: in stock"]
     
-    StatusUpdate --> EvictStockCache["⚡ Invalidate Cache: 'stock:*'"]
-    EvictStockCache --> ReturnUpdated[📦 Return 200 OK with New Balance & Computed Status]
-    ReturnUpdated --> EndStock([🟢 Stock Updated & Synced Across All Clients])
+    StatusUpdate --> EvictStockCache["⚡ Invalidate Cache: stock prefix"]
+    EvictStockCache --> ReturnUpdated["📦 Return 200 OK with New Balance and Computed Status"]
+    ReturnUpdated --> EndStock(["🟢 Stock Updated and Synced Across All Clients"])
 
     classDef green fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46;
     classDef amber fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e;
@@ -241,4 +241,3 @@ erDiagram
 1. **In VS Code / Antigravity**: Open any `.drawio` file directly with the **Draw.io Integration** extension.
 2. **In Browser**: Navigate to **[app.diagrams.net](https://app.diagrams.net)** and drag-and-drop any `.drawio` file into the canvas.
 3. **Database DBML**: Open [`schema.dbml`](./schema.dbml) in **[dbdiagram.io](https://dbdiagram.io)** for interactive relational inspection.
-
