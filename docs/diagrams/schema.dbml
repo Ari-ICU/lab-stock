@@ -1,0 +1,159 @@
+// ========================================================
+// CSD LabStock Management System - Database ERD
+// Engineered for PostgreSQL 16
+// ========================================================
+
+Project lab_stock {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # CSD LabStock Management System
+    University & Faculty Laboratory Asset, Inventory & Equipment Custody Database
+  '''
+}
+
+// --------------------------------------------------------
+// 1. USERS & ACCESS CONTROL
+// --------------------------------------------------------
+Table users {
+  id uuid [pk, default: `uuid_generate_v4()`, note: 'Primary Key']
+  name varchar(150) [not null]
+  email varchar(150) [unique, not null]
+  password_hash varchar(255) [not null]
+  role varchar(80) [not null, default: 'Faculty Lecturer', note: 'Admin, Lecturer, Lab Assistant, Technician']
+  is_admin boolean [not null, default: false]
+  department varchar(150)
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  Note: 'Faculty supervisors, lab administrators, and technicians'
+}
+
+// --------------------------------------------------------
+// 2. LABORATORY FACILITIES & ROOMS
+// --------------------------------------------------------
+Table locations {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  code varchar(50) [unique, not null, note: 'e.g. L1, L2']
+  name varchar(150) [not null, note: 'e.g. Computer & Network Lab 102B']
+  room varchar(50) [not null, note: 'e.g. Rm 102B']
+  building varchar(100) [not null, note: 'e.g. Engineering Block A']
+  capacity int [default: 30]
+  created_at timestamptz [default: `now()`]
+
+  Note: 'Connected classrooms, research zones, and storage hubs'
+}
+
+// --------------------------------------------------------
+// 3. HARDWARE EQUIPMENT ASSETS
+// --------------------------------------------------------
+Table assets {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  serial_number varchar(100) [unique, not null, note: 'Hardware SN: OPT-102B-01, FCW2348L09M']
+  name varchar(200) [not null, note: 'e.g. Cisco Catalyst 9300 48-Port Switch']
+  model varchar(150) [not null, note: 'e.g. C9300-48P-A']
+  total_units int [default: 1]
+  unit_type varchar(50) [default: 'Units']
+  location_id uuid [ref: > locations.id, note: 'Physical room where equipment is stationed']
+  placement_rack varchar(100) [note: 'Wall Cabinet CAB-102B, Student Benches']
+  status varchar(50) [not null, default: 'operational', note: 'operational, in_use, maintenance']
+  loan_status varchar(50) [not null, default: 'available', note: 'available, on_loan']
+  current_borrower varchar(150)
+  loan_due_date date
+  next_calibration varchar(80) [note: 'Audit / Inspection warranty timestamp']
+  image_url text
+  description text
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  Note: 'High-value persistent equipment (PCs, routers, switches, projectors)'
+}
+
+// --------------------------------------------------------
+// 4. INVENTORY CONSUMABLES & PERIPHERALS
+// --------------------------------------------------------
+Table stock_items {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  code varchar(80) [unique, not null, note: 'SKU: MON-102B-P2419H, KB-102B-KB216']
+  name varchar(200) [not null]
+  category varchar(100) [not null, note: 'Monitors, Mice & Keyboards, Networking, Stationery']
+  quantity int [not null, default: 0]
+  unit varchar(50) [not null, default: 'Units']
+  location_id uuid [ref: > locations.id, note: 'Lab room where stock is stored']
+  rack varchar(100) [note: 'Shelf SHF-01, Bench']
+  status varchar(30) [not null, default: 'in_stock', note: 'in_stock, low_stock, out_of_stock']
+  min_threshold int [default: 10]
+  expiry_date varchar(80)
+  image_url text
+  description text
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  indexes {
+    category [name: 'idx_stock_items_category']
+    status [name: 'idx_stock_items_status']
+  }
+
+  Note: 'Fast-moving consumables, peripherals, and spare components'
+}
+
+// --------------------------------------------------------
+// 5. EQUIPMENT LOANS & STUDENT CHECK-OUTS
+// --------------------------------------------------------
+Table loans {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  asset_id uuid [not null, ref: > assets.id, note: 'Borrowed physical asset']
+  borrower_name varchar(150) [not null, note: 'e.g. Sokha Chan']
+  borrower_role varchar(80) [not null, default: 'Student', note: 'Student, Lecturer, Technician']
+  borrower_contact varchar(100) [note: 'Email, Phone or Student ID']
+  course_or_class varchar(150) [note: 'e.g. Advanced Network Capstone']
+  borrow_date date [not null, default: `CURRENT_DATE`]
+  expected_return_date date [not null]
+  actual_return_date date [note: 'Null while active, filled on return']
+  status varchar(30) [not null, default: 'active', note: 'active, returned, overdue']
+  notes text [note: 'Condition checklist & supervisor inspection logs']
+  created_at timestamptz [default: `now()`]
+
+  indexes {
+    status [name: 'idx_loans_status']
+  }
+
+  Note: 'Concurrency-safe student lending records with return inspection trails'
+}
+
+// --------------------------------------------------------
+// 6. ROOM MOVEMENTS & PHYSICAL RELOCATIONS
+// --------------------------------------------------------
+Table transfers {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  asset_id uuid [not null, ref: > assets.id, note: 'Relocated device']
+  from_location_id uuid [ref: > locations.id, note: 'Origin room']
+  to_location_id uuid [ref: > locations.id, note: 'Destination room']
+  transfer_date date [not null, default: `CURRENT_DATE`]
+  transferred_by varchar(150) [not null, note: 'Authorized faculty member or technician']
+  reason text [note: 'e.g. Workshop setup, permanent reallocation']
+  created_at timestamptz [default: `now()`]
+
+  Note: 'Physical equipment movement history between lab rooms'
+}
+
+// --------------------------------------------------------
+// TABLE GROUPS FOR CLEAN PRESENTATION
+// --------------------------------------------------------
+TableGroup Facility_Infrastructure {
+  locations
+}
+
+TableGroup Hardware_Fleet {
+  assets
+  transfers
+}
+
+TableGroup Consumable_Inventory {
+  stock_items
+}
+
+TableGroup Custody_Operations {
+  loans
+  users
+}
+

@@ -8,7 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Search } from 'lucide-react';
 
 export default function StockPage() {
   const router = useRouter();
@@ -86,13 +86,16 @@ export default function StockPage() {
           {/* Filters Toolbar with Lab Dropdown */}
           <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 flex-wrap flex-1">
-              <input
-                type="text"
-                placeholder="Search paper, printer ink, tools, cables, peripherals..."
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className="w-full sm:w-64 bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium"
-              />
+              <div className="relative w-full sm:w-72">
+                <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search consumables, tools, cables, peripherals..."
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
+                />
+              </div>
 
               {/* Lab Filter Dropdown */}
               <Dropdown

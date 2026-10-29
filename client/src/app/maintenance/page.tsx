@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
-import { Wrench, CheckCircle2, Clock } from 'lucide-react';
+import { Wrench, CheckCircle2, Clock, Search } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 
 export default function MaintenancePage() {
@@ -77,15 +77,18 @@ export default function MaintenancePage() {
 
         {/* Flat Records Table */}
         <div className="bg-white border border-neutral-200 rounded">
-          <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
-            <input
-              type="text"
-              placeholder="Search maintenance logs..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              className="w-72 bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400"
-            />
-            <span className="text-xs text-neutral-500">
+          <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative w-full sm:w-72">
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search maintenance logs..."
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs"
+              />
+            </div>
+            <span className="text-xs text-neutral-500 font-medium">
               Showing <span className="font-semibold text-neutral-900">{filtered.length}</span> records
             </span>
           </div>

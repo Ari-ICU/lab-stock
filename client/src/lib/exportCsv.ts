@@ -249,12 +249,34 @@ function buildXlsxWorkbook(rows: Record<string, unknown>[], sheetTitle: string =
   ${autoFilterXml}
 </worksheet>`;
 
-  // Excel Styles: Header with #0F172A solid fill, white bold font; clean borders on data cells
+  // Excel Styles: Times New Roman typography, Header with #0F172A solid fill, white bold font; clean borders on data cells
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="2">
-    <font><name val="Aptos"/><sz val="11"/></font>
-    <font><b/><color rgb="FFFFFFFF"/><name val="Aptos"/><sz val="11"/></font>
+  <fonts count="3">
+    <!-- Font 0: Regular Data Cells (Times New Roman 11pt) -->
+    <font>
+      <sz val="11"/>
+      <name val="Times New Roman"/>
+      <family val="1"/>
+      <charset val="0"/>
+    </font>
+    <!-- Font 1: Styled Header (Times New Roman 11pt Bold White) -->
+    <font>
+      <b/>
+      <sz val="11"/>
+      <color rgb="FFFFFFFF"/>
+      <name val="Times New Roman"/>
+      <family val="1"/>
+      <charset val="0"/>
+    </font>
+    <!-- Font 2: Bold Data Cells (Times New Roman 11pt Bold) -->
+    <font>
+      <b/>
+      <sz val="11"/>
+      <name val="Times New Roman"/>
+      <family val="1"/>
+      <charset val="0"/>
+    </font>
   </fonts>
   <fills count="3">
     <fill><patternFill patternType="none"/></fill>
@@ -278,10 +300,10 @@ function buildXlsxWorkbook(rows: Record<string, unknown>[], sheetTitle: string =
     <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">
       <alignment horizontal="center" vertical="center"/>
     </xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1">
       <alignment vertical="center"/>
     </xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1">
       <alignment horizontal="right" vertical="center"/>
     </xf>
   </cellXfs>

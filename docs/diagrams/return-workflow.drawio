@@ -1,0 +1,136 @@
+<mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title Banner -->
+    <mxCell id="title" value="CSD LabStock: Equipment Check-In &amp; Return Inspection Workflow&#xa;Physical Inspection, Condition Logging, Atomic Status Restoration, and Inventory Replenishment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;fontColor=#0f172a;align=center;shadow=1;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="180" y="20" width="840" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 1: Start -->
+    <mxCell id="start" value="START&#xa;Borrower Returns Hardware to Lab" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#10b981;strokeColor=#059669;fontColor=#ffffff;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="500" y="110" width="200" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- Step 2: Lookup Loan Record -->
+    <mxCell id="lookup" value="Lookup Active Loan Record&#xa;Search Borrower Name / Scan Serial / ID" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#1e293b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="480" y="190" width="240" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 3: Decision: Loan Found? -->
+    <mxCell id="loan_found" value="Active Loan Found?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="510" y="280" width="180" height="75" as="geometry" />
+    </mxCell>
+
+    <mxCell id="loan_missing" value="404 Not Found / Already Returned&#xa;Loan record does not require check-in" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;fontColor=#991b1b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="780" y="287.5" width="210" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 4: Physical Inspection -->
+    <mxCell id="inspect" value="Physical Device Condition Inspection&#xa;1. Power Cables &amp; Adapters Returned?&#xa;2. Test Hardware Boot &amp; Functionality&#xa;3. Inspect for Surface Damage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#1e293b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="470" y="385" width="260" height="75" as="geometry" />
+    </mxCell>
+
+    <!-- Step 5: Damage / Maintenance Check -->
+    <mxCell id="damage_check" value="Device Damaged or&#xa;Needs Maintenance?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="495" y="490" width="210" height="85" as="geometry" />
+    </mxCell>
+
+    <mxCell id="flag_maint" value="Flag for Maintenance Service&#xa;Set asset status = 'maintenance'&#xa;Create repair service ticket" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;fontColor=#991b1b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="780" y="502.5" width="200" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 6: Record Return Notes -->
+    <mxCell id="notes" value="Record Staff Inspection Notes&#xa;Select Quick Presets (e.g. '✓ Tested &amp; Functional')&#xa;or Type Custom Condition Report" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#1e293b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="470" y="605" width="260" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- Step 7: Atomic Database Transaction -->
+    <mxCell id="db_tx" value="PostgreSQL ACID Transaction BEGIN&#xa;Lock Loan Row: SELECT * FROM loans WHERE id = $1 FOR UPDATE&#xa;1. UPDATE loans SET status = 'returned', actual_return_date = CURRENT_DATE&#xa;2. UPDATE assets SET loan_status = 'available', current_borrower = NULL&#xa;PostgreSQL COMMIT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e40af;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="440" y="700" width="320" height="85" as="geometry" />
+    </mxCell>
+
+    <!-- Step 8: Invalidate Cache -->
+    <mxCell id="cache_inval" value="Invalidate Caches Immediately&#xa;cache.invalidatePattern('loan:')&#xa;cache.invalidatePattern('asset:')" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#a855f7;fontColor=#6b21a8;align=center;" vertex="1" parent="1">
+      <mxGeometry x="480" y="815" width="240" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 9: UI Refresh -->
+    <mxCell id="ui_refresh" value="Client Receives 200 OK&#xa;Toast Notification: 'Returned successfully'&#xa;Catalog updates asset status to 'Available on Bench'" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e0e7ff;strokeColor=#6366f1;fontColor=#3730a3;align=center;" vertex="1" parent="1">
+      <mxGeometry x="460" y="905" width="280" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- Step 10: Complete -->
+    <mxCell id="end_success" value="SUCCESS&#xa;Equipment Restored to Active Stock" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#10b981;strokeColor=#059669;fontColor=#ffffff;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="500" y="1000" width="200" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- Connectors -->
+    <mxCell id="e1" edge="1" source="start" target="lookup" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e2" edge="1" source="lookup" target="loan_found" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e3" edge="1" source="loan_found" target="loan_missing" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3_l" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#b91c1c;fontStyle=1;" vertex="1" connectable="0" parent="e3">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e4" edge="1" source="loan_found" target="inspect" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4_l" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#047857;fontStyle=1;" vertex="1" connectable="0" parent="e4">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e5" edge="1" source="inspect" target="damage_check" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e6" edge="1" source="damage_check" target="flag_maint" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e6_l" value="Yes (Damaged)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#b91c1c;fontStyle=1;" vertex="1" connectable="0" parent="e6">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e7" edge="1" source="damage_check" target="notes" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7_l" value="No (Good Condition)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#047857;fontStyle=1;" vertex="1" connectable="0" parent="e7">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e8" edge="1" source="flag_maint" target="notes" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="880" y="638" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="e9" edge="1" source="notes" target="db_tx" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e10" edge="1" source="db_tx" target="cache_inval" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e11" edge="1" source="cache_inval" target="ui_refresh" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e12" edge="1" source="ui_refresh" target="end_success" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>
+

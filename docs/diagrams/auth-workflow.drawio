@@ -1,0 +1,174 @@
+<mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title Banner -->
+    <mxCell id="title" value="CSD LabStock: Authentication &amp; Role-Based Access Control (RBAC) Flowchart&#xa;Rate Limiting, Bcrypt Verification, Cryptographic HS256 JWT Issuance &amp; Route Guard Enforcement" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;fontColor=#0f172a;align=center;shadow=1;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+      <mxGeometry x="180" y="20" width="840" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 1: Start -->
+    <mxCell id="start" value="START&#xa;User Accesses Login Page (/login)" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#10b981;strokeColor=#059669;fontColor=#ffffff;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="500" y="110" width="200" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- Step 2: Form Input -->
+    <mxCell id="input" value="User Enters Credentials&#xa;Email Address &amp; Password" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#1e293b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="490" y="190" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 3: Rate Limiter Check -->
+    <mxCell id="rate_limit" value="Auth Rate Limiter Check&#xa;&lt; 10 attempts / 15 min?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="495" y="280" width="210" height="80" as="geometry" />
+    </mxCell>
+
+    <mxCell id="rate_limit_blocked" value="429 Too Many Requests&#xa;Temporary IP Block&#xa;(Brute-Force Guard)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;fontColor=#991b1b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="780" y="290" width="190" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 4: Query User -->
+    <mxCell id="db_user" value="Query PostgreSQL by Email&#xa;SELECT id, password_hash, role, is_admin&#xa;FROM users WHERE email = $1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e40af;align=center;" vertex="1" parent="1">
+      <mxGeometry x="470" y="390" width="260" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- Step 5: User Exists? -->
+    <mxCell id="user_exists" value="User Found in Database?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="500" y="485" width="200" height="75" as="geometry" />
+    </mxCell>
+
+    <!-- Step 6: Bcrypt Compare -->
+    <mxCell id="bcrypt_check" value="Constant-Time Hash Compare&#xa;bcrypt.compare(password, password_hash)&#xa;Timing-Attack Resistant" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#1e293b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="470" y="590" width="260" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- Step 7: Password Valid? -->
+    <mxCell id="pwd_valid" value="Password Matches Hash?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="500" y="685" width="200" height="75" as="geometry" />
+    </mxCell>
+
+    <mxCell id="auth_fail" value="401 Unauthorized&#xa;Return 'Invalid credentials'&#xa;(Generic response prevents enumeration)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;fontColor=#991b1b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="780" y="692.5" width="220" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 8: Sign JWT -->
+    <mxCell id="jwt_sign" value="Sign HS256 JWT Token&#xa;Payload: { sub: userId, role, permissions, email }&#xa;Expires in 24 hours" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;fontColor=#065f46;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="460" y="790" width="280" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- Step 9: Deliver Token -->
+    <mxCell id="deliver_token" value="Return 200 OK + JWT&#xa;Client stores token in localStorage / Cookie&#xa;Redirect to Lab Dashboard (/overview)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e0e7ff;strokeColor=#6366f1;fontColor=#3730a3;align=center;" vertex="1" parent="1">
+      <mxGeometry x="450" y="885" width="300" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- Step 10: Authenticated API Route Access -->
+    <mxCell id="api_guard" value="Subsequent Requests with Header:&#xa;Authorization: Bearer &lt;token&gt;&#xa;Express Middleware: authenticate()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#1e293b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="470" y="980" width="260" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 11: RBAC Permission Evaluator -->
+    <mxCell id="rbac_check" value="requirePermission(STOCK_CREATE)?&#xa;Checks user permissions / '*' admin wildcard" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="480" y="1070" width="240" height="85" as="geometry" />
+    </mxCell>
+
+    <mxCell id="perm_denied" value="403 Forbidden&#xa;Role lacks required permission" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#ef4444;fontColor=#991b1b;align=center;" vertex="1" parent="1">
+      <mxGeometry x="780" y="1082.5" width="200" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Step 12: Success Controller -->
+    <mxCell id="controller_exec" value="SUCCESS&#xa;Authorize Controller Execution&#xa;(stockController / assetController / loanController)" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#10b981;strokeColor=#059669;fontColor=#ffffff;align=center;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="470" y="1185" width="260" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- CONNECTORS -->
+    <mxCell id="e1" edge="1" source="start" target="input" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e2" edge="1" source="input" target="rate_limit" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e3" edge="1" source="rate_limit" target="rate_limit_blocked" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3_l" value="No (&gt;10 attempts)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#b91c1c;fontStyle=1;" vertex="1" connectable="0" parent="e3">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e4" edge="1" source="rate_limit" target="db_user" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4_l" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#047857;fontStyle=1;" vertex="1" connectable="0" parent="e4">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e5" edge="1" source="db_user" target="user_exists" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e6" edge="1" source="user_exists" target="auth_fail" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="890" y="523" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e6_l" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#b91c1c;fontStyle=1;" vertex="1" connectable="0" parent="e6">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e7" edge="1" source="user_exists" target="bcrypt_check" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7_l" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#047857;fontStyle=1;" vertex="1" connectable="0" parent="e7">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e8" edge="1" source="bcrypt_check" target="pwd_valid" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e9" edge="1" source="pwd_valid" target="auth_fail" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e9_l" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#b91c1c;fontStyle=1;" vertex="1" connectable="0" parent="e9">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e10" edge="1" source="pwd_valid" target="jwt_sign" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e10_l" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#047857;fontStyle=1;" vertex="1" connectable="0" parent="e10">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e11" edge="1" source="jwt_sign" target="deliver_token" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e12" edge="1" source="deliver_token" target="api_guard" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e13" edge="1" source="api_guard" target="rbac_check" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e14" edge="1" source="rbac_check" target="perm_denied" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e14_l" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#b91c1c;fontStyle=1;" vertex="1" connectable="0" parent="e14">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e15" edge="1" source="rbac_check" target="controller_exec" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e15_l" value="Authorized" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#047857;fontStyle=1;" vertex="1" connectable="0" parent="e15">
+      <mxGeometry x="-0.2" relative="1" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>
+

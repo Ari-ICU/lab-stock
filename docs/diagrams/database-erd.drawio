@@ -1,0 +1,89 @@
+<mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title Banner -->
+    <mxCell id="title" value="CSD LabStock: Entity Relationship Diagram (ERD)&#xa;PostgreSQL 16 Relational Schema with UUID Keys &amp; Foreign Key Constraints" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;fontColor=#0f172a;align=center;shadow=1;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+      <mxGeometry x="280" y="20" width="840" height="50" as="geometry" />
+    </mxCell>
+
+    <!-- Table 1: LOCATIONS -->
+    <mxCell id="t_locations" value="locations&#xa;(Laboratory Facilities &amp; Rooms)&#xa;---------------------------------------&#xa;+ id : UUID [PK]&#xa;* code : VARCHAR(50) [UNIQUE]&#xa;* name : VARCHAR(150)&#xa;* room : VARCHAR(50)&#xa;* building : VARCHAR(100)&#xa;  capacity : INT (Default: 30)&#xa;  created_at : TIMESTAMPTZ" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;align=left;resizeLast=1;html=1;whiteSpace=wrap;fillColor=#f3e8ff;strokeColor=#a855f7;fontColor=#581c87;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="60" y="120" width="260" height="180" as="geometry" />
+    </mxCell>
+
+    <!-- Table 2: HARDWARE ASSETS -->
+    <mxCell id="t_assets" value="assets&#xa;(Persistent Equipment Fleet)&#xa;---------------------------------------&#xa;+ id : UUID [PK]&#xa;* serial_number : VARCHAR(100) [UQ]&#xa;* name : VARCHAR(200)&#xa;* model : VARCHAR(150)&#xa;  total_units : INT (Default: 1)&#xa;  unit_type : VARCHAR(50)&#xa;  location_id : UUID [FK -&gt; locations.id]&#xa;  placement_rack : VARCHAR(100)&#xa;* status : VARCHAR(50) (operational)&#xa;* loan_status : VARCHAR(50) (available)&#xa;  current_borrower : VARCHAR(150)&#xa;  loan_due_date : DATE&#xa;  next_calibration : VARCHAR(80)&#xa;  image_url : TEXT&#xa;  created_at : TIMESTAMPTZ" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;align=left;resizeLast=1;html=1;whiteSpace=wrap;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e40af;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="450" y="120" width="280" height="290" as="geometry" />
+    </mxCell>
+
+    <!-- Table 3: STOCK ITEMS (CONSUMABLES) -->
+    <mxCell id="t_stock" value="stock_items&#xa;(Consumables &amp; Peripherals)&#xa;---------------------------------------&#xa;+ id : UUID [PK]&#xa;* code : VARCHAR(80) [UNIQUE]&#xa;* name : VARCHAR(200)&#xa;* category : VARCHAR(100) [INDEX]&#xa;* quantity : INT (Default: 0)&#xa;* unit : VARCHAR(50) (Units)&#xa;  location_id : UUID [FK -&gt; locations.id]&#xa;  rack : VARCHAR(100)&#xa;* status : VARCHAR(30) [INDEX]&#xa;  min_threshold : INT (Default: 10)&#xa;  expiry_date : VARCHAR(80)&#xa;  created_at : TIMESTAMPTZ" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;align=left;resizeLast=1;html=1;whiteSpace=wrap;fillColor=#d1fae5;strokeColor=#10b981;fontColor=#065f46;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="60" y="450" width="270" height="230" as="geometry" />
+    </mxCell>
+
+    <!-- Table 4: LOANS (DEVICE CHECK-OUTS) -->
+    <mxCell id="t_loans" value="loans&#xa;(Student Custody &amp; Check-Outs)&#xa;---------------------------------------&#xa;+ id : UUID [PK]&#xa;* asset_id : UUID [FK -&gt; assets.id]&#xa;* borrower_name : VARCHAR(150)&#xa;* borrower_role : VARCHAR(80)&#xa;  borrower_contact : VARCHAR(100)&#xa;  course_or_class : VARCHAR(150)&#xa;* borrow_date : DATE&#xa;* expected_return_date : DATE&#xa;  actual_return_date : DATE&#xa;* status : VARCHAR(30) [INDEX]&#xa;  notes : TEXT&#xa;  created_at : TIMESTAMPTZ" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;align=left;resizeLast=1;html=1;whiteSpace=wrap;fillColor=#fef3c7;strokeColor=#f59e0b;fontColor=#92400e;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="870" y="120" width="280" height="240" as="geometry" />
+    </mxCell>
+
+    <!-- Table 5: TRANSFERS (RELOCATIONS) -->
+    <mxCell id="t_transfers" value="transfers&#xa;(Equipment Movement History)&#xa;---------------------------------------&#xa;+ id : UUID [PK]&#xa;* asset_id : UUID [FK -&gt; assets.id]&#xa;  from_location_id : UUID [FK -&gt; locations.id]&#xa;  to_location_id : UUID [FK -&gt; locations.id]&#xa;* transfer_date : DATE&#xa;* transferred_by : VARCHAR(150)&#xa;  reason : TEXT&#xa;  created_at : TIMESTAMPTZ" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;align=left;resizeLast=1;html=1;whiteSpace=wrap;fillColor=#e0e7ff;strokeColor=#6366f1;fontColor=#3730a3;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="450" y="490" width="280" height="190" as="geometry" />
+    </mxCell>
+
+    <!-- Table 6: USERS (AUTH & RBAC) -->
+    <mxCell id="t_users" value="users&#xa;(Faculty Supervisors &amp; Operators)&#xa;---------------------------------------&#xa;+ id : UUID [PK]&#xa;* name : VARCHAR(150)&#xa;* email : VARCHAR(150) [UNIQUE]&#xa;* password_hash : VARCHAR(255)&#xa;* role : VARCHAR(80) (Lecturer)&#xa;* is_admin : BOOLEAN (False)&#xa;  department : VARCHAR(150)&#xa;  created_at : TIMESTAMPTZ" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;align=left;resizeLast=1;html=1;whiteSpace=wrap;fillColor=#fee2e2;strokeColor=#ef4444;fontColor=#991b1b;fontSize=11;strokeWidth=2;" vertex="1" parent="1">
+      <mxGeometry x="870" y="450" width="260" height="190" as="geometry" />
+    </mxCell>
+
+    <!-- FOREIGN KEY CONNECTORS -->
+    <!-- locations -> assets -->
+    <mxCell id="fk_loc_asset" edge="1" source="t_locations" target="t_assets" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#3b82f6;strokeWidth=2;fontColor=#1e40af;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="fk_loc_asset_l" value="1 : N (hosts fleet)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#1e40af;fontStyle=1;fontSize=10;" vertex="1" connectable="0" parent="fk_loc_asset">
+      <mxGeometry x="-0.1" relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- locations -> stock_items -->
+    <mxCell id="fk_loc_stock" edge="1" source="t_locations" target="t_stock" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#10b981;strokeWidth=2;fontColor=#065f46;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="fk_loc_stock_l" value="1 : N (stores stock)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#065f46;fontStyle=1;fontSize=10;" vertex="1" connectable="0" parent="fk_loc_stock">
+      <mxGeometry x="-0.1" relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- assets -> loans -->
+    <mxCell id="fk_asset_loans" edge="1" source="t_assets" target="t_loans" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#f59e0b;strokeWidth=2;fontColor=#92400e;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="fk_asset_loans_l" value="1 : N (loan history)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#92400e;fontStyle=1;fontSize=10;" vertex="1" connectable="0" parent="fk_asset_loans">
+      <mxGeometry x="-0.1" relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- assets -> transfers -->
+    <mxCell id="fk_asset_transfers" edge="1" source="t_assets" target="t_transfers" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6366f1;strokeWidth=2;fontColor=#3730a3;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="fk_asset_transfers_l" value="1 : N (relocations)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#3730a3;fontStyle=1;fontSize=10;" vertex="1" connectable="0" parent="fk_asset_transfers">
+      <mxGeometry x="-0.1" relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- locations -> transfers (from_location) -->
+    <mxCell id="fk_loc_transfers" edge="1" source="t_locations" target="t_transfers" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#a855f7;strokeWidth=1.5;dashed=1;fontColor=#581c87;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="380" y="240" />
+          <mxPoint x="380" y="585" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="fk_loc_transfers_l" value="From / To Room" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#581c87;fontStyle=2;fontSize=9;" vertex="1" connectable="0" parent="fk_loc_transfers">
+      <mxGeometry x="0.2" relative="1" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>
+
