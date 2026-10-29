@@ -775,7 +775,7 @@ export function QRScannerModal() {
                         { label: 'Dell OptiPlex Workstations', code: 'OPT-102B-01-TO-24' },
                         { label: 'Dell 24" Monitors', code: 'MON-102B-P2419H' },
                         { label: 'Cisco ISR 4331 Router', code: 'FOC21342X8Z' },
-                        { label: 'Rm 102B Lab Room', code: 'Rm 102B' },
+                        { label: 'Room 102B Lab Room', code: 'Room 102B' },
                       ].map((sample) => (
                         <button
                           key={sample.code}

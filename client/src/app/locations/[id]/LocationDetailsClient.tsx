@@ -83,7 +83,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       };
     }
 
-    const roomKey = loc.room.replace(/^Rm\s*/i, '').trim().toLowerCase();
+    const roomKey = loc.room.replace(/^(rm|room)\s*/i, '').trim().toLowerCase();
 
     const mAssets = assets.filter((a) => {
       const l = a.location.toLowerCase();
@@ -239,7 +239,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       {/* 1. Unified Clean Navigation Header (No duplication!) */}
       <Header
         title={loc.name}
-        subtitle={`${loc.building} • Rm ${loc.room.replace(/^Rm\s*/i, '')}`}
+        subtitle={`${loc.building} • Room ${loc.room.replace(/^(rm|room)\s*/i, '')}`}
         backHref="/locations"
         backLabel="Laboratory Locations"
         showAction={false}

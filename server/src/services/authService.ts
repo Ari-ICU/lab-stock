@@ -42,7 +42,7 @@ export const authService = {
         role: Role.LECTURER,
         is_admin: false,
         department: 'Software Engineering Department',
-        assigned_labs: ['Rm 102B'],
+        assigned_labs: ['Room 102B'],
       },
       {
         id: 'usr_assistant_03',
@@ -52,7 +52,7 @@ export const authService = {
         role: Role.ASSISTANT,
         is_admin: false,
         department: 'Hardware Depot & Lab 102B',
-        assigned_labs: ['Rm 102B', 'Rm 206'],
+        assigned_labs: ['Room 102B', 'Room 206'],
       },
       {
         id: '1234567890',
@@ -127,7 +127,7 @@ export const authService = {
       ? user.assigned_labs
       : user.is_admin
       ? ['all']
-      : ['Rm 102B'];
+      : ['Room 102B'];
 
     // 4. Issue cryptographically signed JWT with assigned laboratories scope
     const token = signToken({
@@ -176,7 +176,7 @@ export const authService = {
       role: input.role || 'Faculty Lecturer',
       is_admin: Boolean(input.is_admin),
       department: input.department || null,
-      assigned_labs: input.assigned_labs || (input.is_admin ? ['all'] : ['Rm 102B']),
+      assigned_labs: input.assigned_labs || (input.is_admin ? ['all'] : ['Room 102B']),
     });
 
     const { password_hash, ...safeUser } = newUser;

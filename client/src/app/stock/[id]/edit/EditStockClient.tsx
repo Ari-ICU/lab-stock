@@ -66,7 +66,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const [category, setCategory] = useState('Cables & Accessories');
   const [quantity, setQuantity] = useState(0);
   const [unit, setUnit] = useState('Units');
-  const [location, setLocation] = useState('Computer Lab Rm 102B');
+  const [location, setLocation] = useState('Computer Lab Room 102B');
   const [rack, setRack] = useState('');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [expiryDate, setExpiryDate] = useState('Active');
@@ -82,7 +82,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       setCategory(item.category || 'Cables & Accessories');
       setQuantity(item.quantity ?? 0);
       setUnit(item.unit || 'Units');
-      setLocation(item.location || 'Computer Lab Rm 102B');
+      setLocation(item.location || 'Computer Lab Room 102B');
       setRack(item.rack || '');
       setStatus(item.status || 'in_stock');
       setExpiryDate(item.expiryDate || 'Active');
@@ -134,7 +134,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
     setCategory(item.category || 'Cables & Accessories');
     setQuantity(item.quantity ?? 0);
     setUnit(item.unit || 'Units');
-    setLocation(item.location || 'Computer Lab Rm 102B');
+    setLocation(item.location || 'Computer Lab Room 102B');
     setRack(item.rack || '');
     setStatus(item.status || 'in_stock');
     setExpiryDate(item.expiryDate || 'Active');

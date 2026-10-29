@@ -113,7 +113,7 @@ export const updateAssignedLabs = asyncHandler(async (req: Request, res: Respons
   if (!Array.isArray(assignedLabs)) {
     return res.status(400).json({
       status: 'error',
-      message: 'assignedLabs must be an array of room codes e.g. ["Rm 102B", "Rm 206"] or ["all"]',
+      message: 'assignedLabs must be an array of room codes e.g. ["Room 102B", "Room 206"] or ["all"]',
     });
   }
 

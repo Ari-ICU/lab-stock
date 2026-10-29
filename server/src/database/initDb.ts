@@ -52,7 +52,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           role: 'Faculty Lecturer',
           is_admin: false,
           department: 'Software Engineering Department',
-          assigned_labs: ['Rm 102B'],
+          assigned_labs: ['Room 102B'],
         },
         {
           name: 'Chan Vicheka',
@@ -61,7 +61,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           role: 'Lab Assistant',
           is_admin: false,
           department: 'Hardware Depot & Lab 102B',
-          assigned_labs: ['Rm 102B', 'Rm 206'],
+          assigned_labs: ['Room 102B', 'Room 206'],
         },
         {
           name: 'John Doe',

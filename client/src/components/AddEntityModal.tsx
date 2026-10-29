@@ -73,7 +73,7 @@ export function AddEntityModal() {
   const [stockLocation, setStockLocation] = useState(
     locations.length > 0
       ? `${locations[0].name} (${locations[0].room})`
-      : 'Computer & Network Lab 102B (Rm 102B)'
+      : 'Computer & Network Lab 102B (Room 102B)'
   );
   const [stockImageUrl, setStockImageUrl] = useState('');
   const [stockDescription, setStockDescription] = useState('');
@@ -83,7 +83,7 @@ export function AddEntityModal() {
   const [assetName, setAssetName] = useState('');
   const [assetModel, setAssetModel] = useState('');
   const [assetSerial, setAssetSerial] = useState('');
-  const [assetLocation, setAssetLocation] = useState('Cisco Networking Lab Rm 301');
+  const [assetLocation, setAssetLocation] = useState('Cisco Networking Lab Room 301');
   const [assetStatus, setAssetStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [assetImageUrl, setAssetImageUrl] = useState('');
   const [assetDescription, setAssetDescription] = useState('');
@@ -104,7 +104,7 @@ export function AddEntityModal() {
   const [rackCode, setRackCode] = useState('');
   const [rackType, setRackType] = useState<'42U Server Rack' | '24U Wall Mount' | 'IDF Distribution' | 'Storage Shelf'>('42U Server Rack');
   const [rackSlots, setRackSlots] = useState(42);
-  const [rackLocation, setRackLocation] = useState('Computer Lab Rm 102B');
+  const [rackLocation, setRackLocation] = useState('Computer Lab Room 102B');
 
   // Maintenance Form State
   const [maintAsset, setMaintAsset] = useState('');
@@ -691,7 +691,7 @@ export function AddEntityModal() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Rm 304"
+                  placeholder="e.g. Room 304"
                   value={locRoom}
                   onChange={(e) => setLocRoom(e.target.value)}
                   className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"

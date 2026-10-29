@@ -45,7 +45,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   const [serialNumber, setSerialNumber] = useState('');
   const [totalUnits, setTotalUnits] = useState(1);
   const [unitType, setUnitType] = useState('Units');
-  const [location, setLocation] = useState('Computer Lab Rm 102B');
+  const [location, setLocation] = useState('Computer Lab Room 102B');
   const [status, setStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [nextCalibration, setNextCalibration] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -61,7 +61,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       setSerialNumber(asset.serialNumber || '');
       setTotalUnits(asset.totalUnits ?? 1);
       setUnitType(asset.unitType ?? 'Units');
-      setLocation(asset.location || 'Computer Lab Rm 102B');
+      setLocation(asset.location || 'Computer Lab Room 102B');
       setStatus(asset.status || 'operational');
       setNextCalibration(asset.nextCalibration || '2027-06-01');
       setImageUrl(asset.imageUrl || '');
@@ -112,7 +112,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
     setSerialNumber(asset.serialNumber || '');
     setTotalUnits(asset.totalUnits ?? 1);
     setUnitType(asset.unitType ?? 'Units');
-    setLocation(asset.location || 'Computer Lab Rm 102B');
+    setLocation(asset.location || 'Computer Lab Room 102B');
     setStatus(asset.status || 'operational');
     setNextCalibration(asset.nextCalibration || '2027-06-01');
     setImageUrl(asset.imageUrl || '');

@@ -147,7 +147,7 @@ export default function LoginPage() {
                   Multi-Lab Fleet
                 </div>
                 <div className="text-[11px] text-neutral-500 leading-normal mt-1">
-                  Manage Rm 102B, 206, 201, 203, 305 & 102 Depot.
+                  Manage Room 102B, 206, 201, 203, 305 & 102 Depot.
                 </div>
               </div>
 

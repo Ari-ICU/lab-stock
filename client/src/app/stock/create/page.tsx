@@ -60,7 +60,7 @@ const PRESETS = [
     category: 'Office Stationery',
     quantity: 10,
     unit: 'Boxes',
-    location: 'Computer Lab Rm 102B',
+    location: 'Computer Lab Room 102B',
     rack: 'Faculty Supply Cabinet CAB-01',
     expiryDate: 'Active',
     imageUrl: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=600&q=80',
@@ -72,7 +72,7 @@ const PRESETS = [
     category: 'Printer Ink & Toner',
     quantity: 4,
     unit: 'Cartridges',
-    location: 'Computer Lab Rm 102B',
+    location: 'Computer Lab Room 102B',
     rack: 'Supply Cabinet CAB-02',
     expiryDate: 'Mfg 2026',
     imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
@@ -84,7 +84,7 @@ const PRESETS = [
     category: 'Printer Ink & Toner',
     quantity: 2,
     unit: 'Sets',
-    location: 'Computer Lab Rm 102B',
+    location: 'Computer Lab Room 102B',
     rack: 'Supply Cabinet CAB-02',
     expiryDate: 'Exp 2028',
     imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
@@ -96,7 +96,7 @@ const PRESETS = [
     category: 'Tools & Equipment',
     quantity: 3,
     unit: 'Kits',
-    location: 'Hardware Staging & Maintenance Depot Rm 102',
+    location: 'Hardware Staging & Maintenance Depot Room 102',
     rack: 'Technician Workbench',
     expiryDate: 'Active',
     imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
@@ -108,7 +108,7 @@ const PRESETS = [
     category: 'Tools & Equipment',
     quantity: 4,
     unit: 'Kits',
-    location: 'Hardware Staging & Maintenance Depot Rm 102',
+    location: 'Hardware Staging & Maintenance Depot Room 102',
     rack: 'Technician Workbench',
     expiryDate: 'Active',
     imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
@@ -120,7 +120,7 @@ const PRESETS = [
     category: 'Cables & Accessories',
     quantity: 28,
     unit: 'Cables',
-    location: 'Computer Lab Rm 102B',
+    location: 'Computer Lab Room 102B',
     rack: 'Desk Outlets to PCs',
     expiryDate: 'Active',
     imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
@@ -139,7 +139,7 @@ function CreateStockForm() {
   const [quantity, setQuantity] = useState(10);
   const [unit, setUnit] = useState('Units');
   const [location, setLocation] = useState(
-    locations.length > 0 ? `${locations[0].name} (${locations[0].room})` : 'Computer Lab Rm 102B'
+    locations.length > 0 ? `${locations[0].name} (${locations[0].room})` : 'Computer Lab Room 102B'
   );
   const [rack, setRack] = useState('');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');

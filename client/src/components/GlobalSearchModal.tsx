@@ -256,7 +256,7 @@ export function GlobalSearchModal() {
                 {[
                   { label: 'Dell OptiPlex 7090 Desktop', q: 'OptiPlex', type: 'PC Fleet' },
                   { label: 'Cisco Catalyst 9300 Switch', q: 'Catalyst', type: 'Switch' },
-                  { label: 'Computer Lab Rm 102B', q: '102B', type: 'Room' },
+                  { label: 'Computer Lab Room 102B', q: '102B', type: 'Room' },
                   { label: 'Dell 24" FHD IPS Monitors', q: 'Monitors', type: 'Peripherals' },
                   { label: 'Epson PowerLite Laser Projector', q: 'Projector', type: 'Hardware' },
                   { label: 'Network & Server Lab 206', q: '206', type: 'Server Lab' },

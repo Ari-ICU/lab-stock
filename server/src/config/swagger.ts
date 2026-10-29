@@ -219,7 +219,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
           id: { type: 'string', format: 'uuid' },
           code: { type: 'string', example: 'L102B' },
           name: { type: 'string', example: 'Computer & Network Lab 102B' },
-          room: { type: 'string', example: 'Rm 102B' },
+          room: { type: 'string', example: 'Room 102B' },
           building: { type: 'string', example: 'Engineering Block A' },
           capacity: { type: 'integer', example: 35 },
           created_at: { type: 'string', format: 'date-time' },
@@ -231,7 +231,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
         properties: {
           code: { type: 'string', example: 'L206' },
           name: { type: 'string', example: 'Network & Server Lab 206' },
-          room: { type: 'string', example: 'Rm 206' },
+          room: { type: 'string', example: 'Room 206' },
           building: { type: 'string', example: 'Engineering Block A' },
           capacity: { type: 'integer', example: 30 },
         },

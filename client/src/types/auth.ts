@@ -7,7 +7,7 @@ export interface User {
   avatarText: string;
   permissions: string;
   department: string;
-  assignedLabs: string[]; // ['all'] or specific room codes e.g. ['Rm 102B', 'Rm 206']
+  assignedLabs: string[]; // ['all'] or specific room codes e.g. ['Room 102B', 'Room 206']
 }
 
 export interface DemoAccount {

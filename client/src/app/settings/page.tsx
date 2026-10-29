@@ -81,8 +81,8 @@ export default function SettingsPage() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState('Faculty Lecturer');
-  const [newUserPrimaryLocation, setNewUserPrimaryLocation] = useState<string>('Rm 102B');
-  const [newUserAssignedLabs, setNewUserAssignedLabs] = useState<string[]>(['Rm 102B']);
+  const [newUserPrimaryLocation, setNewUserPrimaryLocation] = useState<string>('Room 102B');
+  const [newUserAssignedLabs, setNewUserAssignedLabs] = useState<string[]>(['Room 102B']);
 
   // Assign Labs Modal State
   const [selectedUserForLabs, setSelectedUserForLabs] = useState<ManagedUser | null>(null);
@@ -331,13 +331,13 @@ export default function SettingsPage() {
     const roleDef = ROLE_DEFINITIONS[newUserRole] || ROLE_DEFINITIONS['Laboratory Operator'];
 
     let targetDept = 'Engineering Block A - Room 102B';
-    let assignedLabsToSave: string[] = ['Rm 102B'];
+    let assignedLabsToSave: string[] = ['Room 102B'];
 
     if (newUserRole === 'Primary Lab Administrator' || roleDef.badge === 'Admin' || newUserPrimaryLocation === 'all') {
       assignedLabsToSave = ['all'];
       targetDept = 'Faculty Fleet Administration (All Labs)';
     } else if (newUserPrimaryLocation === 'custom') {
-      assignedLabsToSave = newUserAssignedLabs.length > 0 ? newUserAssignedLabs : ['Rm 102B'];
+      assignedLabsToSave = newUserAssignedLabs.length > 0 ? newUserAssignedLabs : ['Room 102B'];
       const matched = locations.filter((l) => assignedLabsToSave.includes(l.room));
       targetDept = matched.length > 0
         ? matched.map((l) => `${l.building} • ${l.room}`).join(', ')
@@ -363,8 +363,8 @@ export default function SettingsPage() {
     showToast(`Added ${newUserName.trim()} as ${roleDef.badge} (${assignedLabsToSave.join(', ')})`, 'success');
     setNewUserName('');
     setNewUserEmail('');
-    setNewUserPrimaryLocation('Rm 102B');
-    setNewUserAssignedLabs(['Rm 102B']);
+    setNewUserPrimaryLocation('Room 102B');
+    setNewUserAssignedLabs(['Room 102B']);
     setIsAddUserModalOpen(false);
   };
 
@@ -377,7 +377,7 @@ export default function SettingsPage() {
     setTempAssignedLabs(
       targetUser.assignedLabs && targetUser.assignedLabs.length > 0
         ? targetUser.assignedLabs
-        : ['Rm 102B']
+        : ['Room 102B']
     );
     setIsAssignLabsModalOpen(true);
   };
@@ -388,7 +388,7 @@ export default function SettingsPage() {
       return;
     }
     if (!selectedUserForLabs) return;
-    const finalLabs = tempAssignedLabs.length > 0 ? tempAssignedLabs : ['Rm 102B'];
+    const finalLabs = tempAssignedLabs.length > 0 ? tempAssignedLabs : ['Room 102B'];
     updateUserAssignedLabs(selectedUserForLabs.id, finalLabs);
     showToast(`Updated lab scope for ${selectedUserForLabs.name}: [${finalLabs.join(', ')}]`, 'success');
     setIsAssignLabsModalOpen(false);
@@ -398,7 +398,7 @@ export default function SettingsPage() {
   const toggleLabInTemp = (roomCode: string) => {
     if (roomCode === 'all') {
       if (tempAssignedLabs.includes('all')) {
-        setTempAssignedLabs(['Rm 102B']);
+        setTempAssignedLabs(['Room 102B']);
       } else {
         setTempAssignedLabs(['all']);
       }
@@ -1517,8 +1517,8 @@ export default function SettingsPage() {
                       setNewUserPrimaryLocation('all');
                       setNewUserAssignedLabs(['all']);
                     } else if (newUserPrimaryLocation === 'all') {
-                      setNewUserPrimaryLocation('Rm 102B');
-                      setNewUserAssignedLabs(['Rm 102B']);
+                      setNewUserPrimaryLocation('Room 102B');
+                      setNewUserAssignedLabs(['Room 102B']);
                     }
                   }}
                   className="w-full"

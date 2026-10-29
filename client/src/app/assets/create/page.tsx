@@ -38,7 +38,7 @@ const PRESETS = [
     model: 'OptiPlex 7090 MT / Core i7 / 16GB / 512GB SSD',
     unitType: 'Desktops',
     defaultUnits: 24,
-    location: 'Computer Lab Rm 102B (Student Benches 1-24)',
+    location: 'Computer Lab Room 102B (Student Benches 1-24)',
     imageUrl: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=600&q=80',
     description: 'Student Desktop Workstation featuring Dell 24-inch FHD monitor, dual-boot Ubuntu & Windows 11 Pro, configured for network simulation.',
   },
@@ -47,7 +47,7 @@ const PRESETS = [
     model: 'C9300-48P-A Gigabit L3 Enterprise Managed',
     unitType: 'Switch',
     defaultUnits: 1,
-    location: 'Computer Lab Rm 102B (Wall Cabinet CAB-102B)',
+    location: 'Computer Lab Room 102B (Wall Cabinet CAB-102B)',
     imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     description: 'Core 48-port Gigabit PoE+ switch directly patched to student desks 1-24, instructor podium, Wi-Fi AP, and fiber optic uplink.',
   },
@@ -56,7 +56,7 @@ const PRESETS = [
     model: 'PowerLite L630U 6200-Lumen WUXGA Laser',
     unitType: 'Unit',
     defaultUnits: 1,
-    location: 'Computer Lab Rm 102B (Ceiling Center Mount)',
+    location: 'Computer Lab Room 102B (Ceiling Center Mount)',
     imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
     description: 'High-lumens laser projector mounted to ceiling with motorized 120-inch projection screen, HDMI 2.1 input, and Miracast wireless mirroring.',
   },
@@ -65,7 +65,7 @@ const PRESETS = [
     model: 'FTKC60UVM4 Inverter R32 Eco Cooling',
     unitType: 'AC Units',
     defaultUnits: 2,
-    location: 'Computer Lab Rm 102B (North & South Walls)',
+    location: 'Computer Lab Room 102B (North & South Walls)',
     imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
     description: 'Split inverter climate control unit maintaining constant 21°C - 23°C temperature and moisture protection for room 102B hardware.',
   },
@@ -82,7 +82,7 @@ function CreateAssetForm() {
   const [totalUnits, setTotalUnits] = useState(1);
   const [unitType, setUnitType] = useState('Units');
   const [location, setLocation] = useState(
-    locations.length > 0 ? `${locations[0].name} (${locations[0].room})` : 'Computer Lab Rm 102B'
+    locations.length > 0 ? `${locations[0].name} (${locations[0].room})` : 'Computer Lab Room 102B'
   );
   const [status, setStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [nextCalibration, setNextCalibration] = useState('2027-06-01');
