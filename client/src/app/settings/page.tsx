@@ -163,6 +163,10 @@ export default function SettingsPage() {
 
   const handleSaveApi = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can modify backend API endpoints.', 'error');
+      return;
+    }
     try {
       localStorage.setItem('csd_api_config', JSON.stringify({ url: apiBaseUrl, env: apiEnvironment }));
       showToast('Backend API configuration saved successfully', 'success');
@@ -173,6 +177,10 @@ export default function SettingsPage() {
 
   const handleSaveAlerts = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can modify alert threshold rules.', 'error');
+      return;
+    }
     try {
       localStorage.setItem(
         'csd_alert_rules',
@@ -192,6 +200,10 @@ export default function SettingsPage() {
   };
 
   const handleResetAlerts = () => {
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can reset alert parameters.', 'error');
+      return;
+    }
     setLowStockThreshold(10);
     setCalibrationDaysAhead(14);
     setEnableLowStockRibbon(true);
@@ -950,6 +962,16 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Non-Admin Restriction Alert Banner for System & Alerts */}
+            {!isAdmin && (
+              <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-lg flex items-start gap-3 shadow-2xs">
+                <Shield className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-900 leading-relaxed">
+                  <span className="font-bold">Read-Only System & Alert Configuration:</span> You are currently signed in as <span className="font-semibold text-neutral-900">{user?.name} ({user?.role})</span>. Modifying API gateway communication endpoints, deployment environment profiles, and fleet-wide alert thresholds is restricted exclusively to Primary Lab Administrators.
+                </div>
+              </div>
+            )}
+
             {/* Backend API & Gateway Configuration */}
             <section className="bg-white border border-neutral-200 rounded-lg p-6 space-y-4 shadow-xs">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
@@ -959,9 +981,17 @@ export default function SettingsPage() {
                     Backend API & Faculty Gateway Daemon
                   </h2>
                 </div>
-                <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200 font-bold">
-                  REST v1 / WebSocket
-                </span>
+                <div className="flex items-center gap-2">
+                  {!isAdmin && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded">
+                      <Lock className="w-2.5 h-2.5 opacity-60" />
+                      <span>Read-Only</span>
+                    </span>
+                  )}
+                  <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200 font-bold">
+                    REST v1 / WebSocket
+                  </span>
+                </div>
               </div>
               <p className="text-xs text-neutral-500">
                 Configure network proxy endpoints connecting to your department laboratory telemetry daemon.
@@ -975,10 +1005,16 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
+                      disabled={!isAdmin}
+                      readOnly={!isAdmin}
                       value={apiBaseUrl}
                       onChange={(e) => setApiBaseUrl(e.target.value)}
                       placeholder="http://localhost:5001/api/v1"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 font-medium text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
+                      className={`w-full border text-xs px-3.5 py-2.5 rounded font-mono transition-colors ${
+                        !isAdmin
+                          ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
+                          : 'bg-white border-neutral-300 text-neutral-900 font-medium focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900'
+                      }`}
                     />
                   </div>
 
@@ -987,9 +1023,14 @@ export default function SettingsPage() {
                       Deployment Environment Profile
                     </label>
                     <select
+                      disabled={!isAdmin}
                       value={apiEnvironment}
                       onChange={(e) => setApiEnvironment(e.target.value)}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 font-medium text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors cursor-pointer"
+                      className={`w-full border text-xs px-3.5 py-2.5 rounded transition-colors ${
+                        !isAdmin
+                          ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
+                          : 'bg-white border-neutral-300 text-neutral-900 font-medium focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 cursor-pointer'
+                      }`}
                     >
                       <option value="Development (Local Faculty Fleet)">Development (Local Faculty Fleet)</option>
                       <option value="Campus Intranet (RUPP STEM Network)">Campus Intranet (RUPP STEM Network)</option>
@@ -1035,13 +1076,23 @@ export default function SettingsPage() {
                       <span>Test Connection</span>
                     </button>
 
-                    <button
-                      type="submit"
-                      className="px-3.5 py-1.5 rounded text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <Save className="w-3.5 h-3.5 text-neutral-300" />
-                      <span>Save Config</span>
-                    </button>
+                    {isAdmin ? (
+                      <button
+                        type="submit"
+                        className="px-3.5 py-1.5 rounded text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Save className="w-3.5 h-3.5 text-neutral-300" />
+                        <span>Save Config</span>
+                      </button>
+                    ) : (
+                      <div
+                        className="px-3 py-1.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 flex items-center gap-1.5 cursor-not-allowed"
+                        title="Administrator privileges required to modify API endpoints"
+                      >
+                        <Lock className="w-3 h-3 opacity-60" />
+                        <span>Read-Only API</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </form>
@@ -1056,9 +1107,17 @@ export default function SettingsPage() {
                     Stock & Maintenance Threshold Alerts
                   </h2>
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
-                  Active Monitoring
-                </span>
+                <div className="flex items-center gap-2">
+                  {!isAdmin && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded">
+                      <Lock className="w-2.5 h-2.5 opacity-60" />
+                      <span>Read-Only</span>
+                    </span>
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
+                    Active Monitoring
+                  </span>
+                </div>
               </div>
               <p className="text-xs text-neutral-500">
                 Set threshold parameters for low-stock warnings, reorder suggestions, and scheduled instrument servicing notices.
@@ -1082,9 +1141,15 @@ export default function SettingsPage() {
                       type="number"
                       min={1}
                       max={100}
+                      disabled={!isAdmin}
+                      readOnly={!isAdmin}
                       value={lowStockThreshold}
                       onChange={(e) => setLowStockThreshold(Number(e.target.value))}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 font-semibold text-xs px-3.5 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono transition-colors"
+                      className={`w-full border text-xs px-3.5 py-2 rounded font-mono transition-colors ${
+                        !isAdmin
+                          ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
+                          : 'bg-white border-neutral-300 text-neutral-900 font-semibold focus:outline-none focus:border-neutral-900'
+                      }`}
                     />
                   </div>
 
@@ -1104,9 +1169,15 @@ export default function SettingsPage() {
                       type="number"
                       min={1}
                       max={90}
+                      disabled={!isAdmin}
+                      readOnly={!isAdmin}
                       value={calibrationDaysAhead}
                       onChange={(e) => setCalibrationDaysAhead(Number(e.target.value))}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 font-semibold text-xs px-3.5 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono transition-colors"
+                      className={`w-full border text-xs px-3.5 py-2 rounded font-mono transition-colors ${
+                        !isAdmin
+                          ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
+                          : 'bg-white border-neutral-300 text-neutral-900 font-semibold focus:outline-none focus:border-neutral-900'
+                      }`}
                     />
                   </div>
                 </div>
@@ -1118,12 +1189,21 @@ export default function SettingsPage() {
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <label className="p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 bg-white flex items-start gap-3 cursor-pointer transition-colors">
+                    <label
+                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                        !isAdmin
+                          ? 'border-neutral-200 opacity-75 cursor-not-allowed'
+                          : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
+                      }`}
+                    >
                       <input
                         type="checkbox"
+                        disabled={!isAdmin}
                         checked={enableLowStockRibbon}
                         onChange={(e) => setEnableLowStockRibbon(e.target.checked)}
-                        className="mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 cursor-pointer"
+                        className={`mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 ${
+                          !isAdmin ? 'cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                       />
                       <div>
                         <div className="font-semibold text-neutral-900">Low Stock Warning Badges</div>
@@ -1131,12 +1211,21 @@ export default function SettingsPage() {
                       </div>
                     </label>
 
-                    <label className="p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 bg-white flex items-start gap-3 cursor-pointer transition-colors">
+                    <label
+                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                        !isAdmin
+                          ? 'border-neutral-200 opacity-75 cursor-not-allowed'
+                          : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
+                      }`}
+                    >
                       <input
                         type="checkbox"
+                        disabled={!isAdmin}
                         checked={enableLoanReminders}
                         onChange={(e) => setEnableLoanReminders(e.target.checked)}
-                        className="mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 cursor-pointer"
+                        className={`mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 ${
+                          !isAdmin ? 'cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                       />
                       <div>
                         <div className="font-semibold text-neutral-900">Overdue Device Loan Alerts</div>
@@ -1144,12 +1233,21 @@ export default function SettingsPage() {
                       </div>
                     </label>
 
-                    <label className="p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 bg-white flex items-start gap-3 cursor-pointer transition-colors">
+                    <label
+                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                        !isAdmin
+                          ? 'border-neutral-200 opacity-75 cursor-not-allowed'
+                          : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
+                      }`}
+                    >
                       <input
                         type="checkbox"
+                        disabled={!isAdmin}
                         checked={enableAudioBeep}
                         onChange={(e) => setEnableAudioBeep(e.target.checked)}
-                        className="mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 cursor-pointer"
+                        className={`mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 ${
+                          !isAdmin ? 'cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                       />
                       <div>
                         <div className="font-semibold text-neutral-900">Scanner Audio Feedback Tone</div>
@@ -1157,12 +1255,21 @@ export default function SettingsPage() {
                       </div>
                     </label>
 
-                    <label className="p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 bg-white flex items-start gap-3 cursor-pointer transition-colors">
+                    <label
+                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                        !isAdmin
+                          ? 'border-neutral-200 opacity-75 cursor-not-allowed'
+                          : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
+                      }`}
+                    >
                       <input
                         type="checkbox"
+                        disabled={!isAdmin}
                         checked={enableDailyDigest}
                         onChange={(e) => setEnableDailyDigest(e.target.checked)}
-                        className="mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 cursor-pointer"
+                        className={`mt-0.5 rounded border-neutral-300 text-neutral-900 focus:ring-0 ${
+                          !isAdmin ? 'cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                       />
                       <div>
                         <div className="font-semibold text-neutral-900">Automated Daily Fleet Digest</div>
@@ -1173,22 +1280,34 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-                  <button
-                    type="button"
-                    onClick={handleResetAlerts}
-                    className="px-3 py-1.5 rounded text-xs font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset Defaults</span>
-                  </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={handleResetAlerts}
+                      className="px-3 py-1.5 rounded text-xs font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset Defaults</span>
+                    </button>
+                  )}
 
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 rounded text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <Save className="w-3.5 h-3.5 text-neutral-300" />
-                    <span>Save Alert Rules</span>
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 rounded text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Save className="w-3.5 h-3.5 text-neutral-300" />
+                      <span>Save Alert Rules</span>
+                    </button>
+                  ) : (
+                    <div
+                      className="px-3.5 py-1.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 flex items-center gap-1.5 cursor-not-allowed"
+                      title="Administrator privileges required to modify alert threshold policies"
+                    >
+                      <Lock className="w-3.5 h-3.5 opacity-60" />
+                      <span>Alert Rules Locked (Read-Only)</span>
+                    </div>
+                  )}
                 </div>
               </form>
             </section>
