@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
+import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
@@ -48,7 +49,14 @@ export default function LoansPage() {
     showToast,
   } = useStock();
 
-  const [activeTab, setActiveTab] = useState<'active' | 'history' | 'transfers'>('active');
+  type LoanTab = 'active' | 'history' | 'transfers';
+  const LOAN_TABS: readonly LoanTab[] = ['active', 'history', 'transfers'] as const;
+
+  const [activeTab, handleTabChange] = usePersistentTab<LoanTab>(
+    'csd_loans_active_tab',
+    LOAN_TABS,
+    'active'
+  );
   const [filterText, setFilterText] = useState('');
 
   // Modals state
@@ -362,7 +370,7 @@ export default function LoansPage() {
           {/* Segmented Tabs */}
           <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl border border-neutral-200/80 text-xs font-semibold shrink-0">
             <button
-              onClick={() => setActiveTab('active')}
+              onClick={() => handleTabChange('active')}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'active'
                   ? 'bg-white text-neutral-900 shadow-2xs font-bold'
@@ -372,7 +380,7 @@ export default function LoansPage() {
               Active Loans ({activeLoans.length})
             </button>
             <button
-              onClick={() => setActiveTab('history')}
+              onClick={() => handleTabChange('history')}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'history'
                   ? 'bg-white text-neutral-900 shadow-2xs font-bold'
@@ -382,7 +390,7 @@ export default function LoansPage() {
               Loan History ({returnedLoans.length})
             </button>
             <button
-              onClick={() => setActiveTab('transfers')}
+              onClick={() => handleTabChange('transfers')}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'transfers'
                   ? 'bg-white text-neutral-900 shadow-2xs font-bold'

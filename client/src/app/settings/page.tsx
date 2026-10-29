@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
+import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { useStock } from '@/context/StockContext';
 import {
   useAuth,
@@ -70,39 +71,11 @@ export default function SettingsPage() {
   type SettingsTab = 'users' | 'sessions' | 'system' | 'profile';
   const VALID_TABS: SettingsTab[] = ['users', 'sessions', 'system', 'profile'];
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>('users');
-
-  // Load and persist active tab across page refreshes (via URL query param & localStorage)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get('tab') as SettingsTab | null;
-      const hashParam = window.location.hash.replace(/^#/, '') as SettingsTab;
-      const storedTab = localStorage.getItem('csd_settings_active_tab') as SettingsTab | null;
-
-      const candidate = tabParam || hashParam || storedTab;
-      if (candidate && VALID_TABS.includes(candidate)) {
-        setActiveTab(candidate);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const handleTabChange = (tab: SettingsTab) => {
-    setActiveTab(tab);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('csd_settings_active_tab', tab);
-        const url = new URL(window.location.href);
-        url.searchParams.set('tab', tab);
-        window.history.replaceState(null, '', url.toString());
-      } catch {
-        // ignore
-      }
-    }
-  };
+  const [activeTab, handleTabChange] = usePersistentTab<SettingsTab>(
+    'csd_settings_active_tab',
+    VALID_TABS,
+    'users'
+  );
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');

@@ -58,6 +58,26 @@ export function ScanCodeModal({
   targetFieldLabel = 'Serial Number or SKU',
 }: ScanCodeModalProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'upload' | 'manual'>('camera');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('csd_scancode_modal_tab') as 'camera' | 'upload' | 'manual' | null;
+      if (saved && ['camera', 'upload', 'manual'].includes(saved)) {
+        setActiveTab(saved);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const switchTab = (tab: 'camera' | 'upload' | 'manual') => {
+    setActiveTab(tab);
+    try {
+      localStorage.setItem('csd_scancode_modal_tab', tab);
+    } catch {
+      // ignore
+    }
+  };
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -277,7 +297,7 @@ export function ScanCodeModal({
         <div className="flex border-b border-neutral-200 bg-neutral-50 text-xs font-semibold">
           <button
             type="button"
-            onClick={() => setActiveTab('camera')}
+            onClick={() => switchTab('camera')}
             className={`flex-1 py-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'camera'
                 ? 'border-neutral-900 text-neutral-900 bg-white'
@@ -289,7 +309,7 @@ export function ScanCodeModal({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('upload')}
+            onClick={() => switchTab('upload')}
             className={`flex-1 py-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'upload'
                 ? 'border-neutral-900 text-neutral-900 bg-white'
@@ -301,7 +321,7 @@ export function ScanCodeModal({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('manual')}
+            onClick={() => switchTab('manual')}
             className={`flex-1 py-2 flex items-center justify-center gap-1.5 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'manual'
                 ? 'border-neutral-900 text-neutral-900 bg-white'

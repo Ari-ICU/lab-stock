@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
@@ -53,7 +54,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   } = useStock();
   const { user, canManageLocation } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'hardware' | 'stock'>('all');
+  type LocationTab = 'all' | 'hardware' | 'stock';
+  const LOCATION_TABS: readonly LocationTab[] = ['all', 'hardware', 'stock'] as const;
+
+  const [activeTab, handleTabChange] = usePersistentTab<LocationTab>(
+    'csd_location_details_tab',
+    LOCATION_TABS,
+    'all'
+  );
   const [filterText, setFilterText] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -472,7 +480,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200/80 text-xs font-semibold shrink-0">
             <button
               type="button"
-              onClick={() => setActiveTab('all')}
+              onClick={() => handleTabChange('all')}
               className={`px-3 py-1.5 rounded-md cursor-pointer transition-all ${
                 activeTab === 'all'
                   ? 'bg-white text-neutral-900 shadow-2xs font-bold'
@@ -483,7 +491,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('hardware')}
+              onClick={() => handleTabChange('hardware')}
               className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
                 activeTab === 'hardware'
                   ? 'bg-white text-neutral-900 shadow-2xs font-bold'
@@ -495,7 +503,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('stock')}
+              onClick={() => handleTabChange('stock')}
               className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
                 activeTab === 'stock'
                   ? 'bg-white text-neutral-900 shadow-2xs font-bold'
