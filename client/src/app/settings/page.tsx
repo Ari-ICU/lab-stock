@@ -146,18 +146,60 @@ export default function SettingsPage() {
     }
   }, []);
 
+  const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
+
+  const resolveHealthUrl = (input: string): string => {
+    let url = (input || 'http://localhost:5001/api/v1').trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `http://${url}`;
+    }
+    url = url.replace(/\/+$/, '');
+
+    // If user explicitly typed full path ending with /health (e.g. http://localhost:5001/api/v1/health or http://localhost:5001/health)
+    if (url.endsWith('/health')) {
+      return url;
+    }
+
+    // If user typed .../api/v1 or .../api/v1/
+    if (url.endsWith('/api/v1')) {
+      return `${url}/health`;
+    }
+
+    // If user typed http://localhost:5001 or domain:port
+    return `${url}/api/v1/health`;
+  };
+
   const handleTestApi = async () => {
     setApiStatus('testing');
+    setApiErrorMessage(null);
     const start = performance.now();
     try {
-      await new Promise((r) => setTimeout(r, 380));
-      const rtt = Math.max(8, Math.round(performance.now() - start));
+      const healthUrl = resolveHealthUrl(apiBaseUrl);
+
+      const res = await fetch(healthUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      const rtt = Math.max(2, Math.round(performance.now() - start));
       setApiLatency(rtt);
       setApiStatus('connected');
-      showToast(`Gateway ping healthy: ${rtt}ms RTT latency`, 'success');
-    } catch {
+      showToast(`Gateway ping healthy: ${rtt}ms RTT (${data.message || 'API Online'})`, 'success');
+    } catch (err: any) {
       setApiStatus('error');
-      showToast('Gateway connection timeout. Check API endpoint.', 'error');
+      const errorMsg = err.name === 'TimeoutError'
+        ? 'Connection timed out after 5s'
+        : (err.message || 'Failed to reach API gateway');
+      setApiErrorMessage(errorMsg);
+      showToast(`Gateway connection error: ${errorMsg}`, 'error');
     }
   };
 
@@ -1056,7 +1098,7 @@ export default function SettingsPage() {
                     ) : apiStatus === 'error' ? (
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                         <AlertCircle className="w-3 h-3" />
-                        <span>Connection Timeout</span>
+                        <span>{apiErrorMessage || 'Connection Error'}</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
