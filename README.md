@@ -142,16 +142,93 @@ server/ (Node.js 24 Express Backend)
 
 ---
 
-## 6. Visual Workflow Flowcharts (Draw.io)
+## 6. Visual Workflow Flowcharts (Draw.io & GitHub Native)
 
-The project includes 4 complete, presentation-ready **Draw.io flowchart diagrams** located in the [`docs/diagrams/`](file:///Users/thoeurnratha/Desktop/lab-stock/docs/diagrams) directory. You can open, edit, and export them directly inside VS Code / Antigravity with the **Draw.io Integration** extension:
+The project includes 4 complete, presentation-ready **workflow flowcharts** located in the [`docs/diagrams/`](docs/diagrams) directory. You can open and edit them inside VS Code with the **Draw.io Integration** extension, or inspect the interactive GitHub-rendered flowcharts below:
 
-| Flowchart Diagram | Focus Area & Decision Logic | File Link |
+| Flowchart Diagram | Focus Area & Decision Logic | Editor Source File |
 | :--- | :--- | :--- |
-| 🔐 **Authentication & RBAC** | Rate limiting, Bcrypt password compare, HS256 JWT signing, and route permission middleware guards | [`auth-workflow.drawio`](file:///Users/thoeurnratha/Desktop/lab-stock/docs/diagrams/auth-workflow.drawio) |
-| 🤝 **Equipment Check-Out** | Barcode scan, availability validation, PostgreSQL `SELECT ... FOR UPDATE` row lock, race condition prevention, and cache eviction | [`checkout-workflow.drawio`](file:///Users/thoeurnratha/Desktop/lab-stock/docs/diagrams/checkout-workflow.drawio) |
-| 🔄 **Equipment Check-In & Return** | Active loan lookup, physical condition inspection checklist, damage service flagging, and status restoration | [`return-workflow.drawio`](file:///Users/thoeurnratha/Desktop/lab-stock/docs/diagrams/return-workflow.drawio) |
-| 📦 **Consumables Stock Adjustment** | Atomic decrement (`WHERE quantity >= 0`), non-negative inventory enforcement, and low-stock threshold triggers | [`stock-workflow.drawio`](file:///Users/thoeurnratha/Desktop/lab-stock/docs/diagrams/stock-workflow.drawio) |
+| 🤝 **Equipment Check-Out** | Barcode scan, availability validation, PostgreSQL `SELECT ... FOR UPDATE` row lock, race condition prevention, and cache eviction | [`checkout-workflow.drawio`](docs/diagrams/checkout-workflow.drawio) |
+| 🔐 **Authentication & RBAC** | Rate limiting, Bcrypt password compare, HS256 JWT signing, and route permission middleware guards | [`auth-workflow.drawio`](docs/diagrams/auth-workflow.drawio) |
+| 🔄 **Equipment Check-In & Return** | Active loan lookup, physical condition inspection checklist, damage service flagging, and status restoration | [`return-workflow.drawio`](docs/diagrams/return-workflow.drawio) |
+| 📦 **Consumables Stock Adjustment** | Atomic decrement (`WHERE quantity >= 0`), non-negative inventory enforcement, and low-stock threshold triggers | [`stock-workflow.drawio`](docs/diagrams/stock-workflow.drawio) |
+
+### 🤝 Equipment Check-Out & Lending Workflow
+
+```mermaid
+flowchart TD
+    Start([🟢 START: Student / Faculty Requests Equipment]) --> Scan[🔍 Identify Equipment<br/>Scan Barcode / QR with Camera<br/>or Search Serial / SKU]
+    Scan --> DecideAvail{Is Equipment<br/>Available in Lab?}
+    
+    DecideAvail -- No --> AlertLoaned[⚠️ Alert: Already On Loan<br/>Display Active Borrower Dossier<br/>and Scheduled Due Date]
+    AlertLoaned --> EndReject([🔴 END: Check-Out Denied])
+    
+    DecideAvail -- Yes --> FillForm[📝 Fill Check-Out Form<br/>Borrower Name, Student ID, Role,<br/>Course / Class, and Return Due Date]
+    FillForm --> DispatchAPI[📡 Client Dispatches Request<br/>POST /api/v1/loans/checkout]
+    DispatchAPI --> GuardAuth{Valid JWT &<br/>loan:checkout Permission?}
+    
+    GuardAuth -- No --> AuthErr[⛔ 401 / 403 Forbidden<br/>Unauthorized Session]
+    GuardAuth -- Yes --> DBTx["🔒 PostgreSQL Transaction BEGIN<br/>SELECT * FROM assets WHERE id = $1 FOR UPDATE<br/>(Pessimistic Row-Level Lock)"]
+    
+    DBTx --> RaceCheck{Status<br/>Still Available?}
+    RaceCheck -- Conflict --> Rollback[⏪ ROLLBACK Transaction<br/>409 Conflict: Double-booking avoided]
+    
+    RaceCheck -- Verified --> Commit["💾 INSERT INTO loans (...)<br/>UPDATE assets SET loan_status = 'on_loan'<br/>COMMIT Transaction"]
+    
+    Commit --> EvictCache["⚡ In-Memory Cache Invalidation<br/>Evict keys matching 'loans:*' and 'assets:*'"]
+    EvictCache --> UIUpdate["📱 Client UI Update<br/>201 Created • Toast Alert<br/>Auto-redirect to /loans/[id] Dossier"]
+    UIUpdate --> Success([🟢 SUCCESS: Equipment Issued & In Custody])
+
+    classDef green fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46;
+    classDef amber fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e;
+    classDef red fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#991b1b;
+    classDef blue fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af;
+    classDef purple fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#5b21b6;
+    
+    class Start,Success green;
+    class DecideAvail,GuardAuth,RaceCheck amber;
+    class AlertLoaned,EndReject,AuthErr,Rollback red;
+    class Scan,FillForm,DispatchAPI,UIUpdate blue;
+    class DBTx,Commit,EvictCache purple;
+```
+
+### 🔐 Authentication, JWT & RBAC Security Workflow
+
+```mermaid
+flowchart TD
+    ClientReq([🌐 Client Request: POST /api/v1/auth/login]) --> RateLimit{IP Under Rate Limit?<br/>10 attempts / 15 min}
+    RateLimit -- Exceeded --> BlockIP[⛔ 429 Too Many Requests<br/>Brute-Force Lockout]
+    
+    RateLimit -- Allowed --> LookupUser[🔍 PostgreSQL Query<br/>SELECT * FROM users WHERE email = $1]
+    LookupUser --> UserExists{User Found &<br/>Status == 'active'?}
+    UserExists -- No --> ErrCreds[❌ 401 Unauthorized<br/>Invalid Credentials]
+    
+    UserExists -- Yes --> CheckPwd[🔐 Bcrypt Password Verification<br/>bcrypt.compare with Salted Hash]
+    CheckPwd --> PwdMatch{Password Matches?}
+    PwdMatch -- No --> ErrCreds
+    
+    PwdMatch -- Yes --> SignJWT["🔑 Generate HS256 JWT Token<br/>Payload: { id, email, role, permissions }<br/>Expires In: 24 Hours"]
+    SignJWT --> AuditLogin[📝 Write Audit Log: user:login]
+    AuditLogin --> ReturnToken[📦 Return 200 OK + JWT Token + User Profile]
+    
+    ReturnToken --> APIReq([📡 Next API Request: Bearer Token in Header])
+    APIReq --> VerifyJWT{Valid Signature &<br/>Not Expired?}
+    VerifyJWT -- Invalid --> Err401[⛔ 401 Unauthorized]
+    
+    VerifyJWT -- Valid --> CheckRole{Has Required<br/>Permission Flag?}
+    CheckRole -- Missing --> Err403[⛔ 403 Forbidden: Insufficient Privileges]
+    CheckRole -- Authorized --> ExecRoute[🟢 Route Handler Executes]
+
+    classDef green fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46;
+    classDef amber fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e;
+    classDef red fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#991b1b;
+    classDef blue fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af;
+    
+    class ClientReq,ExecRoute green;
+    class RateLimit,UserExists,PwdMatch,VerifyJWT,CheckRole amber;
+    class BlockIP,ErrCreds,Err401,Err403 red;
+    class LookupUser,CheckPwd,SignJWT,AuditLogin,ReturnToken,APIReq blue;
+```
 
 ---
 
