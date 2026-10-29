@@ -223,7 +223,7 @@ export function AddEntityModal() {
         if (e.target === e.currentTarget) closeModal();
       }}
     >
-      <div className="bg-white border border-neutral-200 rounded-xl max-w-lg w-full flex flex-col shadow-2xl relative">
+      <div className="bg-white border border-neutral-200 rounded-xl max-w-lg w-full flex flex-col shadow-2xl relative max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 rounded-t-xl bg-white">
           <div className="flex items-center gap-2">
@@ -248,7 +248,7 @@ export function AddEntityModal() {
 
         {/* Stock Form */}
         {activeModal === 'add_stock' && (
-          <form onSubmit={handleStockSubmit} className="p-5 space-y-3.5 text-xs">
+          <form onSubmit={handleStockSubmit} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
             <div>
               <label className="block font-semibold text-neutral-800 mb-1">Item Name</label>
               <input
@@ -388,7 +388,7 @@ export function AddEntityModal() {
 
         {/* Asset Form */}
         {activeModal === 'add_asset' && (
-          <form onSubmit={handleAssetSubmit} className="p-5 space-y-3.5 text-xs">
+          <form onSubmit={handleAssetSubmit} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
             <div>
               <label className="block font-semibold text-neutral-800 mb-1">Equipment Name</label>
               <input
@@ -506,7 +506,7 @@ export function AddEntityModal() {
 
         {/* Rack Form */}
         {activeModal === 'add_rack' && (
-          <form onSubmit={handleRackSubmit} className="p-5 space-y-3.5 text-xs">
+          <form onSubmit={handleRackSubmit} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
             <div>
               <label className="block font-semibold text-neutral-800 mb-1">Rack Name</label>
               <input
@@ -585,7 +585,7 @@ export function AddEntityModal() {
 
         {/* Maintenance Form */}
         {activeModal === 'add_maintenance' && (
-          <form onSubmit={handleMaintenanceSubmit} className="p-5 space-y-3.5 text-xs">
+          <form onSubmit={handleMaintenanceSubmit} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
             <div>
               <label className="block font-semibold text-neutral-800 mb-1">Device Name</label>
               <input
@@ -661,7 +661,7 @@ export function AddEntityModal() {
 
         {/* Location Form */}
         {activeModal === 'add_location' && (
-          <form onSubmit={handleLocationSubmit} className="p-5 space-y-3.5 text-xs">
+          <form onSubmit={handleLocationSubmit} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
             <div>
               <label className="block font-semibold text-neutral-800 mb-1">Lab Name</label>
               <input
