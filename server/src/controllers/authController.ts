@@ -128,3 +128,62 @@ export const updateAssignedLabs = asyncHandler(async (req: Request, res: Respons
     },
   });
 });
+
+/**
+ * GET /api/v1/auth/users
+ * Lists all registered users (Excludes password hashes)
+ */
+export const listUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await authService.getAllUsers();
+
+  return res.status(200).json({
+    status: 'ok',
+    count: users.length,
+    users,
+  });
+});
+
+/**
+ * PATCH /api/v1/auth/users/:id/role
+ * Updates role and administrative authorization for a user (Admin only)
+ */
+export const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
+  const userId = String(req.params.id);
+  const { role } = req.body;
+
+  if (!role || typeof role !== 'string') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'role string is required in request body',
+    });
+  }
+
+  await authService.updateUserRole(userId, role, req.user?.sub);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: `User role successfully updated to ${role}`,
+    data: {
+      userId,
+      role,
+    },
+  });
+});
+
+/**
+ * DELETE /api/v1/auth/users/:id
+ * Removes a user account (Admin only, cannot delete oneself)
+ */
+export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
+  const userId = String(req.params.id);
+
+  await authService.deleteUser(userId, req.user?.sub);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'User account successfully deleted',
+    data: {
+      userId,
+    },
+  });
+});

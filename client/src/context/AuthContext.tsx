@@ -282,6 +282,37 @@ const STORAGE_KEY = 'lab_auth_user';
 const USERS_STORAGE_KEY = 'lab_managed_users';
 const SESSIONS_STORAGE_KEY = 'lab_session_devices';
 
+export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
+  let roleBadge = u.roleBadge;
+  if (u.role === 'Primary Lab Administrator') {
+    roleBadge = 'Admin';
+  } else if (u.role === 'Faculty Lecturer') {
+    roleBadge = 'Lecturer';
+  } else if (u.role === 'Lab Assistant') {
+    roleBadge = 'Lab Assistant';
+  }
+
+  let assignedLabs = u.assignedLabs;
+  if (roleBadge !== 'Admin') {
+    // Non-admin accounts must NEVER have universal 'all' scope
+    if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all') || assignedLabs.includes('*')) {
+      if (u.name.includes('Vakhim') || u.email.includes('vakhim')) {
+        assignedLabs = ['Rm 102B', 'Rm 206'];
+      } else {
+        assignedLabs = ['Rm 102B'];
+      }
+    }
+  } else {
+    assignedLabs = ['all'];
+  }
+
+  return {
+    ...u,
+    roleBadge,
+    assignedLabs,
+  };
+}
+
 const getDefaultUser = (): User => ({
   id: 'user-admin',
   name: DEMO_ACCOUNTS[0].name,
@@ -302,10 +333,9 @@ const getInitialUser = (): User | null => {
     const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
     if (stored) {
       const parsed: User = JSON.parse(stored);
-      if (!parsed.assignedLabs) {
-        parsed.assignedLabs = parsed.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B'];
-      }
-      return parsed;
+      const sanitized = sanitizeUser(parsed);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+      return sanitized;
     }
     const defaultUser = getDefaultUser();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUser));
@@ -321,12 +351,13 @@ const getStoredUsers = (): ManagedUser[] => {
     const stored = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
     if (stored) {
       const parsed: ManagedUser[] = JSON.parse(stored);
-      // Migrate email from @netlab.edu to @lab.edu if stored and ensure assignedLabs exists
-      return parsed.map((u) => ({
-        ...u,
-        email: u.email.replace('@netlab.edu', '@lab.edu'),
-        assignedLabs: u.assignedLabs || (u.role === 'Primary Lab Administrator' ? ['all'] : ['Rm 102B']),
-      }));
+      return parsed.map((u) => {
+        const migrated = {
+          ...u,
+          email: u.email.replace('@netlab.edu', '@lab.edu'),
+        };
+        return sanitizeUser(migrated);
+      });
     }
   } catch {
     // fallback
@@ -383,7 +414,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedUser = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        const sanitized = sanitizeUser(parsed);
+        setUser(sanitized);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
       }
     } catch {
       // ignore
@@ -397,7 +431,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim'];
         let updated = parsed
           .filter((u) => !olderDemoNames.includes(u.name))
-          .map((u) => ({ ...u, email: u.email.replace('@netlab.edu', '@lab.edu') }));
+          .map((u) => {
+            const migrated = { ...u, email: u.email.replace('@netlab.edu', '@lab.edu') };
+            return sanitizeUser(migrated);
+          });
 
         // Ensure Dr. Heng Sovannarith is present
         if (!updated.some((u) => u.name.includes('Sovannarith') || u.email.includes('sovannarith'))) {
@@ -412,9 +449,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updated.push(INITIAL_MANAGED_USERS[2]);
         }
 
-        setManagedUsers(updated);
+        const finalUsers = updated.map(sanitizeUser);
+        setManagedUsers(finalUsers);
         try {
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(finalUsers));
         } catch {
           // ignore
         }
@@ -524,7 +562,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isCurrentUserAdmin = (): boolean => {
+    if (!user) return false;
+    return (
+      user.role === 'Primary Lab Administrator' ||
+      user.roleBadge === 'Admin' ||
+      user.assignedLabs?.includes('all')
+    );
+  };
+
   const updateUserRole = (userId: string, newRole: string) => {
+    if (!isCurrentUserAdmin()) {
+      return;
+    }
     const roleDef = ROLE_DEFINITIONS[newRole] || {
       role: newRole,
       badge: 'Lab Assistant' as RoleBadge,
@@ -564,6 +614,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserAssignedLabs = (userId: string, assignedLabs: string[]) => {
+    if (!isCurrentUserAdmin()) {
+      return;
+    }
     const updated = managedUsers.map((u) => {
       if (u.id === userId) {
         return { ...u, assignedLabs };
@@ -592,6 +645,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => {
+    if (!isCurrentUserAdmin()) {
+      return;
+    }
     const id = `user-${Date.now()}`;
     const userToAdd: ManagedUser = {
       ...newUser,
@@ -605,6 +661,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteUser = (userId: string): boolean => {
+    if (!isCurrentUserAdmin()) {
+      return false;
+    }
     // Prevent deleting the currently active user or deleting all admins
     if (user && user.id === userId) {
       return false;

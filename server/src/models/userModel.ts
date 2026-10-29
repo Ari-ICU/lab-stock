@@ -89,6 +89,33 @@ export const userModel = {
   },
 
   /**
+   * Update user role and admin status
+   */
+  async updateRole(id: string, role: string, isAdmin: boolean): Promise<boolean> {
+    try {
+      const res = await query(
+        'UPDATE users SET role = $1, is_admin = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+        [role, isAdmin, id]
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to update user role: ${err.message}`, err);
+    }
+  },
+
+  /**
+   * Delete a user by their primary UUID
+   */
+  async delete(id: string): Promise<boolean> {
+    try {
+      const res = await query('DELETE FROM users WHERE id = $1', [id]);
+      return (res.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to delete user: ${err.message}`, err);
+    }
+  },
+
+  /**
    * Update user assigned laboratory room scopes
    */
   async updateAssignedLabs(id: string, assignedLabs: string[]): Promise<boolean> {

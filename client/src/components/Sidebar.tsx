@@ -107,9 +107,17 @@ export function Sidebar() {
           </Link>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
-              ALL LABS
-            </span>
+            {user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator' || user?.assignedLabs?.includes('all') ? (
+              <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
+                ALL LABS
+              </span>
+            ) : (
+              <span className="text-[10px] uppercase tracking-wider font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-mono">
+                {user?.assignedLabs && user.assignedLabs.length === 1
+                  ? user.assignedLabs[0]
+                  : `${user?.assignedLabs?.length || 0} LABS`}
+              </span>
+            )}
             {/* Mobile close button */}
             <button
               onClick={closeMobileSidebar}

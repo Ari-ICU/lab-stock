@@ -195,6 +195,42 @@ export const authService = {
   },
 
   /**
+   * Update role for a user (Admin only)
+   */
+  async updateUserRole(userId: string, newRole: string, requestingAdminId?: string): Promise<boolean> {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId}`);
+    }
+
+    const isAdmin = newRole === Role.ADMIN || newRole === 'Primary Lab Administrator';
+    return userModel.updateRole(userId, newRole, isAdmin);
+  },
+
+  /**
+   * Delete a user account (Admin only, cannot delete oneself)
+   */
+  async deleteUser(userId: string, requestingAdminId?: string): Promise<boolean> {
+    if (requestingAdminId && requestingAdminId === userId) {
+      throw new ValidationException('Administrators cannot delete their own active account');
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId}`);
+    }
+
+    return userModel.delete(userId);
+  },
+
+  /**
+   * List all users
+   */
+  async getAllUsers(): Promise<Omit<User, 'password_hash'>[]> {
+    return userModel.findAll();
+  },
+
+  /**
    * Retrieve authenticated user profile by primary UUID or institutional email
    */
   async getUserProfile(userId: string, email?: string): Promise<Omit<User, 'password_hash'> | null> {

@@ -59,8 +59,8 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const loc = locations.find((l) => l.id === id);
-  const isAllowed = loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false;
-  const isAdmin = user?.roleBadge === 'Admin' || user?.assignedLabs?.includes('all');
+  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
+  const isAllowed = isAdmin || (loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false);
 
   // Match items belonging to this lab location
   const { matchingAssets, matchingStock, totalHardwareUnits, totalStockUnits, activeLoansCount, maintenanceCount } = useMemo(() => {
@@ -231,7 +231,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       {/* 1. Unified Clean Navigation Header (No duplication!) */}
       <Header
         title={loc.name}
-        subtitle={`${loc.building} • Rm ${loc.room}`}
+        subtitle={`${loc.building} • Rm ${loc.room.replace(/^Rm\s*/i, '')}`}
         backHref="/locations"
         backLabel="Laboratory Locations"
         showAction={false}

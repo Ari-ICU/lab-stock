@@ -236,12 +236,18 @@ export default function SettingsPage() {
     showToast('Complete system backup JSON downloaded', 'success');
   };
 
+  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
+
   const roleOptions = Object.keys(ROLE_DEFINITIONS).map((roleName) => ({
     label: `${roleName} (${ROLE_DEFINITIONS[roleName].badge})`,
     value: roleName,
   }));
 
   const handleRoleChange = (userId: string, newRole: string) => {
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can change user roles.', 'error');
+      return;
+    }
     updateUserRole(userId, newRole);
     const targetUser = managedUsers.find((u) => u.id === userId);
     showToast(
@@ -252,6 +258,10 @@ export default function SettingsPage() {
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can create operators.', 'error');
+      return;
+    }
     if (!newUserName.trim() || !newUserEmail.trim()) {
       showToast('Please fill in user name and email', 'warning');
       return;
@@ -293,6 +303,10 @@ export default function SettingsPage() {
   };
 
   const openAssignLabsModal = (targetUser: ManagedUser) => {
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can configure lab scope.', 'error');
+      return;
+    }
     setSelectedUserForLabs(targetUser);
     setTempAssignedLabs(
       targetUser.assignedLabs && targetUser.assignedLabs.length > 0
@@ -303,6 +317,10 @@ export default function SettingsPage() {
   };
 
   const handleSaveAssignedLabs = () => {
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can modify laboratory scopes.', 'error');
+      return;
+    }
     if (!selectedUserForLabs) return;
     const finalLabs = tempAssignedLabs.length > 0 ? tempAssignedLabs : ['Rm 102B'];
     updateUserAssignedLabs(selectedUserForLabs.id, finalLabs);
@@ -335,6 +353,10 @@ export default function SettingsPage() {
   };
 
   const handleDeleteUser = (userId: string, userName: string) => {
+    if (!isAdmin) {
+      showToast('Permission denied: Only Primary Administrators can delete operators.', 'error');
+      return;
+    }
     const success = deleteUser(userId);
     if (!success) {
       showToast('Cannot delete currently active administrator', 'warning');
@@ -493,15 +515,27 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsAddUserModalOpen(true)}
-                className="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded transition-colors cursor-pointer shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Operator</span>
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddUserModalOpen(true)}
+                  className="flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold px-3.5 py-2 rounded transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Operator</span>
+                </button>
+              )}
             </div>
+
+            {/* Non-Admin Restriction Alert Banner */}
+            {!isAdmin && (
+              <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-lg flex items-start gap-3 shadow-2xs">
+                <Shield className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-900 leading-relaxed">
+                  <span className="font-bold">Restricted Administrative Controls:</span> You are currently signed in as <span className="font-semibold text-neutral-900">{user?.name} ({user?.role})</span>. Operator role modification, lab assignment scoping, and account deletion are restricted exclusively to Primary Lab Administrators.
+                </div>
+              </div>
+            )}
 
             {/* Role Summary Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -625,16 +659,18 @@ export default function SettingsPage() {
                               )
                             )}
 
-                            {/* Button to edit lab assignments */}
-                            <button
-                              type="button"
-                              onClick={() => openAssignLabsModal(u)}
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded transition-colors cursor-pointer ml-1"
-                              title="Assign or modify authorized laboratory rooms"
-                            >
-                              <Sliders className="w-2.5 h-2.5 text-neutral-500" />
-                              <span>Assign Labs</span>
-                            </button>
+                            {/* Button to edit lab assignments (Admin Only) */}
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => openAssignLabsModal(u)}
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded transition-colors cursor-pointer ml-1"
+                                title="Assign or modify authorized laboratory rooms"
+                              >
+                                <Sliders className="w-2.5 h-2.5 text-neutral-500" />
+                                <span>Assign Labs</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -650,31 +686,47 @@ export default function SettingsPage() {
                           </div>
                         </div>
 
-                        {/* Interactive Role Switcher Dropdown */}
-                        <div className="w-56 shrink-0">
-                          <Dropdown
-                            value={u.role}
-                            options={roleOptions}
-                            onChange={(newRole) => handleRoleChange(u.id, newRole)}
-                            className="w-full"
-                            buttonClassName="py-1.5 px-2.5 text-xs font-semibold text-neutral-900 bg-white border-neutral-300 rounded hover:border-neutral-900"
-                          />
-                        </div>
+                        {/* Interactive Role Switcher Dropdown (Admin) or Locked Badge (Non-Admin) */}
+                        {isAdmin ? (
+                          <div className="w-56 shrink-0">
+                            <Dropdown
+                              value={u.role}
+                              options={roleOptions}
+                              onChange={(newRole) => handleRoleChange(u.id, newRole)}
+                              className="w-full"
+                              buttonClassName="py-1.5 px-2.5 text-xs font-semibold text-neutral-900 bg-white border-neutral-300 rounded hover:border-neutral-900"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-56 shrink-0 flex items-center justify-end">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold border ${getRoleBadgeStyle(
+                                u.roleBadge
+                              )}`}
+                              title="Role permissions are managed exclusively by Primary Administrators"
+                            >
+                              <Lock className="w-3 h-3 opacity-60" />
+                              <span>{u.role}</span>
+                            </span>
+                          </div>
+                        )}
 
-                        {/* Delete User Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteUser(u.id, u.name)}
-                          disabled={isCurrentLoggedUser}
-                          title={
-                            isCurrentLoggedUser
-                              ? 'Cannot remove yourself'
-                              : 'Remove operator'
-                          }
-                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Delete User Button (Admin Only) */}
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUser(u.id, u.name)}
+                            disabled={isCurrentLoggedUser}
+                            title={
+                              isCurrentLoggedUser
+                                ? 'Cannot remove yourself'
+                                : 'Remove operator'
+                            }
+                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

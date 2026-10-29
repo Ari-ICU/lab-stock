@@ -6,6 +6,9 @@ import {
   verifyTokenEndpoint,
   changePassword,
   updateAssignedLabs,
+  listUsers,
+  updateUserRole,
+  deleteUser,
 } from '@/controllers/authController.js';
 import {
   authenticate,
@@ -65,6 +68,27 @@ router.post('/change-password', authenticate, validatePasswordChange, changePass
  * @access  Protected (Administrator only)
  */
 router.patch('/users/:id/labs', authenticate, requireAdmin, updateAssignedLabs);
+
+/**
+ * @route   GET /api/v1/auth/users
+ * @desc    List all system users
+ * @access  Protected (Authenticated users)
+ */
+router.get('/users', authenticate, listUsers);
+
+/**
+ * @route   PATCH /api/v1/auth/users/:id/role
+ * @desc    Update role and admin authorization for a user
+ * @access  Protected (Administrator only)
+ */
+router.patch('/users/:id/role', authenticate, requireAdmin, updateUserRole);
+
+/**
+ * @route   DELETE /api/v1/auth/users/:id
+ * @desc    Remove a user account (Cannot remove oneself)
+ * @access  Protected (Administrator only)
+ */
+router.delete('/users/:id', authenticate, requireAdmin, deleteUser);
 
 /**
  * @route   GET /api/v1/auth/admin-only
