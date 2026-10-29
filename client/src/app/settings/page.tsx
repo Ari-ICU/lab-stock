@@ -67,7 +67,42 @@ export default function SettingsPage() {
     revokeAllOtherSessions,
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'system' | 'profile'>('users');
+  type SettingsTab = 'users' | 'sessions' | 'system' | 'profile';
+  const VALID_TABS: SettingsTab[] = ['users', 'sessions', 'system', 'profile'];
+
+  const [activeTab, setActiveTab] = useState<SettingsTab>('users');
+
+  // Load and persist active tab across page refreshes (via URL query param & localStorage)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab') as SettingsTab | null;
+      const hashParam = window.location.hash.replace(/^#/, '') as SettingsTab;
+      const storedTab = localStorage.getItem('csd_settings_active_tab') as SettingsTab | null;
+
+      const candidate = tabParam || hashParam || storedTab;
+      if (candidate && VALID_TABS.includes(candidate)) {
+        setActiveTab(candidate);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleTabChange = (tab: SettingsTab) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('csd_settings_active_tab', tab);
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState(null, '', url.toString());
+      } catch {
+        // ignore
+      }
+    }
+  };
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -478,7 +513,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-1.5 p-1 bg-white border border-neutral-200 rounded-lg shadow-xs overflow-x-auto">
           <button
             type="button"
-            onClick={() => setActiveTab('users')}
+            onClick={() => handleTabChange('users')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'users'
                 ? 'bg-neutral-900 text-white shadow-xs'
@@ -501,7 +536,7 @@ export default function SettingsPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('sessions')}
+            onClick={() => handleTabChange('sessions')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'sessions'
                 ? 'bg-neutral-900 text-white shadow-xs'
@@ -524,7 +559,7 @@ export default function SettingsPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('system')}
+            onClick={() => handleTabChange('system')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'system'
                 ? 'bg-neutral-900 text-white shadow-xs'
@@ -537,7 +572,7 @@ export default function SettingsPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('profile')}
+            onClick={() => handleTabChange('profile')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'profile'
                 ? 'bg-neutral-900 text-white shadow-xs'
