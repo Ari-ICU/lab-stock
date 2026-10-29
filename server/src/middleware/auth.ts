@@ -347,3 +347,68 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
 
   return next();
 }
+
+/**
+ * Checks whether an authenticated user has authorization over a given laboratory location/room.
+ */
+export function canUserManageLocation(
+  user?: JwtUserPayload,
+  locationStrOrRoom?: string | null
+): boolean {
+  if (!user) return false;
+  if (isUserAdmin(user)) return true;
+  if (!locationStrOrRoom) return true;
+
+  const assignedLabs = user.assignedLabs || [];
+  if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
+    return true;
+  }
+
+  const target = locationStrOrRoom.toLowerCase();
+  return assignedLabs.some((assigned) => {
+    const a = assigned.toLowerCase().trim();
+    if (a === 'all' || a === '*') return true;
+    return target.includes(a);
+  });
+}
+
+/**
+ * Middleware: Verify that the user has scoped authority over the location/room affected by the request.
+ */
+export function requireLocationScope(
+  getLocationResolver: (req: Request) => Promise<string | undefined | null> | string | undefined | null
+) {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(new UnauthorizedException('Authentication required before checking location scope'));
+    }
+
+    if (isUserAdmin(req.user)) {
+      return next();
+    }
+
+    try {
+      const location = await getLocationResolver(req);
+      if (!location) {
+        return next();
+      }
+
+      if (!canUserManageLocation(req.user, location)) {
+        return next(
+          new ForbiddenException(
+            `Access restricted: You do not have management authority over laboratory room '${location}'. Assigned rooms: [${(req.user.assignedLabs || []).join(', ')}]`,
+            'LAB_SCOPE_DENIED',
+            {
+              targetLocation: location,
+              assignedLabs: req.user.assignedLabs,
+            }
+          )
+        );
+      }
+
+      return next();
+    } catch (err) {
+      return next(err);
+    }
+  };
+}

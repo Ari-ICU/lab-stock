@@ -29,4 +29,23 @@ export const locationService = {
     cache.invalidatePattern('location:');
     return created;
   },
+
+  async update(id: string, data: Partial<Location>): Promise<Location> {
+    await this.getById(id);
+    const updated = await locationModel.update(id, data);
+    if (!updated) {
+      throw new NotFoundException(`Location with ID ${id}`);
+    }
+    cache.invalidatePattern('location:');
+    return updated;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    await this.getById(id);
+    const deleted = await locationModel.delete(id);
+    if (deleted) {
+      cache.invalidatePattern('location:');
+    }
+    return deleted;
+  },
 };

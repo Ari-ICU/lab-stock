@@ -50,5 +50,41 @@ export const locationModel = {
     );
     return res.rows[0];
   },
+
+  async update(id: string, loc: Partial<Location>): Promise<Location | null> {
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (loc.name !== undefined) {
+      values.push(loc.name.trim());
+      fields.push(`name = $${values.length}`);
+    }
+    if (loc.room !== undefined) {
+      values.push(loc.room.trim());
+      fields.push(`room = $${values.length}`);
+    }
+    if (loc.building !== undefined) {
+      values.push(loc.building.trim());
+      fields.push(`building = $${values.length}`);
+    }
+    if (loc.capacity !== undefined) {
+      values.push(loc.capacity);
+      fields.push(`capacity = $${values.length}`);
+    }
+
+    if (fields.length === 0) return this.findById(id);
+
+    values.push(id);
+    const res = await query(
+      `UPDATE locations SET ${fields.join(', ')} WHERE id = $${values.length} RETURNING *`,
+      values
+    );
+    return res.rows[0] || null;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    const res = await query('DELETE FROM locations WHERE id = $1', [id]);
+    return (res.rowCount ?? 0) > 0;
+  },
 };
 

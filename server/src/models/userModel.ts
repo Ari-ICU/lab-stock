@@ -9,6 +9,7 @@ export interface User {
   role: string;
   is_admin: boolean;
   department?: string | null;
+  assigned_labs?: string[];
   created_at?: Date;
   updated_at?: Date;
 }
@@ -20,6 +21,7 @@ export interface CreateUserInput {
   role?: string;
   is_admin?: boolean;
   department?: string | null;
+  assigned_labs?: string[];
 }
 
 export const userModel = {
@@ -29,7 +31,7 @@ export const userModel = {
   async findByEmail(email: string): Promise<User | null> {
     try {
       const res = await query(
-        'SELECT id, name, email, password_hash, role, is_admin, department, created_at, updated_at FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1',
+        'SELECT id, name, email, password_hash, role, is_admin, department, assigned_labs, created_at, updated_at FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1',
         [email.trim()]
       );
       return res.rows[0] || null;
@@ -52,7 +54,7 @@ export const userModel = {
 
     try {
       const res = await query(
-        'SELECT id, name, email, password_hash, role, is_admin, department, created_at, updated_at FROM users WHERE id = $1 LIMIT 1',
+        'SELECT id, name, email, password_hash, role, is_admin, department, assigned_labs, created_at, updated_at FROM users WHERE id = $1 LIMIT 1',
         [id.trim()]
       );
       return res.rows[0] || null;
@@ -67,9 +69,9 @@ export const userModel = {
   async create(user: CreateUserInput): Promise<User> {
     try {
       const res = await query(
-        `INSERT INTO users (name, email, password_hash, role, is_admin, department)
-         VALUES ($1, LOWER($2), $3, $4, $5, $6)
-         RETURNING id, name, email, password_hash, role, is_admin, department, created_at, updated_at`,
+        `INSERT INTO users (name, email, password_hash, role, is_admin, department, assigned_labs)
+         VALUES ($1, LOWER($2), $3, $4, $5, $6, $7)
+         RETURNING id, name, email, password_hash, role, is_admin, department, assigned_labs, created_at, updated_at`,
         [
           user.name.trim(),
           user.email.trim(),
@@ -77,11 +79,27 @@ export const userModel = {
           user.role || 'Faculty Lecturer',
           Boolean(user.is_admin),
           user.department || null,
+          user.assigned_labs || ['all'],
         ]
       );
       return res.rows[0];
     } catch (err: any) {
       throw new DatabaseException(`Failed to persist user: ${err.message}`, err);
+    }
+  },
+
+  /**
+   * Update user assigned laboratory room scopes
+   */
+  async updateAssignedLabs(id: string, assignedLabs: string[]): Promise<boolean> {
+    try {
+      const res = await query(
+        'UPDATE users SET assigned_labs = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [assignedLabs, id]
+      );
+      return (res.rowCount ?? 0) > 0;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to update assigned labs: ${err.message}`, err);
     }
   },
 
@@ -106,7 +124,7 @@ export const userModel = {
   async findAll(): Promise<Omit<User, 'password_hash'>[]> {
     try {
       const res = await query(
-        'SELECT id, name, email, role, is_admin, department, created_at FROM users ORDER BY created_at DESC'
+        'SELECT id, name, email, role, is_admin, department, assigned_labs, created_at FROM users ORDER BY created_at DESC'
       );
       return res.rows;
     } catch (err: any) {

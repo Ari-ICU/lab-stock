@@ -101,3 +101,30 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
     message: 'Password updated successfully',
   });
 });
+
+/**
+ * PATCH /api/v1/auth/users/:id/labs
+ * Updates assigned laboratory room scopes for a user (Admin only)
+ */
+export const updateAssignedLabs = asyncHandler(async (req: Request, res: Response) => {
+  const userId = String(req.params.id);
+  const { assignedLabs } = req.body;
+
+  if (!Array.isArray(assignedLabs)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'assignedLabs must be an array of room codes e.g. ["Rm 102B", "Rm 206"] or ["all"]',
+    });
+  }
+
+  await authService.updateAssignedLabs(userId, assignedLabs);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'User laboratory scopes updated successfully',
+    data: {
+      userId,
+      assignedLabs,
+    },
+  });
+});

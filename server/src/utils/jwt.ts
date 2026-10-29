@@ -11,6 +11,7 @@ export interface JwtUserPayload {
   role: string;
   permissions: string[];
   department?: string;
+  assignedLabs?: string[];
   iat?: number;
   exp?: number;
 }

@@ -43,6 +43,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           role: 'Primary Lab Administrator',
           is_admin: true,
           department: 'Engineering Block A - Room 102B',
+          assigned_labs: ['all'],
         },
         {
           name: 'Thoeurn Ratha',
@@ -51,6 +52,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           role: 'Faculty Lecturer',
           is_admin: false,
           department: 'Software Engineering Department',
+          assigned_labs: ['Rm 102B'],
         },
         {
           name: 'Chan Vicheka',
@@ -59,6 +61,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           role: 'Lab Assistant',
           is_admin: false,
           department: 'Hardware Depot & Lab 102B',
+          assigned_labs: ['Rm 102B', 'Rm 206'],
         },
         {
           name: 'John Doe',
@@ -67,15 +70,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           role: 'Primary Lab Administrator',
           is_admin: true,
           department: 'Faculty of Engineering',
+          assigned_labs: ['all'],
         },
       ];
 
       for (const u of initialUsers) {
         await query(
-          `INSERT INTO users (name, email, password_hash, role, is_admin, department)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT (email) DO NOTHING`,
-          [u.name, u.email, u.password_hash, u.role, u.is_admin, u.department]
+          `INSERT INTO users (name, email, password_hash, role, is_admin, department, assigned_labs)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (email) DO UPDATE SET assigned_labs = EXCLUDED.assigned_labs`,
+          [u.name, u.email, u.password_hash, u.role, u.is_admin, u.department, u.assigned_labs]
         );
       }
 

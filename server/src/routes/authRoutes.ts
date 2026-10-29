@@ -5,6 +5,7 @@ import {
   getProfile,
   verifyTokenEndpoint,
   changePassword,
+  updateAssignedLabs,
 } from '@/controllers/authController.js';
 import {
   authenticate,
@@ -57,6 +58,13 @@ router.get('/me', authenticate, getProfile);
  * @access  Protected (Requires Valid JWT)
  */
 router.post('/change-password', authenticate, validatePasswordChange, changePassword);
+
+/**
+ * @route   PATCH /api/v1/auth/users/:id/labs
+ * @desc    Assign or update laboratory rooms scope for an operator
+ * @access  Protected (Administrator only)
+ */
+router.patch('/users/:id/labs', authenticate, requireAdmin, updateAssignedLabs);
 
 /**
  * @route   GET /api/v1/auth/admin-only

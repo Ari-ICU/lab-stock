@@ -43,3 +43,32 @@ export const createLocation = asyncHandler(async (req: Request, res: Response) =
     data: newLocation,
   });
 });
+
+/**
+ * PUT /api/v1/locations/:id
+ * Update an existing laboratory facility
+ */
+export const updateLocation = asyncHandler(async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const updated = await locationService.update(id, req.body);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'Lab location updated successfully',
+    data: updated,
+  });
+});
+
+/**
+ * DELETE /api/v1/locations/:id
+ * Remove a laboratory facility
+ */
+export const deleteLocation = asyncHandler(async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  await locationService.delete(id);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'Lab location deleted successfully',
+  });
+});

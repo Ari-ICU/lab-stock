@@ -15,9 +15,13 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(80) NOT NULL DEFAULT 'Faculty Lecturer',
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     department VARCHAR(150),
+    assigned_labs TEXT[] DEFAULT ARRAY['all']::TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Idempotent column addition for existing deployments
+ALTER TABLE users ADD COLUMN IF NOT EXISTS assigned_labs TEXT[] DEFAULT ARRAY['all']::TEXT[];
 
 -- 2. LAB LOCATIONS
 CREATE TABLE IF NOT EXISTS locations (

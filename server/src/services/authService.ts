@@ -32,6 +32,7 @@ export const authService = {
         role: Role.ADMIN,
         is_admin: true,
         department: 'Engineering Block A - Room 102B',
+        assigned_labs: ['all'],
       },
       {
         id: 'usr_lecturer_02',
@@ -41,6 +42,7 @@ export const authService = {
         role: Role.LECTURER,
         is_admin: false,
         department: 'Software Engineering Department',
+        assigned_labs: ['Rm 102B'],
       },
       {
         id: 'usr_assistant_03',
@@ -50,6 +52,7 @@ export const authService = {
         role: Role.ASSISTANT,
         is_admin: false,
         department: 'Hardware Depot & Lab 102B',
+        assigned_labs: ['Rm 102B', 'Rm 206'],
       },
       {
         id: '1234567890',
@@ -59,6 +62,7 @@ export const authService = {
         role: Role.ADMIN,
         is_admin: true,
         department: 'Faculty of Engineering',
+        assigned_labs: ['all'],
       },
     ];
 
@@ -96,6 +100,7 @@ export const authService = {
           role: devMatch.role,
           is_admin: devMatch.is_admin,
           department: devMatch.department,
+          assigned_labs: devMatch.assigned_labs,
         };
       } else {
         throw new UnauthorizedException('Invalid email or password credentials');
@@ -118,7 +123,13 @@ export const authService = {
       ];
     }
 
-    // 4. Issue cryptographically signed JWT
+    const assignedLabs = user.assigned_labs && user.assigned_labs.length > 0
+      ? user.assigned_labs
+      : user.is_admin
+      ? ['all']
+      : ['Rm 102B'];
+
+    // 4. Issue cryptographically signed JWT with assigned laboratories scope
     const token = signToken({
       sub: user.id,
       name: user.name,
@@ -127,9 +138,11 @@ export const authService = {
       role: user.role,
       permissions,
       department: user.department || undefined,
+      assignedLabs,
     });
 
     const { password_hash, ...safeUser } = user;
+    safeUser.assigned_labs = assignedLabs;
     return { token, user: safeUser };
   },
 
@@ -143,6 +156,7 @@ export const authService = {
     role?: string;
     is_admin?: boolean;
     department?: string | null;
+    assigned_labs?: string[];
   }): Promise<Omit<User, 'password_hash'>> {
     const normalizedEmail = input.email.trim().toLowerCase();
 
@@ -162,10 +176,22 @@ export const authService = {
       role: input.role || 'Faculty Lecturer',
       is_admin: Boolean(input.is_admin),
       department: input.department || null,
+      assigned_labs: input.assigned_labs || (input.is_admin ? ['all'] : ['Rm 102B']),
     });
 
     const { password_hash, ...safeUser } = newUser;
     return safeUser;
+  },
+
+  /**
+   * Update assigned laboratory room scopes for a user
+   */
+  async updateAssignedLabs(userId: string, assignedLabs: string[]): Promise<boolean> {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId}`);
+    }
+    return userModel.updateAssignedLabs(userId, assignedLabs);
   },
 
   /**
