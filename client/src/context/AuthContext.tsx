@@ -48,7 +48,7 @@ export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     name: 'Dr. Heng Sovannarith',
-    email: 'sovannarith@lab.edu',
+    email: 'heng.sovannarith@rupp.edu.kh',
     password: 'password123',
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
@@ -60,7 +60,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   },
   {
     name: 'Thoeurn Ratha',
-    email: 'admin@lab.edu',
+    email: 'thoeurn.ratha@rupp.edu.kh',
     password: 'password123',
     role: 'Faculty Lecturer',
     roleBadge: 'Lecturer',
@@ -72,7 +72,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   },
   {
     name: 'Chan Vicheka',
-    email: 'assistant@lab.edu',
+    email: 'chan.vicheka@rupp.edu.kh',
     password: 'password123',
     role: 'Lab Assistant',
     roleBadge: 'Lab Assistant',
@@ -84,7 +84,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   },
   {
     name: 'John Doe',
-    email: 'john.doe@lab.edu',
+    email: 'john.doe@rupp.edu.kh',
     password: 'password123',
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
@@ -100,7 +100,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   {
     id: 'user-director',
     name: 'Dr. Heng Sovannarith',
-    email: 'sovannarith@lab.edu',
+    email: 'heng.sovannarith@rupp.edu.kh',
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
     avatarText: 'HS',
@@ -113,7 +113,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   {
     id: 'user-assistant-vicheka',
     name: 'Chan Vicheka',
-    email: 'assistant@lab.edu',
+    email: 'chan.vicheka@rupp.edu.kh',
     role: 'Lab Assistant',
     roleBadge: 'Lab Assistant',
     avatarText: 'CV',
@@ -127,7 +127,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   {
     id: 'user-lecturer',
     name: 'Thoeurn Ratha',
-    email: 'admin@lab.edu',
+    email: 'thoeurn.ratha@rupp.edu.kh',
     role: 'Faculty Lecturer',
     roleBadge: 'Lecturer',
     avatarText: 'TR',
@@ -140,7 +140,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   {
     id: 'user-admin-john',
     name: 'John Doe',
-    email: 'john.doe@lab.edu',
+    email: 'john.doe@rupp.edu.kh',
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
     avatarText: 'JD',
@@ -323,14 +323,24 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
   }
 
   // Enforce canonical institutional identities to heal corrupted localStorage
-  if (u.email === 'sovannarith@lab.edu' || u.name?.includes('Sovannarith')) {
+  const emailLower = (u.email || '').toLowerCase();
+  if (
+    emailLower === 'heng.sovannarith@rupp.edu.kh' ||
+    emailLower === 'sovannarith@lab.edu' ||
+    u.name?.includes('Sovannarith')
+  ) {
     role = 'Primary Lab Administrator';
     roleBadge = 'Admin';
     permissions = 'Full Read/Write Access & System Config';
     assignedLabs = ['all'];
     department = 'Engineering Block A - Room 102B';
     supervisedBy = undefined;
-  } else if (u.email === 'admin@lab.edu' || u.name?.includes('Ratha')) {
+  } else if (
+    emailLower === 'thoeurn.ratha@rupp.edu.kh' ||
+    emailLower === 'admin@lab.edu' ||
+    emailLower.includes('ratha') ||
+    u.name?.includes('Ratha')
+  ) {
     role = 'Faculty Lecturer';
     roleBadge = 'Lecturer';
     permissions = 'Course Hardware Allocation & Catalog View';
@@ -339,15 +349,33 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     }
     department = 'Engineering Block A - Room 102B & Room 206';
     supervisedBy = undefined;
-  } else if (u.email === 'vakhim@lab.edu' || u.name?.includes('Vakhim')) {
+  } else if (
+    emailLower === 'chan.vicheka@rupp.edu.kh' ||
+    emailLower === 'assistant@lab.edu' ||
+    emailLower === 'vakhim@lab.edu' ||
+    emailLower.includes('vicheka') ||
+    u.name?.includes('Vicheka') ||
+    u.name?.includes('Vakhim')
+  ) {
     role = 'Lab Assistant';
     roleBadge = 'Lab Assistant';
     permissions = 'Inventory Check-in/Out & Equipment Prep';
     if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
-      assignedLabs = ['Room 102B'];
+      assignedLabs = ['Room 102B', 'Room 206'];
     }
-    department = 'Engineering Block A - Room 102B';
+    department = 'Hardware Depot & Lab 102B';
     supervisedBy = 'Thoeurn Ratha (Faculty Lecturer)';
+  } else if (
+    emailLower === 'john.doe@rupp.edu.kh' ||
+    emailLower === 'john.doe@lab.edu' ||
+    u.name?.includes('John Doe')
+  ) {
+    role = 'Primary Lab Administrator';
+    roleBadge = 'Admin';
+    permissions = 'Full Read/Write Access & System Config';
+    assignedLabs = ['all'];
+    department = 'Faculty of Engineering';
+    supervisedBy = undefined;
   } else {
     // Custom registered user
     if (role === 'Primary Lab Administrator') {
@@ -972,11 +1000,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     const cleanEmail = email.trim().toLowerCase();
-    const normalizedEmail = cleanEmail.replace('@netlab.edu', '@lab.edu');
+    const emailAliases: Record<string, string> = {
+      'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+      'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+      'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+      'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
+      'assistant@lab.edu': 'chan.vicheka@rupp.edu.kh',
+      'vakhim@lab.edu': 'chan.vicheka@rupp.edu.kh',
+      'john.doe@lab.edu': 'john.doe@rupp.edu.kh',
+    };
+    const primaryEmail = emailAliases[cleanEmail] || cleanEmail;
 
     // 1. Attempt live backend authentication
     try {
-      const res = await authService.login({ email: cleanEmail, password });
+      const res = await authService.login({ email: primaryEmail, password });
       if (res?.token && res?.user) {
         localStorage.setItem('lab_auth_token', res.token);
 
@@ -1036,7 +1073,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const matchedManaged = managedUsers.find(
       (acc) =>
         acc.email.toLowerCase() === cleanEmail ||
-        acc.email.toLowerCase().replace('@netlab.edu', '@lab.edu') === normalizedEmail
+        acc.email.toLowerCase() === primaryEmail
     );
 
     if (matchedManaged) {
@@ -1073,7 +1110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const matchedAccount = DEMO_ACCOUNTS.find(
       (acc) =>
         acc.email.toLowerCase() === cleanEmail ||
-        acc.email.toLowerCase().replace('@netlab.edu', '@lab.edu') === normalizedEmail
+        acc.email.toLowerCase() === primaryEmail
     );
 
     if (matchedAccount) {

@@ -783,7 +783,7 @@ export default function UsersPage() {
                   required
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="e.g. david@lab.edu"
+                  placeholder="e.g. chan.vicheka@rupp.edu.kh"
                   className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                 />
               </div>

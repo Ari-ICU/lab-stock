@@ -38,7 +38,7 @@ router.get('/:id', requirePermission(Permission.ASSET_READ), getAssetById);
 router.post(
   '/',
   requirePermission(Permission.ASSET_CREATE),
-  requireLocationScope((req) => req.body.placement_rack || req.body.location || req.body.placementRack),
+  requireLocationScope((req) => [req.body.location, req.body.placement_rack, req.body.placementRack].filter(Boolean).join(' ')),
   validateCreateAsset,
   createAsset
 );
@@ -53,9 +53,11 @@ router.put(
   requirePermission(Permission.ASSET_UPDATE),
   requireLocationScope(async (req) => {
     const a = await assetService.getById(String(req.params.id));
-    const currentLoc = [a?.location_room, a?.placement_rack, a?.location_name].filter(Boolean).join(' ');
-    const newLoc = req.body.placement_rack || req.body.location || req.body.placementRack;
-    return [currentLoc, newLoc].filter(Boolean);
+    const currentLoc = [a?.location_room, a?.location_name, a?.placement_rack].filter(Boolean).join(' ');
+    const newLoc = req.body.location
+      ? [req.body.location, req.body.placement_rack, req.body.placementRack].filter(Boolean).join(' ')
+      : null;
+    return [currentLoc, newLoc].filter(Boolean) as string[];
   }),
   validateUpdateAsset,
   updateAsset

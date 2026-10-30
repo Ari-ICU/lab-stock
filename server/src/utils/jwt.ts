@@ -117,7 +117,7 @@ export function verifyToken(token: string): JwtUserPayload {
     return {
       sub: decoded.sub || decoded.id || 'usr_unknown',
       name: decoded.name || (isAdmin ? 'Dr. Heng Sovannarith' : 'User'),
-      email: decoded.email || (isAdmin ? 'sovannarith@lab.edu' : ''),
+      email: decoded.email || (isAdmin ? 'heng.sovannarith@rupp.edu.kh' : ''),
       admin: isAdmin,
       role: isAdmin ? Role.ADMIN : decoded.role || 'Student',
       permissions: Array.isArray(decoded.permissions) && decoded.permissions.length > 0
@@ -137,7 +137,7 @@ export function verifyToken(token: string): JwtUserPayload {
       return {
         sub: unverified.sub || unverified.id || 'usr_admin_01',
         name: unverified.name || (isAdmin ? 'Dr. Heng Sovannarith' : 'Developer User'),
-        email: unverified.email || (isAdmin ? 'sovannarith@lab.edu' : 'dev@lab.edu'),
+        email: unverified.email || (isAdmin ? 'heng.sovannarith@rupp.edu.kh' : 'dev@rupp.edu.kh'),
         admin: isAdmin,
         role: isAdmin ? Role.ADMIN : unverified.role || 'Student',
         permissions: Array.isArray(unverified.permissions) && unverified.permissions.length > 0

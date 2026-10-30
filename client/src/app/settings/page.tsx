@@ -944,7 +944,7 @@ export default function SettingsPage() {
                     {user?.name || 'Thoeurn Ratha'}
                   </div>
                   <div className="text-xs text-neutral-500 font-mono">
-                    {user?.email || 'admin@lab.edu'}
+                    {user?.email || 'thoeurn.ratha@rupp.edu.kh'}
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     <span

@@ -858,7 +858,7 @@ export const mockLoans: MockLoan[] = [
     serialNumber: 'EPS-L630U-8812',
     borrowerName: 'Dr. Heng Sovannarith',
     borrowerRole: 'Lecturer',
-    borrowerContact: 'sovannarith@lab.edu',
+    borrowerContact: 'heng.sovannarith@rupp.edu.kh',
     courseOrClass: 'Departmental Research Symposium (Room 201)',
     borrowDate: '2026-10-20',
     expectedReturnDate: '2026-10-21',

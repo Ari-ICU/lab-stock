@@ -221,7 +221,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@lab.edu"
+                      placeholder="thoeurn.ratha@rupp.edu.kh"
                       required
                       disabled={isLoading}
                       className="w-full bg-neutral-50/50 text-xs text-neutral-900 pl-9 pr-3 py-2 border border-neutral-300 rounded focus:outline-none focus:border-neutral-900 focus:bg-white focus:ring-1 focus:ring-neutral-900 transition-colors"

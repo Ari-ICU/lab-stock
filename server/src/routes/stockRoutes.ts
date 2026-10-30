@@ -39,7 +39,7 @@ router.get('/:id', requirePermission(Permission.STOCK_READ), getStockItemById);
 router.post(
   '/',
   requirePermission(Permission.STOCK_CREATE),
-  requireLocationScope((req) => req.body.rack || req.body.location),
+  requireLocationScope((req) => [req.body.location, req.body.rack].filter(Boolean).join(' ')),
   validateCreateStock,
   createStockItem
 );
@@ -54,9 +54,11 @@ router.put(
   requirePermission(Permission.STOCK_UPDATE),
   requireLocationScope(async (req) => {
     const s = await stockService.getById(String(req.params.id));
-    const currentLoc = [s?.location_room, s?.rack, s?.location_name].filter(Boolean).join(' ');
-    const newLoc = req.body.rack || req.body.location;
-    return [currentLoc, newLoc].filter(Boolean);
+    const currentLoc = [s?.location_room, s?.location_name, s?.rack].filter(Boolean).join(' ');
+    const newLoc = req.body.location
+      ? [req.body.location, req.body.rack].filter(Boolean).join(' ')
+      : null;
+    return [currentLoc, newLoc].filter(Boolean) as string[];
   }),
   validateUpdateStock,
   updateStockItem

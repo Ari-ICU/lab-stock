@@ -39,7 +39,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       const initialUsers = [
         {
           name: 'Dr. Heng Sovannarith',
-          email: 'sovannarith@lab.edu',
+          email: 'heng.sovannarith@rupp.edu.kh',
           password_hash: hashedPassword,
           role: 'Primary Lab Administrator',
           is_admin: true,
@@ -48,16 +48,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         },
         {
           name: 'Thoeurn Ratha',
-          email: 'admin@lab.edu',
+          email: 'thoeurn.ratha@rupp.edu.kh',
           password_hash: hashedPassword,
           role: 'Faculty Lecturer',
           is_admin: false,
           department: 'Software Engineering Department',
-          assigned_labs: ['Room 102B'],
+          assigned_labs: ['Room 102B', 'Room 206'],
         },
         {
           name: 'Chan Vicheka',
-          email: 'assistant@lab.edu',
+          email: 'chan.vicheka@rupp.edu.kh',
           password_hash: hashedPassword,
           role: 'Lab Assistant',
           is_admin: false,
@@ -66,7 +66,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         },
         {
           name: 'John Doe',
-          email: 'john.doe@lab.edu',
+          email: 'john.doe@rupp.edu.kh',
           password_hash: hashedPassword,
           role: 'Primary Lab Administrator',
           is_admin: true,
@@ -84,7 +84,26 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         );
       }
 
-      console.log('✅ Seeded 4 initial faculty users with bcrypt-hashed credentials.');
+      console.log('✅ Seeded 4 initial faculty users with official @rupp.edu.kh university credentials.');
+    }
+
+    // Migrate any legacy @lab.edu emails in PostgreSQL to official @rupp.edu.kh university domains
+    try {
+      await pool.query(`
+        UPDATE users SET email = 'thoeurn.ratha@rupp.edu.kh', assigned_labs = '{"Room 102B", "Room 206"}' 
+        WHERE email = 'admin@lab.edu' OR email = 'ratha@lab.edu' OR email = 'thoeurn.ratha@lab.edu';
+
+        UPDATE users SET email = 'heng.sovannarith@rupp.edu.kh' 
+        WHERE email = 'sovannarith@lab.edu' OR email = 'heng.sovannarith@lab.edu';
+
+        UPDATE users SET email = 'chan.vicheka@rupp.edu.kh', assigned_labs = '{"Room 102B", "Room 206"}' 
+        WHERE email = 'assistant@lab.edu' OR email = 'vakhim@lab.edu' OR email = 'chan.vicheka@lab.edu';
+
+        UPDATE users SET email = 'john.doe@rupp.edu.kh' 
+        WHERE email = 'john.doe@lab.edu';
+      `);
+    } catch {
+      // Ignore migration errors if records are already up to date
     }
 
     // Check if locations/assets/stock are empty; seed if needed

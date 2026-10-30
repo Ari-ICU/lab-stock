@@ -20,13 +20,13 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
 \`\`\`
 
 * **Option 2 (Login with Credentials):** Execute \`POST /api/v1/auth/login\` with:
-  * **Email:** \`sovannarith@lab.edu\`
+  * **Email:** \`heng.sovannarith@rupp.edu.kh\`
   * **Password:** \`password123\`
   Then copy the returned \`token\` into the **Authorize 🔓** dialog.
 `,
     contact: {
-      name: 'Lab IT Systems Support',
-      email: 'sovannarith@lab.edu',
+      name: 'RUPP Lab IT Systems Support',
+      email: 'heng.sovannarith@rupp.edu.kh',
     },
   },
   servers: [
@@ -54,7 +54,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
         type: 'object',
         required: ['email', 'password'],
         properties: {
-          email: { type: 'string', format: 'email', example: 'sovannarith@lab.edu' },
+          email: { type: 'string', format: 'email', example: 'thoeurn.ratha@rupp.edu.kh' },
           password: { type: 'string', format: 'password', example: 'password123' },
         },
       },
@@ -63,7 +63,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
         required: ['name', 'email', 'password'],
         properties: {
           name: { type: 'string', example: 'Dr. John Doe' },
-          email: { type: 'string', format: 'email', example: 'john.doe@lab.edu' },
+          email: { type: 'string', format: 'email', example: 'john.doe@rupp.edu.kh' },
           password: { type: 'string', format: 'password', example: 'SecureP@ssw0rd2026' },
           role: { type: 'string', example: 'Faculty Lecturer' },
           department: { type: 'string', example: 'Computer Science & Networking' },

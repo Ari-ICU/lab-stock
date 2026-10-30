@@ -23,12 +23,26 @@ export const authService = {
   async login(email: string, plainTextPassword: string): Promise<AuthSessionResponse> {
     const normalizedEmail = email.trim().toLowerCase();
 
+    // Email aliases mapping legacy @lab.edu addresses to official @rupp.edu.kh university accounts
+    const emailAliases: Record<string, string> = {
+      'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+      'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+      'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+      'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
+      'heng.sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
+      'assistant@lab.edu': 'chan.vicheka@rupp.edu.kh',
+      'vakhim@lab.edu': 'chan.vicheka@rupp.edu.kh',
+      'chan.vicheka@lab.edu': 'chan.vicheka@rupp.edu.kh',
+      'john.doe@lab.edu': 'john.doe@rupp.edu.kh',
+    };
+    const primaryEmail = emailAliases[normalizedEmail] || normalizedEmail;
+
     // Standard faculty accounts for development & fallback when database is offline or initializing
     const DEV_SEED_USERS = [
       {
         id: 'usr_admin_01',
         name: 'Dr. Heng Sovannarith',
-        email: 'sovannarith@lab.edu',
+        email: 'heng.sovannarith@rupp.edu.kh',
         password: 'password123',
         role: Role.ADMIN,
         is_admin: true,
@@ -38,17 +52,17 @@ export const authService = {
       {
         id: 'usr_lecturer_02',
         name: 'Thoeurn Ratha',
-        email: 'admin@lab.edu',
+        email: 'thoeurn.ratha@rupp.edu.kh',
         password: 'password123',
         role: Role.LECTURER,
         is_admin: false,
         department: 'Software Engineering Department',
-        assigned_labs: ['Room 102B'],
+        assigned_labs: ['Room 102B', 'Room 206'],
       },
       {
         id: 'usr_assistant_03',
         name: 'Chan Vicheka',
-        email: 'assistant@lab.edu',
+        email: 'chan.vicheka@rupp.edu.kh',
         password: 'password123',
         role: Role.ASSISTANT,
         is_admin: false,
@@ -58,7 +72,7 @@ export const authService = {
       {
         id: '1234567890',
         name: 'John Doe',
-        email: 'john.doe@lab.edu',
+        email: 'john.doe@rupp.edu.kh',
         password: 'password123',
         role: Role.ADMIN,
         is_admin: true,
@@ -70,9 +84,12 @@ export const authService = {
     let user: User | null = null;
     let isDbAvailable = true;
 
-    // 1. Fetch user from PostgreSQL
+    // 1. Fetch user from PostgreSQL (check primary email, then fallback to original)
     try {
-      user = await userModel.findByEmail(normalizedEmail);
+      user = await userModel.findByEmail(primaryEmail);
+      if (!user && primaryEmail !== normalizedEmail) {
+        user = await userModel.findByEmail(normalizedEmail);
+      }
     } catch (dbErr: any) {
       isDbAvailable = false;
       if (process.env.NODE_ENV === 'production') {
@@ -89,7 +106,9 @@ export const authService = {
     } else if (!isDbAvailable || !user) {
       // In development, allow logging in with standard faculty accounts when database is initializing
       const devMatch = DEV_SEED_USERS.find(
-        (u) => u.email.toLowerCase() === normalizedEmail && u.password === plainTextPassword
+        (u) =>
+          (u.email.toLowerCase() === primaryEmail || u.email.toLowerCase() === normalizedEmail) &&
+          u.password === plainTextPassword
       );
 
       if (devMatch) {

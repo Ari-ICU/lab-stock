@@ -366,7 +366,14 @@ export function canUserManageLocation(
   if (!locationStrOrRoom) return true;
 
   let assignedLabs = user.assignedLabs || [];
-  if (user.email === 'admin@lab.edu' && assignedLabs.length <= 1) {
+  const em = (user.email || '').toLowerCase();
+  if (
+    (em.includes('ratha') ||
+      em.includes('vicheka') ||
+      em === 'admin@lab.edu' ||
+      em === 'assistant@lab.edu') &&
+    assignedLabs.length <= 1
+  ) {
     assignedLabs = ['Room 102B', 'Room 206'];
   }
 
