@@ -37,12 +37,6 @@ export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
     permissions: 'Course Hardware Allocation & Catalog View',
     description: 'Course workstation allocation, teaching resource schedule, and inventory review',
   },
-  'Lab Assistant': {
-    role: 'Lab Assistant',
-    badge: 'Lab Assistant',
-    permissions: 'Inventory Check-in/Out & Equipment Prep',
-    description: 'Hardware setup, student lab check-in, and inventory maintenance logging',
-  },
 };
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
@@ -123,20 +117,6 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     status: 'active',
     lastLogin: 'Active now',
     assignedLabs: ['Room 102B', 'Room 206'],
-  },
-  {
-    id: 'user-assistant-vicheka',
-    name: 'Chan Vicheka',
-    email: 'chan.vicheka@rupp.edu.kh',
-    role: 'Lab Assistant',
-    roleBadge: 'Lab Assistant',
-    avatarText: 'CV',
-    permissions: 'Read-Only Department View & Audit (Cannot login / View only)',
-    department: 'Hardware Depot & Lab 102B',
-    status: 'active',
-    lastLogin: 'View Only (No login)',
-    assignedLabs: ['Room 102B', 'Room 206'],
-    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
   },
 ];
 
@@ -338,29 +318,6 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     department = 'Engineering Block A - Room 102B & Room 206';
     supervisedBy = undefined;
   } else if (
-    emailLower === 'chan.vicheka@rupp.edu.kh' ||
-    emailLower === 'assistant@lab.edu' ||
-    emailLower === 'vakhim@lab.edu' ||
-    emailLower.includes('vicheka') ||
-    u.name?.includes('Vicheka') ||
-    u.name?.includes('Vakhim')
-  ) {
-    role = 'Lab Assistant';
-    roleBadge = 'Lab Assistant';
-    permissions = 'Inventory Check-in/Out & Equipment Prep';
-    // Assistant supervised by Thoeurn Ratha must strictly match Thoeurn Ratha's handled laboratories (Room 102B, Room 206)
-    if (
-      !assignedLabs ||
-      assignedLabs.length === 0 ||
-      assignedLabs.includes('all') ||
-      assignedLabs.includes('Room 305') ||
-      assignedLabs.some((r) => !['Room 102B', 'Room 206'].includes(r))
-    ) {
-      assignedLabs = ['Room 102B', 'Room 206'];
-    }
-    department = 'Hardware Depot & Lab 102B';
-    supervisedBy = 'Thoeurn Ratha (Faculty Lecturer)';
-  } else if (
     emailLower === 'john.doe@rupp.edu.kh' ||
     emailLower === 'john.doe@lab.edu' ||
     u.name?.includes('John Doe')
@@ -373,22 +330,17 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     supervisedBy = undefined;
   } else {
     // Custom registered user
-    if (role === 'Primary Lab Administrator') {
+    if (role === 'Primary Lab Administrator' || roleBadge === 'Admin') {
       roleBadge = 'Admin';
       assignedLabs = ['all'];
       supervisedBy = undefined;
-    } else if (role === 'Faculty Lecturer') {
+    } else {
+      role = 'Faculty Lecturer';
       roleBadge = 'Lecturer';
       if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
         assignedLabs = ['Room 102B'];
       }
       supervisedBy = undefined;
-    } else {
-      role = 'Lab Assistant';
-      roleBadge = 'Lab Assistant';
-      if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
-        assignedLabs = ['Room 102B'];
-      }
     }
   }
 
@@ -448,13 +400,22 @@ const getStoredUsers = (): ManagedUser[] => {
     const stored = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
     if (stored) {
       const parsed: ManagedUser[] = JSON.parse(stored);
-      return parsed.map((u) => {
-        const migrated = {
-          ...u,
-          email: u.email.replace('@netlab.edu', '@lab.edu'),
-        };
-        return sanitizeUser(migrated);
-      });
+      return parsed
+        .filter(
+          (u) =>
+            u.role !== 'Lab Assistant' &&
+            (u.roleBadge as string) !== 'Lab Assistant' &&
+            !u.email.includes('vicheka') &&
+            !u.email.includes('assistant') &&
+            !u.email.includes('vakhim')
+        )
+        .map((u) => {
+          const migrated = {
+            ...u,
+            email: u.email.replace('@netlab.edu', '@lab.edu'),
+          };
+          return sanitizeUser(migrated);
+        });
     }
   } catch {
     // fallback
@@ -512,48 +473,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const res = await authService.getUsers();
       if (res?.users && Array.isArray(res.users) && res.users.length > 0) {
-        const dbUsers: ManagedUser[] = res.users.map((dbUser: any) => {
-          const roleBadge: RoleBadge =
-            dbUser.is_admin || dbUser.role === 'Primary Lab Administrator'
-              ? 'Admin'
-              : dbUser.role === 'Lab Assistant'
-              ? 'Lab Assistant'
-              : 'Lecturer';
+        const dbUsers: ManagedUser[] = res.users
+          .filter((dbUser: any) => dbUser.role !== 'Lab Assistant' && !dbUser.email?.includes('vicheka') && !dbUser.email?.includes('assistant'))
+          .map((dbUser: any) => {
+            const roleBadge: RoleBadge =
+              dbUser.is_admin || dbUser.role === 'Primary Lab Administrator'
+                ? 'Admin'
+                : 'Lecturer';
 
-          const avatarText = (dbUser.name || 'User')
-            .split(' ')
-            .filter(Boolean)
-            .map((p: string) => p[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase();
+            const avatarText = (dbUser.name || 'User')
+              .split(' ')
+              .filter(Boolean)
+              .map((p: string) => p[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase();
 
-          return {
-            id: String(dbUser.id),
-            name: dbUser.name,
-            email: dbUser.email,
-            role: dbUser.role,
-            roleBadge,
-            avatarText,
-            permissions:
-              roleBadge === 'Admin'
-                ? 'Full Read/Write Access & System Config'
-                : roleBadge === 'Lecturer'
-                ? 'Course Hardware Allocation & Catalog View'
-                : 'Inventory Check-in/Out & Equipment Prep',
-            department: dbUser.department || 'Engineering Department',
-            status: 'active',
-            lastLogin: dbUser.email === 'admin@lab.edu' ? 'Active now' : 'Today, 09:00 AM',
-            assignedLabs:
-              dbUser.assigned_labs && dbUser.assigned_labs.length > 0
-                ? dbUser.assigned_labs
-                : roleBadge === 'Admin'
-                ? ['all']
-                : ['Room 102B'],
-            supervisedBy:
-              roleBadge === 'Lab Assistant' ? 'Thoeurn Ratha (Faculty Lecturer)' : undefined,
-          };
-        });
+            return {
+              id: String(dbUser.id),
+              name: dbUser.name,
+              email: dbUser.email,
+              role: dbUser.role,
+              roleBadge,
+              avatarText,
+              permissions:
+                roleBadge === 'Admin'
+                  ? 'Full Read/Write Access & System Config'
+                  : 'Course Hardware Allocation & Catalog View',
+              department: dbUser.department || 'Engineering Department',
+              status: 'active',
+              lastLogin: dbUser.email === 'admin@lab.edu' ? 'Active now' : 'Today, 09:00 AM',
+              assignedLabs:
+                dbUser.assigned_labs && dbUser.assigned_labs.length > 0
+                  ? dbUser.assigned_labs
+                  : roleBadge === 'Admin'
+                  ? ['all']
+                  : ['Room 102B'],
+            };
+          });
 
         setManagedUsers(dbUsers);
         try {
@@ -604,9 +561,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
       if (storedUsers) {
         const parsed: ManagedUser[] = JSON.parse(storedUsers);
-        const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim', 'Leang Vakhim'];
+        const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim', 'Leang Vakhim', 'Chan Vicheka'];
         let updated = parsed
-          .filter((u) => !olderDemoNames.includes(u.name) && !u.email.includes('vakhim'))
+          .filter(
+            (u) =>
+              !olderDemoNames.includes(u.name) &&
+              !u.email.includes('vakhim') &&
+              !u.email.includes('vicheka') &&
+              !u.email.includes('assistant') &&
+              u.role !== 'Lab Assistant' &&
+              (u.roleBadge as string) !== 'Lab Assistant'
+          )
           .map((u) => {
             const migrated = { ...u, email: u.email.replace('@netlab.edu', '@lab.edu') };
             return sanitizeUser(migrated);
@@ -809,53 +774,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!targetUser) return;
 
     const isAdmin = isCurrentUserAdmin();
-    const isLecturer = user?.roleBadge === 'Lecturer' || user?.role === 'Faculty Lecturer';
+    if (!isAdmin) return;
 
-    // RBAC Check:
-    // 1. Super Admins can assign any room scope (including 'all').
-    // 2. Faculty Lecturers can relocate Lab Assistants between rooms that the lecturer supervises.
-    if (!isAdmin) {
-      if (!isLecturer || (targetUser.roleBadge !== 'Lab Assistant' && targetUser.role !== 'Lab Assistant')) {
-        return;
-      }
-      if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
-        return;
-      }
-      const lecturerRooms = user?.assignedLabs || [];
-      // MAKE SURE ONLY: Assistant must currently be stationed in one of the lecturer's managed laboratories
-      const currentAssistantLabs = targetUser.assignedLabs || [];
-      const isSupervisedByLecturer = currentAssistantLabs.some((r) => lecturerRooms.includes(r));
-      if (!isSupervisedByLecturer) {
-        return;
-      }
-
-      // New target rooms must also be strictly within the lecturer's managed laboratories
-      const hasUnauthorizedRoom = assignedLabs.some((r) => !lecturerRooms.includes(r));
-      if (hasUnauthorizedRoom) {
-        return;
-      }
-    }
-
-    const isTargetLecturerRatha =
-      targetUser.email === 'thoeurn.ratha@rupp.edu.kh' ||
-      targetUser.name?.includes('Ratha');
-
-    const isTargetAssistantVicheka =
-      targetUser.email === 'chan.vicheka@rupp.edu.kh' ||
-      targetUser.name?.includes('Vicheka');
-
-    let finalAssignedLabs = assignedLabs;
-    if (isTargetAssistantVicheka) {
-      // Find supervisor Thoeurn Ratha's rooms
-      const ratha = managedUsers.find(
-        (m) => m.email === 'thoeurn.ratha@rupp.edu.kh' || m.name?.includes('Ratha')
-      );
-      const rathaRooms = ratha?.assignedLabs || ['Room 102B', 'Room 206'];
-      // Ensure Chan Vicheka's assigned labs are strictly within supervisor's handled rooms
-      const filtered = assignedLabs.filter((r) => rathaRooms.includes(r));
-      finalAssignedLabs = filtered.length > 0 ? filtered : rathaRooms;
-    }
-
+    const finalAssignedLabs = assignedLabs;
     const deptString = finalAssignedLabs.includes('all')
       ? 'Faculty Fleet Administration (All Labs)'
       : `Engineering Block A - ${finalAssignedLabs.join(', ')}`;
@@ -866,18 +787,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...u,
           assignedLabs: finalAssignedLabs,
           department: deptString,
-        };
-      }
-      // If updating supervisor Thoeurn Ratha's handled rooms, keep supervised assistant Chan Vicheka aligned
-      if (
-        isTargetLecturerRatha &&
-        (u.email === 'chan.vicheka@rupp.edu.kh' || u.name?.includes('Vicheka'))
-      ) {
-        const validAssistantLabs = (u.assignedLabs || []).filter((r) => finalAssignedLabs.includes(r));
-        const finalAssistantLabs = validAssistantLabs.length > 0 ? validAssistantLabs : finalAssignedLabs;
-        return {
-          ...u,
-          assignedLabs: finalAssistantLabs,
         };
       }
       return u;
@@ -907,25 +816,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => {
     const isAdmin = isCurrentUserAdmin();
-    const isLecturer = user?.roleBadge === 'Lecturer' || user?.role === 'Faculty Lecturer';
-
-    if (!isAdmin) {
-      if (!isLecturer) return;
-      // Lecturer can only provision Lab Assistants
-      if (newUser.role !== 'Lab Assistant' && newUser.roleBadge !== 'Lab Assistant') {
-        return;
-      }
-      // Lecturer cannot grant universal access
-      if (newUser.assignedLabs?.includes('all') || newUser.assignedLabs?.includes('*')) {
-        return;
-      }
-      // Lecturer can only assign rooms within their own managed laboratories
-      const lecturerRooms = user?.assignedLabs || [];
-      const hasUnauthorizedRoom = (newUser.assignedLabs || []).some((r) => !lecturerRooms.includes(r));
-      if (hasUnauthorizedRoom) {
-        return;
-      }
-    }
+    if (!isAdmin) return;
 
     const id = `user-${Date.now()}`;
     const userToAdd: ManagedUser = {
@@ -1072,11 +963,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .toUpperCase()
             .slice(0, 2) || 'OP';
 
-        let badge: RoleBadge = 'Lab Assistant';
+        let badge: RoleBadge = 'Lecturer';
         if (res.user.is_admin || res.user.role.toLowerCase().includes('admin')) {
           badge = 'Admin';
-        } else if (res.user.role.toLowerCase().includes('lecturer')) {
-          badge = 'Lecturer';
         }
 
         const backendUser: User = {

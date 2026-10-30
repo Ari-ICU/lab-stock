@@ -56,15 +56,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           assigned_labs: ['Room 102B', 'Room 206'],
         },
         {
-          name: 'Chan Vicheka',
-          email: 'chan.vicheka@rupp.edu.kh',
-          password_hash: hashedPassword,
-          role: 'Lab Assistant',
-          is_admin: false,
-          department: 'Hardware Depot & Lab 102B',
-          assigned_labs: ['Room 102B', 'Room 206'],
-        },
-        {
           name: 'John Doe',
           email: 'john.doe@rupp.edu.kh',
           password_hash: hashedPassword,
@@ -84,7 +75,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         );
       }
 
-      console.log('✅ Seeded 4 initial faculty users with official @rupp.edu.kh university credentials.');
+      console.log('✅ Seeded 3 initial faculty users with official @rupp.edu.kh university credentials.');
+    }
+
+    // Purge any legacy lab assistant accounts from PostgreSQL
+    try {
+      await pool.query(`
+        DELETE FROM users WHERE role = 'Lab Assistant' OR email LIKE '%vicheka%' OR email LIKE '%assistant%';
+      `);
+    } catch {
+      // Ignore
     }
 
     // Migrate any legacy @lab.edu emails in PostgreSQL to official @rupp.edu.kh university domains

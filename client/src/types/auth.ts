@@ -25,7 +25,7 @@ export interface DemoAccount {
   supervisedBy?: string;
 }
 
-export type RoleBadge = 'Admin' | 'Lecturer' | 'Lab Assistant';
+export type RoleBadge = 'Admin' | 'Lecturer';
 
 export interface ManagedUser {
   id: string;

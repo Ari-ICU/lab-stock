@@ -71,16 +71,6 @@ export const authService = {
         assigned_labs: ['Room 102B', 'Room 206'],
       },
       {
-        id: 'usr_assistant_03',
-        name: 'Chan Vicheka',
-        email: 'chan.vicheka@rupp.edu.kh',
-        password: 'password123',
-        role: Role.ASSISTANT,
-        is_admin: false,
-        department: 'Hardware Depot & Lab 102B',
-        assigned_labs: ['Room 102B', 'Room 206'],
-      },
-      {
         id: '1234567890',
         name: 'John Doe',
         email: 'john.doe@rupp.edu.kh',

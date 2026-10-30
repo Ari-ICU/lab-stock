@@ -151,7 +151,7 @@ export const userModel = {
   async findAll(): Promise<Omit<User, 'password_hash'>[]> {
     try {
       const res = await query(
-        'SELECT id, name, email, role, is_admin, department, assigned_labs, created_at FROM users ORDER BY created_at DESC'
+        "SELECT id, name, email, role, is_admin, department, assigned_labs, created_at FROM users WHERE role != 'Lab Assistant' AND email NOT LIKE '%vicheka%' AND email NOT LIKE '%assistant%' ORDER BY created_at DESC"
       );
       return res.rows;
     } catch (err: any) {
