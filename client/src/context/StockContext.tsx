@@ -23,6 +23,21 @@ import {
   ToastType,
   ToastData,
 } from '@/types';
+import {
+  assetService,
+  stockService,
+  locationService,
+  loanService,
+  getAuthToken,
+  mapServerAsset,
+  mapServerStock,
+  mapServerLocation,
+  mapServerLoan,
+  toServerAsset,
+  toServerStock,
+  toServerLocation,
+  toServerLoan,
+} from '@/services';
 
 export type {
   ModalType,
@@ -39,6 +54,8 @@ interface StockContextType {
   locations: MockLocation[];
   loans: MockLoan[];
   transfers: MockTransfer[];
+  isBackendConnected: boolean;
+  refreshBackendData: () => Promise<void>;
   addStockItem: (item: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }) => MockItem;
   updateStockQuantity: (id: string, delta: number) => void;
   updateStockItem: (item: MockItem) => void;
@@ -96,6 +113,63 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const [locations, setLocations] = useState<MockLocation[]>(initialLocations);
   const [loans, setLoans] = useState<MockLoan[]>(initialLoans);
   const [transfers, setTransfers] = useState<MockTransfer[]>(initialTransfers);
+  const [isBackendConnected, setIsBackendConnected] = useState(false);
+
+  const refreshBackendData = async () => {
+    // Only query backend if authenticated with a JWT token to prevent 401s
+    const token = getAuthToken();
+    if (!token) {
+      setIsBackendConnected(false);
+      return;
+    }
+
+    try {
+      const [assetsRes, stockRes, locsRes, loansRes] = await Promise.allSettled([
+        assetService.getAssets(),
+        stockService.getStockItems(),
+        locationService.getLocations(),
+        loanService.getLoans(),
+      ]);
+
+      let connected = false;
+
+      if (assetsRes.status === 'fulfilled' && Array.isArray(assetsRes.value?.data) && assetsRes.value.data.length > 0) {
+        setAssets(assetsRes.value.data.map(mapServerAsset));
+        connected = true;
+      }
+
+      if (stockRes.status === 'fulfilled' && Array.isArray(stockRes.value?.data) && stockRes.value.data.length > 0) {
+        setStock(stockRes.value.data.map(mapServerStock));
+        connected = true;
+      }
+
+      if (locsRes.status === 'fulfilled' && Array.isArray(locsRes.value?.data) && locsRes.value.data.length > 0) {
+        setLocations(locsRes.value.data.map(mapServerLocation));
+        connected = true;
+      }
+
+      if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value?.data) && loansRes.value.data.length > 0) {
+        setLoans(loansRes.value.data.map(mapServerLoan));
+        connected = true;
+      }
+
+      setIsBackendConnected(connected);
+    } catch {
+      setIsBackendConnected(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshBackendData();
+
+    // Listen for live token acquisition from AuthContext
+    const handleAuthTokenReady = () => {
+      refreshBackendData();
+    };
+
+    window.addEventListener('csd-auth-token-ready', handleAuthTokenReady);
+    return () => window.removeEventListener('csd-auth-token-ready', handleAuthTokenReady);
+  }, []);
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -240,6 +314,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       };
       setStock((prev) => [newItem, ...prev]);
       showToast(`Added ${newItem.name} to stock`);
+      if (getAuthToken()) {
+        stockService.createStockItem(toServerStock(newItem) as any).catch(() => {});
+      }
       return newItem;
     }
   };
@@ -247,6 +324,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const updateStockItem = (updatedItem: MockItem) => {
     setStock((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
     showToast(`Updated ${updatedItem.name}`);
+    if (getAuthToken()) {
+      stockService.updateStockItem(updatedItem.id, toServerStock(updatedItem) as any).catch(() => {});
+    }
   };
 
   const updateStockQuantity = (id: string, delta: number) => {
@@ -264,12 +344,18 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Quantity adjusted (${delta > 0 ? `+${delta}` : delta})`);
+    if (getAuthToken()) {
+      stockService.adjustStockQuantity(id, delta).catch(() => {});
+    }
   };
 
   const deleteStockItem = (id: string) => {
     const target = stock.find((i) => i.id === id);
     setStock((prev) => prev.filter((i) => i.id !== id));
     showToast(`Removed ${target?.name || 'item'} from inventory`);
+    if (getAuthToken()) {
+      stockService.deleteStockItem(id).catch(() => {});
+    }
   };
 
   const addAsset = (assetData: Omit<MockAsset, 'id'> & { id?: string }): MockAsset => {
@@ -280,18 +366,27 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     };
     setAssets((prev) => [newAsset, ...prev]);
     showToast(`Registered network asset ${newAsset.name}`);
+    if (getAuthToken()) {
+      assetService.createAsset(toServerAsset(newAsset) as any).catch(() => {});
+    }
     return newAsset;
   };
 
   const updateAsset = (updatedAsset: MockAsset) => {
     setAssets((prev) => prev.map((a) => (a.id === updatedAsset.id ? updatedAsset : a)));
     showToast(`Updated ${updatedAsset.name}`);
+    if (getAuthToken()) {
+      assetService.updateAsset(updatedAsset.id, toServerAsset(updatedAsset) as any).catch(() => {});
+    }
   };
 
   const deleteAsset = (id: string) => {
     const target = assets.find((a) => a.id === id);
     setAssets((prev) => prev.filter((a) => a.id !== id));
     showToast(`Deleted asset ${target?.name || ''}`);
+    if (getAuthToken()) {
+      assetService.deleteAsset(id).catch(() => {});
+    }
   };
 
   const lendAsset = (data: Omit<MockLoan, 'id' | 'status'> & { id?: string }): MockLoan => {
@@ -317,6 +412,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     );
 
     showToast(`Checked out ${data.assetName} to ${data.borrowerName}`);
+    if (getAuthToken()) {
+      loanService.createLoan(toServerLoan(newLoan) as any).catch(() => {});
+    }
     return newLoan;
   };
 
@@ -353,6 +451,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     );
 
     showToast(`Device ${targetLoan.assetName} returned to lab stock`);
+    if (getAuthToken()) {
+      loanService.returnLoan(loanId, notes).catch(() => {});
+    }
   };
 
   const transferAsset = (
@@ -435,17 +536,26 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     };
     setLocations((prev) => [newLoc, ...prev]);
     showToast(`Registered location ${newLoc.name}`);
+    if (getAuthToken()) {
+      locationService.createLocation(toServerLocation(newLoc) as any).catch(() => {});
+    }
   };
 
   const updateLocation = (updatedLoc: MockLocation) => {
     setLocations((prev) => prev.map((l) => (l.id === updatedLoc.id ? updatedLoc : l)));
     showToast(`Updated location ${updatedLoc.name}`);
+    if (getAuthToken()) {
+      locationService.updateLocation(updatedLoc.id, toServerLocation(updatedLoc) as any).catch(() => {});
+    }
   };
 
   const deleteLocation = (id: string) => {
     const target = locations.find((l) => l.id === id);
     setLocations((prev) => prev.filter((l) => l.id !== id));
     showToast(`Deleted location ${target?.name || ''}`);
+    if (getAuthToken()) {
+      locationService.deleteLocation(id).catch(() => {});
+    }
   };
 
   return (
@@ -458,6 +568,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         locations,
         loans,
         transfers,
+        isBackendConnected,
+        refreshBackendData,
         addStockItem,
         updateStockItem,
         updateStockQuantity,

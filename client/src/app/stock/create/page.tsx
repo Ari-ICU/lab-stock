@@ -218,7 +218,7 @@ function CreateStockForm() {
       });
 
       setTimeout(() => {
-        router.push(`/stock/${created.id}`);
+        router.push('/stock');
       }, 250);
     } catch {
       showToast('Failed to register stock item', 'error');

@@ -11,6 +11,7 @@ import {
   RoleBadge,
   canUserManageLocation,
 } from '@/types';
+import { authService } from '@/services';
 
 export type {
   User,
@@ -65,21 +66,33 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     roleBadge: 'Lecturer',
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
-    department: 'Engineering Block A - Room 102B & Room 206',
+    department: 'Software Engineering Department',
     description: 'Course lecturer managing student lab stations in Room 102B & Room 206',
     assignedLabs: ['Room 102B', 'Room 206'],
   },
   {
-    name: 'Leang Vakhim',
-    email: 'vakhim@lab.edu',
+    name: 'Chan Vicheka',
+    email: 'assistant@lab.edu',
     password: 'password123',
     role: 'Lab Assistant',
     roleBadge: 'Lab Assistant',
-    avatarText: 'LV',
+    avatarText: 'CV',
     permissions: 'Inventory Check-in/Out & Equipment Prep',
-    department: 'Engineering Block A - Room 102B',
+    department: 'Hardware Depot & Lab 102B',
     description: 'Lab assistant managing equipment distribution under Faculty Lecturer supervision',
-    assignedLabs: ['Room 102B'],
+    assignedLabs: ['Room 102B', 'Room 206'],
+  },
+  {
+    name: 'John Doe',
+    email: 'john.doe@lab.edu',
+    password: 'password123',
+    role: 'Primary Lab Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'JD',
+    permissions: 'Full Read/Write Access & System Config',
+    department: 'Faculty of Engineering',
+    description: 'Engineering systems administrator',
+    assignedLabs: ['all'],
   },
 ];
 
@@ -98,6 +111,20 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     assignedLabs: ['all'],
   },
   {
+    id: 'user-assistant-vicheka',
+    name: 'Chan Vicheka',
+    email: 'assistant@lab.edu',
+    role: 'Lab Assistant',
+    roleBadge: 'Lab Assistant',
+    avatarText: 'CV',
+    permissions: 'Inventory Check-in/Out & Equipment Prep',
+    department: 'Hardware Depot & Lab 102B',
+    status: 'active',
+    lastLogin: 'Today, 09:15 AM',
+    assignedLabs: ['Room 102B', 'Room 206'],
+    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
+  },
+  {
     id: 'user-lecturer',
     name: 'Thoeurn Ratha',
     email: 'admin@lab.edu',
@@ -105,24 +132,23 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     roleBadge: 'Lecturer',
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
-    department: 'Engineering Block A - Room 102B & Room 206',
+    department: 'Software Engineering Department',
     status: 'active',
     lastLogin: 'Active now',
     assignedLabs: ['Room 102B', 'Room 206'],
   },
   {
-    id: 'user-assistant',
-    name: 'Leang Vakhim',
-    email: 'vakhim@lab.edu',
-    role: 'Lab Assistant',
-    roleBadge: 'Lab Assistant',
-    avatarText: 'LV',
-    permissions: 'Inventory Check-in/Out & Equipment Prep',
-    department: 'Engineering Block A - Room 102B',
+    id: 'user-admin-john',
+    name: 'John Doe',
+    email: 'john.doe@lab.edu',
+    role: 'Primary Lab Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'JD',
+    permissions: 'Full Read/Write Access & System Config',
+    department: 'Faculty of Engineering',
     status: 'active',
-    lastLogin: 'Today, 09:20 AM',
-    assignedLabs: ['Room 102B'],
-    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
+    lastLogin: 'Yesterday, 04:45 PM',
+    assignedLabs: ['all'],
   },
 ];
 
@@ -456,6 +482,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(INITIAL_MANAGED_USERS);
   const [sessionDevices, setSessionDevices] = useState<SessionDevice[]>(getInitialSessions);
 
+  const refreshUsersFromBackend = async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('lab_auth_token') : null;
+      if (!token) return;
+
+      const res = await authService.getUsers();
+      if (res?.users && Array.isArray(res.users) && res.users.length > 0) {
+        const dbUsers: ManagedUser[] = res.users.map((dbUser: any) => {
+          const roleBadge: RoleBadge =
+            dbUser.is_admin || dbUser.role === 'Primary Lab Administrator'
+              ? 'Admin'
+              : dbUser.role === 'Lab Assistant'
+              ? 'Lab Assistant'
+              : 'Lecturer';
+
+          const avatarText = (dbUser.name || 'User')
+            .split(' ')
+            .filter(Boolean)
+            .map((p: string) => p[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+
+          return {
+            id: String(dbUser.id),
+            name: dbUser.name,
+            email: dbUser.email,
+            role: dbUser.role,
+            roleBadge,
+            avatarText,
+            permissions:
+              roleBadge === 'Admin'
+                ? 'Full Read/Write Access & System Config'
+                : roleBadge === 'Lecturer'
+                ? 'Course Hardware Allocation & Catalog View'
+                : 'Inventory Check-in/Out & Equipment Prep',
+            department: dbUser.department || 'Engineering Department',
+            status: 'active',
+            lastLogin: dbUser.email === 'admin@lab.edu' ? 'Active now' : 'Today, 09:00 AM',
+            assignedLabs:
+              dbUser.assigned_labs && dbUser.assigned_labs.length > 0
+                ? dbUser.assigned_labs
+                : roleBadge === 'Admin'
+                ? ['all']
+                : ['Room 102B'],
+            supervisedBy:
+              roleBadge === 'Lab Assistant' ? 'Thoeurn Ratha (Faculty Lecturer)' : undefined,
+          };
+        });
+
+        setManagedUsers(dbUsers);
+        try {
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(dbUsers));
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // Backend offline or token pending
+    }
+  };
+
   // Sync state from localStorage on mount (client-only)
   useEffect(() => {
     // 1. Sync User
@@ -467,35 +555,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sanitized);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
       }
+
+      // Auto-acquire JWT token from backend for active account if not already cached
+      const existingToken = localStorage.getItem('lab_auth_token');
+      const userToAuth = storedUser ? JSON.parse(storedUser) : getDefaultUser();
+      if (!existingToken && userToAuth?.email) {
+        authService
+          .login({ email: userToAuth.email, password: 'password123' })
+          .then((res) => {
+            if (res?.token) {
+              localStorage.setItem('lab_auth_token', res.token);
+              window.dispatchEvent(new CustomEvent('csd-auth-token-ready'));
+            }
+          })
+          .catch(() => {});
+      } else if (existingToken) {
+        refreshUsersFromBackend();
+      }
     } catch {
       // ignore
     }
 
-    // 2. Sync Managed Users (ensure only the 3 authorized accounts or custom registered ones)
+    // 2. Sync Managed Users
     try {
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
       if (storedUsers) {
         const parsed: ManagedUser[] = JSON.parse(storedUsers);
-        const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim'];
+        const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim', 'Leang Vakhim'];
         let updated = parsed
-          .filter((u) => !olderDemoNames.includes(u.name))
+          .filter((u) => !olderDemoNames.includes(u.name) && !u.email.includes('vakhim'))
           .map((u) => {
             const migrated = { ...u, email: u.email.replace('@netlab.edu', '@lab.edu') };
             return sanitizeUser(migrated);
           });
 
-        // Ensure Dr. Heng Sovannarith is present
-        if (!updated.some((u) => u.name.includes('Sovannarith') || u.email.includes('sovannarith'))) {
-          updated.unshift(INITIAL_MANAGED_USERS[0]);
-        }
-        // Ensure Thoeurn Ratha is present
-        if (!updated.some((u) => u.name.includes('Ratha') || u.email.includes('admin'))) {
-          updated.splice(1, 0, INITIAL_MANAGED_USERS[1]);
-        }
-        // Ensure Leang Vakhim is present
-        if (!updated.some((u) => u.name.includes('Vakhim') || u.email.includes('vakhim'))) {
-          updated.push(INITIAL_MANAGED_USERS[2]);
-        }
+        INITIAL_MANAGED_USERS.forEach((initUser) => {
+          if (!updated.some((u) => u.email === initUser.email)) {
+            updated.push(initUser);
+          }
+        });
 
         const finalUsers = updated.map(sanitizeUser);
         setManagedUsers(finalUsers);
@@ -510,6 +608,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+
+    refreshUsersFromBackend();
+
+    const handleAuthTokenReady = () => {
+      refreshUsersFromBackend();
+    };
+    window.addEventListener('csd-auth-token-ready', handleAuthTokenReady);
 
     // 3. Sync Sessions & Detect Real Hardware/Browser (NO FAKE MOCK SESSIONS)
     const current = detectCurrentDevice();
@@ -600,6 +705,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     detectRealIp();
+
+    return () => {
+      window.removeEventListener('csd-auth-token-ready', handleAuthTokenReady);
+    };
   }, []);
 
   const saveUsers = (usersList: ManagedUser[]) => {
@@ -653,6 +762,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     saveUsers(updated);
+    authService.updateUserRole(userId, newRole).catch(() => {});
 
     // If updated user is the currently logged in user, update their session
     if (user && (user.id === userId || user.email === updated.find((u) => u.id === userId)?.email)) {
@@ -718,6 +828,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return u;
     });
     saveUsers(updated);
+    authService.updateUserAssignedLabs(userId, assignedLabs).catch(() => {});
 
     // If updated user is the currently logged in user, update active session state
     if (user && (user.id === userId || user.email === targetUser.email)) {
@@ -771,6 +882,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         : (newUser.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
     };
     saveUsers([...managedUsers, userToAdd]);
+    authService
+      .register({
+        name: userToAdd.name,
+        email: userToAdd.email,
+        password: 'password123',
+        role: userToAdd.role,
+        department: userToAdd.department,
+        is_admin: userToAdd.roleBadge === 'Admin',
+        assigned_labs: userToAdd.assignedLabs,
+      })
+      .catch(() => {});
   };
 
   const deleteUser = (userId: string): boolean => {
@@ -783,6 +905,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const filtered = managedUsers.filter((u) => u.id !== userId);
     saveUsers(filtered);
+    authService.deleteUser(userId).catch(() => {});
     return true;
   };
 
@@ -851,7 +974,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cleanEmail = email.trim().toLowerCase();
     const normalizedEmail = cleanEmail.replace('@netlab.edu', '@lab.edu');
 
-    // Check against managed users first
+    // 1. Attempt live backend authentication
+    try {
+      const res = await authService.login({ email: cleanEmail, password });
+      if (res?.token && res?.user) {
+        localStorage.setItem('lab_auth_token', res.token);
+
+        const assignedRooms =
+          res.user.assigned_labs && res.user.assigned_labs.length > 0
+            ? res.user.assigned_labs
+            : res.user.is_admin
+            ? ['all']
+            : ['Room 102B'];
+
+        const initials =
+          res.user.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || 'OP';
+
+        let badge: RoleBadge = 'Lab Assistant';
+        if (res.user.is_admin || res.user.role.toLowerCase().includes('admin')) {
+          badge = 'Admin';
+        } else if (res.user.role.toLowerCase().includes('lecturer')) {
+          badge = 'Lecturer';
+        }
+
+        const backendUser: User = {
+          id: String(res.user.id),
+          name: res.user.name,
+          email: res.user.email,
+          role: res.user.role,
+          roleBadge: badge,
+          avatarText: initials,
+          permissions: res.user.is_admin
+            ? 'Full Read/Write Access & System Config'
+            : 'Course Hardware Allocation & Catalog View',
+          department: res.user.department || 'Engineering Block A - Room 102B',
+          assignedLabs: assignedRooms,
+        };
+
+        const sanitized = sanitizeUser(backendUser);
+        setUser(sanitized);
+        if (rememberMe) {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+          } catch {
+            // ignore
+          }
+        }
+        setIsLoading(false);
+        return { success: true };
+      }
+    } catch {
+      // Backend is offline or credentials rejected, proceed to local demo fallback
+    }
+
+    // 2. Check against managed users fallback
     const matchedManaged = managedUsers.find(
       (acc) =>
         acc.email.toLowerCase() === cleanEmail ||
@@ -969,6 +1150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('lab_auth_token');
     } catch {
       // ignore
     }
@@ -993,6 +1175,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+
+    // Acquire that account's live JWT token from backend
+    authService
+      .login({ email: account.email, password: account.password || 'password123' })
+      .then((res) => {
+        if (res?.token) {
+          localStorage.setItem('lab_auth_token', res.token);
+          window.dispatchEvent(new CustomEvent('csd-auth-token-ready'));
+        }
+      })
+      .catch(() => {});
   };
 
   return (

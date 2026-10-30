@@ -157,7 +157,7 @@ function CreateAssetForm() {
       });
 
       setTimeout(() => {
-        router.push(`/assets/${created.id}`);
+        router.push('/assets');
       }, 250);
     } catch {
       showToast('Failed to register asset', 'error');

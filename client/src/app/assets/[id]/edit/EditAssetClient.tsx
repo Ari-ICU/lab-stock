@@ -150,7 +150,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       });
 
       showToast(`Successfully updated ${name.trim()}`);
-      router.push(`/assets/${asset.id}`);
+      router.push('/assets');
     } catch {
       showToast('Failed to update asset specifications', 'error');
       setIsSubmitting(false);

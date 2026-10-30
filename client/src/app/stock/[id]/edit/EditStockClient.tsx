@@ -181,7 +181,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       });
 
       setTimeout(() => {
-        router.push(`/stock/${item.id}`);
+        router.push('/stock');
       }, 250);
     } catch {
       showToast('Failed to save changes', 'error');
@@ -199,13 +199,13 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       <Header
         title={`Edit ${item.name}`}
         subtitle={`SKU: ${item.code} • ${item.location}`}
-        backHref={`/stock/${item.id}`}
-        backLabel="Details"
+        backHref="/stock"
+        backLabel="Inventory"
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
             <Link
-              href={`/stock/${item.id}`}
+              href="/stock"
               className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
             >
               Cancel
@@ -214,7 +214,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
             <button
               type="button"
               onClick={handleReset}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors cursor-pointer"
               title="Reset to saved values"
             >
               <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
@@ -232,6 +232,16 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
             >
               <Save className="w-3.5 h-3.5 text-neutral-300" />
               <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
+              title="Delete item"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Delete</span>
             </button>
           </div>
         }

@@ -51,5 +51,16 @@ export const loanService = {
   async returnEquipment(loanId: string, notes?: string): Promise<{ status: string; data: any }> {
     return apiClient.post(API_ENDPOINTS.LOANS.RETURN(loanId), { notes });
   },
+
+  /**
+   * Aliases for standard context consumption
+   */
+  async createLoan(loanData: CheckoutLoanInput): Promise<{ status: string; data: any }> {
+    return this.checkoutEquipment(loanData);
+  },
+
+  async returnLoan(loanId: string, notes?: string): Promise<{ status: string; data: any }> {
+    return this.returnEquipment(loanId, notes);
+  },
 };
 

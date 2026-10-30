@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
+import { seedAllData } from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,6 +85,14 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       }
 
       console.log('✅ Seeded 4 initial faculty users with bcrypt-hashed credentials.');
+    }
+
+    // Check if locations/assets/stock are empty; seed if needed
+    const assetCountRes = await pool.query('SELECT COUNT(*)::int as count FROM assets');
+    const assetCount = assetCountRes.rows[0]?.count || 0;
+
+    if (assetCount === 0) {
+      await seedAllData();
     }
 
     return { success: true, message: 'Database initialized successfully' };

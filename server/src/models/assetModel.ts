@@ -53,11 +53,12 @@ export const assetModel = {
 
   async findById(id: string): Promise<Asset | null> {
     try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       const res = await query(
-        `SELECT a.*, l.name as location_name 
+        `SELECT a.*, l.name as location_name, l.room as location_room 
          FROM assets a
          LEFT JOIN locations l ON a.location_id = l.id
-         WHERE a.id = $1 LIMIT 1`,
+         WHERE ${isUuid ? 'a.id = $1' : 'UPPER(a.serial_number) = UPPER($1)'} LIMIT 1`,
         [id]
       );
       return res.rows[0] || null;
@@ -131,14 +132,18 @@ export const assetModel = {
 
     if (fields.length === 0) return this.findById(id);
 
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     values.push(id);
-    const sql = `UPDATE assets SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${values.length} RETURNING *`;
+    const idClause = isUuid ? `id = $${values.length}` : `UPPER(serial_number) = UPPER($${values.length})`;
+    const sql = `UPDATE assets SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE ${idClause} RETURNING *`;
     const res = await query(sql, values);
     return res.rows[0] || null;
   },
 
   async delete(id: string): Promise<boolean> {
-    const res = await query('DELETE FROM assets WHERE id = $1', [id]);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const sql = isUuid ? 'DELETE FROM assets WHERE id = $1' : 'DELETE FROM assets WHERE UPPER(serial_number) = UPPER($1)';
+    const res = await query(sql, [id]);
     return (res.rowCount ?? 0) > 0;
   },
 };

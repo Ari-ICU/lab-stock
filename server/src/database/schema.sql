@@ -31,8 +31,11 @@ CREATE TABLE IF NOT EXISTS locations (
     room VARCHAR(50) NOT NULL,
     building VARCHAR(100) NOT NULL,
     capacity INT DEFAULT 30,
+    image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- 3. INVENTORY & STOCK (Stationery, Printer Ink, Hardware Tools, Consumables)
 CREATE TABLE IF NOT EXISTS stock_items (

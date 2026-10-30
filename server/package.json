@@ -8,7 +8,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc && tsc-alias && (mkdir -p dist/database && cp src/database/schema.sql dist/database/ 2>/dev/null || true)",
     "start": "node dist/server.js",
-    "db:init": "tsx src/database/initDb.ts"
+    "db:init": "tsx src/database/initDb.ts",
+    "db:seed": "tsx -e \"import('./src/database/seedData.js').then(m => m.seedAllData().then(() => process.exit(0)))\""
   },
   "keywords": [],
   "author": "",

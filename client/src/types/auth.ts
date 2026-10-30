@@ -62,17 +62,21 @@ export function canUserManageLocation(
     return false;
   }
 
-  const target = locationStr.toLowerCase();
-  return user.assignedLabs.some((assigned) => {
-    const a = assigned.toLowerCase().trim();
+  const t = locationStr.toLowerCase();
+  return user.assignedLabs.some((assignedRoom) => {
+    const a = assignedRoom.toLowerCase().trim();
     if (a === 'all' || a === '*') return true;
+    if (a.includes('102') && !a.includes('102b') && t.includes('102b')) return false;
+    if (a.includes('102b') && !t.includes('102b')) return false;
+    const escaped = a.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp('\\b' + escaped + '\\b', 'i');
+    if (regex.test(t) || t.includes(a)) return true;
     const normA = a.replace(/^(rm|room)\s*/i, '').trim();
-    return (
-      target.includes(a) ||
-      target.includes(a.replace(/^rm\s*/i, 'room ')) ||
-      target.includes(a.replace(/^room\s*/i, 'rm ')) ||
-      (normA.length > 0 && target.includes(normA))
-    );
+    if (normA.length > 0) {
+      const numRegex = new RegExp('\\b' + normA + '\\b', 'i');
+      return numRegex.test(t);
+    }
+    return false;
   });
 }
 

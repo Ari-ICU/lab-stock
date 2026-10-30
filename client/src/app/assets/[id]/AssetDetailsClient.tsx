@@ -152,10 +152,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
   const handleAddMaintenanceLog = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAllowed) {
-      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
-      return;
-    }
     addMaintenance({
       assetName: asset.name,
       serialNumber: asset.serialNumber,
@@ -172,10 +168,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
   const handleLend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAllowed) {
-      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
-      return;
-    }
     if (!borrowerName.trim()) {
       showToast('Please enter borrower name', 'error');
       return;
@@ -200,10 +192,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   };
 
   const handleReturnFromDetails = () => {
-    if (!isAllowed) {
-      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
-      return;
-    }
     const activeLoan = loans.find((l) => l.assetId === asset.id && l.status === 'active');
     if (activeLoan) {
       returnAsset(activeLoan.id, 'Returned directly via asset control panel');
@@ -220,10 +208,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAllowed) {
-      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
-      return;
-    }
     if (!targetLocation) {
       showToast('Please select a destination lab room', 'error');
       return;
@@ -341,7 +325,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 Restricted Laboratory Equipment
               </div>
               <div className="text-xs text-amber-800 leading-relaxed">
-                This equipment is stationed in <span className="font-semibold text-neutral-900">{asset.location}</span>. Your account is assigned to manage: <span className="font-semibold text-neutral-900">{user?.assignedLabs?.includes('all') ? 'All Laboratories' : user?.assignedLabs?.join(', ') || 'No Assigned Labs'}</span>. You have read-only visibility; relocation, status toggling, loans, and deletion are reserved for assigned lab operators or administrators.
+                This equipment is stationed in <span className="font-semibold text-neutral-900">{asset.location}</span>. Your account is assigned to manage: <span className="font-semibold text-neutral-900">{user?.assignedLabs?.includes('all') ? 'All Laboratories' : user?.assignedLabs?.join(', ') || 'No Assigned Labs'}</span>. You have read-only visibility; relocation, status toggling, loans, editing, and deletion are reserved for assigned lab operators.
               </div>
             </div>
           </div>

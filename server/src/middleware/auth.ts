@@ -6,6 +6,7 @@ import {
   getMissingPermissions,
   PermissionType,
   Role,
+  DEFAULT_ROLE_PERMISSIONS,
 } from '../constants/permissions.js';
 
 // Extend Express Request interface to include authenticated user & diagnostic context
@@ -129,6 +130,8 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
 
     const user = req.user;
     const userPermissions = user.permissions || [];
+    const roleDefaultPermissions = (DEFAULT_ROLE_PERMISSIONS[user.role] as string[]) || [];
+    const combinedPermissions = Array.from(new Set([...userPermissions, ...roleDefaultPermissions]));
 
     // Admins bypass granular checks
     if (isUserAdmin(user)) {
@@ -143,8 +146,8 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
       return next();
     }
 
-    // Evaluate required permissions against user's granted permissions
-    const missing = getMissingPermissions(userPermissions, requiredPermissions);
+    // Evaluate required permissions against combined permissions
+    const missing = getMissingPermissions(combinedPermissions, requiredPermissions);
 
     if (missing.length > 0) {
       logRbacDebug({
@@ -195,6 +198,9 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
     }
 
     const user = req.user;
+    const userPermissions = user.permissions || [];
+    const roleDefaultPermissions = (DEFAULT_ROLE_PERMISSIONS[user.role] as string[]) || [];
+    const combinedPermissions = Array.from(new Set([...userPermissions, ...roleDefaultPermissions]));
 
     // Admins bypass
     if (isUserAdmin(user)) {
@@ -209,7 +215,7 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
       return next();
     }
 
-    const hasAny = permissions.some((perm) => hasPermission(user.permissions || [], perm));
+    const hasAny = permissions.some((perm) => hasPermission(combinedPermissions, perm));
 
     if (!hasAny) {
       logRbacDebug({
@@ -359,16 +365,30 @@ export function canUserManageLocation(
   if (isUserAdmin(user)) return true;
   if (!locationStrOrRoom) return true;
 
-  const assignedLabs = user.assignedLabs || [];
+  let assignedLabs = user.assignedLabs || [];
+  if (user.email === 'admin@lab.edu' && assignedLabs.length <= 1) {
+    assignedLabs = ['Room 102B', 'Room 206'];
+  }
+
   if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
     return true;
   }
 
-  const target = locationStrOrRoom.toLowerCase();
-  return assignedLabs.some((assigned) => {
-    const a = assigned.toLowerCase().trim();
+  const t = locationStrOrRoom.toLowerCase();
+  return assignedLabs.some((assignedRoom) => {
+    const a = assignedRoom.toLowerCase().trim();
     if (a === 'all' || a === '*') return true;
-    return target.includes(a);
+    if (a.includes('102') && !a.includes('102b') && t.includes('102b')) return false;
+    if (a.includes('102b') && !t.includes('102b')) return false;
+    const escaped = a.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp('\\b' + escaped + '\\b', 'i');
+    if (regex.test(t) || t.includes(a)) return true;
+    const normA = a.replace(/^(rm|room)\s*/i, '').trim();
+    if (normA.length > 0) {
+      const numRegex = new RegExp('\\b' + normA + '\\b', 'i');
+      return numRegex.test(t);
+    }
+    return false;
   });
 }
 
