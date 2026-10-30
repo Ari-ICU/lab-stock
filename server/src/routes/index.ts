@@ -4,6 +4,8 @@ import stockRoutes from '@/routes/stockRoutes.js';
 import assetRoutes from '@/routes/assetRoutes.js';
 import loanRoutes from '@/routes/loanRoutes.js';
 import locationRoutes from '@/routes/locationRoutes.js';
+import maintenanceRoutes from '@/routes/maintenanceRoutes.js';
+import purchaseRequestRoutes from '@/routes/purchaseRequestRoutes.js';
 
 const router = Router();
 
@@ -30,5 +32,11 @@ router.use('/loans', loanRoutes);
 
 // Laboratory Locations & Rooms
 router.use('/locations', locationRoutes);
+
+// Maintenance & Audits
+router.use('/maintenance', maintenanceRoutes);
+
+// Purchase Requests & Procurement
+router.use('/requests', purchaseRequestRoutes);
 
 export default router;

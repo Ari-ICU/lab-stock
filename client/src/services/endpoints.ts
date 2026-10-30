@@ -60,5 +60,23 @@ export const API_ENDPOINTS = {
     UPDATE: (locationId: string) => `/locations/${locationId}`,
     DELETE: (locationId: string) => `/locations/${locationId}`,
   },
+
+  // Maintenance & Audits
+  MAINTENANCE: {
+    LIST: '/maintenance',
+    DETAILS: (id: string) => `/maintenance/${id}`,
+    CREATE: '/maintenance',
+    UPDATE: (id: string) => `/maintenance/${id}`,
+    DELETE: (id: string) => `/maintenance/${id}`,
+  },
+
+  // Purchase Requests & Procurement
+  REQUESTS: {
+    LIST: '/requests',
+    DETAILS: (id: string) => `/requests/${id}`,
+    CREATE: '/requests',
+    UPDATE: (id: string) => `/requests/${id}`,
+    DELETE: (id: string) => `/requests/${id}`,
+  },
 } as const;
 

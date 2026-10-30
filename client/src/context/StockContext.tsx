@@ -9,6 +9,7 @@ import {
   mockLocations as initialLocations,
   mockLoans as initialLoans,
   mockTransfers as initialTransfers,
+  mockPurchaseRequests as initialPurchaseRequests,
   MockItem,
   MockAsset,
   MockRack,
@@ -22,21 +23,25 @@ import {
   AnyEntity,
   ToastType,
   ToastData,
+  PurchaseRequest,
 } from '@/types';
 import {
   assetService,
   stockService,
   locationService,
   loanService,
+  maintenanceService,
   getAuthToken,
   mapServerAsset,
   mapServerStock,
   mapServerLocation,
   mapServerLoan,
+  mapServerMaintenance,
   toServerAsset,
   toServerStock,
   toServerLocation,
   toServerLoan,
+  toServerMaintenance,
 } from '@/services';
 
 export type {
@@ -54,6 +59,7 @@ interface StockContextType {
   locations: MockLocation[];
   loans: MockLoan[];
   transfers: MockTransfer[];
+  requests: PurchaseRequest[];
   isBackendConnected: boolean;
   refreshBackendData: () => Promise<void>;
   addStockItem: (item: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }) => MockItem;
@@ -75,6 +81,9 @@ interface StockContextType {
   addLocation: (loc: Omit<MockLocation, 'id'> & { id?: string }) => void;
   updateLocation: (loc: MockLocation) => void;
   deleteLocation: (id: string) => void;
+  addPurchaseRequest: (req: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }) => PurchaseRequest;
+  updatePurchaseRequestStatus: (id: string, status: PurchaseRequest['status'], notes?: string) => void;
+  deletePurchaseRequest: (id: string) => void;
   isScannerOpen: boolean;
   openScanner: () => void;
   closeScanner: () => void;
@@ -113,6 +122,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const [locations, setLocations] = useState<MockLocation[]>(initialLocations);
   const [loans, setLoans] = useState<MockLoan[]>(initialLoans);
   const [transfers, setTransfers] = useState<MockTransfer[]>(initialTransfers);
+  const [requests, setRequests] = useState<PurchaseRequest[]>(initialPurchaseRequests);
   const [isBackendConnected, setIsBackendConnected] = useState(false);
 
   const refreshBackendData = async () => {
@@ -124,11 +134,12 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const [assetsRes, stockRes, locsRes, loansRes] = await Promise.allSettled([
+      const [assetsRes, stockRes, locsRes, loansRes, maintRes] = await Promise.allSettled([
         assetService.getAssets(),
         stockService.getStockItems(),
         locationService.getLocations(),
         loanService.getLoans(),
+        maintenanceService.getMaintenance(),
       ]);
 
       let connected = false;
@@ -150,6 +161,11 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
       if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value?.data) && loansRes.value.data.length > 0) {
         setLoans(loansRes.value.data.map(mapServerLoan));
+        connected = true;
+      }
+
+      if (maintRes.status === 'fulfilled' && Array.isArray(maintRes.value?.data) && maintRes.value.data.length > 0) {
+        setMaintenance(maintRes.value.data.map(mapServerMaintenance));
         connected = true;
       }
 
@@ -517,16 +533,29 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     };
     setMaintenance((prev) => [newRec, ...prev]);
     showToast(`Scheduled maintenance for ${newRec.assetName}`);
+    if (getAuthToken()) {
+      maintenanceService.createMaintenance(toServerMaintenance(newRec) as any).then((res) => {
+        if (res?.data?.id) {
+          setMaintenance((prev) => prev.map((m) => (m.id === newRec.id ? { ...m, id: String(res.data.id) } : m)));
+        }
+      }).catch(() => {});
+    }
   };
 
   const updateMaintenance = (updatedRec: MockMaintenance) => {
     setMaintenance((prev) => prev.map((m) => (m.id === updatedRec.id ? updatedRec : m)));
     showToast(`Updated service log for ${updatedRec.assetName}`);
+    if (getAuthToken()) {
+      maintenanceService.updateMaintenance(updatedRec.id, toServerMaintenance(updatedRec) as any).catch(() => {});
+    }
   };
 
   const deleteMaintenance = (id: string) => {
     setMaintenance((prev) => prev.filter((m) => m.id !== id));
     showToast(`Deleted maintenance record`);
+    if (getAuthToken()) {
+      maintenanceService.deleteMaintenance(id).catch(() => {});
+    }
   };
 
   const addLocation = (locData: Omit<MockLocation, 'id'> & { id?: string }) => {
@@ -558,6 +587,40 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const addPurchaseRequest = (reqData: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }): PurchaseRequest => {
+    const newReq: PurchaseRequest = {
+      id: reqData.id || `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`,
+      requestDate: new Date().toISOString().split('T')[0],
+      status: reqData.status || 'pending',
+      ...reqData,
+    };
+    setRequests((prev) => [newReq, ...prev]);
+    showToast(`Purchase requisition "${newReq.title}" submitted successfully for ${newReq.targetRoom}.`);
+    return newReq;
+  };
+
+  const updatePurchaseRequestStatus = (id: string, status: PurchaseRequest['status'], notes?: string) => {
+    setRequests((prev) =>
+      prev.map((r) => {
+        if (r.id === id) {
+          return {
+            ...r,
+            status,
+            notes: notes !== undefined ? notes : r.notes,
+          };
+        }
+        return r;
+      })
+    );
+    showToast(`Requisition ${id} status updated to ${status.toUpperCase()}.`);
+  };
+
+  const deletePurchaseRequest = (id: string) => {
+    const target = requests.find((r) => r.id === id);
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+    showToast(`Purchase request ${target?.id || id} removed.`);
+  };
+
   return (
     <StockContext.Provider
       value={{
@@ -568,6 +631,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         locations,
         loans,
         transfers,
+        requests,
         isBackendConnected,
         refreshBackendData,
         addStockItem,
@@ -589,6 +653,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         addLocation,
         updateLocation,
         deleteLocation,
+        addPurchaseRequest,
+        updatePurchaseRequestStatus,
+        deletePurchaseRequest,
         isScannerOpen,
         openScanner,
         closeScanner,

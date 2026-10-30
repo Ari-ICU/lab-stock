@@ -90,6 +90,23 @@ export interface MockLocation {
   imageUrl?: string;
 }
 
+export interface PurchaseRequest {
+  id: string;
+  title: string;
+  category: string;
+  targetRoom: string;
+  quantity: number;
+  unit: string;
+  estimatedCost?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'approved' | 'ordered' | 'fulfilled' | 'rejected';
+  reason: string;
+  requestedBy: string;
+  requesterRole: string;
+  requestDate: string;
+  notes?: string;
+}
+
 export type AnyEntity =
   | MockItem
   | MockAsset
@@ -97,7 +114,8 @@ export type AnyEntity =
   | MockMaintenance
   | MockLocation
   | MockLoan
-  | MockTransfer;
+  | MockTransfer
+  | PurchaseRequest;
 
 export type ModalType =
   | 'none'

@@ -105,9 +105,46 @@ CREATE TABLE IF NOT EXISTS transfers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 7. MAINTENANCE & AUDIT LOGS
+CREATE TABLE IF NOT EXISTS maintenance_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    asset_id UUID REFERENCES assets(id) ON DELETE SET NULL,
+    asset_name VARCHAR(200) NOT NULL,
+    serial_number VARCHAR(100) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    technician VARCHAR(150) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. PURCHASE & PROCUREMENT REQUISITIONS
+CREATE TABLE IF NOT EXISTS purchase_requests (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    target_room VARCHAR(50) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit VARCHAR(50) NOT NULL DEFAULT 'Units',
+    estimated_cost VARCHAR(50),
+    priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    reason TEXT NOT NULL,
+    requested_by VARCHAR(150) NOT NULL,
+    requester_role VARCHAR(100) NOT NULL,
+    request_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- INDEXES for Query Performance
 CREATE INDEX IF NOT EXISTS idx_stock_items_category ON stock_items(category);
 CREATE INDEX IF NOT EXISTS idx_stock_items_status ON stock_items(status);
 CREATE INDEX IF NOT EXISTS idx_assets_serial ON assets(serial_number);
 CREATE INDEX IF NOT EXISTS idx_loans_status ON loans(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_status ON maintenance_records(status);
+CREATE INDEX IF NOT EXISTS idx_purchase_requests_status ON purchase_requests(status);
 

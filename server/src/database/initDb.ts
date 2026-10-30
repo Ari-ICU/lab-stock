@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import { seedAllData, seedLoans, seedTransfers } from './seedData.js';
+import { seedAllData, seedLoans, seedTransfers, seedMaintenance, seedPurchaseRequests } from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -145,6 +145,56 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         }
       }
       console.log('✅ Seeded device loans into PostgreSQL.');
+    }
+
+    // Ensure maintenance records are populated in PostgreSQL
+    const maintCountRes = await pool.query('SELECT COUNT(*)::int as count FROM maintenance_records');
+    const maintCount = maintCountRes.rows[0]?.count || 0;
+    if (maintCount === 0) {
+      for (const m of seedMaintenance) {
+        const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [m.serial_number]);
+        const assetId = assetRes.rows[0]?.id || null;
+        await query(
+          `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT DO NOTHING`,
+          [assetId, m.asset_name, m.serial_number, m.type, m.date, m.technician, m.status, m.notes]
+        );
+      }
+      console.log('✅ Seeded maintenance & audit records into PostgreSQL.');
+    }
+
+    // Ensure purchase requests are populated in PostgreSQL
+    const reqCountRes = await pool.query('SELECT COUNT(*)::int as count FROM purchase_requests');
+    const reqCount = reqCountRes.rows[0]?.count || 0;
+    if (reqCount === 0) {
+      for (const r of seedPurchaseRequests) {
+        await query(
+          `INSERT INTO purchase_requests (
+             id, title, category, target_room, quantity, unit,
+             estimated_cost, priority, status, reason, requested_by, requester_role, request_date, notes
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+           ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes`,
+          [
+            r.id,
+            r.title,
+            r.category,
+            r.target_room,
+            r.quantity,
+            r.unit,
+            r.estimated_cost,
+            r.priority,
+            r.status,
+            r.reason,
+            r.requested_by,
+            r.requester_role,
+            r.request_date,
+            r.notes,
+          ]
+        );
+      }
+      console.log('✅ Seeded purchase requisitions into PostgreSQL.');
     }
 
     return { success: true, message: 'Database initialized successfully' };

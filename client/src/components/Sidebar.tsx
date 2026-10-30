@@ -20,6 +20,7 @@ import {
   Barcode,
   X,
   ArrowLeftRight,
+  ShoppingCart,
   Users
 } from 'lucide-react';
 
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/assets', label: 'Hardware Assets', icon: Router },
   { href: '/stock', label: 'Inventory', icon: Package },
+  { href: '/requests', label: 'Purchase Requests', icon: ShoppingCart },
   { href: '/loans', label: 'Device Loans', icon: ArrowLeftRight },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench },
   { href: '/locations', label: 'Lab Locations', icon: MapPin },
@@ -51,6 +53,7 @@ export function Sidebar() {
     maintenance,
     locations,
     loans,
+    requests,
     isMobileSidebarOpen,
     closeMobileSidebar,
     showToast,
@@ -68,6 +71,7 @@ export function Sidebar() {
   });
 
   const activeLoansCount = loans.filter((l) => l.status === 'active').length;
+  const pendingRequestsCount = requests ? requests.filter((r) => r.status === 'pending').length : 0;
 
   return (
     <>
@@ -191,6 +195,8 @@ export function Sidebar() {
                 ? assets.length
                 : item.href === '/stock'
                 ? stock.length
+                : item.href === '/requests'
+                ? (pendingRequestsCount > 0 ? pendingRequestsCount : requests?.length)
                 : item.href === '/loans'
                 ? (activeLoansCount > 0 ? activeLoansCount : undefined)
                 : item.href === '/maintenance'

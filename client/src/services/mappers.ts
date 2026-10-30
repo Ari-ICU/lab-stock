@@ -1,4 +1,4 @@
-import { MockAsset, MockItem, MockLocation, MockLoan } from '@/types';
+import { MockAsset, MockItem, MockLocation, MockLoan, MockMaintenance } from '@/types';
 
 /**
  * Data mappers to convert between PostgreSQL / Express API payloads (snake_case)
@@ -136,4 +136,30 @@ export function toServerLoan(l: Partial<MockLoan>): Record<string, any> {
     notes: l.notes,
   };
 }
+
+export function mapServerMaintenance(m: any): MockMaintenance {
+  return {
+    id: String(m.id),
+    assetName: m.asset_name || m.assetName || 'Hardware Instrument',
+    serialNumber: m.serial_number || m.serialNumber || 'SN-N/A',
+    type: (m.type as MockMaintenance['type']) || 'Firmware Upgrade',
+    date: m.date ? (typeof m.date === 'string' ? m.date.split('T')[0] : new Date(m.date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+    technician: m.technician || 'Technician',
+    status: (m.status as MockMaintenance['status']) || 'Pending',
+    notes: m.notes || '',
+  };
+}
+
+export function toServerMaintenance(m: Partial<MockMaintenance>): Record<string, any> {
+  return {
+    asset_name: m.assetName,
+    serial_number: m.serialNumber,
+    type: m.type,
+    date: m.date,
+    technician: m.technician,
+    status: m.status,
+    notes: m.notes,
+  };
+}
+
 

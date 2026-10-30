@@ -303,6 +303,112 @@ export const seedTransfers = [
   },
 ];
 
+export const seedMaintenance = [
+  {
+    serial_number: 'OPT-102B-01-TO-24',
+    asset_name: 'Dell OptiPlex 7090 (24 Desktops in 102B)',
+    type: 'Firmware Upgrade',
+    date: '2026-10-25',
+    technician: 'Thoeurn Ratha',
+    status: 'Completed',
+    notes: 'Golden master OS image deployed across all 24 student workstations. Deep Freeze enabled for disk freeze.',
+  },
+  {
+    serial_number: 'DKN-FTKC60U-102B',
+    asset_name: 'Daikin 2.5 HP Air Conditioners (Lab 102B)',
+    type: 'Port Audit',
+    date: '2026-11-02',
+    technician: 'HVAC Maintenance Team',
+    status: 'In Progress',
+    notes: 'Bimonthly dust filter wash, evaporator coil sanitizing, and refrigerant pressure test for dual units.',
+  },
+  {
+    serial_number: 'EPS-L630U-8812',
+    asset_name: 'Epson PowerLite Laser Projector (Lab 102B)',
+    type: 'Port Audit',
+    date: '2026-10-20',
+    technician: 'Audio-Visual Staff',
+    status: 'Completed',
+    notes: 'Laser optical engine cleaned, motorized screen limit switches calibrated, HDMI 2.1 signal verified at 4K.',
+  },
+  {
+    serial_number: 'FCW2348L09M',
+    asset_name: 'Cisco C9300 48P Switch (Lab 102B)',
+    type: 'Firmware Upgrade',
+    date: '2026-11-15',
+    technician: 'Cisco TAC Support',
+    status: 'Pending',
+    notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 24 port VLAN mappings.',
+  },
+];
+
+export const seedPurchaseRequests = [
+  {
+    id: 'REQ-2026-001',
+    title: 'Cat6A UTP RJ45 2-Meter Factory Blue Patch Cords (Pack of 50)',
+    category: 'Cables & Accessories',
+    target_room: 'Room 102B',
+    quantity: 2,
+    unit: 'Boxes',
+    estimated_cost: '$140.00',
+    priority: 'high',
+    status: 'pending',
+    reason: 'Current supply in Room 102B is critically low; needed for 24 student workstation benches before upcoming semester exam.',
+    requested_by: 'Thoeurn Ratha',
+    requester_role: 'Faculty Lecturer',
+    request_date: '2026-10-28',
+    notes: 'Submitted for department director review. Awaiting budget sign-off.',
+  },
+  {
+    id: 'REQ-2026-002',
+    title: 'Cisco 10GBASE-SR SFP+ 850nm Optical Transceiver Modules',
+    category: 'Networking Equipment',
+    target_room: 'Room 206',
+    quantity: 8,
+    unit: 'Units',
+    estimated_cost: '$320.00',
+    priority: 'medium',
+    status: 'approved',
+    reason: 'Expansion of 10Gbps fiber uplinks between Rack 01 switch and student server cluster in Room 206.',
+    requested_by: 'Thoeurn Ratha',
+    requester_role: 'Faculty Lecturer',
+    request_date: '2026-10-25',
+    notes: 'Approved by Dr. Heng Sovannarith. University procurement vendor contacted.',
+  },
+  {
+    id: 'REQ-2026-003',
+    title: 'HP LaserJet 05A (CE505A) High-Yield Black Toner Cartridges',
+    category: 'Printer Supplies',
+    target_room: 'Room 102B',
+    quantity: 4,
+    unit: 'Cartridges',
+    estimated_cost: '$180.00',
+    priority: 'urgent',
+    status: 'ordered',
+    reason: 'Faculty laboratory report printer is showing low toner warning. Needed for student assignment printouts.',
+    requested_by: 'Chan Vicheka',
+    requester_role: 'Lab Assistant',
+    request_date: '2026-10-24',
+    notes: 'PO issued to supplier. Expected delivery early next week.',
+  },
+  {
+    id: 'REQ-2026-004',
+    title: 'iFixit Pro Tech Electronics & Computer Repair Tool Kit',
+    category: 'Electronics & Tools',
+    target_room: 'Room 102',
+    quantity: 2,
+    unit: 'Kits',
+    estimated_cost: '$150.00',
+    priority: 'medium',
+    status: 'fulfilled',
+    reason: 'Replacement precision screwdrivers and anti-static wrist straps for hardware maintenance depot workbench.',
+    requested_by: 'Chan Vicheka',
+    requester_role: 'Lab Assistant',
+    request_date: '2026-10-15',
+    notes: 'Delivered and verified by Dr. Heng Sovannarith. Stationed at Basement Depot Room 102.',
+  },
+];
+
 export async function seedAllData(): Promise<void> {
   console.log('🌱 Populating database tables with institutional fleet records...');
 
@@ -412,5 +518,48 @@ export async function seedAllData(): Promise<void> {
     }
   }
   console.log(`✅ Seeded ${seedTransfers.length} Laboratory Relocations.`);
+
+  // 6. Seed Maintenance Records
+  for (const m of seedMaintenance) {
+    const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [m.serial_number]);
+    const assetId = assetRes.rows[0]?.id || null;
+    await query(
+      `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT DO NOTHING`,
+      [assetId, m.asset_name, m.serial_number, m.type, m.date, m.technician, m.status, m.notes]
+    );
+  }
+  console.log(`✅ Seeded ${seedMaintenance.length} Maintenance & Audit Records.`);
+
+  // 7. Seed Purchase Requests
+  for (const r of seedPurchaseRequests) {
+    await query(
+      `INSERT INTO purchase_requests (
+         id, title, category, target_room, quantity, unit,
+         estimated_cost, priority, status, reason, requested_by, requester_role, request_date, notes
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+       ON CONFLICT (id) DO UPDATE
+       SET status = EXCLUDED.status, notes = EXCLUDED.notes`,
+      [
+        r.id,
+        r.title,
+        r.category,
+        r.target_room,
+        r.quantity,
+        r.unit,
+        r.estimated_cost,
+        r.priority,
+        r.status,
+        r.reason,
+        r.requested_by,
+        r.requester_role,
+        r.request_date,
+        r.notes,
+      ]
+    );
+  }
+  console.log(`✅ Seeded ${seedPurchaseRequests.length} Purchase Requisition Requests.`);
 }
 

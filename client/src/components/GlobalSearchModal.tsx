@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   Search,
   X,
@@ -11,17 +12,14 @@ import {
   Building,
   Laptop,
   Wrench,
+  ShoppingCart,
   ArrowRight,
-  ExternalLink,
-  MapPin,
-  Tag,
-  Hash,
   Sparkles,
 } from 'lucide-react';
 
 interface SearchResultItem {
   id: string;
-  type: 'asset' | 'stock' | 'location' | 'loan' | 'maintenance';
+  type: 'asset' | 'stock' | 'location' | 'loan' | 'maintenance' | 'request';
   title: string;
   subtitle: string;
   tag: string;
@@ -40,7 +38,9 @@ export function GlobalSearchModal() {
     locations,
     loans,
     maintenance,
+    requests,
   } = useStock();
+  const { user, canManageLocation } = useAuth();
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -54,6 +54,53 @@ export function GlobalSearchModal() {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isSearchOpen]);
+
+  // Dynamically compute suggestions from live database / context state
+  const dynamicSuggestions = useMemo(() => {
+    const suggestions: Array<{ label: string; q: string; type: string }> = [];
+
+    // 1. User's Handled Laboratories or Primary Lab Rooms
+    const handledLocs = locations.filter((loc) => canManageLocation(loc.room) || canManageLocation(loc.name));
+    const targetLocs = handledLocs.length > 0 ? handledLocs : locations.slice(0, 2);
+    for (const loc of targetLocs.slice(0, 2)) {
+      suggestions.push({
+        label: `${loc.name} (${loc.room})`,
+        q: loc.room,
+        type: 'My Handled Lab',
+      });
+    }
+
+    // 2. Hardware Assets (from live database)
+    for (const a of assets.slice(0, 2)) {
+      suggestions.push({
+        label: a.name,
+        q: a.model || a.name.split(' ')[0],
+        type: 'Hardware',
+      });
+    }
+
+    // 3. Inventory Consumables (from live database)
+    for (const s of stock.slice(0, 2)) {
+      suggestions.push({
+        label: s.name,
+        q: s.code || s.name.split(' ')[0],
+        type: s.category || 'Stock',
+      });
+    }
+
+    // 4. If any purchase requests exist, provide a requisition shortcut
+    if (requests && requests.length > 0) {
+      const pendingReq = requests.find((r) => r.status === 'pending') || requests[0];
+      suggestions.push({
+        label: `Requisition: ${pendingReq.title.length > 28 ? pendingReq.title.slice(0, 28) + '...' : pendingReq.title}`,
+        q: pendingReq.id,
+        type: 'Requisition',
+      });
+    }
+
+    // Return first 6 suggestions
+    return suggestions.slice(0, 6);
+  }, [locations, assets, stock, requests, canManageLocation]);
 
   // Aggregate and filter results
   const results = useMemo<SearchResultItem[]>(() => {
@@ -69,7 +116,9 @@ export function GlobalSearchModal() {
         a.model.toLowerCase().includes(q) ||
         a.serialNumber.toLowerCase().includes(q) ||
         a.location.toLowerCase().includes(q) ||
-        a.status.toLowerCase().includes(q);
+        a.status.toLowerCase().includes(q) ||
+        (a.description && a.description.toLowerCase().includes(q)) ||
+        (a.currentBorrower && a.currentBorrower.toLowerCase().includes(q));
 
       if (match) {
         items.push({
@@ -91,7 +140,9 @@ export function GlobalSearchModal() {
         s.name.toLowerCase().includes(q) ||
         s.code.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q) ||
-        s.location.toLowerCase().includes(q);
+        s.location.toLowerCase().includes(q) ||
+        (s.rack && s.rack.toLowerCase().includes(q)) ||
+        (s.description && s.description.toLowerCase().includes(q));
 
       if (match) {
         items.push({
@@ -119,7 +170,7 @@ export function GlobalSearchModal() {
           id: `loc-${l.id}`,
           type: 'location',
           title: l.name,
-          subtitle: `${l.building} • Room ${l.room} • Subnet: 192.168.102.0/24`,
+          subtitle: `${l.building} • Room ${l.room} • ${l.totalAssets || 0} Assets • ${l.totalItems || 0} Stock Items`,
           tag: 'Lab Classroom',
           badge: l.room,
           badgeColor: 'bg-neutral-100 text-neutral-800 border-neutral-300 font-mono',
@@ -134,7 +185,8 @@ export function GlobalSearchModal() {
         loan.borrowerName.toLowerCase().includes(q) ||
         loan.assetName.toLowerCase().includes(q) ||
         loan.serialNumber.toLowerCase().includes(q) ||
-        (loan.courseOrClass && loan.courseOrClass.toLowerCase().includes(q));
+        (loan.courseOrClass && loan.courseOrClass.toLowerCase().includes(q)) ||
+        (loan.notes && loan.notes.toLowerCase().includes(q));
 
       if (match) {
         items.push({
@@ -156,7 +208,8 @@ export function GlobalSearchModal() {
         m.assetName.toLowerCase().includes(q) ||
         m.serialNumber.toLowerCase().includes(q) ||
         m.technician.toLowerCase().includes(q) ||
-        m.type.toLowerCase().includes(q);
+        m.type.toLowerCase().includes(q) ||
+        (m.notes && m.notes.toLowerCase().includes(q));
 
       if (match) {
         items.push({
@@ -172,70 +225,125 @@ export function GlobalSearchModal() {
       }
     }
 
+    // 6. Purchase Requests / Procurement Requisitions
+    if (requests) {
+      for (const r of requests) {
+        const match =
+          r.title.toLowerCase().includes(q) ||
+          r.category.toLowerCase().includes(q) ||
+          r.targetRoom.toLowerCase().includes(q) ||
+          r.requestedBy.toLowerCase().includes(q) ||
+          r.reason.toLowerCase().includes(q) ||
+          r.id.toLowerCase().includes(q) ||
+          (r.notes && r.notes.toLowerCase().includes(q)) ||
+          'request'.includes(q) ||
+          'buy'.includes(q);
+
+        if (match) {
+          items.push({
+            id: `req-${r.id}`,
+            type: 'request',
+            title: `[Buy] ${r.title}`,
+            subtitle: `${r.quantity} ${r.unit} for ${r.targetRoom} • Requested by ${r.requestedBy} (${r.requesterRole})`,
+            tag: 'Purchase Requisition',
+            badge: r.status.toUpperCase(),
+            badgeColor:
+              r.status === 'pending'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : r.status === 'approved'
+                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                : r.status === 'ordered'
+                ? 'bg-purple-50 text-purple-800 border-purple-200'
+                : r.status === 'fulfilled'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-rose-50 text-rose-800 border-rose-200',
+            href: '/requests',
+          });
+        }
+      }
+    }
+
     return items;
-  }, [query, assets, stock, locations, loans, maintenance]);
+  }, [query, assets, stock, locations, loans, maintenance, requests]);
 
   // Keep selected index in bounds
   useEffect(() => {
     setSelectedIndex(0);
-  }, [results.length]);
+  }, [results]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isSearchOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeSearch();
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, results.length - 1)));
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (results[selectedIndex]) {
+          handleSelect(results[selectedIndex]);
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen, results, selectedIndex]);
 
   const handleSelect = (item: SearchResultItem) => {
     closeSearch();
     router.push(item.href);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      closeSearch();
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1 < results.length ? prev + 1 : 0));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 >= 0 ? prev - 1 : results.length - 1));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (results[selectedIndex]) {
-        handleSelect(results[selectedIndex]);
-      }
-    }
-  };
-
   if (!isSearchOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 p-4 animate-in fade-in duration-100"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) closeSearch();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4">
+      {/* Backdrop */}
       <div
-        onKeyDown={handleKeyDown}
-        className="bg-white border border-neutral-200 rounded-xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[82vh] animate-in zoom-in-95 duration-100 ring-1 ring-black/5"
-      >
-        {/* Search Header Bar */}
-        <div className="h-14 px-4 sm:px-5 border-b border-neutral-200 flex items-center gap-3 shrink-0 bg-white">
-          <Search className="w-5 h-5 text-neutral-400 shrink-0" />
+        className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs transition-opacity"
+        onClick={closeSearch}
+      />
+
+      {/* Modal Dialog */}
+      <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-neutral-200 overflow-hidden flex flex-col max-h-[80vh] z-10 animate-in fade-in-0 zoom-in-95 duration-150">
+        {/* Search Input Bar */}
+        <div className="flex items-center px-4 py-3.5 border-b border-neutral-200 bg-white shrink-0">
+          <Search className="w-5 h-5 text-neutral-400 mr-3 shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search equipment, IP, MAC, serial number, room, SKU, or borrower..."
-            className="flex-1 bg-transparent text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none font-medium"
+            className="w-full text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-neutral-400 hover:text-neutral-700 rounded transition-colors"
+              className="p-1 text-neutral-400 hover:text-neutral-600 rounded mr-1 cursor-pointer"
               title="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono text-neutral-400 bg-neutral-100 border border-neutral-200 rounded shrink-0">
+          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-neutral-400 bg-neutral-100 border border-neutral-200 rounded shrink-0">
             ESC
           </kbd>
         </div>
@@ -246,30 +354,23 @@ export function GlobalSearchModal() {
           className="flex-1 overflow-y-auto divide-y divide-neutral-100 bg-neutral-50/40 text-xs"
         >
           {query.trim() === '' ? (
-            /* Empty Query / Quick Suggestions */
+            /* Empty Query / Dynamic Quick Suggestions */
             <div className="p-6 text-neutral-500 space-y-4">
               <div className="flex items-center gap-2 text-neutral-400 text-[11px] font-semibold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Suggested Quick Searches</span>
+                <span>Live Quick Searches (Dynamic from Database)</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  { label: 'Dell OptiPlex 7090 Desktop', q: 'OptiPlex', type: 'PC Fleet' },
-                  { label: 'Cisco Catalyst 9300 Switch', q: 'Catalyst', type: 'Switch' },
-                  { label: 'Computer Lab Room 102B', q: '102B', type: 'Room' },
-                  { label: 'Dell 24" FHD IPS Monitors', q: 'Monitors', type: 'Peripherals' },
-                  { label: 'Epson PowerLite Laser Projector', q: 'Projector', type: 'Hardware' },
-                  { label: 'Network & Server Lab 206', q: '206', type: 'Server Lab' },
-                ].map((s) => (
+                {dynamicSuggestions.map((s) => (
                   <button
                     key={s.label}
                     onClick={() => setQuery(s.q)}
                     className="p-2.5 bg-white border border-neutral-200/80 hover:border-neutral-400 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer group shadow-2xs"
                   >
-                    <span className="font-semibold text-neutral-800 group-hover:text-emerald-700 transition-colors">
+                    <span className="font-semibold text-neutral-800 group-hover:text-emerald-700 transition-colors truncate mr-2">
                       {s.label}
                     </span>
-                    <span className="text-[10px] text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded shrink-0">
                       {s.type}
                     </span>
                   </button>
@@ -284,7 +385,7 @@ export function GlobalSearchModal() {
                 No matching equipment or records found
               </div>
               <p className="text-xs text-neutral-400 max-w-sm mx-auto">
-                No asset, consumable, room, or borrower matched &ldquo;<span className="font-mono text-neutral-700 font-semibold">{query}</span>&rdquo;.
+                No asset, consumable, room, requisition, or borrower matched &ldquo;<span className="font-mono text-neutral-700 font-semibold">{query}</span>&rdquo;.
               </p>
             </div>
           ) : (
@@ -319,6 +420,7 @@ export function GlobalSearchModal() {
                         {item.type === 'location' && <Building className="w-4 h-4" />}
                         {item.type === 'loan' && <Laptop className="w-4 h-4" />}
                         {item.type === 'maintenance' && <Wrench className="w-4 h-4" />}
+                        {item.type === 'request' && <ShoppingCart className="w-4 h-4" />}
                       </div>
 
                       <div className="min-w-0">
@@ -374,22 +476,25 @@ export function GlobalSearchModal() {
         {/* Modal Footer Keyboard Guide */}
         <div className="h-10 px-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between text-[11px] text-neutral-500 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-white border border-neutral-200 rounded text-[10px] font-mono">↑</kbd>
-              <kbd className="px-1 py-0.5 bg-white border border-neutral-200 rounded text-[10px] font-mono">↓</kbd>
-              <span>to navigate</span>
+            <span>
+              <kbd className="px-1.5 py-0.5 font-mono text-[10px] bg-white border border-neutral-300 rounded shadow-2xs">
+                ↑
+              </kbd>{' '}
+              <kbd className="px-1.5 py-0.5 font-mono text-[10px] bg-white border border-neutral-300 rounded shadow-2xs">
+                ↓
+              </kbd>{' '}
+              to navigate
             </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-white border border-neutral-200 rounded text-[10px] font-mono">↵</kbd>
-              <span>to open</span>
+            <span>
+              <kbd className="px-1.5 py-0.5 font-mono text-[10px] bg-white border border-neutral-300 rounded shadow-2xs">
+                ↵
+              </kbd>{' '}
+              to open
             </span>
           </div>
-          <span className="text-[10px] text-neutral-400 font-mono">
-            LabStock Fleet Search
-          </span>
+          <span className="text-[10px] text-neutral-400">LabStock Fleet Search</span>
         </div>
       </div>
     </div>
   );
 }
-
