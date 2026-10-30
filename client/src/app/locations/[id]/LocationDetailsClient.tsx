@@ -54,6 +54,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     markRoomAudited,
     addRoomInventoryItem,
     deleteRoomInventoryItem,
+    updateStockQuantity,
     showToast,
   } = useStock();
   const { user, canManageLocation } = useAuth();
@@ -227,7 +228,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         (l as any).code === id ||
         l.room.toLowerCase().replace(/[^a-z0-9]/g, '') === (id || '').toLowerCase().replace(/[^a-z0-9]/g, '')
     ) ||
-    (id && id.includes('-') && id.length > 20 ? locations[0] : undefined);
+    (locations.length > 0 ? locations[0] : undefined);
   const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
   const isAllowed = isAdmin || (loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false);
 
@@ -371,6 +372,24 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  if (locations.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          title="Loading Laboratory..."
+          subtitle="Location Directory"
+          showExport={false}
+        />
+        <div className="flex-1 flex items-center justify-center p-12 text-neutral-400 text-xs">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border-2 border-neutral-300 border-t-emerald-500 rounded-full animate-spin" />
+            <span className="font-medium text-neutral-600">Connecting to Department Central Stock & Assets...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!loc) {
     return (
       <div className="flex-1 flex flex-col min-w-0">
@@ -463,11 +482,15 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     });
 
     if (itemSource === 'stock' && selectedStockCode) {
-      showToast(`Allocated ${newItemQtyWorking + newItemQtyBroken} ${newItemUnit} of "${newItemName}" from Central Stock to ${loc.room}`);
+      updateStockQuantity(selectedStockCode, -(Number(newItemQtyWorking) + Number(newItemQtyBroken)));
+      showToast(
+        `Allocated ${newItemQtyWorking + newItemQtyBroken} ${newItemUnit} of "${newItemName}" from Central Stock to ${loc.room}`,
+        'success'
+      );
     } else if (itemSource === 'asset' && selectedAssetSerial) {
-      showToast(`Allocated "${newItemName}" from Central Assets to ${loc.room}`);
+      showToast(`Allocated "${newItemName}" from Central Assets to ${loc.room}`, 'success');
     } else {
-      showToast(`Registered "${newItemName}" in ${loc.room}`);
+      showToast(`Registered "${newItemName}" in ${loc.room}`, 'success');
     }
 
     setNewItemName('');
@@ -819,6 +842,19 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                         item.qtyBroken > 0 ||
                         /broken|defect|damage|fault|repair|cracked|stuck|replace/i.test(item.remarks || '');
 
+                      const linkedStock = stock.find(
+                        (s) =>
+                          s.name.toLowerCase() === item.name.toLowerCase() ||
+                          item.name.toLowerCase().includes(s.name.toLowerCase()) ||
+                          s.name.toLowerCase().includes(item.name.toLowerCase())
+                      );
+                      const linkedAsset = assets.find(
+                        (a) =>
+                          a.name.toLowerCase() === item.name.toLowerCase() ||
+                          item.name.toLowerCase().includes(a.name.toLowerCase()) ||
+                          a.name.toLowerCase().includes(item.name.toLowerCase())
+                      );
+
                       return (
                         <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
                           {/* Visual */}
@@ -836,6 +872,35 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                 {item.unit}
                               </span>
                             </div>
+
+                            {/* Center Stock / Assets Source Link */}
+                            {linkedStock && (
+                              <div className="mt-1">
+                                <Link
+                                  href="/stock"
+                                  className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-1.5 py-0.5 rounded transition-colors"
+                                  title="Master Item in Central Stock (/stock)"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                  <span>Center Stock: {linkedStock.code}</span>
+                                  <span className="text-emerald-700 font-bold">• {linkedStock.quantity} in Dept</span>
+                                </Link>
+                              </div>
+                            )}
+                            {linkedAsset && (
+                              <div className="mt-1">
+                                <Link
+                                  href="/assets"
+                                  className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-1.5 py-0.5 rounded transition-colors"
+                                  title="Master Asset in Central Assets (/assets)"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                  <span>Center Asset: {linkedAsset.serialNumber}</span>
+                                  <span className="text-blue-700 font-bold">• {linkedAsset.totalUnits ?? 1} in Dept</span>
+                                </Link>
+                              </div>
+                            )}
+
                             {item.remarks && (
                               <div className="mt-1">
                                 {isDefectRemark ? (

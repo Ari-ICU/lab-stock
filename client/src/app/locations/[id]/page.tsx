@@ -2,7 +2,22 @@ import { Suspense } from 'react';
 import LocationDetailsClient from './LocationDetailsClient';
 
 export function generateStaticParams() {
-  return [{ id: '1' }];
+  return [
+    { id: '1' },
+    { id: '07cf0336-1b6b-45f1-9d53-89910fca337c' },
+    { id: 'LOC-102B' },
+    { id: 'LOC-206' },
+    { id: 'LOC-201' },
+    { id: 'LOC-203' },
+    { id: 'LOC-305' },
+    { id: 'LOC-102' },
+    { id: 'L1' },
+    { id: 'L2' },
+    { id: 'L3' },
+    { id: 'L4' },
+    { id: 'L5' },
+    { id: 'L6' },
+  ];
 }
 
 type Props = {
