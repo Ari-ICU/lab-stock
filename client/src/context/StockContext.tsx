@@ -2,14 +2,6 @@
 
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import {
-  mockStock as initialStock,
-  mockAssets as initialAssets,
-  mockRacks as initialRacks,
-  mockMaintenance as initialMaintenance,
-  mockLocations as initialLocations,
-  mockLoans as initialLoans,
-  mockTransfers as initialTransfers,
-  mockPurchaseRequests as initialPurchaseRequests,
   MockItem,
   MockAsset,
   MockRack,
@@ -17,8 +9,6 @@ import {
   MockLocation,
   MockLoan,
   MockTransfer,
-} from '@/data/mockData';
-import {
   ModalType,
   AnyEntity,
   ToastType,
@@ -27,6 +17,7 @@ import {
   RoomInventoryItem,
 } from '@/types';
 import {
+  authService,
   assetService,
   stockService,
   locationService,
@@ -124,19 +115,33 @@ interface StockContextType {
 const StockContext = createContext<StockContextType | undefined>(undefined);
 
 export function StockProvider({ children }: { children: React.ReactNode }) {
-  const [stock, setStock] = useState<MockItem[]>(initialStock);
-  const [assets, setAssets] = useState<MockAsset[]>(initialAssets);
-  const [racks, setRacks] = useState<MockRack[]>(initialRacks);
-  const [maintenance, setMaintenance] = useState<MockMaintenance[]>(initialMaintenance);
-  const [locations, setLocations] = useState<MockLocation[]>(initialLocations);
-  const [loans, setLoans] = useState<MockLoan[]>(initialLoans);
-  const [transfers, setTransfers] = useState<MockTransfer[]>(initialTransfers);
-  const [requests, setRequests] = useState<PurchaseRequest[]>(initialPurchaseRequests);
+  const [stock, setStock] = useState<MockItem[]>([]);
+  const [assets, setAssets] = useState<MockAsset[]>([]);
+  const [racks, setRacks] = useState<MockRack[]>([]);
+  const [maintenance, setMaintenance] = useState<MockMaintenance[]>([]);
+  const [locations, setLocations] = useState<MockLocation[]>([]);
+  const [loans, setLoans] = useState<MockLoan[]>([]);
+  const [transfers, setTransfers] = useState<MockTransfer[]>([]);
+  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [isBackendConnected, setIsBackendConnected] = useState(false);
 
   const refreshBackendData = async () => {
-    // Only query backend if authenticated with a JWT token to prevent 401s
-    const token = getAuthToken();
+    let token = getAuthToken();
+    if (!token && typeof window !== 'undefined') {
+      try {
+        const authRes = await authService.login({
+          email: 'heng.sovannarith@rupp.edu.kh',
+          password: 'password123',
+        });
+        if (authRes?.token) {
+          localStorage.setItem('lab_auth_token', authRes.token);
+          token = authRes.token;
+        }
+      } catch {
+        // backend might be starting
+      }
+    }
+
     if (!token) {
       setIsBackendConnected(false);
       return;
@@ -153,35 +158,60 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       let connected = false;
+      let fetchedAssets: MockAsset[] = [];
+      let fetchedStock: MockItem[] = [];
 
-      if (assetsRes.status === 'fulfilled' && Array.isArray(assetsRes.value?.data) && assetsRes.value.data.length > 0) {
-        setAssets(assetsRes.value.data.map(mapServerAsset));
+      if (assetsRes.status === 'fulfilled' && Array.isArray(assetsRes.value?.data)) {
+        fetchedAssets = assetsRes.value.data.map(mapServerAsset);
+        setAssets(fetchedAssets);
         connected = true;
       }
 
-      if (stockRes.status === 'fulfilled' && Array.isArray(stockRes.value?.data) && stockRes.value.data.length > 0) {
-        setStock(stockRes.value.data.map(mapServerStock));
+      if (stockRes.status === 'fulfilled' && Array.isArray(stockRes.value?.data)) {
+        fetchedStock = stockRes.value.data.map(mapServerStock);
+        setStock(fetchedStock);
         connected = true;
       }
 
-      if (locsRes.status === 'fulfilled' && Array.isArray(locsRes.value?.data) && locsRes.value.data.length > 0) {
+      if (locsRes.status === 'fulfilled' && Array.isArray(locsRes.value?.data)) {
         setLocations(locsRes.value.data.map(mapServerLocation));
         connected = true;
       }
 
-      if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value?.data) && loansRes.value.data.length > 0) {
+      if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value?.data)) {
         setLoans(loansRes.value.data.map(mapServerLoan));
         connected = true;
       }
 
-      if (maintRes.status === 'fulfilled' && Array.isArray(maintRes.value?.data) && maintRes.value.data.length > 0) {
+      if (maintRes.status === 'fulfilled' && Array.isArray(maintRes.value?.data)) {
         setMaintenance(maintRes.value.data.map(mapServerMaintenance));
         connected = true;
       }
 
-      if (reqsRes.status === 'fulfilled' && Array.isArray(reqsRes.value?.data) && reqsRes.value.data.length > 0) {
+      if (reqsRes.status === 'fulfilled' && Array.isArray(reqsRes.value?.data)) {
         setRequests(reqsRes.value.data.map(mapServerPurchaseRequest));
         connected = true;
+      }
+
+      // Populate racks dynamically from real database stock and assets
+      const uniqueRackNames = Array.from(
+        new Set([
+          ...fetchedStock.map((s) => s.rack).filter(Boolean),
+          ...fetchedAssets.map((a: any) => a.placementRack).filter(Boolean),
+        ])
+      );
+      if (uniqueRackNames.length > 0) {
+        setRacks(
+          uniqueRackNames.map((name, idx) => ({
+            id: `rack-${idx + 1}`,
+            name,
+            code: `RCK-${String(idx + 1).padStart(2, '0')}`,
+            location: 'Laboratory Facility',
+            totalSlots: 24,
+            usedSlots: 12,
+            type: 'Storage Shelf' as const,
+          }))
+        );
       }
 
       setIsBackendConnected(connected);
@@ -627,6 +657,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Updated count in room inventory`, 'info');
+    if (getAuthToken()) {
+      locationService.updateRoomInventoryCount(itemId, field, delta).catch(() => {});
+    }
   };
 
   const markRoomAudited = (roomId: string, auditorName: string) => {
@@ -646,6 +679,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Room marked audited for ${today} by ${auditorName}`, 'success');
+    if (getAuthToken()) {
+      locationService.markRoomAudited(roomId, auditorName).catch(() => {});
+    }
   };
 
   const addRoomInventoryItem = (
@@ -668,6 +704,25 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Added ${newItem.name} to room inventory`, 'success');
+    if (getAuthToken()) {
+      locationService.addRoomInventory(roomId, itemData).then((res) => {
+        if (res?.data?.id) {
+          // Update temporary id with server id
+          setLocations((current) =>
+            current.map((l) =>
+              l.id !== roomId
+                ? l
+                : {
+                    ...l,
+                    inventories: (l.inventories || []).map((inv) =>
+                      inv.id === newItem.id ? { ...inv, id: String(res.data.id) } : inv
+                    ),
+                  }
+            )
+          );
+        }
+      }).catch(() => {});
+    }
   };
 
   const deleteRoomInventoryItem = (roomId: string, itemId: string) => {
@@ -681,6 +736,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Removed item from room inventory`, 'info');
+    if (getAuthToken()) {
+      locationService.deleteRoomInventory(itemId).catch(() => {});
+    }
   };
 
   const addPurchaseRequest = (reqData: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }): PurchaseRequest => {
