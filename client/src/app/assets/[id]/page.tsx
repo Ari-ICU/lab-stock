@@ -1,7 +1,7 @@
 import AssetDetailsClient from './AssetDetailsClient';
 
 export function generateStaticParams() {
-  return [];
+  return [{ id: '1' }];
 }
 
 type Props = {

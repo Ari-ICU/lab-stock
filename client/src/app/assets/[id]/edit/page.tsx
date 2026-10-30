@@ -1,7 +1,7 @@
 import EditAssetClient from './EditAssetClient';
 
 export function generateStaticParams() {
-  return [];
+  return [{ id: '1' }];
 }
 
 type Props = {
