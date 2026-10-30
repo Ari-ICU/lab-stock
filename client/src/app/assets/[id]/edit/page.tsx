@@ -1,10 +1,7 @@
-import { mockAssets } from '@/data/mockData';
 import EditAssetClient from './EditAssetClient';
 
 export function generateStaticParams() {
-  return mockAssets.map((asset) => ({
-    id: asset.id,
-  }));
+  return [];
 }
 
 type Props = {

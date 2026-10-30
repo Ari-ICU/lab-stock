@@ -1,10 +1,7 @@
-import { mockAssets } from '@/data/mockData';
 import AssetDetailsClient from './AssetDetailsClient';
 
 export function generateStaticParams() {
-  return mockAssets.map((asset) => ({
-    id: asset.id,
-  }));
+  return [];
 }
 
 type Props = {
