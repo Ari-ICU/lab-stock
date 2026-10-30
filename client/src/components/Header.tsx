@@ -56,21 +56,21 @@ export function Header({
         </button>
 
         {backHref ? (
-          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 truncate">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
             <Link
               href={backHref}
-              className="text-xs sm:text-base font-bold text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-1 shrink-0 group"
+              className="text-xs sm:text-sm font-semibold text-neutral-500 hover:text-neutral-900 transition-colors flex items-center gap-1 shrink-0 group"
               title={`Back to ${backLabel}`}
             >
               <ArrowLeft className="w-4 h-4 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
-              <span className="hidden xs:inline sm:inline">{backLabel}</span>
+              <span className="hidden sm:inline">{backLabel}</span>
             </Link>
             <span className="text-neutral-300">/</span>
-            <h1 className="text-xs sm:text-base font-bold text-neutral-900 truncate">{title}</h1>
+            <h1 className="text-sm sm:text-base font-bold text-neutral-900 truncate">{title}</h1>
             {subtitle && (
               <>
-                <span className="text-neutral-300 hidden sm:inline">/</span>
-                <span className="text-xs text-neutral-500 font-medium hidden sm:inline truncate">{subtitle}</span>
+                <span className="text-neutral-300 hidden lg:inline">/</span>
+                <span className="text-xs text-neutral-500 font-medium hidden lg:inline truncate">{subtitle}</span>
               </>
             )}
           </div>

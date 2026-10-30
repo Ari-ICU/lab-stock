@@ -352,16 +352,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleMarkAudited}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
-              title="Stamp room with today's audit date"
-            >
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Mark Audited Today</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setShowDoorQrModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
               title="Generate printable QR placard for room door"
@@ -402,17 +392,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
-
-                <div className="h-4 w-px bg-neutral-200 mx-1 hidden sm:block" />
-
-                <button
-                  type="button"
-                  onClick={() => setShowAddItemModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Room Item</span>
-                </button>
               </>
             )}
           </div>
@@ -480,20 +459,24 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
               <button
                 type="button"
-                onClick={() => handleTabChange('audit')}
+                onClick={handleMarkAudited}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
+                title="Stamp room with today's audit date"
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Quick Room Audit Mode</span>
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                <span>Mark Audited Today</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setShowAddItemModal(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Add Item</span>
-              </button>
+
+              {isAllowed && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddItemModal(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Add Room Item</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -626,26 +609,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         {/* 4. Tab Content: Facility & Condition Matrix */}
         {activeTab === 'matrix' && (
           <div className="space-y-6">
-            {/* Helper Banner */}
-            <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-              <div className="space-y-0.5">
-                <span className="font-bold text-emerald-950">
-                  Location-Centric Inventory & Condition Roster
-                </span>
-                <p className="text-emerald-800">
-                  Every table, chair, air conditioner, and desktop is tracked specifically to <strong className="text-neutral-900">{loc.room}</strong> with working vs broken count breakdowns.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddItemModal(true)}
-                className="shrink-0 inline-flex items-center gap-1 text-xs font-bold bg-white text-emerald-900 border border-emerald-300 hover:bg-emerald-50 px-3 py-1.5 rounded-lg shadow-2xs transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Item to Room</span>
-              </button>
-            </div>
-
             {/* Inventory Category Sections */}
             {[
               { title: 'Furniture & Fixtures', items: furnitureItems, icon: '🪑', desc: 'Student chairs, teacher desks, computer benches & whiteboards' },
@@ -672,64 +635,119 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   <div className="divide-y divide-neutral-100">
                     {section.items.map((item) => {
                       const total = item.qtyWorking + item.qtyBroken + item.qtyMaintenance;
+                      const operationalPercent = total > 0 ? Math.round((item.qtyWorking / total) * 100) : 100;
+                      const isDefectRemark =
+                        item.qtyBroken > 0 ||
+                        /broken|defect|damage|fault|repair|cracked|stuck|replace/i.test(item.remarks || '');
+
                       return (
-                        <div key={item.id} className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-neutral-50/50 transition-colors">
-                          <div className="space-y-1 min-w-0 max-w-md">
-                            <div className="flex items-center gap-2">
+                        <div key={item.id} className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-neutral-50/60 transition-colors">
+                          <div className="space-y-1.5 min-w-0 max-w-lg">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="text-sm font-bold text-neutral-900">{item.name}</h4>
-                              <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.2 rounded border border-neutral-200">
+                              <span className="text-[10px] font-mono font-semibold uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200">
                                 {item.unit}
+                              </span>
+                              <span className="text-xs text-neutral-400 font-mono">
+                                Total: {total}
                               </span>
                             </div>
                             <div className="text-xs text-neutral-600 font-medium">
                               {item.brandSpec || 'Standard Department Specification'}
                             </div>
                             {item.remarks && (
-                              <div className="text-[11px] text-rose-700 bg-rose-50/80 border border-rose-200/80 px-2 py-0.5 rounded-md inline-block">
-                                <strong>Defect Note:</strong> {item.remarks}
+                              <div>
+                                {isDefectRemark ? (
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-md">
+                                    <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                                    <span><strong>Defect Note:</strong> {item.remarks}</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 bg-neutral-100/90 border border-neutral-200/80 px-2.5 py-0.5 rounded-md">
+                                    <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
+                                    <span>{item.remarks}</span>
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
 
-                          {/* Condition Counts & Quick Counter Buttons */}
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-3">
-                              {/* Working Count */}
-                              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center min-w-[70px]">
-                                <div className="text-[9px] uppercase font-bold text-emerald-800">Working</div>
-                                <div className="text-base font-bold text-emerald-800 font-mono">{item.qtyWorking}</div>
+                          {/* Condition Counts & Quick Actions */}
+                          <div className="flex items-center gap-4 sm:gap-6 flex-wrap lg:flex-nowrap justify-between lg:justify-end">
+                            {/* Operational Health Indicator */}
+                            <div className="hidden sm:flex flex-col items-end gap-1 min-w-[110px]">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <span className={`font-mono font-bold ${operationalPercent === 100 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                  {operationalPercent}%
+                                </span>
+                                <span className="text-neutral-400 text-[10px]">operational</span>
+                              </div>
+                              <div className="w-24 h-1.5 bg-neutral-100 rounded-full overflow-hidden flex border border-neutral-200/60">
+                                <div
+                                  className="bg-emerald-500 h-full transition-all duration-300"
+                                  style={{ width: `${operationalPercent}%` }}
+                                />
+                                {item.qtyBroken > 0 && (
+                                  <div
+                                    className="bg-rose-500 h-full transition-all duration-300"
+                                    style={{ width: `${100 - operationalPercent}%` }}
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Condition Badges */}
+                            <div className="flex items-center gap-2">
+                              {/* Working Count Badge */}
+                              <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-lg">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                <span className="font-mono text-sm font-bold text-emerald-950">{item.qtyWorking}</span>
+                                <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Working</span>
                               </div>
 
-                              {/* Broken Count */}
-                              <div className={`rounded-lg p-2 text-center min-w-[70px] border ${
+                              {/* Broken Count Badge */}
+                              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${
                                 item.qtyBroken > 0
-                                  ? 'bg-rose-50 border-rose-200 text-rose-800'
-                                  : 'bg-neutral-50 border-neutral-200 text-neutral-500'
+                                  ? 'bg-rose-50 border-rose-200/80 text-rose-950'
+                                  : 'bg-neutral-50 border-neutral-200/70 text-neutral-400'
                               }`}>
-                                <div className="text-[9px] uppercase font-bold">Broken</div>
-                                <div className="text-base font-bold font-mono">{item.qtyBroken}</div>
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${item.qtyBroken > 0 ? 'bg-rose-500' : 'bg-neutral-300'}`} />
+                                <span className="font-mono text-sm font-bold">{item.qtyBroken}</span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider">Broken</span>
                               </div>
 
-                              {/* Under Maintenance Count */}
+                              {/* In Repair Badge if > 0 */}
                               {item.qtyMaintenance > 0 && (
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center min-w-[70px]">
-                                  <div className="text-[9px] uppercase font-bold text-amber-800">Repair</div>
-                                  <div className="text-base font-bold text-amber-800 font-mono">{item.qtyMaintenance}</div>
+                                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 px-2.5 py-1.5 rounded-lg text-amber-900">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                  <span className="font-mono text-sm font-bold">{item.qtyMaintenance}</span>
+                                  <span className="text-[10px] uppercase font-bold tracking-wider">Repair</span>
                                 </div>
                               )}
                             </div>
 
-                            {/* Quick Adjust Buttons */}
-                            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200">
+                            {/* Quick Defect & Repair Action Controls */}
+                            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-neutral-200 shadow-2xs">
                               <button
                                 type="button"
-                                onClick={() => updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1)}
-                                className="px-2 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-100 rounded transition-colors"
-                                title="Add 1 to Broken count"
+                                onClick={() => {
+                                  if (item.qtyWorking > 0) {
+                                    updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', -1);
+                                    updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
+                                  } else {
+                                    updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                                title="Report 1 unit broken / defective"
                               >
-                                +1 Broken
+                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                                <span className="hidden sm:inline">Report Defect</span>
+                                <span className="sm:hidden">+1</span>
                               </button>
-                              <div className="h-3 w-px bg-neutral-300" />
+
+                              <div className="h-4 w-px bg-neutral-200" />
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -739,13 +757,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                   }
                                 }}
                                 disabled={item.qtyBroken === 0}
-                                className="px-2 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-40 rounded transition-colors"
-                                title="Mark 1 repaired (move broken to working)"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-35 disabled:hover:bg-transparent rounded-md transition-colors cursor-pointer"
+                                title="Mark 1 unit repaired (return to working)"
                               >
-                                Mark 1 Repaired
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="hidden sm:inline">Mark Repaired</span>
+                                <span className="sm:hidden">Fixed</span>
                               </button>
                             </div>
 
+                            {/* Admin Delete */}
                             {isAdmin && (
                               <button
                                 type="button"
@@ -753,7 +774,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                 className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                                 title="Delete item from room"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                           </div>
