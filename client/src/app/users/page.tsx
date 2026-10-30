@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
@@ -366,6 +367,38 @@ export default function UsersPage() {
         return 'bg-amber-50 text-amber-700 border-amber-200';
     }
   };
+
+  if (isAssistant) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
+        <Header
+          title="Access Restricted"
+          subtitle="User & Role Management is restricted to Faculty Administrators and Lecturers"
+          showExport={false}
+          showAction={false}
+        />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white border border-neutral-200 rounded-lg p-6 text-center shadow-xs">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-neutral-900 mb-1">
+              Access Restricted
+            </h3>
+            <p className="text-xs text-neutral-500 mb-6 leading-relaxed">
+              Lab Assistants do not have administrative permissions to view or modify institutional user roles and lab supervisory scopes.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded transition-colors"
+            >
+              Return to Overview
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">

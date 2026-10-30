@@ -57,6 +57,16 @@ export function Sidebar() {
   } = useStock();
   const { user, managedUsers, logout } = useAuth();
 
+  const isAssistant = user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant';
+
+  const visibleNavItems = navItems.filter((item) => {
+    // Hide User Roles route for Lab Assistants
+    if (item.href === '/users' && isAssistant) {
+      return false;
+    }
+    return true;
+  });
+
   const activeLoansCount = loans.filter((l) => l.status === 'active').length;
 
   return (
@@ -169,7 +179,7 @@ export function Sidebar() {
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
             Menu
           </div>
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive =
               item.href === '/'
