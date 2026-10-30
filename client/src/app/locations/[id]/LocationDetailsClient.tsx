@@ -145,7 +145,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     }
   };
 
-  // New Item Form State
+  // New Item Form State & Central Stock Integration
+  const [itemSource, setItemSource] = useState<'stock' | 'asset' | 'custom'>('stock');
+  const [selectedStockCode, setSelectedStockCode] = useState<string>('');
+  const [selectedAssetSerial, setSelectedAssetSerial] = useState<string>('');
   const [newItemName, setNewItemName] = useState('');
   const [newItemGroup, setNewItemGroup] = useState<AssetGroup>('FURNITURE');
   const [newItemBrandSpec, setNewItemBrandSpec] = useState('');
@@ -153,6 +156,55 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [newItemQtyWorking, setNewItemQtyWorking] = useState(1);
   const [newItemQtyBroken, setNewItemQtyBroken] = useState(0);
   const [newItemRemarks, setNewItemRemarks] = useState('');
+
+  const handleSelectCentralStock = (code: string) => {
+    setSelectedStockCode(code);
+    const item = stock.find((s) => s.code === code || s.id === code);
+    if (item) {
+      setNewItemName(item.name);
+      setNewItemUnit(item.unit || 'pcs');
+      setNewItemBrandSpec(item.description || item.rack || 'Sourced from Central Stock');
+      const cat = (item.category || '').toLowerCase();
+      const n = item.name.toLowerCase();
+      if (
+        cat.includes('chair') ||
+        cat.includes('table') ||
+        cat.includes('desk') ||
+        cat.includes('cabinet') ||
+        cat.includes('fixture') ||
+        n.includes('chair') ||
+        n.includes('desk') ||
+        n.includes('table') ||
+        n.includes('bench') ||
+        n.includes('whiteboard')
+      ) {
+        setNewItemGroup('FURNITURE');
+      } else if (cat.includes('electrical') || cat.includes('cable') || cat.includes('power')) {
+        setNewItemGroup('ELECTRICAL');
+      } else if (cat.includes('tool') || cat.includes('safety')) {
+        setNewItemGroup('SAFETY_MISC');
+      } else {
+        setNewItemGroup('FURNITURE');
+      }
+      setNewItemQtyWorking(Math.min(item.quantity || 1, 24));
+      setNewItemQtyBroken(0);
+      setNewItemRemarks(`Central Stock SKU: ${item.code}`);
+    }
+  };
+
+  const handleSelectCentralAsset = (serial: string) => {
+    setSelectedAssetSerial(serial);
+    const asset = assets.find((a) => a.serialNumber === serial || a.id === serial);
+    if (asset) {
+      setNewItemName(asset.name);
+      setNewItemUnit(asset.unitType || 'Units');
+      setNewItemBrandSpec(`Model: ${asset.model} • S/N: ${asset.serialNumber}`);
+      setNewItemGroup('IT_HARDWARE');
+      setNewItemQtyWorking(asset.totalUnits ?? 1);
+      setNewItemQtyBroken(0);
+      setNewItemRemarks(`Central Asset Tag: ${asset.serialNumber}`);
+    }
+  };
 
   const loc =
     locations.find(
@@ -382,7 +434,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const handleCreateFacilityItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim()) {
-      showToast('Please enter an item name', 'warning');
+      showToast('Please enter or select an equipment item', 'warning');
       return;
     }
 
@@ -397,12 +449,23 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       remarks: newItemRemarks.trim() || undefined,
     });
 
+    if (itemSource === 'stock' && selectedStockCode) {
+      showToast(`Allocated ${newItemQtyWorking + newItemQtyBroken} ${newItemUnit} of "${newItemName}" from Central Stock to ${loc.room}`);
+    } else if (itemSource === 'asset' && selectedAssetSerial) {
+      showToast(`Allocated "${newItemName}" from Central Assets to ${loc.room}`);
+    } else {
+      showToast(`Registered "${newItemName}" in ${loc.room}`);
+    }
+
     setNewItemName('');
     setNewItemBrandSpec('');
     setNewItemUnit('pcs');
     setNewItemQtyWorking(1);
     setNewItemQtyBroken(0);
     setNewItemRemarks('');
+    setSelectedStockCode('');
+    setSelectedAssetSerial('');
+    setItemSource('stock');
     setShowAddItemModal(false);
   };
 
