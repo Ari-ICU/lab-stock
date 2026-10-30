@@ -7,7 +7,7 @@ export function generateStaticParams() {
   }));
 }
 
-export const dynamicParams = true;
+export const dynamicParams = false;
 
 type Props = {
   params: Promise<{ id: string }>;
