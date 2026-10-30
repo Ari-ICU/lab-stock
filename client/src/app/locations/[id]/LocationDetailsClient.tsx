@@ -77,10 +77,73 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   );
 
   const [filterText, setFilterText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCondition, setSelectedCondition] = useState<string>('all');
+  const [hardwareStatusFilter, setHardwareStatusFilter] = useState<string>('all');
+  const [stockStatusFilter, setStockStatusFilter] = useState<string>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDoorQrModal, setShowDoorQrModal] = useState(false);
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Dropdown Options
+  const categoryOptions: DropdownOption[] = [
+    { label: 'All Categories', value: 'all' },
+    { label: 'Furniture & Fixtures', value: 'FURNITURE' },
+    { label: 'Electrical & HVAC', value: 'ELECTRICAL' },
+    { label: 'Lab & IT Hardware', value: 'IT_HARDWARE' },
+    { label: 'Safety & Misc', value: 'SAFETY_MISC' },
+  ];
+
+  const conditionOptions: DropdownOption[] = [
+    { label: 'All Conditions', value: 'all' },
+    { label: '100% Operational', value: 'operational' },
+    { label: 'Defective / Needs Repair', value: 'defective' },
+  ];
+
+  const hardwareStatusOptions: DropdownOption[] = [
+    { label: 'All Operational Statuses', value: 'all' },
+    { label: 'Operational', value: 'operational' },
+    { label: 'In Production', value: 'in_use' },
+    { label: 'Maintenance / RMA', value: 'maintenance' },
+  ];
+
+  const stockStatusOptions: DropdownOption[] = [
+    { label: 'All Statuses', value: 'all' },
+    { label: 'In Stock', value: 'in_stock' },
+    { label: 'Low Stock', value: 'low_stock' },
+    { label: 'Out of Stock', value: 'out_of_stock' },
+  ];
+
+  const getCategoryIcon = (group: AssetGroup) => {
+    switch (group) {
+      case 'FURNITURE':
+        return '🪑';
+      case 'ELECTRICAL':
+        return '⚡';
+      case 'IT_HARDWARE':
+        return '🖥️';
+      case 'SAFETY_MISC':
+        return '🧯';
+      default:
+        return '📦';
+    }
+  };
+
+  const getCategoryLabel = (group: AssetGroup) => {
+    switch (group) {
+      case 'FURNITURE':
+        return 'Furniture & Fixtures';
+      case 'ELECTRICAL':
+        return 'Electrical & HVAC';
+      case 'IT_HARDWARE':
+        return 'Lab & IT Hardware';
+      case 'SAFETY_MISC':
+        return 'Safety & Misc';
+      default:
+        return group;
+    }
+  };
 
   // New Item Form State
   const [newItemName, setNewItemName] = useState('');
@@ -157,19 +220,31 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     };
   }, [loc, assets, stock, loans, maintenance]);
 
-  // Inventory Groups Breakdown
-  const roomInventories = useMemo(() => {
+  // Filtered room inventories based on search, category and condition
+  const filteredRoomInventories = useMemo(() => {
     if (!loc || !loc.inventories) return [];
-    if (!filterText.trim()) return loc.inventories;
-    const q = filterText.toLowerCase();
-    return loc.inventories.filter(
-      (item) =>
+    const q = filterText.toLowerCase().trim();
+    return loc.inventories.filter((item) => {
+      const matchesSearch =
+        !q ||
         item.name.toLowerCase().includes(q) ||
         item.brandSpec?.toLowerCase().includes(q) ||
         item.group.toLowerCase().includes(q) ||
-        item.remarks?.toLowerCase().includes(q)
-    );
-  }, [loc, filterText]);
+        item.remarks?.toLowerCase().includes(q);
+
+      const matchesCategory =
+        selectedCategory === 'all' || item.group === selectedCategory;
+
+      const matchesCondition =
+        selectedCondition === 'all'
+          ? true
+          : selectedCondition === 'operational'
+          ? item.qtyBroken === 0
+          : item.qtyBroken > 0;
+
+      return matchesSearch && matchesCategory && matchesCondition;
+    });
+  }, [loc, filterText, selectedCategory, selectedCondition]);
 
   const inventorySummary = useMemo(() => {
     const invs = loc?.inventories || [];
@@ -188,30 +263,41 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     };
   }, [loc]);
 
-  // Filtered lists based on search query
+  // Filtered hardware assets
   const filteredAssets = useMemo(() => {
-    if (!filterText.trim()) return matchingAssets;
-    const q = filterText.toLowerCase();
-    return matchingAssets.filter(
-      (a) =>
+    const q = filterText.toLowerCase().trim();
+    return matchingAssets.filter((a) => {
+      const matchesQuery =
+        !q ||
         a.name.toLowerCase().includes(q) ||
         a.model.toLowerCase().includes(q) ||
         a.serialNumber.toLowerCase().includes(q) ||
-        a.status.toLowerCase().includes(q)
-    );
-  }, [matchingAssets, filterText]);
+        a.status.toLowerCase().includes(q);
 
+      const matchesStatus =
+        hardwareStatusFilter === 'all' || a.status === hardwareStatusFilter;
+
+      return matchesQuery && matchesStatus;
+    });
+  }, [matchingAssets, filterText, hardwareStatusFilter]);
+
+  // Filtered consumables & stock items
   const filteredStock = useMemo(() => {
-    if (!filterText.trim()) return matchingStock;
-    const q = filterText.toLowerCase();
-    return matchingStock.filter(
-      (s) =>
+    const q = filterText.toLowerCase().trim();
+    return matchingStock.filter((s) => {
+      const matchesQuery =
+        !q ||
         s.name.toLowerCase().includes(q) ||
         s.code.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q) ||
-        s.status.toLowerCase().includes(q)
-    );
-  }, [matchingStock, filterText]);
+        s.status.toLowerCase().includes(q);
+
+      const matchesStatus =
+        stockStatusFilter === 'all' || s.status === stockStatusFilter;
+
+      return matchesQuery && matchesStatus;
+    });
+  }, [matchingStock, filterText, stockStatusFilter]);
 
   const copyToClipboard = (text: string, label: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -401,11 +487,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* 2. Hero Telemetry & Location Matrix Overview */}
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        {/* 2. Room Overview Hero Card */}
+        <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-2xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative group">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative group">
                 <LabThumbnail
                   src={loc.imageUrl}
                   alt={loc.name}
@@ -457,7 +543,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               </div>
             </div>
 
-            {/* Quick Action Button Box */}
+            {/* Action Buttons */}
             <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
               <button
                 type="button"
@@ -473,7 +559,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <button
                   type="button"
                   onClick={() => setShowAddItemModal(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Add Room Item</span>
@@ -481,298 +567,288 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               )}
             </div>
           </div>
+        </div>
 
-          {/* 4 Condition KPI Metric Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-neutral-100">
-            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
-              <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-[11px] font-medium">Usable Operational Units</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div className="text-xl font-bold text-neutral-900 font-mono">
-                {inventorySummary.totalWorking} <span className="text-xs font-sans font-normal text-neutral-500">units OK</span>
-              </div>
-              <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">
-                {inventorySummary.healthRate}% Operational Usability
-              </p>
+        {/* 3. Condition KPI Metric Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Operational Units</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
+            <div className="text-2xl font-bold text-neutral-900 font-mono">
+              {inventorySummary.totalWorking} <span className="text-xs font-sans font-normal text-neutral-500">Units OK</span>
+            </div>
+            <div className="text-[11px] text-emerald-700 font-medium mt-1">
+              {inventorySummary.healthRate}% Operational Usability
+            </div>
+          </div>
 
-            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
-              <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-[11px] font-medium">Broken / Need Repair</span>
-                <Wrench className="w-4 h-4 text-rose-600" />
-              </div>
-              <div className="text-xl font-bold text-rose-700 font-mono">
-                {inventorySummary.totalBroken} <span className="text-xs font-sans font-normal text-neutral-500">defective</span>
-              </div>
-              <p className="text-[10px] text-neutral-400 mt-0.5">
-                {inventorySummary.totalBroken > 0 ? 'Reported on repair roster' : 'Zero broken equipment'}
-              </p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Defective / Repair</span>
+              <Wrench className="w-4 h-4 text-rose-600" />
             </div>
+            <div className="text-2xl font-bold text-rose-700 font-mono">
+              {inventorySummary.totalBroken} <span className="text-xs font-sans font-normal text-neutral-500">Defective</span>
+            </div>
+            <div className="text-[11px] text-neutral-500 mt-1">
+              {inventorySummary.totalBroken > 0 ? 'Reported on repair roster' : 'Zero broken equipment'}
+            </div>
+          </div>
 
-            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
-              <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-[11px] font-medium">Serialized Assets</span>
-                <Microscope className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="text-xl font-bold text-neutral-900 font-mono">
-                {totalHardwareUnits} <span className="text-xs font-sans font-normal text-neutral-500">devices</span>
-              </div>
-              <p className="text-[10px] text-neutral-400 mt-0.5">{matchingAssets.length} model classes</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Serialized Assets</span>
+              <Microscope className="w-4 h-4 text-blue-600" />
             </div>
+            <div className="text-2xl font-bold text-neutral-900 font-mono">
+              {totalHardwareUnits} <span className="text-xs font-sans font-normal text-neutral-500">Devices</span>
+            </div>
+            <div className="text-[11px] text-neutral-500 mt-1">{matchingAssets.length} model classes registered</div>
+          </div>
 
-            <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-xl p-3.5">
-              <div className="flex items-center justify-between text-neutral-500 mb-1">
-                <span className="text-[11px] font-medium">Student Seating</span>
-                <Users className="w-4 h-4 text-neutral-500" />
-              </div>
-              <div className="text-xl font-bold text-neutral-900 font-mono">
-                {loc.capacity || 30} <span className="text-xs font-sans font-normal text-neutral-500">stations</span>
-              </div>
-              <p className="text-[10px] text-neutral-400 mt-0.5">Assigned student capacity</p>
+          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-1">
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Student Capacity</span>
+              <Users className="w-4 h-4 text-neutral-400" />
             </div>
+            <div className="text-2xl font-bold text-neutral-900 font-mono">
+              {loc.capacity || 30} <span className="text-xs font-sans font-normal text-neutral-500">Stations</span>
+            </div>
+            <div className="text-[11px] text-neutral-500 mt-1">Assigned student seating capacity</div>
           </div>
         </div>
 
-        {/* 3. Search & Tabs Bar */}
-        <div className="bg-white border border-neutral-200/90 rounded-xl p-3.5 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search chairs, tables, AC, projectors, PCs..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              className="w-full bg-neutral-50/70 border border-neutral-200 text-neutral-900 text-xs pl-9 pr-8 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white focus:ring-1 focus:ring-neutral-900 font-medium transition-all placeholder:text-neutral-400"
-            />
-            {filterText && (
-              <button
-                type="button"
-                onClick={() => setFilterText('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Segmented Control Tabs */}
-          <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200/80 text-xs font-semibold shrink-0">
-            <button
-              type="button"
-              onClick={() => handleTabChange('matrix')}
-              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all ${
-                activeTab === 'matrix'
-                  ? 'bg-white text-neutral-900 shadow-2xs font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              Facility & Condition ({roomInventories.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('audit')}
-              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
-                activeTab === 'audit'
-                  ? 'bg-white text-emerald-800 shadow-2xs font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Quick Audit Mode</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('hardware')}
-              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
-                activeTab === 'hardware'
-                  ? 'bg-white text-neutral-900 shadow-2xs font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              <Microscope className="w-3.5 h-3.5 text-blue-600" />
-              <span>Hardware ({matchingAssets.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTabChange('stock')}
-              className={`px-3 py-1.5 rounded-md cursor-pointer transition-all flex items-center gap-1.5 ${
-                activeTab === 'stock'
-                  ? 'bg-white text-neutral-900 shadow-2xs font-bold'
-                  : 'text-neutral-600 hover:text-neutral-900'
-              }`}
-            >
-              <Boxes className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Consumables ({matchingStock.length})</span>
-            </button>
-          </div>
+        {/* 4. Tab Navigation */}
+        <div className="flex items-center gap-2 border-b border-neutral-200 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => handleTabChange('matrix')}
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'matrix'
+                ? 'border-neutral-900 text-neutral-900 font-bold'
+                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-neutral-600" />
+            <span>Facility & Condition ({loc.inventories?.length || 0})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('hardware')}
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'hardware'
+                ? 'border-neutral-900 text-neutral-900 font-bold'
+                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+          >
+            <Microscope className="w-4 h-4 text-blue-600" />
+            <span>Hardware Assets ({matchingAssets.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('stock')}
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'stock'
+                ? 'border-neutral-900 text-neutral-900 font-bold'
+                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+          >
+            <Boxes className="w-4 h-4 text-emerald-600" />
+            <span>Consumables & Stock ({matchingStock.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange('audit')}
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'audit'
+                ? 'border-emerald-600 text-emerald-800 font-bold'
+                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <span>Quick Audit Mode</span>
+          </button>
         </div>
 
-        {/* 4. Tab Content: Facility & Condition Matrix */}
+        {/* 5. Tab Content: Facility & Condition Table (matches /stock & /assets) */}
         {activeTab === 'matrix' && (
-          <div className="space-y-6">
-            {/* Inventory Category Sections */}
-            {[
-              { title: 'Furniture & Fixtures', items: furnitureItems, icon: '🪑', desc: 'Student chairs, teacher desks, computer benches & whiteboards' },
-              { title: 'Electrical & HVAC', items: electricalItems, icon: '⚡', desc: 'Air conditioners, wall fans, tube lights & power strips' },
-              { title: 'Lab & IT Hardware Equipment', items: itItems, icon: '🖥️', desc: 'Desktop PCs, monitors, projectors, screens & network switches' },
-              { title: 'Safety & Miscellaneous', items: safetyItems, icon: '🧯', desc: 'Fire extinguishers, trash receptacles & access controls' },
-            ].map((section, sIdx) => {
-              if (section.items.length === 0) return null;
+          <div className="bg-white border border-neutral-200 rounded-lg w-full shadow-2xs">
+            {/* Filters Toolbar with Category & Condition Dropdowns */}
+            <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 flex-wrap flex-1">
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search chairs, tables, AC, projectors, PCs..."
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
+                  />
+                </div>
 
-              const sectionTotalWorking = section.items.reduce((sum, i) => sum + i.qtyWorking, 0);
-              const sectionTotalBroken = section.items.reduce((sum, i) => sum + i.qtyBroken, 0);
-              const sectionTotal = sectionTotalWorking + sectionTotalBroken;
-              const sectionHealth = sectionTotal > 0 ? Math.round((sectionTotalWorking / sectionTotal) * 100) : 100;
+                <Dropdown
+                  value={selectedCategory}
+                  options={categoryOptions}
+                  onChange={setSelectedCategory}
+                  placeholder="Category"
+                  className="w-full sm:w-auto"
+                />
 
-              return (
-                <div key={sIdx} className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden shadow-xs">
-                  {/* Category Header Bar */}
-                  <div className="p-4 border-b border-neutral-200/80 bg-neutral-50/80 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-base shadow-2xs">
-                        {section.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
-                          <span>{section.title}</span>
-                          <span className="text-[10px] font-mono font-medium text-neutral-400 lowercase">
-                            ({section.items.length} item types)
-                          </span>
-                        </h3>
-                        <p className="text-[11px] text-neutral-500 mt-0.5">{section.desc}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold font-mono ${
-                        sectionHealth >= 90
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
-                          : 'bg-amber-50 text-amber-800 border border-amber-200/80'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${sectionHealth >= 90 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                        {sectionHealth}% Health
-                      </span>
-                    </div>
-                  </div>
+                <Dropdown
+                  value={selectedCondition}
+                  options={conditionOptions}
+                  onChange={setSelectedCondition}
+                  placeholder="Condition"
+                  className="w-full sm:w-auto"
+                />
+              </div>
 
-                  {/* Clean Column Header for Grid Alignment */}
-                  <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-2.5 bg-neutral-100/60 border-b border-neutral-200/70 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
-                    <div className="col-span-5">Item & Specification</div>
-                    <div className="col-span-2 text-center">Usability Status</div>
-                    <div className="col-span-3 text-center">Condition Counts</div>
-                    <div className="col-span-2 text-right">Quick Actions</div>
-                  </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-xs text-neutral-500">
+                  Showing <span className="font-semibold text-neutral-900">{filteredRoomInventories.length}</span> items
+                </div>
+                {isAllowed && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddItemModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Add Room Item</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
-                  {/* Items List */}
-                  <div className="divide-y divide-neutral-100">
-                    {section.items.map((item) => {
-                      const total = item.qtyWorking + item.qtyBroken + item.qtyMaintenance;
+            {/* Clean Responsive Table matching /stock and /assets */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[780px]">
+                <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
+                  <tr>
+                    <th className="py-3 px-4 w-12 text-center">Visual</th>
+                    <th className="py-3 px-4">Item & Equipment Name</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4">Specification / Model</th>
+                    <th className="py-3 px-4 text-center">Total Count</th>
+                    <th className="py-3 px-4 text-center">Working</th>
+                    <th className="py-3 px-4 text-center">Broken</th>
+                    <th className="py-3 px-4">Operational Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {filteredRoomInventories.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-8 text-center text-neutral-500">
+                        No facility or equipment records found matching your filter criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRoomInventories.map((item) => {
+                      const total = item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0);
                       const operationalPercent = total > 0 ? Math.round((item.qtyWorking / total) * 100) : 100;
                       const isDefectRemark =
                         item.qtyBroken > 0 ||
                         /broken|defect|damage|fault|repair|cracked|stuck|replace/i.test(item.remarks || '');
 
                       return (
-                        <div
-                          key={item.id}
-                          className="p-4 sm:px-5 sm:py-3.5 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-center hover:bg-neutral-50/60 transition-colors"
-                        >
-                          {/* Col 1: Item & Details (col-span-5) */}
-                          <div className="md:col-span-5 space-y-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-bold text-neutral-900">{item.name}</span>
-                              <span className="text-[10px] font-mono font-semibold uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200">
+                        <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
+                          {/* Visual */}
+                          <td className="py-3 px-4 text-center">
+                            <div className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 flex items-center justify-center text-lg shrink-0 shadow-2xs mx-auto">
+                              {getCategoryIcon(item.group)}
+                            </div>
+                          </td>
+
+                          {/* Item & Equipment Name */}
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-neutral-900 flex items-center gap-1.5 flex-wrap">
+                              <span>{item.name}</span>
+                              <span className="text-[10px] font-mono font-medium uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200/70">
                                 {item.unit}
                               </span>
-                              <span className="text-xs text-neutral-400 font-mono">
-                                Total: {total}
-                              </span>
-                            </div>
-                            <div className="text-xs text-neutral-500 font-normal truncate">
-                              {item.brandSpec || 'Standard Department Specification'}
                             </div>
                             {item.remarks && (
-                              <div className="pt-0.5">
+                              <div className="mt-1">
                                 {isDefectRemark ? (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-900 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-md">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-md">
                                     <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                                    <span><strong>Defect Note:</strong> {item.remarks}</span>
+                                    <span>{item.remarks}</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 bg-neutral-100/90 border border-neutral-200/80 px-2 py-0.5 rounded-md">
-                                    <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
-                                    <span>{item.remarks}</span>
+                                  <span className="text-[11px] text-neutral-500 line-clamp-1">
+                                    {item.remarks}
                                   </span>
                                 )}
                               </div>
                             )}
-                          </div>
+                          </td>
 
-                          {/* Col 2: Usability Status (col-span-2) */}
-                          <div className="md:col-span-2 flex flex-row md:flex-col items-center justify-between md:justify-center gap-1">
-                            <span className="text-xs text-neutral-500 md:hidden font-medium">Usability:</span>
-                            <div className="flex flex-col items-center gap-1">
-                              <span className={`inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-full ${
-                                operationalPercent >= 90
-                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
-                                  : operationalPercent >= 60
-                                  ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
-                                  : 'bg-rose-50 text-rose-800 border border-rose-200/80'
+                          {/* Category */}
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200/60">
+                              {getCategoryLabel(item.group)}
+                            </span>
+                          </td>
+
+                          {/* Specification */}
+                          <td className="py-3 px-4 text-neutral-600 font-medium">
+                            {item.brandSpec || 'Standard Specification'}
+                          </td>
+
+                          {/* Total Count */}
+                          <td className="py-3 px-4 text-center font-mono font-bold text-neutral-900">
+                            <span className="bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
+                              {total}
+                            </span>
+                          </td>
+
+                          {/* Working */}
+                          <td className="py-3 px-4 text-center font-mono">
+                            <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              {item.qtyWorking}
+                            </span>
+                          </td>
+
+                          {/* Broken */}
+                          <td className="py-3 px-4 text-center font-mono">
+                            {item.qtyBroken > 0 ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-xs">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                {item.qtyBroken}
+                              </span>
+                            ) : (
+                              <span className="text-neutral-400 text-xs font-normal">0</span>
+                            )}
+                          </td>
+
+                          {/* Operational Status */}
+                          <td className="py-3 px-4">
+                            {operationalPercent === 100 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                100% Operational
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold ${
+                                operationalPercent >= 70
+                                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                  : 'bg-rose-50 text-rose-800 border border-rose-200'
                               }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${operationalPercent >= 90 ? 'bg-emerald-500' : operationalPercent >= 60 ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                                <span className={`w-1.5 h-1.5 rounded-full ${operationalPercent >= 70 ? 'bg-amber-500' : 'bg-rose-500'}`} />
                                 {operationalPercent}% Usable
                               </span>
-                              <div className="w-20 h-1 bg-neutral-100 rounded-full overflow-hidden flex border border-neutral-200/50">
-                                <div
-                                  className="bg-emerald-500 h-full transition-all duration-300"
-                                  style={{ width: `${operationalPercent}%` }}
-                                />
-                                {item.qtyBroken > 0 && (
-                                  <div
-                                    className="bg-rose-500 h-full transition-all duration-300"
-                                    style={{ width: `${100 - operationalPercent}%` }}
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                            )}
+                          </td>
 
-                          {/* Col 3: Condition Counts (col-span-3) */}
-                          <div className="md:col-span-3 flex items-center justify-between md:justify-center gap-2">
-                            <span className="text-xs text-neutral-500 md:hidden font-medium">Counts:</span>
-                            <div className="flex items-center gap-2">
-                              {/* Working Count */}
-                              <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                <span className="font-mono text-xs font-bold text-emerald-950">{item.qtyWorking}</span>
-                                <span className="text-[10px] font-semibold text-emerald-800">working</span>
-                              </div>
-
-                              {/* Broken Count */}
-                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
-                                item.qtyBroken > 0
-                                  ? 'bg-rose-50 border-rose-200/80 text-rose-950'
-                                  : 'bg-neutral-50 border-neutral-200/70 text-neutral-400'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.qtyBroken > 0 ? 'bg-rose-500' : 'bg-neutral-300'}`} />
-                                <span className="font-mono text-xs font-bold">{item.qtyBroken}</span>
-                                <span className="text-[10px] font-semibold">broken</span>
-                              </div>
-
-                              {/* Under Maintenance Count if > 0 */}
-                              {item.qtyMaintenance > 0 && (
-                                <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg text-amber-900 text-xs font-bold">
-                                  <span className="font-mono">{item.qtyMaintenance}</span>
-                                  <span className="text-[10px] font-normal">repair</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Col 4: Quick Actions (col-span-2) */}
-                          <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-1.5 pt-2 md:pt-0 border-t md:border-t-0 border-neutral-100">
-                            <div className="flex items-center gap-1">
-                              {/* Report Defect */}
+                          {/* Actions */}
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* + Defect */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -783,14 +859,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                     updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
                                   }
                                 }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-md transition-all shadow-2xs cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-neutral-700 hover:text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-md transition-all shadow-2xs cursor-pointer"
                                 title="Report 1 unit broken / defective"
                               >
                                 <AlertTriangle className="w-3 h-3 text-rose-500" />
                                 <span>+ Defect</span>
                               </button>
 
-                              {/* Mark Repaired */}
+                              {/* ✓ Fixed */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -800,33 +876,33 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                   }
                                 }}
                                 disabled={item.qtyBroken === 0}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200/80 disabled:opacity-30 disabled:hover:bg-emerald-50/80 rounded-md transition-all shadow-2xs cursor-pointer"
-                                title="Mark 1 unit repaired (return to working)"
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 disabled:opacity-30 rounded-md transition-all shadow-2xs cursor-pointer"
+                                title="Mark 1 unit repaired"
                               >
                                 <Check className="w-3 h-3 text-emerald-600" />
                                 <span>✓ Fixed</span>
                               </button>
-                            </div>
 
-                            {/* Admin Delete */}
-                            {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => deleteRoomInventoryItem(loc.id, item.id)}
-                                className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                                title="Delete item from room roster"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
+                              {/* Admin Delete */}
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteRoomInventoryItem(loc.id, item.id)}
+                                  className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer ml-1"
+                                  title="Delete from roster"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
