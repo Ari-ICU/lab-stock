@@ -17,7 +17,6 @@ import {
   Settings,
   LogOut,
   Search,
-  Barcode,
   X,
   ArrowLeftRight,
   ShoppingCart,
@@ -52,7 +51,6 @@ export function Sidebar() {
   }, []);
 
   const {
-    openScanner,
     openSearch,
     stock,
     assets,
@@ -150,20 +148,6 @@ export function Sidebar() {
               <X className="w-4 h-4" />
             </button>
           </div>
-        </div>
-
-        {/* Barcode / Model Quick Scan Action */}
-        <div className="p-3 border-b border-neutral-100">
-          <button
-            onClick={() => {
-              openScanner();
-              closeMobileSidebar();
-            }}
-            className="w-full flex items-center justify-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white px-3 py-2.5 rounded text-xs font-semibold transition-colors cursor-pointer"
-          >
-            <Barcode className="w-4 h-4 text-emerald-400" />
-            <span>Scan Barcode / Model</span>
-          </button>
         </div>
 
         {/* Global Fleet Quick Search (Cmd+K) */}

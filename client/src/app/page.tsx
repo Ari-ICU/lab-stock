@@ -3,9 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
-import { exportToCsv } from '@/lib/exportCsv';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { RowActionMenu } from '@/components/RowActionMenu';
@@ -28,7 +26,8 @@ import {
   ShieldCheck,
   Wrench,
   Layers,
-  MapPin
+  MapPin,
+  Menu
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -46,6 +45,7 @@ export default function DashboardPage() {
     deleteStockItem,
     deleteAsset,
     returnAsset,
+    toggleMobileSidebar,
   } = useStock();
 
   const activeLoans = loans.filter((l) => l.status === 'active');
@@ -53,72 +53,21 @@ export default function DashboardPage() {
   const totalHardwareUnits = assets.reduce((sum, a) => sum + (a.totalUnits || 1), 0);
   const totalStockUnits = stock.reduce((sum, i) => sum + i.quantity, 0);
 
-  const handleExport = () => {
-    const hardwareRows = assets.map((a) => ({
-      'Record Category': 'Hardware Asset',
-      'Item / Equipment Name': a.name,
-      'Model / SKU': a.model,
-      'Serial / Identifier': a.serialNumber,
-      'Total Count': a.totalUnits ?? 1,
-      'Unit Type': a.unitType ?? 'Units',
-      'Assigned Location': a.location,
-      'Operational Status': a.status,
-      'Loan Status': a.loanStatus === 'on_loan' ? `Checked out (${a.currentBorrower || 'Borrower'})` : 'Available',
-      'Audit / Warranty Date': a.nextCalibration || '',
-    }));
-
-    const stockRows = stock.map((s) => ({
-      'Record Category': 'Inventory Item',
-      'Item / Equipment Name': s.name,
-      'Model / SKU': s.code,
-      'Serial / Identifier': s.code,
-      'Total Count': s.quantity,
-      'Unit Type': s.unit,
-      'Assigned Location': s.location,
-      'Operational Status': s.status,
-      'Loan Status': 'In Shelf / Storage',
-      'Audit / Warranty Date': s.expiryDate || 'Active',
-    }));
-
-    exportToCsv('csd_stock_department_fleet_overview', [...hardwareRows, ...stockRows]);
-  };
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-      <Header
-        title="Faculty Laboratories Overview"
-        subtitle={`${locations.length} Connected Lab Classrooms • ${assets.length} Deployed Hardware Assets • Student & Staff Loans`}
-        onExport={handleExport}
-        actions={
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={openScanner}
-              title="Scan Barcode / QR Tag"
-              className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
-            >
-              <QrCode className="w-3.5 h-3.5 text-neutral-600" />
-              <span className="hidden md:inline">Scan</span>
-            </button>
-            <Link
-              href="/loans"
-              title="Lend Equipment"
-              className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
-            >
-              <Laptop className="w-3.5 h-3.5 text-amber-600" />
-              <span className="hidden sm:inline">Lend Device</span>
-            </Link>
-            <Link
-              href="/assets/create"
-              title="Register New Hardware"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Create Asset</span>
-              <span className="sm:hidden text-xs">Asset</span>
-            </Link>
-          </div>
-        }
-      />
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden h-14 bg-white border-b border-neutral-200 px-3 flex items-center shrink-0">
+        <button
+          onClick={toggleMobileSidebar}
+          className="p-1.5 -ml-1 text-neutral-600 hover:text-neutral-900 rounded hover:bg-neutral-100 transition-colors shrink-0"
+          title="Open Menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <span className="ml-2 font-bold text-xs text-neutral-900">Faculty Laboratories Overview</span>
+      </div>
+
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
         
