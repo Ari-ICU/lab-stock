@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStock } from '@/context/StockContext';
@@ -45,6 +45,12 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     openScanner,
     openSearch,
@@ -60,17 +66,17 @@ export function Sidebar() {
   } = useStock();
   const { user, managedUsers, logout } = useAuth();
 
-  const isAssistant = user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant';
+  const isAssistant = mounted && (user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant');
 
   const visibleNavItems = navItems.filter((item) => {
-    // Hide User Roles route for Lab Assistants
+    // Hide User Roles route for Lab Assistants once mounted
     if (item.href === '/users' && isAssistant) {
       return false;
     }
     return true;
   });
 
-  const activeLoansCount = loans.filter((l) => l.status === 'active').length;
+  const activeLoansCount = loans ? loans.filter((l) => l.status === 'active').length : 0;
   const pendingRequestsCount = requests ? requests.filter((r) => r.status === 'pending').length : 0;
 
   return (
@@ -85,6 +91,7 @@ export function Sidebar() {
 
       {/* Responsive Aside Navigation */}
       <aside
+        suppressHydrationWarning
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 flex flex-col h-screen select-none shrink-0 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
           isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
@@ -122,16 +129,16 @@ export function Sidebar() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator' || user?.assignedLabs?.includes('all') ? (
-              <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
-                ALL LABS
+          <div className="flex items-center gap-1.5 shrink-0" suppressHydrationWarning>
+            {mounted && user?.assignedLabs && !user.assignedLabs.includes('all') && user.roleBadge !== 'Admin' && user.role !== 'Primary Lab Administrator' ? (
+              <span className="text-[10px] uppercase tracking-wider font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-mono">
+                {user.assignedLabs.length === 1
+                  ? user.assignedLabs[0]
+                  : `${user.assignedLabs.length} LABS`}
               </span>
             ) : (
-              <span className="text-[10px] uppercase tracking-wider font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-mono">
-                {user?.assignedLabs && user.assignedLabs.length === 1
-                  ? user.assignedLabs[0]
-                  : `${user?.assignedLabs?.length || 0} LABS`}
+              <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
+                ALL LABS
               </span>
             )}
             {/* Mobile close button */}
@@ -179,7 +186,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto" suppressHydrationWarning>
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
             Menu
           </div>
@@ -257,17 +264,17 @@ export function Sidebar() {
         </div>
 
         {/* User Footer */}
-        <div className="p-3 border-t border-neutral-200 flex items-center justify-between">
+        <div className="p-3 border-t border-neutral-200 flex items-center justify-between" suppressHydrationWarning>
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded bg-neutral-900 text-emerald-400 font-bold flex items-center justify-center text-xs shrink-0">
-              {user?.avatarText || 'TR'}
+              {mounted ? (user?.avatarText || 'TR') : 'HS'}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-neutral-900 truncate">
-                {user?.name || 'Thoeurn Ratha'}
+                {mounted ? (user?.name || 'Dr. Heng Sovannarith') : 'Dr. Heng Sovannarith'}
               </p>
               <p className="text-[11px] text-neutral-500 truncate">
-                {user?.role || 'Network Lab Admin'}
+                {mounted ? (user?.role || 'Primary Lab Administrator') : 'Primary Lab Administrator'}
               </p>
             </div>
           </div>
@@ -286,3 +293,4 @@ export function Sidebar() {
     </>
   );
 }
+

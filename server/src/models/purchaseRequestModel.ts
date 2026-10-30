@@ -14,6 +14,7 @@ export interface PurchaseRequestRecord {
   requested_by: string;
   requester_role: string;
   request_date: string;
+  image_url?: string;
   notes?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -51,9 +52,9 @@ export const purchaseRequestModel = {
     const res = await query(
       `INSERT INTO purchase_requests (
          id, title, category, target_room, quantity, unit,
-         estimated_cost, priority, status, reason, requested_by, requester_role, request_date, notes
+         estimated_cost, priority, status, reason, requested_by, requester_role, request_date, image_url, notes
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
       [
         data.id,
@@ -69,10 +70,73 @@ export const purchaseRequestModel = {
         data.requested_by,
         data.requester_role,
         data.request_date || new Date().toISOString().split('T')[0],
+        data.image_url || null,
         data.notes || null,
       ]
     );
     return res.rows[0];
+  },
+
+  async update(id: string, data: Partial<PurchaseRequestRecord>): Promise<PurchaseRequestRecord | null> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (data.title !== undefined) {
+      fields.push(`title = $${idx++}`);
+      values.push(data.title);
+    }
+    if (data.category !== undefined) {
+      fields.push(`category = $${idx++}`);
+      values.push(data.category);
+    }
+    if (data.target_room !== undefined) {
+      fields.push(`target_room = $${idx++}`);
+      values.push(data.target_room);
+    }
+    if (data.quantity !== undefined) {
+      fields.push(`quantity = $${idx++}`);
+      values.push(data.quantity);
+    }
+    if (data.unit !== undefined) {
+      fields.push(`unit = $${idx++}`);
+      values.push(data.unit);
+    }
+    if (data.estimated_cost !== undefined) {
+      fields.push(`estimated_cost = $${idx++}`);
+      values.push(data.estimated_cost);
+    }
+    if (data.priority !== undefined) {
+      fields.push(`priority = $${idx++}`);
+      values.push(data.priority);
+    }
+    if (data.status !== undefined) {
+      fields.push(`status = $${idx++}`);
+      values.push(data.status);
+    }
+    if (data.reason !== undefined) {
+      fields.push(`reason = $${idx++}`);
+      values.push(data.reason);
+    }
+    if (data.image_url !== undefined) {
+      fields.push(`image_url = $${idx++}`);
+      values.push(data.image_url);
+    }
+    if (data.notes !== undefined) {
+      fields.push(`notes = $${idx++}`);
+      values.push(data.notes);
+    }
+
+    if (fields.length === 0) return this.findById(id);
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(id);
+
+    const res = await query(
+      `UPDATE purchase_requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    return res.rows[0] || null;
   },
 
   async updateStatus(id: string, status: string, notes?: string): Promise<PurchaseRequestRecord | null> {

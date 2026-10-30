@@ -135,10 +135,13 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
     requested_by VARCHAR(150) NOT NULL,
     requester_role VARCHAR(100) NOT NULL,
     request_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    image_url TEXT,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- INDEXES for Query Performance
 CREATE INDEX IF NOT EXISTS idx_stock_items_category ON stock_items(category);

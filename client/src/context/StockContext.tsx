@@ -31,17 +31,20 @@ import {
   locationService,
   loanService,
   maintenanceService,
+  purchaseRequestService,
   getAuthToken,
   mapServerAsset,
   mapServerStock,
   mapServerLocation,
   mapServerLoan,
   mapServerMaintenance,
+  mapServerPurchaseRequest,
   toServerAsset,
   toServerStock,
   toServerLocation,
   toServerLoan,
   toServerMaintenance,
+  toServerPurchaseRequest,
 } from '@/services';
 
 export type {
@@ -82,6 +85,7 @@ interface StockContextType {
   updateLocation: (loc: MockLocation) => void;
   deleteLocation: (id: string) => void;
   addPurchaseRequest: (req: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }) => PurchaseRequest;
+  updatePurchaseRequest: (req: PurchaseRequest) => void;
   updatePurchaseRequestStatus: (id: string, status: PurchaseRequest['status'], notes?: string) => void;
   deletePurchaseRequest: (id: string) => void;
   isScannerOpen: boolean;
@@ -134,12 +138,13 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const [assetsRes, stockRes, locsRes, loansRes, maintRes] = await Promise.allSettled([
+      const [assetsRes, stockRes, locsRes, loansRes, maintRes, reqsRes] = await Promise.allSettled([
         assetService.getAssets(),
         stockService.getStockItems(),
         locationService.getLocations(),
         loanService.getLoans(),
         maintenanceService.getMaintenance(),
+        purchaseRequestService.getPurchaseRequests(),
       ]);
 
       let connected = false;
@@ -166,6 +171,11 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
       if (maintRes.status === 'fulfilled' && Array.isArray(maintRes.value?.data) && maintRes.value.data.length > 0) {
         setMaintenance(maintRes.value.data.map(mapServerMaintenance));
+        connected = true;
+      }
+
+      if (reqsRes.status === 'fulfilled' && Array.isArray(reqsRes.value?.data) && reqsRes.value.data.length > 0) {
+        setRequests(reqsRes.value.data.map(mapServerPurchaseRequest));
         connected = true;
       }
 
@@ -596,7 +606,18 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     };
     setRequests((prev) => [newReq, ...prev]);
     showToast(`Purchase requisition "${newReq.title}" submitted successfully for ${newReq.targetRoom}.`);
+    if (getAuthToken()) {
+      purchaseRequestService.createPurchaseRequest(toServerPurchaseRequest(newReq)).catch(() => {});
+    }
     return newReq;
+  };
+
+  const updatePurchaseRequest = (updatedReq: PurchaseRequest) => {
+    setRequests((prev) => prev.map((r) => (r.id === updatedReq.id ? updatedReq : r)));
+    showToast(`Updated requisition ${updatedReq.id} (${updatedReq.title})`);
+    if (getAuthToken()) {
+      purchaseRequestService.updatePurchaseRequest(updatedReq.id, toServerPurchaseRequest(updatedReq)).catch(() => {});
+    }
   };
 
   const updatePurchaseRequestStatus = (id: string, status: PurchaseRequest['status'], notes?: string) => {
@@ -613,12 +634,18 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       })
     );
     showToast(`Requisition ${id} status updated to ${status.toUpperCase()}.`);
+    if (getAuthToken()) {
+      purchaseRequestService.updatePurchaseRequestStatus(id, status, notes).catch(() => {});
+    }
   };
 
   const deletePurchaseRequest = (id: string) => {
     const target = requests.find((r) => r.id === id);
     setRequests((prev) => prev.filter((r) => r.id !== id));
     showToast(`Purchase request ${target?.id || id} removed.`);
+    if (getAuthToken()) {
+      purchaseRequestService.deletePurchaseRequest(id).catch(() => {});
+    }
   };
 
   return (
@@ -654,6 +681,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         updateLocation,
         deleteLocation,
         addPurchaseRequest,
+        updatePurchaseRequest,
         updatePurchaseRequestStatus,
         deletePurchaseRequest,
         isScannerOpen,

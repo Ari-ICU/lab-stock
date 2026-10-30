@@ -10,6 +10,7 @@ export * from './stockService';
 export * from './loanService';
 export * from './locationService';
 export * from './maintenanceService';
+export * from './purchaseRequestService';
 export * from './systemService';
 export * from './mappers';
 

@@ -104,6 +104,7 @@ export interface PurchaseRequest {
   requestedBy: string;
   requesterRole: string;
   requestDate: string;
+  imageUrl?: string;
   notes?: string;
 }
 

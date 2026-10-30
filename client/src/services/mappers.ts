@@ -1,4 +1,4 @@
-import { MockAsset, MockItem, MockLocation, MockLoan, MockMaintenance } from '@/types';
+import { MockAsset, MockItem, MockLocation, MockLoan, MockMaintenance, PurchaseRequest } from '@/types';
 
 /**
  * Data mappers to convert between PostgreSQL / Express API payloads (snake_case)
@@ -161,5 +161,46 @@ export function toServerMaintenance(m: Partial<MockMaintenance>): Record<string,
     notes: m.notes,
   };
 }
+
+export function mapServerPurchaseRequest(r: any): PurchaseRequest {
+  return {
+    id: String(r.id),
+    title: r.title || 'Purchase Item',
+    category: r.category || 'General Equipment',
+    targetRoom: r.target_room || r.targetRoom || 'Room 102B',
+    quantity: Number(r.quantity || 1),
+    unit: r.unit || 'Units',
+    estimatedCost: r.estimated_cost || r.estimatedCost,
+    priority: (r.priority as PurchaseRequest['priority']) || 'medium',
+    status: (r.status as PurchaseRequest['status']) || 'pending',
+    reason: r.reason || '',
+    requestedBy: r.requested_by || r.requestedBy || 'Faculty Lecturer',
+    requesterRole: r.requester_role || r.requesterRole || 'Faculty Lecturer',
+    requestDate: r.request_date ? (typeof r.request_date === 'string' ? r.request_date.split('T')[0] : new Date(r.request_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+    imageUrl: r.image_url || r.imageUrl,
+    notes: r.notes || '',
+  };
+}
+
+export function toServerPurchaseRequest(r: Partial<PurchaseRequest>): Record<string, any> {
+  return {
+    id: r.id,
+    title: r.title,
+    category: r.category,
+    target_room: r.targetRoom,
+    quantity: r.quantity,
+    unit: r.unit,
+    estimated_cost: r.estimatedCost,
+    priority: r.priority,
+    status: r.status,
+    reason: r.reason,
+    requested_by: r.requestedBy,
+    requester_role: r.requesterRole,
+    request_date: r.requestDate,
+    image_url: r.imageUrl,
+    notes: r.notes,
+  };
+}
+
 
 

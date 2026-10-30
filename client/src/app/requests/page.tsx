@@ -2,8 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
+import { LabThumbnail } from '@/components/LabThumbnail';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { PurchaseRequest } from '@/types';
@@ -26,18 +28,19 @@ import {
   X,
   ChevronRight,
   Eye,
+  Edit3,
   Check,
   Flame,
   ArrowRight,
 } from 'lucide-react';
 
 export default function PurchaseRequestsPage() {
+  const router = useRouter();
   const { user, canManageLocation } = useAuth();
   const isPrimaryAdmin = user?.role === 'Primary Lab Administrator' || user?.roleBadge === 'Admin';
   const {
     requests,
     locations,
-    addPurchaseRequest,
     updatePurchaseRequestStatus,
     deletePurchaseRequest,
     showToast,
@@ -48,36 +51,6 @@ export default function PurchaseRequestsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [selectedRoom, setSelectedRoom] = useState<string>('all');
-
-  // Modal states
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedDetails, setSelectedDetails] = useState<PurchaseRequest | null>(null);
-
-  // New Request Form states
-  const defaultTargetRoom =
-    user?.assignedLabs && user.assignedLabs.length > 0
-      ? user.assignedLabs[0]
-      : 'Room 102B';
-
-  const [formTitle, setFormTitle] = useState('');
-  const [formCategory, setFormCategory] = useState('Networking Equipment');
-  const [formTargetRoom, setFormTargetRoom] = useState(defaultTargetRoom);
-  const [formQuantity, setFormQuantity] = useState(1);
-  const [formUnit, setFormUnit] = useState('Units');
-  const [formEstimatedCost, setFormEstimatedCost] = useState('');
-  const [formPriority, setFormPriority] = useState<PurchaseRequest['priority']>('medium');
-  const [formReason, setFormReason] = useState('');
-
-  // Allowed rooms for creation
-  const availableRooms = useMemo(() => {
-    if (isPrimaryAdmin) {
-      return locations.map((l) => l.room);
-    }
-    if (user?.assignedLabs && user.assignedLabs.length > 0) {
-      return user.assignedLabs;
-    }
-    return ['Room 102B', 'Room 206'];
-  }, [isPrimaryAdmin, user, locations]);
 
   // Filter requests
   const filteredRequests = useMemo(() => {
@@ -153,75 +126,32 @@ export default function PurchaseRequestsPage() {
   const inProcurementCount = requests.filter((r) => r.status === 'approved' || r.status === 'ordered').length;
   const fulfilledCount = requests.filter((r) => r.status === 'fulfilled').length;
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formTitle.trim()) {
-      showToast('Please enter an item title or description.', 'error');
-      return;
-    }
-    if (!formReason.trim()) {
-      showToast('Please provide a justification / reason for this purchase request.', 'error');
-      return;
-    }
-
-    if (!canManageLocation(formTargetRoom)) {
-      showToast(`Action restricted: ${formTargetRoom} is outside your laboratory supervisory scope.`, 'error');
-      return;
-    }
-
-    const created = addPurchaseRequest({
-      title: formTitle.trim(),
-      category: formCategory,
-      targetRoom: formTargetRoom,
-      quantity: Number(formQuantity) || 1,
-      unit: formUnit,
-      estimatedCost: formEstimatedCost ? (formEstimatedCost.startsWith('$') ? formEstimatedCost : `$${formEstimatedCost}`) : undefined,
-      priority: formPriority,
-      reason: formReason.trim(),
-      requestedBy: user?.name || 'Thoeurn Ratha',
-      requesterRole: user?.roleBadge || user?.role || 'Faculty Lecturer',
-    });
-
-    setIsCreateModalOpen(false);
-    setFormTitle('');
-    setFormReason('');
-    setFormEstimatedCost('');
-    setFormQuantity(1);
-  };
-
   const handleStatusChange = (req: PurchaseRequest, newStatus: PurchaseRequest['status'], note?: string) => {
     if (!isPrimaryAdmin && req.requestedBy !== user?.name) {
       showToast('Only Primary Lab Administrators can alter procurement statuses for other users.', 'error');
       return;
     }
     updatePurchaseRequestStatus(req.id, newStatus, note);
-    if (selectedDetails && selectedDetails.id === req.id) {
-      setSelectedDetails({ ...selectedDetails, status: newStatus, notes: note || selectedDetails.notes });
-    }
   };
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
-      {/* 1. Header */}
+      {/* 1. Header with Dedicated New Webpage Action */}
       <Header
         title="Purchase & Procurement Requisitions"
         subtitle="/ Request to Buy Laboratory Supplies, Hardware Equipment & Consumables"
         actions={
-          <button
-            onClick={() => {
-              setFormTargetRoom(availableRooms[0] || 'Room 102B');
-              setIsCreateModalOpen(true);
-            }}
+          <Link
+            href="/requests/create"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-emerald-400" />
-            <span>+ Request to Buy</span>
-          </button>
+            <span> Request to Buy</span>
+          </Link>
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
         {/* 2. KPI Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs">
@@ -283,15 +213,15 @@ export default function PurchaseRequestsPage() {
           <div className="leading-relaxed">
             {isPrimaryAdmin ? (
               <span>
-                <strong>Primary Administrator Authority:</strong> You possess universal approval, purchasing, and fulfillment authority across all 7 faculty laboratories.
+                <strong>Primary Administrator Authority:</strong> You possess universal approval, purchasing, and fulfillment authority across all faculty laboratories.
               </span>
             ) : (
               <span>
-                <strong>{user?.roleBadge || user?.role || 'Faculty Lecturer'} Scope:</strong> You are assigned to manage{' '}
+                <strong>{user?.roleBadge || user?.role || 'Faculty Lecturer'} Scope:</strong> You manage{' '}
                 <strong className="text-neutral-900 font-semibold">
                   {user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}
                 </strong>.
-                You can note and submit purchase requisitions for equipment and consumables for your laboratories. Requests are routed to Department Administration for budget approval.
+                You can submit purchasing requests for your laboratories. Requests are routed to Department Administration for budget approval.
               </span>
             )}
           </div>
@@ -376,9 +306,13 @@ export default function PurchaseRequestsPage() {
                 Purchase & Procurement Requisitions ({sortedRequests.length})
               </h2>
             </div>
-            <span className="text-[11px] text-neutral-400">
-              Showing active procurement requests across laboratories
-            </span>
+            <Link
+              href="/requests/create"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              <span>+ New Requisition Webpage</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           {sortedRequests.length === 0 ? (
@@ -386,26 +320,35 @@ export default function PurchaseRequestsPage() {
               <ShoppingCart className="w-8 h-8 mx-auto text-neutral-300" />
               <div className="font-semibold text-neutral-700 text-sm">No purchase requests found</div>
               <p className="text-xs text-neutral-400 max-w-sm mx-auto">
-                No purchase requisition matched the selected filter or query. Click &quot;+ Request to Buy&quot; to note a new purchase requisition.
+                No purchase requisition matched the selected filter or query.
               </p>
+              <Link
+                href="/requests/create"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Create Requisition Webpage</span>
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-neutral-50/70 border-b border-neutral-200 text-neutral-500 font-semibold text-[11px]">
                   <tr>
+                    <th className="py-3 px-4 w-16">Item Visual</th>
                     <th className="py-3 px-4">Item & Requisition ID</th>
                     <th className="py-3 px-4">Destination Lab</th>
                     <th className="py-3 px-4">Qty & Est. Cost</th>
                     <th className="py-3 px-4">Priority</th>
                     <th className="py-3 px-4">Requester</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4 text-right">Webpage Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
                   {sortedRequests.map((req) => {
                     const isHandled = canManageLocation(req.targetRoom);
+                    const canEdit = isPrimaryAdmin || (req.requestedBy === user?.name && req.status === 'pending');
 
                     return (
                       <tr
@@ -414,23 +357,38 @@ export default function PurchaseRequestsPage() {
                           !isHandled ? 'bg-neutral-50/25 text-neutral-500' : ''
                         }`}
                       >
-                        {/* Item & Requisition ID */}
+                        {/* Item Visual Thumbnail */}
+                        <td className="py-3 px-4 w-16">
+                          <Link
+                            href={`/requests/${req.id}`}
+                            className="w-12 h-12 rounded-xl border border-neutral-200/90 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 hover:border-neutral-400 transition-colors shadow-2xs group"
+                            title="Click to view full webpage"
+                          >
+                            <LabThumbnail
+                              src={req.imageUrl}
+                              alt={req.title}
+                              size="thumb"
+                              fallbackType="item"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          </Link>
+                        </td>
+
+                        {/* Item & Requisition ID with direct link to details webpage */}
                         <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center shrink-0">
-                              <Tag className="w-4 h-4 text-neutral-600" />
+                          <Link
+                            href={`/requests/${req.id}`}
+                            className="block group cursor-pointer"
+                          >
+                            <div className="font-semibold text-neutral-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
+                              {req.title}
                             </div>
-                            <div>
-                              <div className="font-semibold text-neutral-900 line-clamp-1">
-                                {req.title}
-                              </div>
-                              <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 mt-0.5">
-                                <span className="font-mono font-medium">{req.id}</span>
-                                <span>•</span>
-                                <span>{req.category}</span>
-                              </div>
+                            <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 mt-0.5">
+                              <span className="font-mono font-medium">{req.id}</span>
+                              <span>•</span>
+                              <span>{req.category}</span>
                             </div>
-                          </div>
+                          </Link>
                         </td>
 
                         {/* Destination Lab */}
@@ -513,17 +471,30 @@ export default function PurchaseRequestsPage() {
                           )}
                         </td>
 
-                        {/* Actions */}
+                        {/* Dedicated Webpage Actions */}
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => setSelectedDetails(req)}
-                              className="px-2.5 py-1 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded hover:bg-neutral-50 transition-colors cursor-pointer shadow-2xs"
+                            {/* View Webpage Link */}
+                            <Link
+                              href={`/requests/${req.id}`}
+                              className="px-2.5 py-1 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded hover:bg-neutral-50 transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1"
                             >
-                              Details
-                            </button>
+                              <Eye className="w-3 h-3 text-neutral-500" />
+                              <span>View</span>
+                            </Link>
 
-                            {/* Admin Workflow Quick Approvals */}
+                            {/* Edit Webpage Link */}
+                            {canEdit && (
+                              <Link
+                                href={`/requests/${req.id}/edit`}
+                                className="px-2.5 py-1 text-xs font-semibold text-neutral-900 bg-white border border-neutral-300 hover:border-neutral-400 rounded hover:bg-neutral-50 transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1"
+                              >
+                                <Edit3 className="w-3 h-3 text-blue-600" />
+                                <span>Edit</span>
+                              </Link>
+                            )}
+
+                            {/* Admin Quick Workflow Buttons */}
                             {isPrimaryAdmin && req.status === 'pending' && (
                               <button
                                 onClick={() => handleStatusChange(req, 'approved', 'Approved by Laboratory Director.')}
@@ -561,332 +532,6 @@ export default function PurchaseRequestsPage() {
           )}
         </div>
       </div>
-
-      {/* 6. Create / Note Requisition Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-neutral-900">Request to Buy / Note Requisition</h3>
-                  <p className="text-xs text-neutral-500">Submit procurement requisition for faculty laboratory</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 text-neutral-400 hover:text-neutral-600 rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateSubmit} className="space-y-4 pt-4 text-xs">
-              {/* Item Title */}
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Item Description / Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Cat6A Patch Cords (Pack of 50) or 4K HDMI Cables"
-                  className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                />
-              </div>
-
-              {/* Category & Destination Room */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">Category</label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    <option value="Networking Equipment">Networking Equipment</option>
-                    <option value="Cables & Accessories">Cables & Accessories</option>
-                    <option value="Computer Hardware">Computer Hardware</option>
-                    <option value="Mice & Keyboards">Mice & Keyboards</option>
-                    <option value="Monitors & Displays">Monitors & Displays</option>
-                    <option value="Electronics & Tools">Electronics & Tools</option>
-                    <option value="Printer Supplies">Printer Supplies</option>
-                    <option value="Stationery & Misc">Stationery & Misc</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Destination Lab Room <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={formTargetRoom}
-                    onChange={(e) => setFormTargetRoom(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    {availableRooms.map((room) => (
-                      <option key={room} value={room}>
-                        {room} {canManageLocation(room) ? '(Handled)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Quantity, Unit, Estimated Cost */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">Quantity</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={formQuantity}
-                    onChange={(e) => setFormQuantity(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">Unit</label>
-                  <select
-                    value={formUnit}
-                    onChange={(e) => setFormUnit(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    <option value="Units">Units</option>
-                    <option value="Boxes">Boxes</option>
-                    <option value="Packs">Packs</option>
-                    <option value="Rolls">Rolls</option>
-                    <option value="Cartridges">Cartridges</option>
-                    <option value="Kits">Kits</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">Estimated Cost ($)</label>
-                  <input
-                    type="text"
-                    value={formEstimatedCost}
-                    onChange={(e) => setFormEstimatedCost(e.target.value)}
-                    placeholder="e.g. 150.00"
-                    className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">Urgency / Priority</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { value: 'low', label: 'Low', color: 'border-neutral-200 hover:border-neutral-400' },
-                    { value: 'medium', label: 'Medium', color: 'border-blue-200 hover:border-blue-400' },
-                    { value: 'high', label: 'High', color: 'border-amber-200 hover:border-amber-400' },
-                    { value: 'urgent', label: '🔥 Urgent', color: 'border-rose-200 hover:border-rose-400' },
-                  ].map((p) => (
-                    <button
-                      type="button"
-                      key={p.value}
-                      onClick={() => setFormPriority(p.value as PurchaseRequest['priority'])}
-                      className={`py-1.5 text-center font-medium rounded-lg border transition-all cursor-pointer ${
-                        formPriority === p.value
-                          ? 'bg-neutral-900 text-white border-neutral-900 font-semibold'
-                          : `bg-neutral-50 text-neutral-700 ${p.color}`
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Justification / Reason */}
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Justification / Purpose <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value)}
-                  placeholder="Explain why this equipment or supply is needed (e.g. laboratory expansion, replacing damaged patch cords, student semester practical exam)..."
-                  className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                />
-              </div>
-
-              {/* Requester Info Notice */}
-              <div className="bg-neutral-50 border border-neutral-200/80 rounded-lg p-2.5 text-[11px] text-neutral-600 flex items-center justify-between">
-                <span>
-                  Submitted by: <strong>{user?.name || 'Thoeurn Ratha'}</strong> ({user?.roleBadge || 'Faculty Lecturer'})
-                </span>
-                <span className="text-neutral-400">{new Date().toISOString().split('T')[0]}</span>
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3 py-2 font-semibold text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs transition-colors cursor-pointer"
-                >
-                  Submit Requisition
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 7. Requisition Details Modal */}
-      {selectedDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-semibold text-neutral-500">{selectedDetails.id}</span>
-                  <span
-                    className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                      selectedDetails.status === 'pending'
-                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                        : selectedDetails.status === 'approved'
-                        ? 'bg-blue-50 text-blue-800 border border-blue-200'
-                        : selectedDetails.status === 'ordered'
-                        ? 'bg-purple-50 text-purple-800 border border-purple-200'
-                        : selectedDetails.status === 'fulfilled'
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        : 'bg-rose-50 text-rose-800 border border-rose-200'
-                    }`}
-                  >
-                    {selectedDetails.status}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-neutral-900 mt-1">{selectedDetails.title}</h3>
-              </div>
-              <button
-                onClick={() => setSelectedDetails(null)}
-                className="p-1 text-neutral-400 hover:text-neutral-600 rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 py-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 bg-neutral-50 p-3 rounded-xl border border-neutral-200/80">
-                <div>
-                  <span className="text-[10px] text-neutral-500 uppercase font-semibold">Destination Lab</span>
-                  <div className="font-bold text-neutral-900 mt-0.5">{selectedDetails.targetRoom}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-neutral-500 uppercase font-semibold">Category</span>
-                  <div className="font-bold text-neutral-900 mt-0.5">{selectedDetails.category}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-neutral-500 uppercase font-semibold">Quantity & Unit</span>
-                  <div className="font-bold text-neutral-900 mt-0.5">{selectedDetails.quantity} {selectedDetails.unit}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-neutral-500 uppercase font-semibold">Estimated Cost</span>
-                  <div className="font-bold text-neutral-900 mt-0.5">{selectedDetails.estimatedCost || 'Unspecified'}</div>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-neutral-500 uppercase font-semibold">Justification / Reason</span>
-                <p className="mt-1 p-2.5 bg-neutral-50/80 border border-neutral-200/70 rounded-lg text-neutral-800 leading-relaxed">
-                  {selectedDetails.reason}
-                </p>
-              </div>
-
-              {selectedDetails.notes && (
-                <div>
-                  <span className="text-[10px] text-neutral-500 uppercase font-semibold">Procurement / Administrative Notes</span>
-                  <p className="mt-1 p-2.5 bg-blue-50/50 border border-blue-200/60 rounded-lg text-blue-950 leading-relaxed font-mono text-[11px]">
-                    {selectedDetails.notes}
-                  </p>
-                </div>
-              )}
-
-              <div className="text-[11px] text-neutral-500 border-t border-neutral-100 pt-3 flex items-center justify-between">
-                <span>Requested by: <strong>{selectedDetails.requestedBy}</strong> ({selectedDetails.requesterRole})</span>
-                <span>Date: {selectedDetails.requestDate}</span>
-              </div>
-            </div>
-
-            {/* Workflow status controls */}
-            <div className="border-t border-neutral-100 pt-3 flex items-center justify-between">
-              {/* Requester cancel option */}
-              {selectedDetails.status === 'pending' && (selectedDetails.requestedBy === user?.name || isPrimaryAdmin) ? (
-                <button
-                  onClick={() => {
-                    deletePurchaseRequest(selectedDetails.id);
-                    setSelectedDetails(null);
-                  }}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
-                >
-                  Cancel Requisition
-                </button>
-              ) : <div />}
-
-              <div className="flex items-center gap-2">
-                {isPrimaryAdmin && selectedDetails.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => handleStatusChange(selectedDetails, 'rejected', 'Rejected by Lab Administration.')}
-                      className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(selectedDetails, 'approved', 'Approved for procurement.')}
-                      className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors cursor-pointer"
-                    >
-                      Approve
-                    </button>
-                  </>
-                )}
-
-                {isPrimaryAdmin && selectedDetails.status === 'approved' && (
-                  <button
-                    onClick={() => handleStatusChange(selectedDetails, 'ordered', 'Purchase Order dispatched.')}
-                    className="px-3 py-1.5 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors cursor-pointer"
-                  >
-                    Mark as Ordered
-                  </button>
-                )}
-
-                {isPrimaryAdmin && selectedDetails.status === 'ordered' && (
-                  <button
-                    onClick={() => handleStatusChange(selectedDetails, 'fulfilled', 'Delivered and stocked in laboratory.')}
-                    className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors cursor-pointer"
-                  >
-                    Mark as Fulfilled & Received
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setSelectedDetails(null)}
-                  className="px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-colors cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

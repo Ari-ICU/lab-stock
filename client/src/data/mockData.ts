@@ -909,6 +909,7 @@ export const mockPurchaseRequests: PurchaseRequest[] = [
     requestedBy: 'Thoeurn Ratha',
     requesterRole: 'Faculty Lecturer',
     requestDate: '2026-10-28',
+    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     notes: 'Submitted for department director review. Awaiting budget sign-off.',
   },
   {
@@ -925,6 +926,7 @@ export const mockPurchaseRequests: PurchaseRequest[] = [
     requestedBy: 'Thoeurn Ratha',
     requesterRole: 'Faculty Lecturer',
     requestDate: '2026-10-25',
+    imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
     notes: 'Approved by Dr. Heng Sovannarith. University procurement vendor contacted.',
   },
   {
@@ -941,6 +943,7 @@ export const mockPurchaseRequests: PurchaseRequest[] = [
     requestedBy: 'Chan Vicheka',
     requesterRole: 'Lab Assistant',
     requestDate: '2026-10-24',
+    imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
     notes: 'PO issued to supplier. Expected delivery early next week.',
   },
   {
@@ -957,6 +960,7 @@ export const mockPurchaseRequests: PurchaseRequest[] = [
     requestedBy: 'Chan Vicheka',
     requesterRole: 'Lab Assistant',
     requestDate: '2026-10-15',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
     notes: 'Delivered and verified by Dr. Heng Sovannarith. Stationed at Basement Depot Room 102.',
   },
 ];
