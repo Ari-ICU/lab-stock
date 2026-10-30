@@ -990,7 +990,10 @@ export async function seedAllData(): Promise<void> {
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT (serial_number) DO UPDATE
-       SET total_units = EXCLUDED.total_units, location_id = EXCLUDED.location_id, image_url = EXCLUDED.image_url`,
+       SET name = EXCLUDED.name, model = EXCLUDED.model, total_units = EXCLUDED.total_units,
+           unit_type = EXCLUDED.unit_type, location_id = EXCLUDED.location_id,
+           placement_rack = EXCLUDED.placement_rack, status = EXCLUDED.status,
+           image_url = EXCLUDED.image_url, description = EXCLUDED.description`,
       [
         a.serial_number,
         a.name,
@@ -1018,7 +1021,9 @@ export async function seedAllData(): Promise<void> {
        )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (code) DO UPDATE
-       SET quantity = EXCLUDED.quantity, location_id = EXCLUDED.location_id, image_url = EXCLUDED.image_url`,
+       SET name = EXCLUDED.name, category = EXCLUDED.category, quantity = EXCLUDED.quantity,
+           unit = EXCLUDED.unit, location_id = EXCLUDED.location_id, rack = EXCLUDED.rack,
+           status = EXCLUDED.status, image_url = EXCLUDED.image_url, description = EXCLUDED.description`,
       [s.code, s.name, s.category, s.quantity, s.unit, locId, s.rack, s.status, s.image_url, s.description]
     );
   }
