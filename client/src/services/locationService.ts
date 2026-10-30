@@ -11,6 +11,9 @@ export interface CreateLocationInput {
   building: string;
   capacity?: number;
   description?: string;
+  floor?: number;
+  room_type?: string;
+  image_url?: string;
 }
 
 export const locationService = {
@@ -51,5 +54,36 @@ export const locationService = {
   async deleteLocation(locationId: string): Promise<{ status: string; message: string }> {
     return apiClient.delete(API_ENDPOINTS.LOCATIONS.DELETE(locationId));
   },
-};
 
+  /**
+   * Add facility inventory item to room
+   */
+  async addRoomInventory(roomId: string, item: any): Promise<{ status: string; data: any }> {
+    return apiClient.post(`/locations/${roomId}/inventory`, item);
+  },
+
+  /**
+   * Adjust quantity count of a room inventory item
+   */
+  async updateRoomInventoryCount(
+    itemId: string,
+    field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance',
+    delta: number
+  ): Promise<{ status: string; data: any }> {
+    return apiClient.patch(`/locations/inventory/${itemId}`, { field, delta });
+  },
+
+  /**
+   * Remove an item from room inventory
+   */
+  async deleteRoomInventory(itemId: string): Promise<{ status: string; message: string }> {
+    return apiClient.delete(`/locations/inventory/${itemId}`);
+  },
+
+  /**
+   * Record room audit
+   */
+  async markRoomAudited(roomId: string, auditorName: string): Promise<{ status: string; data: any }> {
+    return apiClient.post(`/locations/${roomId}/audit`, { auditorName });
+  },
+};

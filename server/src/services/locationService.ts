@@ -4,7 +4,7 @@ import { cache } from '../utils/cache.js';
 
 export const locationService = {
   async getAll(): Promise<Location[]> {
-    return cache.getOrSet('location:list:all', () => locationModel.findAll(), 120000); // 2-min TTL
+    return cache.getOrSet('location:list:all', () => locationModel.findAll(), 30000); // 30-sec TTL
   },
 
   async getById(id: string): Promise<Location> {
@@ -47,5 +47,31 @@ export const locationService = {
       cache.invalidatePattern('location:');
     }
     return deleted;
+  },
+
+  // Room Inventory (Facility Matrix)
+  async addRoomInventoryItem(roomId: string, item: any): Promise<any> {
+    await this.getById(roomId);
+    const created = await locationModel.addRoomInventoryItem(roomId, item);
+    cache.invalidatePattern('location:');
+    return created;
+  },
+
+  async updateRoomInventoryCount(itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number): Promise<any> {
+    const updated = await locationModel.updateRoomInventoryCount(itemId, field, delta);
+    cache.invalidatePattern('location:');
+    return updated;
+  },
+
+  async deleteRoomInventoryItem(itemId: string): Promise<boolean> {
+    const deleted = await locationModel.deleteRoomInventoryItem(itemId);
+    cache.invalidatePattern('location:');
+    return deleted;
+  },
+
+  async markAudited(roomId: string, auditorName: string): Promise<any> {
+    const updated = await locationModel.markAudited(roomId, auditorName);
+    cache.invalidatePattern('location:');
+    return updated;
   },
 };

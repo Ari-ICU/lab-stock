@@ -5,6 +5,10 @@ import {
   createLocation,
   updateLocation,
   deleteLocation,
+  addRoomInventory,
+  updateRoomInventoryCount,
+  deleteRoomInventory,
+  markRoomAudited,
 } from '@/controllers/locationController.js';
 import { authenticate, requirePermission, requireAdmin, requireLocationScope } from '@/middleware/auth.js';
 import { validateCreateLocation } from '@/middleware/validate.js';
@@ -66,6 +70,46 @@ router.delete(
   '/:id',
   requireAdmin,
   deleteLocation
+);
+
+/**
+ * @route   POST /api/v1/locations/:id/inventory
+ * @desc    Add facility inventory item to room
+ */
+router.post(
+  '/:id/inventory',
+  requirePermission(Permission.LOCATION_MANAGE),
+  addRoomInventory
+);
+
+/**
+ * @route   PATCH /api/v1/locations/inventory/:itemId
+ * @desc    Update count of a room inventory item
+ */
+router.patch(
+  '/inventory/:itemId',
+  requirePermission(Permission.LOCATION_MANAGE),
+  updateRoomInventoryCount
+);
+
+/**
+ * @route   DELETE /api/v1/locations/inventory/:itemId
+ * @desc    Remove an item from room inventory
+ */
+router.delete(
+  '/inventory/:itemId',
+  requirePermission(Permission.LOCATION_MANAGE),
+  deleteRoomInventory
+);
+
+/**
+ * @route   POST /api/v1/locations/:id/audit
+ * @desc    Mark room audited
+ */
+router.post(
+  '/:id/audit',
+  requirePermission(Permission.LOCATION_MANAGE),
+  markRoomAudited
 );
 
 export default router;

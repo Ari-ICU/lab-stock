@@ -72,3 +72,64 @@ export const deleteLocation = asyncHandler(async (req: Request, res: Response) =
     message: 'Lab location deleted successfully',
   });
 });
+
+/**
+ * POST /api/v1/locations/:id/inventory
+ * Add a room facility inventory item
+ */
+export const addRoomInventory = asyncHandler(async (req: Request, res: Response) => {
+  const roomId = String(req.params.id);
+  const item = await locationService.addRoomInventoryItem(roomId, req.body);
+
+  return res.status(201).json({
+    status: 'ok',
+    message: 'Room inventory item added successfully',
+    data: item,
+  });
+});
+
+/**
+ * PATCH /api/v1/locations/inventory/:itemId
+ * Update quantity count of a room inventory item
+ */
+export const updateRoomInventoryCount = asyncHandler(async (req: Request, res: Response) => {
+  const itemId = String(req.params.itemId);
+  const { field, delta } = req.body;
+  const item = await locationService.updateRoomInventoryCount(itemId, field, delta);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'Room inventory count adjusted successfully',
+    data: item,
+  });
+});
+
+/**
+ * DELETE /api/v1/locations/inventory/:itemId
+ * Remove an item from room inventory
+ */
+export const deleteRoomInventory = asyncHandler(async (req: Request, res: Response) => {
+  const itemId = String(req.params.itemId);
+  await locationService.deleteRoomInventoryItem(itemId);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'Room inventory item removed successfully',
+  });
+});
+
+/**
+ * POST /api/v1/locations/:id/audit
+ * Mark room audited
+ */
+export const markRoomAudited = asyncHandler(async (req: Request, res: Response) => {
+  const roomId = String(req.params.id);
+  const auditorName = req.body.auditorName || req.user?.name || 'Administrator';
+  const updatedLocation = await locationService.markAudited(roomId, auditorName);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'Room audit recorded successfully',
+    data: updatedLocation,
+  });
+});
