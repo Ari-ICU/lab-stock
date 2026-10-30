@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
@@ -11,23 +10,18 @@ import {
   ManagedUser,
 } from '@/context/AuthContext';
 import {
-  Shield,
   Users,
   Plus,
   Trash2,
-  Lock,
-  Building,
-  Sliders,
   X,
 } from 'lucide-react';
 
 export default function UsersPage() {
-  const { showToast, locations } = useStock();
+  const { showToast } = useStock();
   const {
     user,
     managedUsers,
     updateUserRole,
-    updateUserAssignedLabs,
     addUser,
     deleteUser,
   } = useAuth();
@@ -36,13 +30,6 @@ export default function UsersPage() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState('Faculty Lecturer');
-  const [newUserPrimaryLocation, setNewUserPrimaryLocation] = useState<string>('Room 102B');
-  const [newUserAssignedLabs, setNewUserAssignedLabs] = useState<string[]>(['Room 102B']);
-
-  // Assign / Relocate Labs Modal State
-  const [selectedUserForLabs, setSelectedUserForLabs] = useState<ManagedUser | null>(null);
-  const [isAssignLabsModalOpen, setIsAssignLabsModalOpen] = useState(false);
-  const [tempAssignedLabs, setTempAssignedLabs] = useState<string[]>([]);
 
   const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
 
@@ -50,29 +37,6 @@ export default function UsersPage() {
     label: `${roleName} (${ROLE_DEFINITIONS[roleName].badge})`,
     value: roleName,
   }));
-
-  const locationOptions = React.useMemo(() => {
-    const opts = [
-      {
-        label: 'All Laboratories (Universal Access)',
-        value: 'all',
-      },
-    ];
-
-    locations.forEach((loc) => {
-      opts.push({
-        label: `${loc.name} (${loc.room}) • ${loc.building}`,
-        value: loc.room,
-      });
-    });
-
-    opts.push({
-      label: '+ Custom Multi-Room Scope...',
-      value: 'custom',
-    });
-
-    return opts;
-  }, [locations]);
 
   const handleRoleChange = (userId: string, newRole: string) => {
     if (!isAdmin) {
@@ -105,31 +69,6 @@ export default function UsersPage() {
 
     const roleDef = ROLE_DEFINITIONS[newUserRole] || ROLE_DEFINITIONS['Faculty Lecturer'];
 
-    let targetDept = 'Engineering Block A - Room 102B';
-    let assignedLabsToSave: string[] = ['Room 102B'];
-
-    if (
-      newUserRole === 'Primary Lab Administrator' ||
-      roleDef.badge === 'Admin' ||
-      newUserPrimaryLocation === 'all'
-    ) {
-      assignedLabsToSave = ['all'];
-      targetDept = 'Faculty Fleet Administration (All Labs)';
-    } else if (newUserPrimaryLocation === 'custom') {
-      assignedLabsToSave = newUserAssignedLabs.length > 0 ? newUserAssignedLabs : ['Room 102B'];
-      const matched = locations.filter((l) => assignedLabsToSave.includes(l.room));
-      targetDept =
-        matched.length > 0
-          ? matched.map((l) => `${l.building} • ${l.room}`).join(', ')
-          : 'Engineering Block A - Room 102B';
-    } else {
-      assignedLabsToSave = [newUserPrimaryLocation];
-      const matched = locations.find((l) => l.room === newUserPrimaryLocation);
-      targetDept = matched
-        ? `${matched.building} - ${matched.room}`
-        : 'Engineering Block A - Room 102B';
-    }
-
     addUser({
       name: newUserName.trim(),
       email: newUserEmail.trim().toLowerCase(),
@@ -137,81 +76,20 @@ export default function UsersPage() {
       roleBadge: roleDef.badge,
       avatarText: initials,
       permissions: roleDef.permissions,
-      department: targetDept,
+      department: 'Faculty of Engineering',
       status: 'active',
-      assignedLabs: assignedLabsToSave,
+      assignedLabs: ['all'],
     });
 
     showToast(
-      `Added ${newUserName.trim()} as ${roleDef.badge} (${assignedLabsToSave.join(', ')})`,
+      `Added ${newUserName.trim()} as ${roleDef.badge}`,
       'success'
     );
 
     setNewUserName('');
     setNewUserEmail('');
-    setNewUserPrimaryLocation('Room 102B');
-    setNewUserAssignedLabs(['Room 102B']);
+    setNewUserRole('Faculty Lecturer');
     setIsAddUserModalOpen(false);
-  };
-
-  const openAssignLabsModal = (targetUser: ManagedUser) => {
-    if (!isAdmin) {
-      showToast(
-        'Permission denied: Only Administrators can configure lab room scopes.',
-        'error'
-      );
-      return;
-    }
-    setSelectedUserForLabs(targetUser);
-
-    const currentLabs =
-      targetUser.assignedLabs && targetUser.assignedLabs.length > 0
-        ? targetUser.assignedLabs
-        : ['Room 102B'];
-
-    setTempAssignedLabs(currentLabs);
-    setIsAssignLabsModalOpen(true);
-  };
-
-  const handleSaveAssignedLabs = () => {
-    if (!selectedUserForLabs || !isAdmin) {
-      showToast('Permission denied: You do not have authority to modify laboratory scopes.', 'error');
-      return;
-    }
-
-    const finalLabs = tempAssignedLabs.length > 0 ? tempAssignedLabs : ['Room 102B'];
-    updateUserAssignedLabs(selectedUserForLabs.id, finalLabs);
-
-    showToast(
-      `Updated lab scope for ${selectedUserForLabs.name}: [${finalLabs.join(', ')}]`,
-      'success'
-    );
-
-    setIsAssignLabsModalOpen(false);
-    setSelectedUserForLabs(null);
-  };
-
-  const toggleLabInTemp = (roomCode: string) => {
-    if (roomCode === 'all') {
-      if (tempAssignedLabs.includes('all')) {
-        setTempAssignedLabs(['Room 102B']);
-      } else {
-        setTempAssignedLabs(['all']);
-      }
-      return;
-    }
-
-    if (tempAssignedLabs.includes('all')) {
-      setTempAssignedLabs([roomCode]);
-      return;
-    }
-
-    if (tempAssignedLabs.includes(roomCode)) {
-      const filtered = tempAssignedLabs.filter((r) => r !== roomCode);
-      setTempAssignedLabs(filtered.length > 0 ? filtered : [roomCode]);
-    } else {
-      setTempAssignedLabs([...tempAssignedLabs, roomCode]);
-    }
   };
 
   const handleDeleteUser = (userId: string, userName: string) => {
@@ -241,7 +119,7 @@ export default function UsersPage() {
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
         title="User & Role Management"
-        subtitle="Manage Faculty Personnel, Administrator Roles, and Laboratory Room Scopes"
+        subtitle="Manage Faculty Personnel and Administrative Roles"
         showExport={false}
         showAction={false}
       />
@@ -260,7 +138,7 @@ export default function UsersPage() {
               Department Faculty Personnel & Roles
             </h2>
             <p className="text-xs text-neutral-500 mt-1 max-w-xl">
-              Configure personnel roles and laboratory station scopes. Changes apply immediately to active sessions.
+              Configure personnel roles and administrative privileges. Changes apply immediately to active sessions.
             </p>
           </div>
 
@@ -269,8 +147,6 @@ export default function UsersPage() {
               type="button"
               onClick={() => {
                 setNewUserRole('Faculty Lecturer');
-                setNewUserPrimaryLocation('Room 102B');
-                setNewUserAssignedLabs(['Room 102B']);
                 setIsAddUserModalOpen(true);
               }}
               className="flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded transition-colors cursor-pointer shrink-0 shadow-xs bg-neutral-900 hover:bg-neutral-800 text-white"
@@ -323,7 +199,7 @@ export default function UsersPage() {
               </span>
             </div>
             <span className="text-[11px] text-neutral-500">
-              {isAdmin ? 'Select a role dropdown to instantly change permissions' : 'Authorized Department Roster'}
+              {isAdmin ? 'Select a role dropdown to change permissions' : 'Authorized Department Roster'}
             </span>
           </div>
 
@@ -369,46 +245,6 @@ export default function UsersPage() {
 
                       <div className="text-[10px] text-neutral-400 mt-0.5">
                         {u.department} • Last login: {u.lastLogin}
-                      </div>
-
-                      {/* Scoped Lab Permissions Pills */}
-                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                        <span className="text-[10px] uppercase font-bold text-neutral-400 shrink-0">
-                          Assigned Labs:
-                        </span>
-                        {u.assignedLabs?.includes('all') || u.roleBadge === 'Admin' ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded font-mono shadow-2xs">
-                            <Shield className="w-2.5 h-2.5 text-emerald-400" />
-                            <span>All Laboratories (Universal Access)</span>
-                          </span>
-                        ) : u.assignedLabs && u.assignedLabs.length > 0 ? (
-                          u.assignedLabs.map((room) => (
-                            <span
-                              key={room}
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono"
-                            >
-                              <Building className="w-2.5 h-2.5 text-blue-500" />
-                              <span>{room}</span>
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">
-                            No Labs Assigned
-                          </span>
-                        )}
-
-                        {/* Button to edit lab assignments (Admin Only) */}
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => openAssignLabsModal(u)}
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded transition-colors cursor-pointer ml-1 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
-                            title="Configure authorized lab classrooms"
-                          >
-                            <Sliders className="w-2.5 h-2.5" />
-                            <span>Assign Labs</span>
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -467,7 +303,7 @@ export default function UsersPage() {
                   Register Department Faculty
                 </h3>
                 <p className="text-xs text-neutral-500">
-                  Provision institutional credentials and laboratory station assignments
+                  Provision institutional credentials and administrative role
                 </p>
               </div>
               <button
@@ -520,58 +356,6 @@ export default function UsersPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Authorized Laboratory Scope
-                </label>
-                <Dropdown
-                  value={newUserPrimaryLocation}
-                  options={locationOptions}
-                  onChange={(val) => {
-                    setNewUserPrimaryLocation(val);
-                    if (val !== 'custom' && val !== 'all') {
-                      setNewUserAssignedLabs([val]);
-                    }
-                  }}
-                  className="w-full"
-                />
-              </div>
-
-              {newUserPrimaryLocation === 'custom' && (
-                <div className="p-3 bg-neutral-50 rounded border border-neutral-200 space-y-1.5 max-h-40 overflow-y-auto">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block mb-1">
-                    Select Multiple Laboratories:
-                  </span>
-                  {locations.map((loc) => {
-                    const isChecked = newUserAssignedLabs.includes(loc.room);
-                    return (
-                      <label
-                        key={loc.id}
-                        className="flex items-center justify-between text-xs p-1.5 rounded hover:bg-neutral-100 cursor-pointer"
-                      >
-                        <span className="text-neutral-700">
-                          {loc.name} ({loc.room})
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => {
-                            if (isChecked) {
-                              setNewUserAssignedLabs(
-                                newUserAssignedLabs.filter((r) => r !== loc.room)
-                              );
-                            } else {
-                              setNewUserAssignedLabs([...newUserAssignedLabs, loc.room]);
-                            }
-                          }}
-                          className="rounded text-neutral-900 focus:ring-neutral-900"
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100 mt-4">
                 <button
                   type="button"
@@ -588,120 +372,6 @@ export default function UsersPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Assign Laboratories Modal */}
-      {isAssignLabsModalOpen && selectedUserForLabs && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-lg border border-neutral-200 max-w-lg w-full p-5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-neutral-900">
-                  Assign Laboratories Scope
-                </h3>
-                <p className="text-xs text-neutral-500">
-                  Managing authorized laboratory rooms for <span className="font-semibold text-neutral-900">{selectedUserForLabs.name}</span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAssignLabsModalOpen(false);
-                  setSelectedUserForLabs(null);
-                }}
-                className="text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <label className="flex items-center gap-2 p-2.5 rounded border border-neutral-200 bg-neutral-50 hover:bg-neutral-100/70 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={tempAssignedLabs.includes('all')}
-                  onChange={() => toggleLabInTemp('all')}
-                  className="rounded text-neutral-900 focus:ring-neutral-900"
-                />
-                <div>
-                  <div className="text-xs font-bold text-neutral-900">All Laboratories (Universal Access)</div>
-                  <div className="text-[10px] text-neutral-500">Universal access across all current and future laboratory facilities</div>
-                </div>
-              </label>
-
-              {!tempAssignedLabs.includes('all') && (
-                <div className="space-y-1.5 max-h-60 overflow-y-auto p-2 bg-neutral-50/70 rounded border border-neutral-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block px-1 mb-1">
-                    Select Authorized Classrooms ({locations.length})
-                  </span>
-                  {locations.map((loc) => {
-                    const isChecked = tempAssignedLabs.includes(loc.room);
-                    return (
-                      <label
-                        key={loc.id}
-                        className={`flex items-center justify-between p-2 rounded border transition-colors cursor-pointer ${
-                          isChecked
-                            ? 'bg-blue-50/80 border-blue-300 text-blue-900'
-                            : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-100/60'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => toggleLabInTemp(loc.room)}
-                            className="rounded text-blue-600 focus:ring-blue-500 shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold truncate">
-                              {loc.name} ({loc.room})
-                            </div>
-                            <div className="text-[10px] text-neutral-500 truncate">
-                              {loc.building} • {loc.totalAssets} Assets • {loc.totalItems} Items
-                            </div>
-                          </div>
-                        </div>
-                        {isChecked && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded font-mono shrink-0">
-                            Assigned
-                          </span>
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-3 border-t border-neutral-100 mt-2">
-                <div className="text-[11px] text-neutral-500">
-                  Selected scope:{' '}
-                  <span className="font-mono font-bold text-neutral-900">
-                    {tempAssignedLabs.includes('all') ? 'All Labs (Universal)' : tempAssignedLabs.join(', ')}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAssignLabsModalOpen(false);
-                      setSelectedUserForLabs(null);
-                    }}
-                    className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveAssignedLabs}
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded cursor-pointer shadow-xs"
-                  >
-                    Save Laboratory Scope
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

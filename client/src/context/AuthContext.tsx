@@ -73,8 +73,8 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
     department: 'Software Engineering Department',
-    description: 'Faculty Lecturer managing student workstations and teaching laboratories (Room 102B & Room 206)',
-    assignedLabs: ['Room 102B', 'Room 206'],
+    description: 'Faculty Lecturer managing student workstations and teaching resources',
+    assignedLabs: ['all'],
   },
 ];
 
@@ -116,7 +116,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Software Engineering Department',
     status: 'active',
     lastLogin: 'Active now',
-    assignedLabs: ['Room 102B', 'Room 206'],
+    assignedLabs: ['all'],
   },
 ];
 
@@ -312,10 +312,8 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     role = 'Faculty Lecturer';
     roleBadge = 'Lecturer';
     permissions = 'Course Hardware Allocation & Catalog View';
-    if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all') || assignedLabs.includes('Room 305')) {
-      assignedLabs = ['Room 102B', 'Room 206'];
-    }
-    department = 'Engineering Block A - Room 102B & Room 206';
+    assignedLabs = ['all'];
+    department = 'Software Engineering Department';
     supervisedBy = undefined;
   } else if (
     emailLower === 'john.doe@rupp.edu.kh' ||
@@ -337,9 +335,7 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     } else {
       role = 'Faculty Lecturer';
       roleBadge = 'Lecturer';
-      if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
-        assignedLabs = ['Room 102B'];
-      }
+      assignedLabs = ['all'];
       supervisedBy = undefined;
     }
   }

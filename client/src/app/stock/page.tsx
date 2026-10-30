@@ -25,27 +25,12 @@ export default function StockPage() {
   const isAssistant = user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant';
   const myAssignedRooms = user?.assignedLabs || [];
 
-  // Order locations so user's handled laboratories appear at the top
-  const sortedLocations = [...locations].sort((a, b) => {
-    const aAllowed = canManageLocation(a.room) || canManageLocation(a.name);
-    const bAllowed = canManageLocation(b.room) || canManageLocation(b.name);
-    if (aAllowed && !bAllowed) return -1;
-    if (!aAllowed && bAllowed) return 1;
-    return 0;
-  });
-
   const labOptions: DropdownOption[] = [
     { label: 'All Laboratories', value: 'all' },
-    ...(!isSuperAdmin && myAssignedRooms.length > 0
-      ? [{ label: `My Handled Labs (${myAssignedRooms.join(', ')})`, value: 'my_assigned' }]
-      : []),
-    ...sortedLocations.map((loc) => {
-      const isMine = canManageLocation(loc.room) || canManageLocation(loc.name);
-      return {
-        label: `${loc.name} (${loc.room})${!isSuperAdmin && isMine ? ' • Your Lab' : ''}`,
-        value: loc.room,
-      };
-    }),
+    ...locations.map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: loc.room,
+    })),
   ];
 
   const statusOptions: DropdownOption[] = [
@@ -334,15 +319,6 @@ export default function StockPage() {
                         <td className="py-3 px-4 text-neutral-600">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span>{item.location}</span>
-                            {!isAllowed && (
-                              <span
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 shrink-0"
-                                title="Outside your assigned lab room scope"
-                              >
-                                <Shield className="w-2.5 h-2.5 text-neutral-400" />
-                                Read-only
-                              </span>
-                            )}
                           </div>
                           <div className="text-[11px] text-neutral-400 font-mono">{item.rack}</div>
                         </td>
