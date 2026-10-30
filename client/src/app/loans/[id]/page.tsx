@@ -1,7 +1,7 @@
 import LoanDetailsClient from './LoanDetailsClient';
 
 export function generateStaticParams() {
-  return [];
+  return [{ id: '1' }];
 }
 
 type Props = {

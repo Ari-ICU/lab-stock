@@ -8,11 +8,13 @@ import LocationDetailsClient from './locations/[id]/LocationDetailsClient';
 import StockDetailsClient from './stock/[id]/StockDetailsClient';
 import AssetDetailsClient from './assets/[id]/AssetDetailsClient';
 import LoanDetailsClient from './loans/[id]/LoanDetailsClient';
+import EditAssetClient from './assets/[id]/edit/EditAssetClient';
+import EditStockClient from './stock/[id]/edit/EditStockClient';
 
 export default function NotFound() {
   const router = useRouter();
   const [resolvedRoute, setResolvedRoute] = useState<{
-    type: 'location' | 'stock' | 'asset' | 'loan' | null;
+    type: 'location' | 'stock' | 'asset' | 'loan' | 'asset-edit' | 'stock-edit' | null;
     id: string;
   }>({ type: null, id: '' });
   const [mounted, setMounted] = useState(false);
@@ -22,6 +24,20 @@ export default function NotFound() {
     if (typeof window === 'undefined') return;
 
     const path = window.location.pathname || '';
+
+    // Check for /assets/<id>/edit
+    const assetEditMatch = path.match(/\/assets\/([^/?#]+)\/edit/i);
+    if (assetEditMatch && assetEditMatch[1]) {
+      setResolvedRoute({ type: 'asset-edit', id: decodeURIComponent(assetEditMatch[1]) });
+      return;
+    }
+
+    // Check for /stock/<id>/edit
+    const stockEditMatch = path.match(/\/stock\/([^/?#]+)\/edit/i);
+    if (stockEditMatch && stockEditMatch[1]) {
+      setResolvedRoute({ type: 'stock-edit', id: decodeURIComponent(stockEditMatch[1]) });
+      return;
+    }
 
     // Check for /locations/<id>
     const locMatch = path.match(/\/locations\/([^/?#]+)/i);
@@ -63,6 +79,12 @@ export default function NotFound() {
   }
   if (resolvedRoute.type === 'loan') {
     return <LoanDetailsClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'asset-edit') {
+    return <EditAssetClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'stock-edit') {
+    return <EditStockClient id={resolvedRoute.id} />;
   }
 
   if (!mounted) {

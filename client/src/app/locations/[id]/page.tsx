@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import LocationDetailsClient from './LocationDetailsClient';
 
 export function generateStaticParams() {
-  return [];
+  return [{ id: '1' }];
 }
 
 type Props = {
