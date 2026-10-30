@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import { seedAllData } from './seedData.js';
+import { seedAllData, seedLoans, seedTransfers } from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,6 +112,39 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
     if (assetCount === 0) {
       await seedAllData();
+    }
+
+    // Ensure loans and transfers are populated in PostgreSQL
+    const loanCountRes = await pool.query('SELECT COUNT(*)::int as count FROM loans');
+    const loanCount = loanCountRes.rows[0]?.count || 0;
+    if (loanCount === 0) {
+      for (const l of seedLoans) {
+        const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [l.serial_number]);
+        const assetId = assetRes.rows[0]?.id;
+        if (assetId) {
+          await query(
+            `INSERT INTO loans (
+               asset_id, borrower_name, borrower_role, borrower_contact, course_or_class,
+               borrow_date, expected_return_date, actual_return_date, status, notes
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             ON CONFLICT DO NOTHING`,
+            [
+              assetId,
+              l.borrower_name,
+              l.borrower_role,
+              l.borrower_contact,
+              l.course_or_class,
+              l.borrow_date,
+              l.expected_return_date,
+              (l as any).actual_return_date || null,
+              l.status,
+              l.notes,
+            ]
+          );
+        }
+      }
+      console.log('✅ Seeded device loans into PostgreSQL.');
     }
 
     return { success: true, message: 'Database initialized successfully' };

@@ -258,6 +258,51 @@ export const seedStock = [
   },
 ];
 
+export const seedLoans = [
+  {
+    serial_number: 'SW-CORE-3850-X1',
+    borrower_name: 'Sokha Chan',
+    borrower_role: 'Student',
+    borrower_contact: 'sokha.chan@student.edu (Tel: 012 345 678)',
+    course_or_class: 'Advanced Network Routing Capstone (Class CS-Y4)',
+    borrow_date: '2026-10-26',
+    expected_return_date: '2026-11-05',
+    status: 'active',
+    notes: 'Checked out for weekend branch-office VPN and OSPF routing topology simulation project.',
+  },
+  {
+    serial_number: 'EPS-L630U-8812',
+    borrower_name: 'Dr. Heng Sovannarith',
+    borrower_role: 'Lecturer',
+    borrower_contact: 'heng.sovannarith@rupp.edu.kh',
+    course_or_class: 'Departmental Research Symposium (Room 201)',
+    borrow_date: '2026-10-20',
+    expected_return_date: '2026-10-21',
+    actual_return_date: '2026-10-21',
+    status: 'returned',
+    notes: 'Used for annual engineering symposium keynote and returned in pristine condition.',
+  },
+];
+
+export const seedTransfers = [
+  {
+    serial_number: 'SW-CORE-3850-X1',
+    from_room: 'Room 102',
+    to_room: 'Room 102B',
+    transfer_date: '2026-10-22',
+    transferred_by: 'Thoeurn Ratha',
+    reason: 'Permanent deployment to Room 102B to support student CCNA practicals.',
+  },
+  {
+    serial_number: 'FCM2016L38X',
+    from_room: 'Room 102B',
+    to_room: 'Room 206',
+    transfer_date: '2026-10-24',
+    transferred_by: 'Chan Vicheka',
+    reason: 'Reallocated to Room 206 switch rack for enterprise networking lab session.',
+  },
+];
+
 export async function seedAllData(): Promise<void> {
   console.log('🌱 Populating database tables with institutional fleet records...');
 
@@ -321,5 +366,51 @@ export async function seedAllData(): Promise<void> {
     );
   }
   console.log(`✅ Seeded ${seedStock.length} Consumable Inventory Items.`);
+
+  // 4. Seed Loans
+  for (const l of seedLoans) {
+    const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [l.serial_number]);
+    const assetId = assetRes.rows[0]?.id;
+    if (assetId) {
+      await query(
+        `INSERT INTO loans (
+           asset_id, borrower_name, borrower_role, borrower_contact, course_or_class,
+           borrow_date, expected_return_date, actual_return_date, status, notes
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT DO NOTHING`,
+        [
+          assetId,
+          l.borrower_name,
+          l.borrower_role,
+          l.borrower_contact,
+          l.course_or_class,
+          l.borrow_date,
+          l.expected_return_date,
+          (l as any).actual_return_date || null,
+          l.status,
+          l.notes,
+        ]
+      );
+    }
+  }
+  console.log(`✅ Seeded ${seedLoans.length} Device Loans.`);
+
+  // 5. Seed Transfers
+  for (const t of seedTransfers) {
+    const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [t.serial_number]);
+    const assetId = assetRes.rows[0]?.id;
+    const fromLocId = locationMap.get(t.from_room) || null;
+    const toLocId = locationMap.get(t.to_room) || null;
+    if (assetId) {
+      await query(
+        `INSERT INTO transfers (asset_id, from_location_id, to_location_id, transfer_date, transferred_by, reason)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT DO NOTHING`,
+        [assetId, fromLocId, toLocId, t.transfer_date, t.transferred_by, t.reason]
+      );
+    }
+  }
+  console.log(`✅ Seeded ${seedTransfers.length} Laboratory Relocations.`);
 }
 
