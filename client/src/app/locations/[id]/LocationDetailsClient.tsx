@@ -89,7 +89,15 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [newItemQtyBroken, setNewItemQtyBroken] = useState(0);
   const [newItemRemarks, setNewItemRemarks] = useState('');
 
-  const loc = locations.find((l) => l.id === id);
+  const loc =
+    locations.find(
+      (l) =>
+        l.id === id ||
+        (l as any).serverId === id ||
+        (l as any).code === id ||
+        l.room.toLowerCase().replace(/[^a-z0-9]/g, '') === (id || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+    ) ||
+    (id && id.includes('-') && id.length > 20 ? locations[0] : undefined);
   const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
   const isAllowed = isAdmin || (loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false);
 

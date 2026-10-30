@@ -83,15 +83,48 @@ export function toServerStock(s: Partial<MockItem>): Record<string, any> {
   };
 }
 
+import { mockLocations } from '@/data/mockData';
+
+const roomToMockIdMap: Record<string, string> = {
+  'LOC-102B': 'L1',
+  'Room 102B': 'L1',
+  '102B': 'L1',
+  'LOC-206': 'L2',
+  'Room 206': 'L2',
+  '206': 'L2',
+  'LOC-201': 'L3',
+  'Room 201': 'L3',
+  '201': 'L3',
+  'LOC-203': 'L4',
+  'Room 203': 'L4',
+  '203': 'L4',
+  'LOC-305': 'L5',
+  'Room 305': 'L5',
+  '305': 'L5',
+  'LOC-102': 'L6',
+  'Room 102': 'L6',
+  '102': 'L6',
+};
+
 export function mapServerLocation(l: any): MockLocation {
+  const roomKey = (l.room || '').replace(/^rm\s*/i, '').trim();
+  const stableId = roomToMockIdMap[l.code] || roomToMockIdMap[l.room] || roomToMockIdMap[roomKey] || String(l.id);
+  const base = mockLocations.find((m) => m.id === stableId || m.room === l.room);
+
   return {
-    id: String(l.id),
-    name: l.name || 'Laboratory Room',
-    room: l.room || 'Room 101',
-    building: l.building || 'Engineering Block A',
-    totalAssets: Number(l.total_assets ?? l.totalAssets ?? 0),
-    totalItems: Number(l.total_items ?? l.totalItems ?? 0),
-    imageUrl: l.image_url || l.imageUrl,
+    ...(base || {}),
+    id: stableId,
+    name: l.name || base?.name || 'Laboratory Room',
+    room: l.room || base?.room || 'Room 101',
+    building: l.building || base?.building || 'Engineering Block A',
+    floor: l.floor ?? base?.floor ?? 1,
+    capacity: l.capacity ?? base?.capacity ?? 30,
+    totalAssets: Number(l.total_assets ?? l.totalAssets ?? base?.totalAssets ?? 0),
+    totalItems: Number(l.total_items ?? l.totalItems ?? base?.totalItems ?? 0),
+    imageUrl: l.image_url || l.imageUrl || base?.imageUrl,
+    inventories: base?.inventories || [],
+    lastAuditedAt: l.last_audited_at || base?.lastAuditedAt,
+    auditedBy: l.audited_by || base?.auditedBy,
   };
 }
 
