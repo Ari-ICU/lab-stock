@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import { seedAllData, seedLoans, seedTransfers, seedMaintenance, seedPurchaseRequests } from './seedData.js';
+import { seedAllData, seedLoans, seedTransfers, seedMaintenance, seedPurchaseRequests, seedRoomInventory } from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,15 +54,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           is_admin: false,
           department: 'Software Engineering Department',
           assigned_labs: ['Room 102B', 'Room 206'],
-        },
-        {
-          name: 'John Doe',
-          email: 'john.doe@rupp.edu.kh',
-          password_hash: hashedPassword,
-          role: 'Primary Lab Administrator',
-          is_admin: true,
-          department: 'Faculty of Engineering',
-          assigned_labs: ['all'],
         },
       ];
 
@@ -203,10 +194,37 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS supervised_by VARCHAR(150);
       UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-001' AND (image_url IS NULL OR image_url = '');
       UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-002' AND (image_url IS NULL OR image_url = '');
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', supervised_by = 'Thoeurn Ratha (Faculty Lecturer)' WHERE id = 'REQ-2026-003';
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', supervised_by = 'Thoeurn Ratha (Faculty Lecturer)' WHERE id = 'REQ-2026-004';
-      UPDATE purchase_requests SET supervised_by = 'Thoeurn Ratha (Faculty Lecturer)' WHERE requested_by ILIKE '%Vicheka%' OR requester_role = 'Lab Assistant';
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', requested_by = 'Thoeurn Ratha', requester_role = 'Faculty Lecturer' WHERE id = 'REQ-2026-003';
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', requested_by = 'Thoeurn Ratha', requester_role = 'Faculty Lecturer' WHERE id = 'REQ-2026-004';
     `);
+
+    // Ensure room facility inventory (furniture & equipment) is populated in PostgreSQL
+    const roomInvCountRes = await pool.query('SELECT COUNT(*)::int as count FROM room_inventory');
+    const roomInvCount = roomInvCountRes.rows[0]?.count || 0;
+    if (roomInvCount === 0) {
+      for (const inv of seedRoomInventory) {
+        const locRes = await query('SELECT id FROM locations WHERE code = $1', [inv.room_code]);
+        const roomId = locRes.rows[0]?.id;
+        if (roomId) {
+          await query(
+            `INSERT INTO room_inventory (room_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [
+              roomId,
+              inv.name,
+              inv.group_type,
+              inv.brand_spec || null,
+              inv.unit || 'pcs',
+              inv.qty_working || 0,
+              inv.qty_broken || 0,
+              inv.qty_maintenance || 0,
+              inv.remarks || null,
+            ]
+          );
+        }
+      }
+      console.log(`✅ Seeded ${seedRoomInventory.length} Room Facility Inventory Records into PostgreSQL.`);
+    }
 
     return { success: true, message: 'Database initialized successfully' };
   } catch (err: any) {
