@@ -357,6 +357,7 @@ export const seedPurchaseRequests = [
     requested_by: 'Thoeurn Ratha',
     requester_role: 'Faculty Lecturer',
     request_date: '2026-10-28',
+    image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     notes: 'Submitted for department director review. Awaiting budget sign-off.',
   },
   {
@@ -373,6 +374,7 @@ export const seedPurchaseRequests = [
     requested_by: 'Thoeurn Ratha',
     requester_role: 'Faculty Lecturer',
     request_date: '2026-10-25',
+    image_url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
     notes: 'Approved by Dr. Heng Sovannarith. University procurement vendor contacted.',
   },
   {
@@ -389,6 +391,7 @@ export const seedPurchaseRequests = [
     requested_by: 'Chan Vicheka',
     requester_role: 'Lab Assistant',
     request_date: '2026-10-24',
+    image_url: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
     notes: 'PO issued to supplier. Expected delivery early next week.',
   },
   {
@@ -405,6 +408,7 @@ export const seedPurchaseRequests = [
     requested_by: 'Chan Vicheka',
     requester_role: 'Lab Assistant',
     request_date: '2026-10-15',
+    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
     notes: 'Delivered and verified by Dr. Heng Sovannarith. Stationed at Basement Depot Room 102.',
   },
 ];
@@ -537,11 +541,11 @@ export async function seedAllData(): Promise<void> {
     await query(
       `INSERT INTO purchase_requests (
          id, title, category, target_room, quantity, unit,
-         estimated_cost, priority, status, reason, requested_by, requester_role, request_date, notes
+         estimated_cost, priority, status, reason, requested_by, requester_role, request_date, image_url, notes
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        ON CONFLICT (id) DO UPDATE
-       SET status = EXCLUDED.status, notes = EXCLUDED.notes`,
+       SET status = EXCLUDED.status, notes = EXCLUDED.notes, image_url = EXCLUDED.image_url`,
       [
         r.id,
         r.title,
@@ -556,6 +560,7 @@ export async function seedAllData(): Promise<void> {
         r.requested_by,
         r.requester_role,
         r.request_date,
+        r.image_url,
         r.notes,
       ]
     );

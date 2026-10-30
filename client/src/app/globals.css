@@ -99,14 +99,13 @@ input::placeholder, textarea::placeholder {
 
 @media print {
   html, body {
+    width: 100% !important;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 100% !important;
     margin: 0 !important;
-    padding: 8mm 12mm !important;
-    overflow: visible !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #111111 !important;
-    box-sizing: border-box !important;
   }
 
   /* Completely strip chrome navigation, sidebar, modals and interactive UI */
@@ -129,11 +128,24 @@ input::placeholder, textarea::placeholder {
 
   /* Unclip scroll views so the entire document prints without scrollbar cutoffs */
   main,
-  .flex-1,
-  div {
+  .flex-1 {
     overflow: visible !important;
-    height: auto !important;
-    max-height: none !important;
+  }
+
+  .a4-print-canvas {
+    width: 100% !important;
+    max-width: 210mm !important;
+    min-height: 258mm !important;
+    height: 262mm !important;
+    max-height: 265mm !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
   }
 
   /* Ensure colors and borders render faithfully on physical paper */

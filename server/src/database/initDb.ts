@@ -172,10 +172,10 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         await query(
           `INSERT INTO purchase_requests (
              id, title, category, target_room, quantity, unit,
-             estimated_cost, priority, status, reason, requested_by, requester_role, request_date, notes
+             estimated_cost, priority, status, reason, requested_by, requester_role, request_date, image_url, notes
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-           ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+           ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes, image_url = EXCLUDED.image_url`,
           [
             r.id,
             r.title,
@@ -190,12 +190,21 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             r.requested_by,
             r.requester_role,
             r.request_date,
+            (r as any).image_url || null,
             r.notes,
           ]
         );
       }
       console.log('✅ Seeded purchase requisitions into PostgreSQL.');
     }
+
+    // Ensure all existing purchase requests have valid image_url populated
+    await pool.query(`
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-001' AND (image_url IS NULL OR image_url = '');
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-002' AND (image_url IS NULL OR image_url = '');
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-003' AND (image_url IS NULL OR image_url = '');
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-004' AND (image_url IS NULL OR image_url = '');
+    `);
 
     return { success: true, message: 'Database initialized successfully' };
   } catch (err: any) {

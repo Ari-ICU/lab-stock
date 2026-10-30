@@ -162,6 +162,23 @@ export function toServerMaintenance(m: Partial<MockMaintenance>): Record<string,
   };
 }
 
+const DEFAULT_REQUEST_IMAGES: Record<string, string> = {
+  'REQ-2026-001': 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+  'REQ-2026-002': 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+  'REQ-2026-003': 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
+  'REQ-2026-004': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+};
+
+const CATEGORY_DEFAULT_IMAGES: Record<string, string> = {
+  'Cables & Accessories': 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+  'Networking Equipment': 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+  'Printer Supplies': 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
+  'Electronics & Tools': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+  'Computer Hardware': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+  'Monitors & Displays': 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
+  'Mice & Keyboards': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+};
+
 export function mapServerPurchaseRequest(r: any): PurchaseRequest {
   return {
     id: String(r.id),
@@ -177,7 +194,7 @@ export function mapServerPurchaseRequest(r: any): PurchaseRequest {
     requestedBy: r.requested_by || r.requestedBy || 'Faculty Lecturer',
     requesterRole: r.requester_role || r.requesterRole || 'Faculty Lecturer',
     requestDate: r.request_date ? (typeof r.request_date === 'string' ? r.request_date.split('T')[0] : new Date(r.request_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
-    imageUrl: r.image_url || r.imageUrl,
+    imageUrl: r.image_url || r.imageUrl || DEFAULT_REQUEST_IMAGES[String(r.id)] || CATEGORY_DEFAULT_IMAGES[r.category] || '',
     notes: r.notes || '',
   };
 }
