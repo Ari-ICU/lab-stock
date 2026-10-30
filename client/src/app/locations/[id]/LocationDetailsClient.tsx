@@ -11,25 +11,19 @@ import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import {
-  Building,
   ArrowLeft,
   Boxes,
   Microscope,
   Search,
   Plus,
-  Laptop,
   CheckCircle2,
-  Clock,
   Wrench,
   AlertTriangle,
-  ExternalLink,
   Edit3,
   Trash2,
   MapPin,
   Layers,
-  Shield,
   FileSpreadsheet,
-  Copy,
   Check,
   ChevronRight,
   X,
@@ -38,9 +32,7 @@ import {
   Calendar,
   Users,
   CheckCircle,
-  Minus,
   Sparkles,
-  FileText,
 } from 'lucide-react';
 import { RoomInventoryItem, AssetGroup } from '@/types';
 
@@ -291,8 +283,8 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         selectedCondition === 'all'
           ? true
           : selectedCondition === 'operational'
-          ? item.qtyBroken === 0
-          : item.qtyBroken > 0;
+            ? item.qtyBroken === 0
+            : item.qtyBroken > 0;
 
       return matchesSearch && matchesCategory && matchesCondition;
     });
@@ -566,11 +558,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded">
                     {loc.type?.replace('_', ' ') || 'LAB'}
                   </span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                    inventorySummary.totalBroken > 0
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${inventorySummary.totalBroken > 0
                       ? 'bg-amber-50 text-amber-800 border border-amber-200'
                       : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                  }`}>
+                    }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${inventorySummary.totalBroken > 0 ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
                     {inventorySummary.totalBroken > 0 ? `${inventorySummary.totalBroken} Defective Items` : '100% Operational'}
                   </span>
@@ -682,11 +673,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <button
             type="button"
             onClick={() => handleTabChange('matrix')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeTab === 'matrix'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'matrix'
                 ? 'border-neutral-900 text-neutral-900 font-bold'
                 : 'border-transparent text-neutral-500 hover:text-neutral-800'
-            }`}
+              }`}
           >
             <Layers className="w-4 h-4 text-neutral-600" />
             <span>Facility & Condition ({loc.inventories?.length || 0})</span>
@@ -694,11 +684,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <button
             type="button"
             onClick={() => handleTabChange('hardware')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeTab === 'hardware'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'hardware'
                 ? 'border-neutral-900 text-neutral-900 font-bold'
                 : 'border-transparent text-neutral-500 hover:text-neutral-800'
-            }`}
+              }`}
           >
             <Microscope className="w-4 h-4 text-blue-600" />
             <span>Hardware Assets ({matchingAssets.length})</span>
@@ -706,11 +695,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <button
             type="button"
             onClick={() => handleTabChange('stock')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeTab === 'stock'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'stock'
                 ? 'border-neutral-900 text-neutral-900 font-bold'
                 : 'border-transparent text-neutral-500 hover:text-neutral-800'
-            }`}
+              }`}
           >
             <Boxes className="w-4 h-4 text-emerald-600" />
             <span>Consumables & Stock ({matchingStock.length})</span>
@@ -718,11 +706,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <button
             type="button"
             onClick={() => handleTabChange('audit')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-              activeTab === 'audit'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'audit'
                 ? 'border-emerald-600 text-emerald-800 font-bold'
                 : 'border-transparent text-neutral-500 hover:text-neutral-800'
-            }`}
+              }`}
           >
             <Sparkles className="w-4 h-4 text-emerald-600" />
             <span>Quick Audit Mode</span>
@@ -774,7 +761,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Add Room Item</span>
+                    <span>Allocate from Center Stock</span>
                   </button>
                 )}
               </div>
@@ -891,11 +878,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                 100% Operational
                               </span>
                             ) : (
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold ${
-                                operationalPercent >= 70
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold ${operationalPercent >= 70
                                   ? 'bg-amber-50 text-amber-800 border border-amber-200'
                                   : 'bg-rose-50 text-rose-800 border border-rose-200'
-                              }`}>
+                                }`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${operationalPercent >= 70 ? 'bg-amber-500' : 'bg-rose-500'}`} />
                                 {operationalPercent}% Usable
                               </span>
@@ -1193,11 +1179,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           {asset.model}
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                            asset.status === 'operational'
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${asset.status === 'operational'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-amber-50 text-amber-700 border border-amber-200'
-                          }`}>
+                            }`}>
                             {asset.status.toUpperCase()}
                           </span>
                         </td>
@@ -1444,18 +1429,21 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         </div>
       )}
 
-      {/* 9. Add Room Item Modal */}
+      {/* 9. Allocate from Center Stock / Assets Modal */}
       {showAddItemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-neutral-200 space-y-5">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 space-y-5 max-h-[92vh] overflow-y-auto">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
-                  Facility Record
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">
+                  Center Stock Allocation
                 </span>
                 <h3 className="text-base font-bold text-neutral-900 mt-1">
-                  Add Item to {loc.room}
+                  Allocate Equipment to {loc.room}
                 </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Draw furniture, chairs, or hardware directly from Central Stock (/stock) or Assets (/assets).
+                </p>
               </div>
               <button
                 type="button"
@@ -1466,20 +1454,149 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               </button>
             </div>
 
+            {/* Source Segmented Selector */}
+            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setItemSource('stock');
+                  if (stock.length > 0) {
+                    handleSelectCentralStock(stock[0].code);
+                  }
+                }}
+                className={`flex-1 py-1.5 px-2 rounded-md transition-all text-center cursor-pointer ${itemSource === 'stock'
+                    ? 'bg-white text-neutral-900 shadow-2xs font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+              >
+                📦 Center Stock (/stock)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setItemSource('asset');
+                  if (assets.length > 0) {
+                    handleSelectCentralAsset(assets[0].serialNumber);
+                  }
+                }}
+                className={`flex-1 py-1.5 px-2 rounded-md transition-all text-center cursor-pointer ${itemSource === 'asset'
+                    ? 'bg-white text-neutral-900 shadow-2xs font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+              >
+                🖥️ Center Assets (/assets)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setItemSource('custom');
+                  setNewItemName('');
+                  setNewItemBrandSpec('');
+                  setNewItemUnit('pcs');
+                  setNewItemRemarks('');
+                  setSelectedStockCode('');
+                  setSelectedAssetSerial('');
+                }}
+                className={`py-1.5 px-3 rounded-md transition-all text-center cursor-pointer ${itemSource === 'custom'
+                    ? 'bg-white text-neutral-900 shadow-2xs font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+              >
+                ✏️ Custom
+              </button>
+            </div>
+
             <form onSubmit={handleCreateFacilityItem} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Item / Equipment Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Student Chair, Air Conditioner, Whiteboard..."
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
-                />
-              </div>
+              {/* Option A: Pick from Central Stock */}
+              {itemSource === 'stock' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      Select Item from Central Stock (/stock) *
+                    </label>
+                    <select
+                      value={selectedStockCode}
+                      onChange={(e) => handleSelectCentralStock(e.target.value)}
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
+                    >
+                      <option value="">-- Choose Item from /stock --</option>
+                      {stock.map((s) => (
+                        <option key={s.id} value={s.code}>
+                          {s.name} ({s.code}) — {s.quantity} {s.unit} in Dept
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedStockCode && (
+                    <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs text-neutral-600 space-y-1">
+                      <div className="font-semibold text-neutral-900 flex items-center justify-between">
+                        <span>{newItemName}</span>
+                        <span className="font-mono text-[10px] bg-neutral-200 text-neutral-800 px-1.5 py-0.5 rounded">
+                          {selectedStockCode}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-neutral-500">
+                        {newItemBrandSpec}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Option B: Pick from Central Assets */}
+              {itemSource === 'asset' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      Select Device from Central Hardware Assets (/assets) *
+                    </label>
+                    <select
+                      value={selectedAssetSerial}
+                      onChange={(e) => handleSelectCentralAsset(e.target.value)}
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
+                    >
+                      <option value="">-- Choose Hardware from /assets --</option>
+                      {assets.map((a) => (
+                        <option key={a.id} value={a.serialNumber}>
+                          {a.name} ({a.serialNumber}) — {a.totalUnits ?? 1} units
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedAssetSerial && (
+                    <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs text-neutral-600 space-y-1">
+                      <div className="font-semibold text-neutral-900 flex items-center justify-between">
+                        <span>{newItemName}</span>
+                        <span className="font-mono text-[10px] bg-neutral-200 text-neutral-800 px-1.5 py-0.5 rounded">
+                          {selectedAssetSerial}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-neutral-500">
+                        {newItemBrandSpec}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Option C: Custom Item Name */}
+              {itemSource === 'custom' && (
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                    Item / Equipment Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Student Chair, Air Conditioner, Whiteboard..."
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 font-medium"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1506,43 +1623,44 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     type="text"
                     value={newItemUnit}
                     onChange={(e) => setNewItemUnit(e.target.value)}
-                    placeholder="pcs, sets, units..."
+                    placeholder="pcs, chairs, tables, sets..."
                     className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                  >
-                  </input>
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Brand & Specification
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Panasonic 2.5HP Inverter, Wooden 2-Seater Desk..."
-                  value={newItemBrandSpec}
-                  onChange={(e) => setNewItemBrandSpec(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                />
-              </div>
+              {itemSource === 'custom' && (
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                    Brand & Specification
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Panasonic 2.5HP Inverter, Wooden 2-Seater Desk..."
+                    value={newItemBrandSpec}
+                    onChange={(e) => setNewItemBrandSpec(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Working Count
+                    Working Units (Allocated to {loc.room})
                   </label>
                   <input
                     type="number"
                     min="0"
                     value={newItemQtyWorking}
                     onChange={(e) => setNewItemQtyWorking(parseInt(e.target.value) || 0)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 font-mono"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 font-mono font-bold"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Broken / Defective Count
+                    Defective / Broken Units
                   </label>
                   <input
                     type="number"
@@ -1556,18 +1674,18 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
               <div>
                 <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Defect Remarks / Notes (Optional)
+                  Placement Details / Defect Remarks (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 1 wheel broken, light flickering..."
+                  placeholder="e.g. Student Rows 1-4, Instructor podium..."
                   value={newItemRemarks}
                   onChange={(e) => setNewItemRemarks(e.target.value)}
                   className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
                 <button
                   type="button"
                   onClick={() => setShowAddItemModal(false)}
@@ -1577,9 +1695,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  Add to Room Roster
+                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Allocate to {loc.room}</span>
                 </button>
               </div>
             </form>
