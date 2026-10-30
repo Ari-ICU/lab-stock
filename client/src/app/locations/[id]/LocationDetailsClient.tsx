@@ -591,17 +591,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
                             title="Click to view full specifications"
                           >
-                            {asset.imageUrl ? (
-                              <img
-                                src={getOptimizedImageUrl(asset.imageUrl, 'thumb')}
-                                alt={asset.name}
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="w-4 h-4 text-neutral-400" />
-                            )}
+                            <LabThumbnail
+                              src={asset.imageUrl}
+                              alt={asset.name}
+                              size="thumb"
+                              fallbackType="item"
+                              className="w-full h-full object-cover"
+                            />
                           </Link>
                         </td>
                         <td className="py-3.5 px-4">
@@ -755,17 +751,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
                             title="Click to view details"
                           >
-                            {item.imageUrl ? (
-                              <img
-                                src={getOptimizedImageUrl(item.imageUrl, 'thumb')}
-                                alt={item.name}
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="w-4 h-4 text-neutral-400" />
-                            )}
+                            <LabThumbnail
+                              src={item.imageUrl}
+                              alt={item.name}
+                              size="thumb"
+                              fallbackType="item"
+                              className="w-full h-full object-cover"
+                            />
                           </Link>
                         </td>
                         <td className="py-3.5 px-4">

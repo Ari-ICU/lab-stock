@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LabThumbnail } from '@/components/LabThumbnail';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import {
   Package,
@@ -500,17 +501,13 @@ export default function DashboardPage() {
                         className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors"
                         title="View details"
                       >
-                        {asset.imageUrl ? (
-                          <img
-                            src={getOptimizedImageUrl(asset.imageUrl, 'thumb')}
-                            alt={asset.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <ImageIcon className="w-4 h-4 text-neutral-400" />
-                        )}
+                        <LabThumbnail
+                          src={asset.imageUrl}
+                          alt={asset.name}
+                          size="thumb"
+                          fallbackType="item"
+                          className="w-full h-full object-cover"
+                        />
                       </Link>
 
                       <div className="min-w-0">

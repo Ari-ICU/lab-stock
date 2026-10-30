@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LabThumbnail } from '@/components/LabThumbnail';
 import { Boxes, Microscope, Building, ArrowRight, Search, Plus, Shield } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 
@@ -160,17 +161,14 @@ export default function LocationsPage() {
                       className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-700 cursor-pointer hover:border-neutral-400 transition-colors shrink-0 shadow-2xs overflow-hidden border border-neutral-200"
                       title="Click to view lab equipment and inventory"
                     >
-                      {loc.imageUrl ? (
-                        <img
-                          src={getOptimizedImageUrl(loc.imageUrl, 'thumb')}
-                          alt={loc.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Building className="w-5 h-5" />
-                      )}
+                      <LabThumbnail
+                        src={loc.imageUrl}
+                        alt={loc.name}
+                        size="thumb"
+                        fallbackType="building"
+                        className="w-full h-full object-cover"
+                        iconClassName="w-5 h-5 text-neutral-500"
+                      />
                     </Link>
                     <div>
                       <Link
