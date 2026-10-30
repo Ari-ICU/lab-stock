@@ -75,7 +75,15 @@ export default function LocationsPage() {
         loc.name.toLowerCase().includes(filterText.toLowerCase()) ||
         loc.room.toLowerCase().includes(filterText.toLowerCase()) ||
         loc.building.toLowerCase().includes(filterText.toLowerCase())
-    );
+    )
+    .sort((a, b) => {
+      // Handled laboratories appear first at the top; unhandled go to the bottom
+      const aAllowed = canManageLocation(a.room) || canManageLocation(a.name);
+      const bAllowed = canManageLocation(b.room) || canManageLocation(b.name);
+      if (aAllowed && !bAllowed) return -1;
+      if (!aAllowed && bAllowed) return 1;
+      return 0;
+    });
 
   const handleExport = () => {
     exportToCsv(

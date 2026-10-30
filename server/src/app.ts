@@ -25,9 +25,9 @@ app.use(globalRateLimiter);
 // 3. UI Terminal Request Logger (from utils)
 app.use(requestLogger);
 
-// 4. Request Body Parsing with Strict Size Guards (prevents memory exhaustion DoS)
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// 4. Request Body Parsing with Generous Size Limits (supports high-res base64 equipment photos)
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 // 5. Input Sanitization (prototype pollution protection)
 app.use(sanitizeRequest);

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import {
@@ -21,6 +22,7 @@ import {
   FileText,
   HelpCircle,
   Eye,
+  Shield,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -58,8 +60,10 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const id = propId || (params?.id as string);
 
   const { stock, updateStockItem, deleteStockItem, locations, showToast } = useStock();
+  const { user, canManageLocation } = useAuth();
 
   const item = stock.find((s) => s.id === id);
+  const isAllowed = item ? canManageLocation(item.location) : false;
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -123,7 +127,53 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
     );
   }
 
-  const locationOptions = locations.map((loc) => ({
+  // Enforce laboratory room management scope
+  if (!isAllowed) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          title={`Restricted Scope: ${item.name}`}
+          subtitle={`Stationed in ${item.location}`}
+          showExport={false}
+          backHref={`/stock/${item.id}`}
+          backLabel="Back to Item"
+        />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="bg-white border border-neutral-200 rounded-lg p-8 max-w-lg w-full text-center space-y-4 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
+              <Shield className="w-6 h-6" />
+            </div>
+            <h2 className="text-base font-bold text-neutral-900">Restricted Laboratory Scope</h2>
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              This inventory item is stored in <span className="font-semibold text-neutral-800">{item.location}</span>. Your account ({user?.role}) is assigned to manage: <span className="font-semibold text-neutral-800">{user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}</span>.
+            </p>
+            <p className="text-xs text-neutral-500">
+              Modifications and deletions are restricted to operators assigned to this laboratory. Universal access is strictly reserved for Primary Lab Administrators.
+            </p>
+            <div className="pt-2 flex justify-center gap-3">
+              <Link
+                href={`/stock/${item.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded transition-colors"
+              >
+                View Item Details
+              </Link>
+              <Link
+                href="/stock"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Return to Stock Directory
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Only allow selecting locations the user is authorized to manage (unless administrator)
+  const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
+  const locationOptions = (managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
     label: `${loc.name} (${loc.room})`,
     value: `${loc.name} (${loc.room})`,
   }));
@@ -152,6 +202,16 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isAllowed) {
+      showToast('You do not have permission to modify inventory stored in this lab', 'error');
+      return;
+    }
+
+    if (!canManageLocation(location)) {
+      showToast(`You cannot move this item to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}`, 'warning');
+      return;
+    }
 
     if (!name.trim()) {
       showToast('Please enter an item name', 'warning');
@@ -190,6 +250,10 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   };
 
   const handleDelete = () => {
+    if (!isAllowed) {
+      showToast('You do not have permission to delete inventory stored in this lab', 'error');
+      return;
+    }
     deleteStockItem(item.id);
     router.push('/stock');
   };

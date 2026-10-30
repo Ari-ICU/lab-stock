@@ -20,17 +20,35 @@ export default function StockPage() {
     locations,
     deleteStockItem,
   } = useStock();
-  const { canManageLocation } = useAuth();
+  const { user, canManageLocation } = useAuth();
   const [filterText, setFilterText] = useState('');
   const [selectedLab, setSelectedLab] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
+  const isSuperAdmin = user?.roleBadge === 'Admin' || user?.assignedLabs?.includes('all');
+  const myAssignedRooms = user?.assignedLabs || [];
+
+  // Order locations so user's handled laboratories appear at the top
+  const sortedLocations = [...locations].sort((a, b) => {
+    const aAllowed = canManageLocation(a.room) || canManageLocation(a.name);
+    const bAllowed = canManageLocation(b.room) || canManageLocation(b.name);
+    if (aAllowed && !bAllowed) return -1;
+    if (!aAllowed && bAllowed) return 1;
+    return 0;
+  });
+
   const labOptions: DropdownOption[] = [
     { label: 'All Laboratories', value: 'all' },
-    ...locations.map((loc) => ({
-      label: `${loc.name} (${loc.room})`,
-      value: loc.room,
-    })),
+    ...(!isSuperAdmin && myAssignedRooms.length > 0
+      ? [{ label: `My Handled Labs (${myAssignedRooms.join(', ')})`, value: 'my_assigned' }]
+      : []),
+    ...sortedLocations.map((loc) => {
+      const isMine = canManageLocation(loc.room) || canManageLocation(loc.name);
+      return {
+        label: `${loc.name} (${loc.room})${!isSuperAdmin && isMine ? ' • Your Lab' : ''}`,
+        value: loc.room,
+      };
+    }),
   ];
 
   const statusOptions: DropdownOption[] = [
@@ -40,22 +58,34 @@ export default function StockPage() {
     { label: 'Out of Stock', value: 'out_of_stock' },
   ];
 
-  const filteredStock = stock.filter((item) => {
-    const matchesQuery =
-      item.name.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.code.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.location.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.rack.toLowerCase().includes(filterText.toLowerCase());
+  const filteredStock = stock
+    .filter((item) => {
+      const matchesQuery =
+        item.name.toLowerCase().includes(filterText.toLowerCase()) ||
+        item.code.toLowerCase().includes(filterText.toLowerCase()) ||
+        item.location.toLowerCase().includes(filterText.toLowerCase()) ||
+        item.rack.toLowerCase().includes(filterText.toLowerCase());
 
-    const matchesLab =
-      selectedLab === 'all' ||
-      item.location.toLowerCase().includes(selectedLab.toLowerCase());
+      const matchesLab =
+        selectedLab === 'all'
+          ? true
+          : selectedLab === 'my_assigned'
+          ? canManageLocation(item.location)
+          : item.location.toLowerCase().includes(selectedLab.toLowerCase());
 
-    const matchesStatus =
-      selectedStatus === 'all' || item.status === selectedStatus;
+      const matchesStatus =
+        selectedStatus === 'all' || item.status === selectedStatus;
 
-    return matchesQuery && matchesLab && matchesStatus;
-  });
+      return matchesQuery && matchesLab && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Items in handled laboratories come first; unhandled laboratories go to the bottom
+      const aAllowed = canManageLocation(a.location);
+      const bAllowed = canManageLocation(b.location);
+      if (aAllowed && !bAllowed) return -1;
+      if (!aAllowed && bAllowed) return 1;
+      return 0;
+    });
 
   const handleExport = () => {
     exportToCsv(

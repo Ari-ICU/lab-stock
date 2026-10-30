@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { ScanCodeModal } from '@/components/ScanCodeModal';
@@ -132,15 +133,20 @@ function CreateStockForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addStockItem, locations, showToast } = useStock();
+  const { user, canManageLocation } = useAuth();
+
+  // Find first manageable location for default
+  const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
+  const defaultLocation = managedLocations.length > 0
+    ? `${managedLocations[0].name} (${managedLocations[0].room})`
+    : 'Computer Lab Room 102B';
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [category, setCategory] = useState('Cables & Accessories');
   const [quantity, setQuantity] = useState(10);
   const [unit, setUnit] = useState('Units');
-  const [location, setLocation] = useState(
-    locations.length > 0 ? `${locations[0].name} (${locations[0].room})` : 'Computer Lab Room 102B'
-  );
+  const [location, setLocation] = useState(defaultLocation);
   const [rack, setRack] = useState('');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [expiryDate, setExpiryDate] = useState('Active');
@@ -161,7 +167,7 @@ function CreateStockForm() {
     if (paramLocation) setLocation(paramLocation);
   }, [searchParams]);
 
-  const locationOptions = locations.map((loc) => ({
+  const locationOptions = (managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
     label: `${loc.name} (${loc.room})`,
     value: `${loc.name} (${loc.room})`,
   }));
@@ -172,7 +178,8 @@ function CreateStockForm() {
     setCategory(preset.category);
     setQuantity(preset.quantity);
     setUnit(preset.unit);
-    setLocation(preset.location);
+    const presetLoc = canManageLocation(preset.location) ? preset.location : defaultLocation;
+    setLocation(presetLoc);
     setRack(preset.rack);
     setExpiryDate(preset.expiryDate);
     setImageUrl(preset.imageUrl);
@@ -190,6 +197,11 @@ function CreateStockForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!canManageLocation(location)) {
+      showToast(`You can only register items within your assigned laboratories (${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'})`, 'warning');
+      return;
+    }
 
     if (!name.trim()) {
       showToast('Please enter an item name', 'warning');

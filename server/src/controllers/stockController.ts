@@ -71,10 +71,16 @@ export const updateStockItem = asyncHandler(async (req: Request, res: Response) 
  */
 export const adjustStockQuantity = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
-  const delta = Number(req.body.delta ?? req.body.amount);
+  const rawDelta =
+    req.body.delta ??
+    req.body.quantityChange ??
+    req.body.quantity_change ??
+    req.body.amount ??
+    req.body.change;
+  const delta = Number(rawDelta);
 
   if (isNaN(delta) || delta === 0) {
-    throw new ValidationException('Field "delta" or "amount" is required and must be a non-zero number');
+    throw new ValidationException('Field "quantityChange" or "delta" is required and must be a non-zero number');
   }
 
   const updated = await stockService.adjustQuantity(id, delta);

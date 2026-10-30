@@ -53,7 +53,9 @@ router.put(
   requirePermission(Permission.ASSET_UPDATE),
   requireLocationScope(async (req) => {
     const a = await assetService.getById(String(req.params.id));
-    return a?.placement_rack || a?.location_name;
+    const currentLoc = [a?.location_room, a?.placement_rack, a?.location_name].filter(Boolean).join(' ');
+    const newLoc = req.body.placement_rack || req.body.location || req.body.placementRack;
+    return [currentLoc, newLoc].filter(Boolean);
   }),
   validateUpdateAsset,
   updateAsset
@@ -69,7 +71,7 @@ router.delete(
   requirePermission(Permission.ASSET_DELETE),
   requireLocationScope(async (req) => {
     const a = await assetService.getById(String(req.params.id));
-    return a?.placement_rack || a?.location_name;
+    return [a?.location_room, a?.placement_rack, a?.location_name].filter(Boolean).join(' ');
   }),
   deleteAsset
 );

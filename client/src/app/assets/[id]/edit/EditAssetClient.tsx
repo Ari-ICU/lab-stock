@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
+import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
@@ -23,6 +24,7 @@ import {
   FileText,
   HelpCircle,
   Eye,
+  Shield,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -37,8 +39,10 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   const id = propId || (params?.id as string);
 
   const { assets, updateAsset, deleteAsset, locations, showToast } = useStock();
+  const { user, canManageLocation } = useAuth();
 
   const asset = assets.find((a) => a.id === id);
+  const isAllowed = asset ? canManageLocation(asset.location) : false;
 
   const [name, setName] = useState('');
   const [model, setModel] = useState('');
@@ -101,7 +105,53 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
     );
   }
 
-  const locationOptions = locations.map((loc) => ({
+  // Enforce laboratory room management scope
+  if (!isAllowed) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header
+          title={`Restricted Scope: ${asset.name}`}
+          subtitle={`Stationed in ${asset.location}`}
+          showExport={false}
+          backHref={`/assets/${asset.id}`}
+          backLabel="Back to Asset"
+        />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="bg-white border border-neutral-200 rounded-lg p-8 max-w-lg w-full text-center space-y-4 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
+              <Shield className="w-6 h-6" />
+            </div>
+            <h2 className="text-base font-bold text-neutral-900">Restricted Laboratory Scope</h2>
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              This hardware asset is stationed in <span className="font-semibold text-neutral-800">{asset.location}</span>. Your account ({user?.role}) is assigned to manage: <span className="font-semibold text-neutral-800">{user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}</span>.
+            </p>
+            <p className="text-xs text-neutral-500">
+              Modification and deletion rights are restricted to operators assigned to this laboratory. Universal access is strictly reserved for Primary Lab Administrators.
+            </p>
+            <div className="pt-2 flex justify-center gap-3">
+              <Link
+                href={`/assets/${asset.id}`}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded transition-colors"
+              >
+                View Asset Details
+              </Link>
+              <Link
+                href="/assets"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Return to Assets
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Only allow selecting locations the user is authorized to manage (unless administrator)
+  const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
+  const locationOptions = (managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
     label: `${loc.name} (${loc.room})`,
     value: `${loc.name} (${loc.room})`,
   }));
@@ -122,6 +172,16 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isAllowed) {
+      showToast('You do not have permission to modify assets stationed in this lab', 'error');
+      return;
+    }
+
+    if (!canManageLocation(location)) {
+      showToast(`You cannot move this asset to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}`, 'warning');
+      return;
+    }
 
     if (!name.trim()) {
       showToast('Please specify equipment name', 'warning');
@@ -158,6 +218,10 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   };
 
   const handleDelete = () => {
+    if (!isAllowed) {
+      showToast('You do not have permission to delete assets stationed in this lab', 'error');
+      return;
+    }
     deleteAsset(asset.id);
     router.push('/assets');
   };

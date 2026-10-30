@@ -23,35 +23,65 @@ const statusOptions: DropdownOption[] = [
 export default function AssetsPage() {
   const router = useRouter();
   const { assets, deleteAsset, locations } = useStock();
-  const { canManageLocation } = useAuth();
+  const { user, canManageLocation } = useAuth();
   const [filterText, setFilterText] = useState('');
   const [labFilter, setLabFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const isSuperAdmin = user?.roleBadge === 'Admin' || user?.assignedLabs?.includes('all');
+  const myAssignedRooms = user?.assignedLabs || [];
+
+  // Order locations so user's handled laboratories appear at the top
+  const sortedLocations = [...locations].sort((a, b) => {
+    const aAllowed = canManageLocation(a.room) || canManageLocation(a.name);
+    const bAllowed = canManageLocation(b.room) || canManageLocation(b.name);
+    if (aAllowed && !bAllowed) return -1;
+    if (!aAllowed && bAllowed) return 1;
+    return 0;
+  });
+
   const labOptions: DropdownOption[] = [
     { label: 'All Laboratories', value: 'all' },
-    ...locations.map((loc) => ({
-      label: `${loc.name} (${loc.room})`,
-      value: loc.room,
-    })),
+    ...(!isSuperAdmin && myAssignedRooms.length > 0
+      ? [{ label: `My Handled Labs (${myAssignedRooms.join(', ')})`, value: 'my_assigned' }]
+      : []),
+    ...sortedLocations.map((loc) => {
+      const isMine = canManageLocation(loc.room) || canManageLocation(loc.name);
+      return {
+        label: `${loc.name} (${loc.room})${!isSuperAdmin && isMine ? ' • Your Lab' : ''}`,
+        value: loc.room,
+      };
+    }),
   ];
 
-  const filteredAssets = assets.filter((asset) => {
-    const matchesQuery =
-      asset.name.toLowerCase().includes(filterText.toLowerCase()) ||
-      asset.serialNumber.toLowerCase().includes(filterText.toLowerCase()) ||
-      asset.model.toLowerCase().includes(filterText.toLowerCase()) ||
-      asset.location.toLowerCase().includes(filterText.toLowerCase());
+  const filteredAssets = assets
+    .filter((asset) => {
+      const matchesQuery =
+        asset.name.toLowerCase().includes(filterText.toLowerCase()) ||
+        asset.serialNumber.toLowerCase().includes(filterText.toLowerCase()) ||
+        asset.model.toLowerCase().includes(filterText.toLowerCase()) ||
+        asset.location.toLowerCase().includes(filterText.toLowerCase());
 
-    const matchesLab =
-      labFilter === 'all' ||
-      asset.location.toLowerCase().includes(labFilter.toLowerCase());
+      const matchesLab =
+        labFilter === 'all'
+          ? true
+          : labFilter === 'my_assigned'
+          ? canManageLocation(asset.location)
+          : asset.location.toLowerCase().includes(labFilter.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === 'all' || asset.status === statusFilter;
+      const matchesStatus =
+        statusFilter === 'all' || asset.status === statusFilter;
 
-    return matchesQuery && matchesLab && matchesStatus;
-  });
+      return matchesQuery && matchesLab && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Hardware in handled laboratories comes first; unhandled laboratories go to the bottom
+      const aAllowed = canManageLocation(a.location);
+      const bAllowed = canManageLocation(b.location);
+      if (aAllowed && !bAllowed) return -1;
+      if (!aAllowed && bAllowed) return 1;
+      return 0;
+    });
 
   const handleExport = () => {
     exportToCsv(

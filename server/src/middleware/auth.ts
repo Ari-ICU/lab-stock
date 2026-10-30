@@ -396,7 +396,14 @@ export function canUserManageLocation(
  * Middleware: Verify that the user has scoped authority over the location/room affected by the request.
  */
 export function requireLocationScope(
-  getLocationResolver: (req: Request) => Promise<string | undefined | null> | string | undefined | null
+  getLocationResolver: (
+    req: Request
+  ) =>
+    | Promise<string | string[] | undefined | null>
+    | string
+    | string[]
+    | undefined
+    | null
 ) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
@@ -408,22 +415,26 @@ export function requireLocationScope(
     }
 
     try {
-      const location = await getLocationResolver(req);
-      if (!location) {
+      const resolved = await getLocationResolver(req);
+      if (!resolved) {
         return next();
       }
 
-      if (!canUserManageLocation(req.user, location)) {
-        return next(
-          new ForbiddenException(
-            `Access restricted: You do not have management authority over laboratory room '${location}'. Assigned rooms: [${(req.user.assignedLabs || []).join(', ')}]`,
-            'LAB_SCOPE_DENIED',
-            {
-              targetLocation: location,
-              assignedLabs: req.user.assignedLabs,
-            }
-          )
-        );
+      const locationsToCheck = Array.isArray(resolved) ? resolved : [resolved];
+
+      for (const location of locationsToCheck) {
+        if (location && !canUserManageLocation(req.user, location)) {
+          return next(
+            new ForbiddenException(
+              `Access restricted: You do not have management authority over laboratory room '${location}'. Assigned rooms: [${(req.user.assignedLabs || []).join(', ')}]`,
+              'LAB_SCOPE_DENIED',
+              {
+                targetLocation: location,
+                assignedLabs: req.user.assignedLabs,
+              }
+            )
+          );
+        }
       }
 
       return next();

@@ -9,6 +9,7 @@ export interface StockItem {
   unit: string;
   location_id?: string;
   location_name?: string;
+  location_room?: string;
   rack?: string;
   status: 'in_stock' | 'low_stock' | 'out_of_stock';
   min_threshold?: number;

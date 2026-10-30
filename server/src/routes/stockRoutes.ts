@@ -54,23 +54,25 @@ router.put(
   requirePermission(Permission.STOCK_UPDATE),
   requireLocationScope(async (req) => {
     const s = await stockService.getById(String(req.params.id));
-    return s?.rack || s?.location_name;
+    const currentLoc = [s?.location_room, s?.rack, s?.location_name].filter(Boolean).join(' ');
+    const newLoc = req.body.rack || req.body.location;
+    return [currentLoc, newLoc].filter(Boolean);
   }),
   validateUpdateStock,
   updateStockItem
 );
 
 /**
- * @route   PATCH /api/v1/stock/:id/adjust
+ * @route   PATCH /api/v1/stock/:id/quantity or /api/v1/stock/:id/adjust
  * @desc    Atomic quantity adjustment (+delta / -delta) safe for concurrent users with location scope check
  * @access  Protected (Requires stock:update + Room Scope)
  */
 router.patch(
-  '/:id/adjust',
+  ['/:id/quantity', '/:id/adjust'],
   requirePermission(Permission.STOCK_UPDATE),
   requireLocationScope(async (req) => {
     const s = await stockService.getById(String(req.params.id));
-    return s?.rack || s?.location_name;
+    return [s?.location_room, s?.rack, s?.location_name].filter(Boolean).join(' ');
   }),
   adjustStockQuantity
 );
@@ -85,7 +87,7 @@ router.delete(
   requirePermission(Permission.STOCK_DELETE),
   requireLocationScope(async (req) => {
     const s = await stockService.getById(String(req.params.id));
-    return s?.rack || s?.location_name;
+    return [s?.location_room, s?.rack, s?.location_name].filter(Boolean).join(' ');
   }),
   deleteStockItem
 );

@@ -9,6 +9,7 @@ export interface Asset {
   unit_type: string;
   location_id?: string;
   location_name?: string;
+  location_room?: string;
   placement_rack?: string;
   status: 'operational' | 'in_use' | 'maintenance';
   loan_status: 'available' | 'on_loan';
