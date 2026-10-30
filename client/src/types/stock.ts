@@ -1,5 +1,6 @@
 export interface MockItem {
   id: string;
+  serverId?: string;
   name: string;
   code: string;
   category: string;
@@ -15,6 +16,7 @@ export interface MockItem {
 
 export interface MockLoan {
   id: string;
+  serverId?: string;
   assetId: string;
   assetName: string;
   serialNumber: string;
@@ -43,6 +45,7 @@ export interface MockTransfer {
 
 export interface MockAsset {
   id: string;
+  serverId?: string;
   name: string;
   serialNumber: string;
   model: string;
@@ -109,6 +112,8 @@ export interface RoomInventoryItem {
 
 export interface MockLocation {
   id: string;
+  serverId?: string;
+  code?: string;
   name: string;
   building: string;
   room: string;

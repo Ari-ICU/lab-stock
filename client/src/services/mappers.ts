@@ -12,6 +12,7 @@ export function mapServerAsset(a: any): MockAsset {
 
   return {
     id: String(a.id),
+    serverId: String(a.id),
     name: a.name || 'Hardware Device',
     model: a.model || 'Standard',
     serialNumber: a.serial_number || a.serialNumber || 'SN-N/A',
@@ -53,6 +54,7 @@ export function mapServerStock(s: any): MockItem {
 
   return {
     id: String(s.id),
+    serverId: String(s.id),
     name: s.name || 'Consumable Item',
     code: s.code || 'SKU-000',
     category: s.category || 'Peripherals',
@@ -113,7 +115,8 @@ export function mapServerLocation(l: any): MockLocation {
 
   return {
     ...(base || {}),
-    id: stableId,
+    id: String(l.id || stableId),
+    serverId: String(l.id),
     name: l.name || base?.name || 'Laboratory Room',
     room: l.room || base?.room || 'Room 101',
     building: l.building || base?.building || 'Engineering Block A',
@@ -140,6 +143,7 @@ export function toServerLocation(l: Partial<MockLocation>): Record<string, any> 
 export function mapServerLoan(l: any): MockLoan {
   return {
     id: String(l.id),
+    serverId: String(l.id),
     assetId: String(l.asset_id || l.assetId || ''),
     assetName: l.asset_name || l.assetName || 'Lab Device',
     serialNumber: l.serial_number || l.serialNumber || 'SN-N/A',

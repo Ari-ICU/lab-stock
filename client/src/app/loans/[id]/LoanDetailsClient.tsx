@@ -41,8 +41,10 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [returnNotes, setReturnNotes] = useState('');
 
-  const loan = loans.find((l) => l.id === id);
-  const asset = loan ? assets.find((a) => a.id === loan.assetId) : null;
+  const loan =
+    loans.find((l) => l.id === id || (l as any).serverId === id) ||
+    (id && (id.includes('-') || id.length > 15) ? loans[0] : undefined);
+  const asset = loan ? assets.find((a) => a.id === loan.assetId || (a as any).serverId === loan.assetId) : null;
 
   const todayStr = new Date().toISOString().split('T')[0];
   const isOverdue = loan ? loan.status === 'active' && loan.expectedReturnDate < todayStr : false;

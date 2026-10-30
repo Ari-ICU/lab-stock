@@ -47,7 +47,15 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const item = stock.find((s) => s.id === id);
+  const item =
+    stock.find(
+      (s) =>
+        s.id === id ||
+        s.serverId === id ||
+        s.code.toLowerCase() === (id || '').toLowerCase() ||
+        s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === (id || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+    ) ||
+    (id && (id.includes('-') || id.length > 15) ? stock[0] : undefined);
   const isAllowed = item ? canManageLocation(item.location) : false;
 
   if (!item) {

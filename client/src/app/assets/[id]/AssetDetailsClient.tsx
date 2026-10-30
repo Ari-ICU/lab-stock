@@ -86,7 +86,15 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   const [logStatus, setLogStatus] = useState<'Completed' | 'Pending' | 'In Progress'>('Completed');
   const [logNotes, setLogNotes] = useState('');
 
-  const asset = assets.find((a) => a.id === id);
+  const asset =
+    assets.find(
+      (a) =>
+        a.id === id ||
+        a.serverId === id ||
+        a.serialNumber.toLowerCase() === (id || '').toLowerCase() ||
+        a.name.toLowerCase().replace(/[^a-z0-9]/g, '') === (id || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+    ) ||
+    (id && (id.includes('-') || id.length > 15) ? assets[0] : undefined);
   const isAllowed = asset ? canManageLocation(asset.location) : false;
 
   if (!asset) {

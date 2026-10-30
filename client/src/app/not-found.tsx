@@ -1,11 +1,77 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FlaskConical, ArrowLeft, MapPin } from 'lucide-react';
+import LocationDetailsClient from './locations/[id]/LocationDetailsClient';
+import StockDetailsClient from './stock/[id]/StockDetailsClient';
+import AssetDetailsClient from './assets/[id]/AssetDetailsClient';
+import LoanDetailsClient from './loans/[id]/LoanDetailsClient';
 
 export default function NotFound() {
   const router = useRouter();
+  const [resolvedRoute, setResolvedRoute] = useState<{
+    type: 'location' | 'stock' | 'asset' | 'loan' | null;
+    id: string;
+  }>({ type: null, id: '' });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window === 'undefined') return;
+
+    const path = window.location.pathname || '';
+
+    // Check for /locations/<id>
+    const locMatch = path.match(/\/locations\/([^/?#]+)/i);
+    if (locMatch && locMatch[1]) {
+      setResolvedRoute({ type: 'location', id: decodeURIComponent(locMatch[1]) });
+      return;
+    }
+
+    // Check for /stock/<id>
+    const stockMatch = path.match(/\/stock\/([^/?#]+)/i);
+    if (stockMatch && stockMatch[1]) {
+      setResolvedRoute({ type: 'stock', id: decodeURIComponent(stockMatch[1]) });
+      return;
+    }
+
+    // Check for /assets/<id>
+    const assetMatch = path.match(/\/assets\/([^/?#]+)/i);
+    if (assetMatch && assetMatch[1]) {
+      setResolvedRoute({ type: 'asset', id: decodeURIComponent(assetMatch[1]) });
+      return;
+    }
+
+    // Check for /loans/<id>
+    const loanMatch = path.match(/\/loans\/([^/?#]+)/i);
+    if (loanMatch && loanMatch[1]) {
+      setResolvedRoute({ type: 'loan', id: decodeURIComponent(loanMatch[1]) });
+      return;
+    }
+  }, []);
+
+  if (resolvedRoute.type === 'location') {
+    return <LocationDetailsClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'stock') {
+    return <StockDetailsClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'asset') {
+    return <AssetDetailsClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'loan') {
+    return <LoanDetailsClient id={resolvedRoute.id} />;
+  }
+
+  if (!mounted) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8 text-neutral-400 text-xs">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col items-center justify-center p-6 text-neutral-900 font-sans">

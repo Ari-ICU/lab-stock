@@ -989,6 +989,7 @@ export const mockMaintenance: MockMaintenance[] = [
 export const mockLocations: MockLocation[] = [
   {
     id: 'L1',
+    serverId: '07cf0336-1b6b-45f1-9d53-89910fca337c',
     name: 'Computer & Network Lab 102B',
     building: 'Engineering Block A',
     room: 'Room 102B',
