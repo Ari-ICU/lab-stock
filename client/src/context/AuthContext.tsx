@@ -269,6 +269,7 @@ interface AuthContextType {
   updateUserAssignedLabs: (userId: string, assignedLabs: string[]) => void;
   addUser: (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => void;
   deleteUser: (userId: string) => boolean;
+  resetUsersToDefault: () => void;
   // Location Permissions Guard
   canManageLocation: (locationStr: string) => boolean;
   // Session Devices
@@ -283,37 +284,64 @@ const USERS_STORAGE_KEY = 'lab_managed_users';
 const SESSIONS_STORAGE_KEY = 'lab_session_devices';
 
 export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
+  let role = u.role;
   let roleBadge = u.roleBadge;
-  if (u.role === 'Primary Lab Administrator') {
-    roleBadge = 'Admin';
-  } else if (u.role === 'Faculty Lecturer') {
-    roleBadge = 'Lecturer';
-  } else if (u.role === 'Lab Assistant') {
-    roleBadge = 'Lab Assistant';
-  }
-
+  let permissions = u.permissions;
+  let department = u.department;
   let assignedLabs = u.assignedLabs;
+
   if (assignedLabs && Array.isArray(assignedLabs)) {
     assignedLabs = assignedLabs.map((r) => (typeof r === 'string' ? r.replace(/^Rm\s+/i, 'Room ') : r));
   }
-  if (roleBadge !== 'Admin') {
-    // Non-admin accounts must NEVER have universal 'all' scope
-    if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all') || assignedLabs.includes('*')) {
-      if (u.name?.includes('Ratha') || u.email?.includes('admin')) {
-        assignedLabs = ['Room 102B', 'Room 206'];
-      } else if (u.name?.includes('Vakhim') || u.email?.includes('vakhim')) {
+
+  // Enforce canonical institutional identities to heal corrupted localStorage
+  if (u.email === 'sovannarith@lab.edu' || u.name?.includes('Sovannarith')) {
+    role = 'Primary Lab Administrator';
+    roleBadge = 'Admin';
+    permissions = 'Full Read/Write Access & System Config';
+    assignedLabs = ['all'];
+    department = 'Engineering Block A - Room 102B';
+  } else if (u.email === 'admin@lab.edu' || u.name?.includes('Ratha')) {
+    role = 'Faculty Lecturer';
+    roleBadge = 'Lecturer';
+    permissions = 'Course Hardware Allocation & Catalog View';
+    if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all') || assignedLabs.includes('Room 305')) {
+      assignedLabs = ['Room 102B', 'Room 206'];
+    }
+    department = 'Engineering Block A - Room 102B & Room 206';
+  } else if (u.email === 'vakhim@lab.edu' || u.name?.includes('Vakhim')) {
+    role = 'Lab Assistant';
+    roleBadge = 'Lab Assistant';
+    permissions = 'Inventory Check-in/Out & Equipment Prep';
+    if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
+      assignedLabs = ['Room 102B'];
+    }
+    department = 'Engineering Block A - Room 102B';
+  } else {
+    // Custom registered user
+    if (role === 'Primary Lab Administrator') {
+      roleBadge = 'Admin';
+      assignedLabs = ['all'];
+    } else if (role === 'Faculty Lecturer') {
+      roleBadge = 'Lecturer';
+      if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
         assignedLabs = ['Room 102B'];
-      } else {
+      }
+    } else {
+      role = 'Lab Assistant';
+      roleBadge = 'Lab Assistant';
+      if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
         assignedLabs = ['Room 102B'];
       }
     }
-  } else {
-    assignedLabs = ['all'];
   }
 
   return {
     ...u,
+    role,
     roleBadge,
+    permissions,
+    department,
     assignedLabs,
   };
 }
@@ -733,6 +761,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  const resetUsersToDefault = () => {
+    setManagedUsers(INITIAL_MANAGED_USERS);
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_MANAGED_USERS));
+    } catch {
+      // ignore
+    }
+  };
+
   const refreshSessionDevices = () => {
     const current = detectCurrentDevice();
     const updated = sessionDevices.map((s) => {
@@ -948,6 +985,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateUserAssignedLabs,
         addUser,
         deleteUser,
+        resetUsersToDefault,
         canManageLocation,
         sessionDevices,
         refreshSessionDevices,
