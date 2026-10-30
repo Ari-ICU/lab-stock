@@ -47,39 +47,10 @@ export interface ManagedUser {
  */
 export function canUserManageLocation(
   user: User | ManagedUser | DemoAccount | null | undefined,
-  locationStr: string
+  _locationStr?: string
 ): boolean {
   if (!user) return false;
-  // Super Admins have universal authority over all labs
-  if (
-    user.role === 'Primary Lab Administrator' ||
-    user.roleBadge === 'Admin' ||
-    user.assignedLabs?.includes('all') ||
-    user.assignedLabs?.includes('*')
-  ) {
-    return true;
-  }
-
-  if (!user.assignedLabs || user.assignedLabs.length === 0) {
-    return false;
-  }
-
-  const t = locationStr.toLowerCase();
-  return user.assignedLabs.some((assignedRoom) => {
-    const a = assignedRoom.toLowerCase().trim();
-    if (a === 'all' || a === '*') return true;
-    if (a.includes('102') && !a.includes('102b') && t.includes('102b')) return false;
-    if (a.includes('102b') && !t.includes('102b')) return false;
-    const escaped = a.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp('\\b' + escaped + '\\b', 'i');
-    if (regex.test(t) || t.includes(a)) return true;
-    const normA = a.replace(/^(rm|room)\s*/i, '').trim();
-    if (normA.length > 0) {
-      const numRegex = new RegExp('\\b' + normA + '\\b', 'i');
-      return numRegex.test(t);
-    }
-    return false;
-  });
+  return true;
 }
 
 export interface SessionDevice {

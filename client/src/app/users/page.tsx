@@ -659,7 +659,7 @@ export default function UsersPage() {
                               {loc.name} ({loc.room})
                             </div>
                             <div className="text-[10px] text-neutral-500 truncate">
-                              {loc.building} • {loc.description || loc.name}
+                              {loc.building} • {loc.totalAssets} Assets • {loc.totalItems} Items
                             </div>
                           </div>
                         </div>
