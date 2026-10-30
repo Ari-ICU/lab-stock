@@ -29,6 +29,7 @@ export default function AssetsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const isSuperAdmin = user?.roleBadge === 'Admin' || user?.assignedLabs?.includes('all');
+  const isAssistant = user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant';
   const myAssignedRooms = user?.assignedLabs || [];
 
   // Order locations so user's handled laboratories appear at the top
@@ -109,12 +110,20 @@ export default function AssetsPage() {
       <Header
         title="Faculty Lab Hardware & Assets"
         subtitle="Workstations, Network Switches, Projectors & Infrastructure Across All Labs"
-        actionLabel="Create Asset"
-        onAction={() => router.push('/assets/create')}
+        actionLabel={isAssistant ? undefined : "Create Asset"}
+        onAction={isAssistant ? undefined : () => router.push('/assets/create')}
         onExport={handleExport}
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+        {isAssistant && (
+          <div className="p-3.5 bg-neutral-100 border border-neutral-300 rounded-lg flex items-center gap-3 text-neutral-800 text-xs shadow-2xs">
+            <Shield className="w-4 h-4 text-neutral-600 shrink-0" />
+            <div>
+              <span className="font-semibold">View-Only Department Inspection Mode:</span> Lab Assistants have read-only inspection access. Equipment profiles and hardware assets cannot be modified.
+            </div>
+          </div>
+        )}
         <div className="bg-white border border-neutral-200 rounded">
           {/* Filters Toolbar with Dropdown */}
           <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -176,7 +185,7 @@ export default function AssetsPage() {
                   </tr>
                 ) : (
                   filteredAssets.map((asset) => {
-                    const isAllowed = canManageLocation(asset.location);
+                    const isAllowed = !isAssistant && canManageLocation(asset.location);
                     return (
                       <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors group">
                         {/* Device Image Thumbnail with Direct Link */}

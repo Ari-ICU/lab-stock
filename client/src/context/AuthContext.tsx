@@ -53,9 +53,21 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
     avatarText: 'HS',
-    permissions: 'Full Read/Write Access & System Config',
+    permissions: 'Full Read/Write Access & System Config (Super Admin)',
     department: 'Engineering Block A - Room 102B',
-    description: 'Faculty supervisor and laboratory director with full administrative oversight across all lab rooms',
+    description: 'Faculty supervisor & Super Admin with universal oversight across all department facilities',
+    assignedLabs: ['all'],
+  },
+  {
+    name: 'John Doe',
+    email: 'john.doe@rupp.edu.kh',
+    password: 'password123',
+    role: 'Department Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'JD',
+    permissions: 'Full Read/Write Access & Asset Management (Admin)',
+    department: 'Faculty of Engineering - Administration',
+    description: 'Department administrator managing furniture, fixtures, and asset counting',
     assignedLabs: ['all'],
   },
   {
@@ -67,33 +79,8 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
     department: 'Software Engineering Department',
-    description: 'Course lecturer managing student lab stations in Room 102B & Room 206',
+    description: 'Faculty Lecturer managing student workstations and teaching laboratories (Room 102B & Room 206)',
     assignedLabs: ['Room 102B', 'Room 206'],
-  },
-  {
-    name: 'Chan Vicheka',
-    email: 'chan.vicheka@rupp.edu.kh',
-    password: 'password123',
-    role: 'Lab Assistant',
-    roleBadge: 'Lab Assistant',
-    avatarText: 'CV',
-    permissions: 'Inventory Check-in/Out & Equipment Prep',
-    department: 'Hardware Depot & Lab 102B',
-    description: 'Lab assistant managing equipment distribution under Faculty Lecturer supervision',
-    assignedLabs: ['Room 102B', 'Room 206'],
-    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
-  },
-  {
-    name: 'John Doe',
-    email: 'john.doe@rupp.edu.kh',
-    password: 'password123',
-    role: 'Primary Lab Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'JD',
-    permissions: 'Full Read/Write Access & System Config',
-    department: 'Faculty of Engineering',
-    description: 'Engineering systems administrator',
-    assignedLabs: ['all'],
   },
 ];
 
@@ -105,25 +92,24 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     role: 'Primary Lab Administrator',
     roleBadge: 'Admin',
     avatarText: 'HS',
-    permissions: 'Full Read/Write Access & System Config',
+    permissions: 'Full Read/Write Access & System Config (Super Admin)',
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Today, 08:30 AM',
     assignedLabs: ['all'],
   },
   {
-    id: 'user-assistant-vicheka',
-    name: 'Chan Vicheka',
-    email: 'chan.vicheka@rupp.edu.kh',
-    role: 'Lab Assistant',
-    roleBadge: 'Lab Assistant',
-    avatarText: 'CV',
-    permissions: 'Inventory Check-in/Out & Equipment Prep',
-    department: 'Hardware Depot & Lab 102B',
+    id: 'user-admin-john',
+    name: 'John Doe',
+    email: 'john.doe@rupp.edu.kh',
+    role: 'Department Administrator',
+    roleBadge: 'Admin',
+    avatarText: 'JD',
+    permissions: 'Full Read/Write Access & Asset Management (Admin)',
+    department: 'Faculty of Engineering',
     status: 'active',
-    lastLogin: 'Today, 09:15 AM',
-    assignedLabs: ['Room 102B', 'Room 206'],
-    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
+    lastLogin: 'Today, 08:45 AM',
+    assignedLabs: ['all'],
   },
   {
     id: 'user-lecturer',
@@ -139,17 +125,18 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     assignedLabs: ['Room 102B', 'Room 206'],
   },
   {
-    id: 'user-admin-john',
-    name: 'John Doe',
-    email: 'john.doe@rupp.edu.kh',
-    role: 'Primary Lab Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'JD',
-    permissions: 'Full Read/Write Access & System Config',
-    department: 'Faculty of Engineering',
+    id: 'user-assistant-vicheka',
+    name: 'Chan Vicheka',
+    email: 'chan.vicheka@rupp.edu.kh',
+    role: 'Lab Assistant',
+    roleBadge: 'Lab Assistant',
+    avatarText: 'CV',
+    permissions: 'Read-Only Department View & Audit (Cannot login / View only)',
+    department: 'Hardware Depot & Lab 102B',
     status: 'active',
-    lastLogin: 'Yesterday, 04:45 PM',
-    assignedLabs: ['all'],
+    lastLogin: 'View Only (No login)',
+    assignedLabs: ['Room 102B', 'Room 206'],
+    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
   },
 ];
 
@@ -1040,6 +1027,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     const cleanEmail = email.trim().toLowerCase();
+    // Strict RBAC: Only Super Admin, Admin, and Lecturer can log in. Lab Assistants have View-Only inspection access.
+    if (
+      cleanEmail.includes('vicheka') ||
+      cleanEmail.includes('assistant') ||
+      cleanEmail === 'chan.vicheka@rupp.edu.kh'
+    ) {
+      setIsLoading(false);
+      return {
+        success: false,
+        error:
+          'Access restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators. Please sign in as Super Admin, Admin, or Lecturer.',
+      };
+    }
     const emailAliases: Record<string, string> = {
       'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
       'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',

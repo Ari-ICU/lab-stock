@@ -37,6 +37,17 @@ export const authService = {
     };
     const primaryEmail = emailAliases[normalizedEmail] || normalizedEmail;
 
+    // Strict RBAC: Only Super Admin, Admin, and Lecturer can log in. Lab Assistants have View-Only status.
+    if (
+      primaryEmail === 'chan.vicheka@rupp.edu.kh' ||
+      primaryEmail.includes('assistant') ||
+      primaryEmail.includes('vicheka')
+    ) {
+      throw new ForbiddenException(
+        'Login restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators. Please sign in as Super Admin, Admin, or Lecturer.'
+      );
+    }
+
     // Standard faculty accounts for development & fallback when database is offline or initializing
     const DEV_SEED_USERS = [
       {
