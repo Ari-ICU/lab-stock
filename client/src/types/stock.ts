@@ -80,14 +80,47 @@ export interface MockMaintenance {
   notes: string;
 }
 
+export type RoomType =
+  | 'COMPUTER_LAB'
+  | 'LECTURE_ROOM'
+  | 'STAFF_OFFICE'
+  | 'SERVER_ROOM'
+  | 'STORAGE';
+
+export type AssetGroup =
+  | 'FURNITURE'
+  | 'ELECTRICAL'
+  | 'IT_HARDWARE'
+  | 'SAFETY_MISC';
+
+export interface RoomInventoryItem {
+  id: string;
+  roomId: string;
+  name: string;
+  group: AssetGroup;
+  brandSpec?: string;
+  unit: string;
+  qtyWorking: number;
+  qtyBroken: number;
+  qtyMaintenance: number;
+  remarks?: string;
+  lastAuditedAt?: string;
+}
+
 export interface MockLocation {
   id: string;
   name: string;
   building: string;
   room: string;
+  type?: RoomType;
+  floor?: number;
+  capacity?: number;
   totalAssets: number;
   totalItems: number;
   imageUrl?: string;
+  lastAuditedAt?: string;
+  auditedBy?: string;
+  inventories?: RoomInventoryItem[];
 }
 
 export interface PurchaseRequest {

@@ -1,0 +1,22 @@
+Room Code,Room Name,Floor,Building,Category Group,Item Name,Brand / Specification,Unit,Qty Working (Good),Qty Broken (Defective),Qty Under Maintenance,Remarks / Defect Notes,Audited Date,Audited By
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,FURNITURE,Student Chair,Heavy-duty Ergonomic Mesh Swivel,pcs,38,2,0,2 chairs have broken castors near back row,2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,FURNITURE,Student Computer Desk,Dual-station Wooden Desk with cable channel,sets,20,0,0,All sturdy and grounded,2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,ELECTRICAL,Air Conditioner,Panasonic 2.5HP Inverter Split Unit,units,1,1,0,Unit B window side leaking water and loud compressor,2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,ELECTRICAL,Ceiling LED Tube Light,Philips 36W LED Tube 4000K Neutral White,pcs,8,2,0,2 bulbs flickering above Lecturer podium,2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,IT_HARDWARE,Desktop PC System Unit,Dell OptiPlex 7090 Core i7 / 16GB / 512GB SSD,units,38,1,1,PC #14 PSU blown; PC #22 under RAM replacement,2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,IT_HARDWARE,LCD Projector & Screen,Epson EB-2250U 5000 Lumens Full HD + 120" Screen,sets,1,0,0,Lamp timer at 310h (Good),2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,FURNITURE,Whiteboard & Marker Tray,Porcelain Magnetic 2.4m x 1.2m Wall Mounted,pcs,1,0,0,Clean surface,2026-10-30,Dr. Heng Sovannarith
+Room 102B,Computer & Network Lab 102B,1,Engineering Block A,SAFETY_MISC,Fire Extinguisher,CO2 5KG Clean Agent Gas Extinguisher,units,1,0,0,Pressure gauge green zone,2026-10-30,Dr. Heng Sovannarith
+Room 206,Network & Server Lab 206,2,Engineering Block A,FURNITURE,Student Chair,Ergonomic Mid-Back Mesh,pcs,32,0,0,All in prime condition,2026-10-30,John Doe
+Room 206,Network & Server Lab 206,2,Engineering Block A,FURNITURE,Student Computer Desk,Dual-station Heavy Steel Frame,sets,16,0,0,Equipped with ESD grounding pads,2026-10-30,John Doe
+Room 206,Network & Server Lab 206,2,Engineering Block A,ELECTRICAL,Air Conditioner,Daikin 2.5HP Inverter Ceiling Cassette,units,2,0,0,Both units running at 21C,2026-10-30,John Doe
+Room 206,Network & Server Lab 206,2,Engineering Block A,IT_HARDWARE,Desktop PC System Unit,Dell OptiPlex 7090 Core i7 / 32GB RAM / Dual NIC,units,32,0,0,All dual-NIC rigs verified,2026-10-30,John Doe
+Room 206,Network & Server Lab 206,2,Engineering Block A,IT_HARDWARE,42U Server Rack Enclosure,APC NetShelter SX 42U Server Rack,units,2,0,0,Locked and keyed to Primary Admin,2026-10-30,John Doe
+Room 201,Software Engineering & AI Lab 201,2,Engineering Block A,FURNITURE,Student Chair,Ergonomic Mid-Back Mesh,pcs,37,3,0,3 chairs have cracked lumbar supports in Row 4,2026-10-30,Thoeurn Ratha
+Room 201,Software Engineering & AI Lab 201,2,Engineering Block A,ELECTRICAL,Air Conditioner,Panasonic 2.5HP Inverter Split Unit,units,2,0,0,Filters cleaned,2026-10-30,Thoeurn Ratha
+Room 201,Software Engineering & AI Lab 201,2,Engineering Block A,IT_HARDWARE,Desktop PC System Unit,HP EliteDesk 800 G6 Core i7 / RTX 3060 AI Rig,units,39,1,0,Station #08 motherboard error (POST beeps),2026-10-30,Thoeurn Ratha
+Room 203,Electronics & Embedded IoT Lab 203,2,Engineering Block A,FURNITURE,Student Stool / Chair,Anti-Static ESD Workbench Stool,pcs,28,2,0,2 hydraulic cylinders sink under weight,2026-10-30,Dr. Heng Sovannarith
+Room 203,Electronics & Embedded IoT Lab 203,2,Engineering Block A,ELECTRICAL,Wall Fan,Mitsubishi 16" Heavy Wall Mount Fan,units,4,1,0,Fan #3 motor buzzing and refuses to oscillate,2026-10-30,Dr. Heng Sovannarith
+Room 305,Cybersecurity & Cloud Lab 305,3,Engineering Block B,ELECTRICAL,Air Conditioner,Panasonic 2.5HP Inverter Split Unit,units,1,1,0,Unit A blowing warm air (refrigerant leak),2026-10-30,Thoeurn Ratha
+Room 305,Cybersecurity & Cloud Lab 305,3,Engineering Block B,IT_HARDWARE,LCD Projector & Screen,BenQ MH560 Full HD 3800lm DLP,sets,0,1,0,Bulb shattered during lecture (lamp error),2026-10-30,Thoeurn Ratha
+Room 102,Hardware Staging & Maintenance Depot,0,Basement Facility,FURNITURE,Spare Student Chairs (Buffer),Ergonomic Mesh Mixed Stock,pcs,15,8,0,8 units awaiting replacement castors and pistons,2026-10-30,Dr. Heng Sovannarith

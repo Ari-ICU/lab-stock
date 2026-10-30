@@ -141,6 +141,29 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 9. ROOM FACILITY & CONDITION INVENTORY (Location-Centric Bulk Furniture & Equipment)
+CREATE TABLE IF NOT EXISTS room_inventory (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    room_id UUID REFERENCES locations(id) ON DELETE CASCADE,
+    name VARCHAR(150) NOT NULL,
+    group_type VARCHAR(50) NOT NULL, -- 'FURNITURE', 'ELECTRICAL', 'IT_HARDWARE', 'SAFETY_MISC'
+    brand_spec VARCHAR(150),
+    unit VARCHAR(50) DEFAULT 'pcs',
+    qty_working INT DEFAULT 0,
+    qty_broken INT DEFAULT 0,
+    qty_maintenance INT DEFAULT 0,
+    remarks TEXT,
+    last_audited_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Location enhancements for room matrix & auditing
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS floor INT DEFAULT 1;
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS room_type VARCHAR(50) DEFAULT 'COMPUTER_LAB';
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS last_audited_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS audited_by VARCHAR(150);
+
 ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- INDEXES for Query Performance

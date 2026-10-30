@@ -24,6 +24,7 @@ import {
   ToastType,
   ToastData,
   PurchaseRequest,
+  RoomInventoryItem,
 } from '@/types';
 import {
   assetService,
@@ -84,6 +85,10 @@ interface StockContextType {
   addLocation: (loc: Omit<MockLocation, 'id'> & { id?: string }) => void;
   updateLocation: (loc: MockLocation) => void;
   deleteLocation: (id: string) => void;
+  updateRoomInventoryCount: (roomId: string, itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number) => void;
+  markRoomAudited: (roomId: string, auditorName: string) => void;
+  addRoomInventoryItem: (roomId: string, item: Omit<RoomInventoryItem, 'id' | 'roomId'>) => void;
+  deleteRoomInventoryItem: (roomId: string, itemId: string) => void;
   addPurchaseRequest: (req: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }) => PurchaseRequest;
   updatePurchaseRequest: (req: PurchaseRequest) => void;
   updatePurchaseRequestStatus: (id: string, status: PurchaseRequest['status'], notes?: string) => void;
@@ -597,6 +602,87 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateRoomInventoryCount = (
+    roomId: string,
+    itemId: string,
+    field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance',
+    delta: number
+  ) => {
+    setLocations((prev) =>
+      prev.map((loc) => {
+        if (loc.id !== roomId) return loc;
+        const updatedInventories = (loc.inventories || []).map((item) => {
+          if (item.id !== itemId) return item;
+          const nextVal = Math.max(0, (item[field] || 0) + delta);
+          return {
+            ...item,
+            [field]: nextVal,
+            lastAuditedAt: new Date().toISOString().split('T')[0],
+          };
+        });
+        return {
+          ...loc,
+          inventories: updatedInventories,
+        };
+      })
+    );
+    showToast(`Updated count in room inventory`, 'info');
+  };
+
+  const markRoomAudited = (roomId: string, auditorName: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    setLocations((prev) =>
+      prev.map((loc) => {
+        if (loc.id !== roomId) return loc;
+        return {
+          ...loc,
+          lastAuditedAt: today,
+          auditedBy: auditorName,
+          inventories: (loc.inventories || []).map((inv) => ({
+            ...inv,
+            lastAuditedAt: today,
+          })),
+        };
+      })
+    );
+    showToast(`Room marked audited for ${today} by ${auditorName}`, 'success');
+  };
+
+  const addRoomInventoryItem = (
+    roomId: string,
+    itemData: Omit<RoomInventoryItem, 'id' | 'roomId'>
+  ) => {
+    const newItem: RoomInventoryItem = {
+      id: `inv-${Date.now()}`,
+      roomId,
+      lastAuditedAt: new Date().toISOString().split('T')[0],
+      ...itemData,
+    };
+    setLocations((prev) =>
+      prev.map((loc) => {
+        if (loc.id !== roomId) return loc;
+        return {
+          ...loc,
+          inventories: [...(loc.inventories || []), newItem],
+        };
+      })
+    );
+    showToast(`Added ${newItem.name} to room inventory`, 'success');
+  };
+
+  const deleteRoomInventoryItem = (roomId: string, itemId: string) => {
+    setLocations((prev) =>
+      prev.map((loc) => {
+        if (loc.id !== roomId) return loc;
+        return {
+          ...loc,
+          inventories: (loc.inventories || []).filter((inv) => inv.id !== itemId),
+        };
+      })
+    );
+    showToast(`Removed item from room inventory`, 'info');
+  };
+
   const addPurchaseRequest = (reqData: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }): PurchaseRequest => {
     const newReq: PurchaseRequest = {
       id: reqData.id || `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`,
@@ -680,6 +766,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         addLocation,
         updateLocation,
         deleteLocation,
+        updateRoomInventoryCount,
+        markRoomAudited,
+        addRoomInventoryItem,
+        deleteRoomInventoryItem,
         addPurchaseRequest,
         updatePurchaseRequest,
         updatePurchaseRequestStatus,
