@@ -7,6 +7,7 @@ import {
   ConflictException,
   ValidationException,
   NotFoundException,
+  ForbiddenException,
 } from '../exceptions/errorHandler.js';
 
 export interface AuthSessionResponse {
@@ -148,22 +149,65 @@ export const authService = {
 
   /**
    * Register a new user in the PostgreSQL database with hashed password
+   * Admins can create any user role and scope.
+   * Faculty Lecturers can only provision Lab Assistants within their managed rooms.
    */
-  async register(input: {
-    name: string;
-    email: string;
-    password: string;
-    role?: string;
-    is_admin?: boolean;
-    department?: string | null;
-    assigned_labs?: string[];
-  }): Promise<Omit<User, 'password_hash'>> {
+  async register(
+    input: {
+      name: string;
+      email: string;
+      password: string;
+      role?: string;
+      is_admin?: boolean;
+      department?: string | null;
+      assigned_labs?: string[];
+    },
+    requestingUser?: JwtUserPayload
+  ): Promise<Omit<User, 'password_hash'>> {
     const normalizedEmail = input.email.trim().toLowerCase();
 
     // Check if user already exists
     const existing = await userModel.findByEmail(normalizedEmail);
     if (existing) {
       throw new ConflictException(`An account with email '${normalizedEmail}' already exists`);
+    }
+
+    let effectiveRole = input.role || 'Faculty Lecturer';
+    let effectiveIsAdmin = Boolean(input.is_admin);
+    let effectiveAssignedLabs = input.assigned_labs || (input.is_admin ? ['all'] : ['Room 102B']);
+
+    if (requestingUser) {
+      const isAdmin =
+        requestingUser.admin ||
+        requestingUser.role === Role.ADMIN ||
+        requestingUser.role === 'Primary Lab Administrator';
+
+      if (!isAdmin) {
+        const isLecturer =
+          requestingUser.role === Role.LECTURER ||
+          requestingUser.role === 'Faculty Lecturer';
+
+        if (!isLecturer) {
+          throw new ForbiddenException('Only Administrators and Faculty Lecturers can register accounts');
+        }
+
+        // Faculty Lecturer can ONLY provision Lab Assistants
+        effectiveRole = Role.ASSISTANT;
+        effectiveIsAdmin = false;
+
+        // Scopes must not contain 'all' or '*'
+        if (effectiveAssignedLabs.includes('all') || effectiveAssignedLabs.includes('*')) {
+          throw new ForbiddenException('Faculty Lecturers cannot grant universal laboratory access');
+        }
+
+        const lecturerRooms = requestingUser.assignedLabs || [];
+        const hasUnauthorized = effectiveAssignedLabs.some((r) => !lecturerRooms.includes(r));
+        if (hasUnauthorized) {
+          throw new ForbiddenException(
+            `Faculty Lecturers can only assign laboratories within their supervisory scope: [${lecturerRooms.join(', ')}]`
+          );
+        }
+      }
     }
 
     // Hash password with bcrypt work factor 12
@@ -173,10 +217,10 @@ export const authService = {
       name: input.name,
       email: normalizedEmail,
       password_hash: hashedPassword,
-      role: input.role || 'Faculty Lecturer',
-      is_admin: Boolean(input.is_admin),
+      role: effectiveRole,
+      is_admin: effectiveIsAdmin,
       department: input.department || null,
-      assigned_labs: input.assigned_labs || (input.is_admin ? ['all'] : ['Room 102B']),
+      assigned_labs: effectiveAssignedLabs,
     });
 
     const { password_hash, ...safeUser } = newUser;
@@ -185,12 +229,71 @@ export const authService = {
 
   /**
    * Update assigned laboratory room scopes for a user
+   * Admins can configure any room scope.
+   * Faculty Lecturers can relocate Lab Assistants between laboratories that the lecturer manages.
    */
-  async updateAssignedLabs(userId: string, assignedLabs: string[]): Promise<boolean> {
+  async updateAssignedLabs(
+    userId: string,
+    assignedLabs: string[],
+    requestingUser?: JwtUserPayload
+  ): Promise<boolean> {
     const user = await userModel.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId}`);
     }
+
+    if (requestingUser) {
+      const isAdmin =
+        requestingUser.admin ||
+        requestingUser.role === Role.ADMIN ||
+        requestingUser.role === 'Primary Lab Administrator';
+
+      if (!isAdmin) {
+        const isLecturer =
+          requestingUser.role === Role.LECTURER ||
+          requestingUser.role === 'Faculty Lecturer';
+
+        if (!isLecturer) {
+          throw new ForbiddenException(
+            'Only Administrators and supervising Faculty Lecturers can assign laboratory locations'
+          );
+        }
+
+        // Target user must be a Lab Assistant
+        const targetRole = user.role;
+        if (targetRole !== Role.ASSISTANT && targetRole !== 'Lab Assistant') {
+          throw new ForbiddenException(
+            'Faculty Lecturers can only relocate and assign scopes for Lab Assistants under their supervision'
+          );
+        }
+
+        // Lecturer cannot assign 'all' or '*'
+        if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
+          throw new ForbiddenException('Faculty Lecturers cannot grant universal lab access');
+        }
+
+        // All rooms in assignedLabs must be within lecturer's assignedLabs
+        const lecturerLabs = requestingUser.assignedLabs || [];
+
+        // MAKE SURE ONLY: Assistant must currently be stationed in one of the lecturer's managed laboratories
+        const currentLabs = user.assigned_labs || [];
+        const isSupervisedByLecturer =
+          currentLabs.length === 0 || currentLabs.some((room) => lecturerLabs.includes(room));
+        if (!isSupervisedByLecturer) {
+          throw new ForbiddenException(
+            `Access restricted: You can only relocate assistants who are currently stationed within your supervised laboratories: [${lecturerLabs.join(', ')}]`
+          );
+        }
+
+        const hasUnauthorizedRoom = assignedLabs.some((room) => !lecturerLabs.includes(room));
+        if (hasUnauthorizedRoom) {
+          throw new ForbiddenException(
+            `Faculty Lecturers can only assign rooms within their supervisory scope: [${lecturerLabs.join(', ')}]`
+          );
+        }
+      }
+    }
+
     return userModel.updateAssignedLabs(userId, assignedLabs);
   },
 

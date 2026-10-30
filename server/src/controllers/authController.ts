@@ -22,9 +22,10 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 /**
  * POST /api/v1/auth/register
  * Creates a new user in PostgreSQL with bcrypt-hashed credentials
+ * Supported for Administrators and Faculty Lecturers (for Lab Assistants)
  */
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const newUser = await authService.register(req.body);
+  const newUser = await authService.register(req.body, req.user);
 
   return res.status(201).json({
     status: 'ok',
@@ -104,7 +105,8 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
 
 /**
  * PATCH /api/v1/auth/users/:id/labs
- * Updates assigned laboratory room scopes for a user (Admin only)
+ * Updates assigned laboratory room scopes for a user
+ * Supported for Administrators (universal) and Faculty Lecturers (for supervising Lab Assistants within their managed rooms)
  */
 export const updateAssignedLabs = asyncHandler(async (req: Request, res: Response) => {
   const userId = String(req.params.id);
@@ -117,7 +119,7 @@ export const updateAssignedLabs = asyncHandler(async (req: Request, res: Respons
     });
   }
 
-  await authService.updateAssignedLabs(userId, assignedLabs);
+  await authService.updateAssignedLabs(userId, assignedLabs, req.user);
 
   return res.status(200).json({
     status: 'ok',

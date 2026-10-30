@@ -36,10 +36,16 @@ router.post('/login', authRateLimiter, validateLogin, login);
 
 /**
  * @route   POST /api/v1/auth/register
- * @desc    Provision a new faculty or admin account
- * @access  Protected (Requires Administrator)
+ * @desc    Provision a new faculty or lab assistant account (Admin or Supervising Faculty Lecturer)
+ * @access  Protected (Administrator or Faculty Lecturer)
  */
-router.post('/register', authenticate, requireAdmin, validateRegister, register);
+router.post(
+  '/register',
+  authenticate,
+  requireRole(Role.ADMIN, Role.LECTURER, 'Faculty Lecturer', 'Primary Lab Administrator'),
+  validateRegister,
+  register
+);
 
 /**
  * @route   POST /api/v1/auth/verify
@@ -64,10 +70,15 @@ router.post('/change-password', authenticate, validatePasswordChange, changePass
 
 /**
  * @route   PATCH /api/v1/auth/users/:id/labs
- * @desc    Assign or update laboratory rooms scope for an operator
- * @access  Protected (Administrator only)
+ * @desc    Assign or update laboratory rooms scope for an operator (Admin or Supervising Faculty Lecturer)
+ * @access  Protected (Administrator or Faculty Lecturer)
  */
-router.patch('/users/:id/labs', authenticate, requireAdmin, updateAssignedLabs);
+router.patch(
+  '/users/:id/labs',
+  authenticate,
+  requireRole(Role.ADMIN, Role.LECTURER, 'Faculty Lecturer', 'Primary Lab Administrator'),
+  updateAssignedLabs
+);
 
 /**
  * @route   GET /api/v1/auth/users

@@ -65,9 +65,9 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     roleBadge: 'Lecturer',
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
-    department: 'Engineering Block A - Room 102B',
-    description: 'Course lecturer managing student lab stations in Computer Lab 102B',
-    assignedLabs: ['Room 102B'],
+    department: 'Engineering Block A - Room 102B & Room 206',
+    description: 'Course lecturer managing student lab stations in Room 102B & Room 206',
+    assignedLabs: ['Room 102B', 'Room 206'],
   },
   {
     name: 'Leang Vakhim',
@@ -78,8 +78,8 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarText: 'LV',
     permissions: 'Inventory Check-in/Out & Equipment Prep',
     department: 'Engineering Block A - Room 102B',
-    description: 'Lab assistant managing equipment distribution for Lab 102B & Networking Lab 206',
-    assignedLabs: ['Room 102B', 'Room 206'],
+    description: 'Lab assistant managing equipment distribution under Faculty Lecturer supervision',
+    assignedLabs: ['Room 102B'],
   },
 ];
 
@@ -105,10 +105,10 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     roleBadge: 'Lecturer',
     avatarText: 'TR',
     permissions: 'Course Hardware Allocation & Catalog View',
-    department: 'Engineering Block A - Room 102B',
+    department: 'Engineering Block A - Room 102B & Room 206',
     status: 'active',
     lastLogin: 'Active now',
-    assignedLabs: ['Room 102B'],
+    assignedLabs: ['Room 102B', 'Room 206'],
   },
   {
     id: 'user-assistant',
@@ -121,7 +121,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     department: 'Engineering Block A - Room 102B',
     status: 'active',
     lastLogin: 'Today, 09:20 AM',
-    assignedLabs: ['Room 102B', 'Room 206'],
+    assignedLabs: ['Room 102B'],
   },
 ];
 
@@ -299,8 +299,10 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
   if (roleBadge !== 'Admin') {
     // Non-admin accounts must NEVER have universal 'all' scope
     if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all') || assignedLabs.includes('*')) {
-      if (u.name.includes('Vakhim') || u.email.includes('vakhim')) {
+      if (u.name?.includes('Ratha') || u.email?.includes('admin')) {
         assignedLabs = ['Room 102B', 'Room 206'];
+      } else if (u.name?.includes('Vakhim') || u.email?.includes('vakhim')) {
+        assignedLabs = ['Room 102B'];
       } else {
         assignedLabs = ['Room 102B'];
       }
@@ -617,22 +619,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserAssignedLabs = (userId: string, assignedLabs: string[]) => {
-    if (!isCurrentUserAdmin()) {
-      return;
+    const targetUser = managedUsers.find((u) => u.id === userId);
+    if (!targetUser) return;
+
+    const isAdmin = isCurrentUserAdmin();
+    const isLecturer = user?.roleBadge === 'Lecturer' || user?.role === 'Faculty Lecturer';
+
+    // RBAC Check:
+    // 1. Super Admins can assign any room scope (including 'all').
+    // 2. Faculty Lecturers can relocate Lab Assistants between rooms that the lecturer supervises.
+    if (!isAdmin) {
+      if (!isLecturer || (targetUser.roleBadge !== 'Lab Assistant' && targetUser.role !== 'Lab Assistant')) {
+        return;
+      }
+      if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
+        return;
+      }
+      const lecturerRooms = user?.assignedLabs || [];
+      // MAKE SURE ONLY: Assistant must currently be stationed in one of the lecturer's managed laboratories
+      const currentAssistantLabs = targetUser.assignedLabs || [];
+      const isSupervisedByLecturer = currentAssistantLabs.some((r) => lecturerRooms.includes(r));
+      if (!isSupervisedByLecturer) {
+        return;
+      }
+
+      // New target rooms must also be strictly within the lecturer's managed laboratories
+      const hasUnauthorizedRoom = assignedLabs.some((r) => !lecturerRooms.includes(r));
+      if (hasUnauthorizedRoom) {
+        return;
+      }
     }
+
+    const deptString = assignedLabs.includes('all')
+      ? 'Faculty Fleet Administration (All Labs)'
+      : `Engineering Block A - ${assignedLabs.join(', ')}`;
+
     const updated = managedUsers.map((u) => {
       if (u.id === userId) {
-        return { ...u, assignedLabs };
+        return {
+          ...u,
+          assignedLabs,
+          department: deptString,
+        };
       }
       return u;
     });
     saveUsers(updated);
 
     // If updated user is the currently logged in user, update active session state
-    if (user && (user.id === userId || user.email === updated.find((u) => u.id === userId)?.email)) {
+    if (user && (user.id === userId || user.email === targetUser.email)) {
       const updatedCurrentUser: User = {
         ...user,
         assignedLabs,
+        department: deptString,
       };
       setUser(updatedCurrentUser);
       try {
@@ -648,9 +687,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => {
-    if (!isCurrentUserAdmin()) {
-      return;
+    const isAdmin = isCurrentUserAdmin();
+    const isLecturer = user?.roleBadge === 'Lecturer' || user?.role === 'Faculty Lecturer';
+
+    if (!isAdmin) {
+      if (!isLecturer) return;
+      // Lecturer can only provision Lab Assistants
+      if (newUser.role !== 'Lab Assistant' && newUser.roleBadge !== 'Lab Assistant') {
+        return;
+      }
+      // Lecturer cannot grant universal access
+      if (newUser.assignedLabs?.includes('all') || newUser.assignedLabs?.includes('*')) {
+        return;
+      }
+      // Lecturer can only assign rooms within their own managed laboratories
+      const lecturerRooms = user?.assignedLabs || [];
+      const hasUnauthorizedRoom = (newUser.assignedLabs || []).some((r) => !lecturerRooms.includes(r));
+      if (hasUnauthorizedRoom) {
+        return;
+      }
     }
+
     const id = `user-${Date.now()}`;
     const userToAdd: ManagedUser = {
       ...newUser,
