@@ -16,7 +16,7 @@ import {
   ExternalLink,
   ArrowRight,
 } from 'lucide-react';
-import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/data/mockData';
+import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/types';
 
 export function ItemDetailsModal() {
   const router = useRouter();

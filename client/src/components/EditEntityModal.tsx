@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStock } from '@/context/StockContext';
 import { X } from 'lucide-react';
-import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/data/mockData';
+import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/types';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
