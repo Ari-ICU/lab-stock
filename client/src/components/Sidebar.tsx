@@ -92,7 +92,7 @@ export function Sidebar() {
       {/* Responsive Aside Navigation */}
       <aside
         suppressHydrationWarning
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 flex flex-col h-screen select-none shrink-0 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 flex flex-col h-screen select-none shrink-0 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 print:hidden ${
           isMobileSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >

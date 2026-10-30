@@ -44,7 +44,7 @@ export function Header({
   };
 
   return (
-    <header className="h-16 bg-white border-b border-neutral-200 px-3 sm:px-8 flex items-center justify-between shrink-0 gap-2 sm:gap-3">
+    <header className="h-16 bg-white border-b border-neutral-200 px-3 sm:px-8 flex items-center justify-between shrink-0 gap-2 sm:gap-3 print:hidden">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {/* Mobile Hamburger Toggle */}
         <button

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { LabThumbnail } from '@/components/LabThumbnail';
+import { getAssetPath } from '@/lib/basePath';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { PurchaseRequest } from '@/types';
@@ -91,9 +92,46 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
     }
   };
 
+  useEffect(() => {
+    let originalTitle = typeof document !== 'undefined' ? document.title : '';
+    const handleBeforePrint = () => {
+      originalTitle = document.title;
+      document.title = '';
+    };
+    const handleAfterPrint = () => {
+      document.title = originalTitle;
+    };
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
+
+  const handlePrint = () => {
+    let style = document.getElementById('print-zero-margin') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'print-zero-margin';
+      style.innerHTML = `@page { size: A4 portrait; margin: 0mm !important; } @page :left { margin: 0mm !important; } @page :right { margin: 0mm !important; } @page :first { margin: 0mm !important; }`;
+      document.head.appendChild(style);
+    }
+    const originalTitle = document.title;
+    document.title = '';
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
+
+  const parsedCost = request.estimatedCost ? parseFloat(request.estimatedCost.replace(/[^0-9.]/g, '')) : null;
+  const totalCostFormatted = parsedCost != null ? `$${parsedCost.toFixed(2)}` : (request.estimatedCost || 'Unspecified');
+  const unitPriceFormatted = parsedCost != null && request.quantity > 0 ? `$${(parsedCost / request.quantity).toFixed(2)}` : 'N/A';
+
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
-      {/* Top Header with Integrated Back Navigation & Action Controls (matching Assets & Inventory style) */}
+      {/* Top Header with Integrated Back Navigation & Action Controls */}
       <Header
         title={request.title}
         subtitle={`ID: ${request.id} • Destination: ${request.targetRoom}`}
@@ -103,11 +141,11 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
         actions={
           <div className="flex items-center gap-2">
             <button
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-700 hover:bg-neutral-50 rounded font-medium transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5 text-neutral-500" />
-              <span className="hidden sm:inline">Print Voucher</span>
+              <span className="hidden sm:inline">Print Voucher / Invoice</span>
             </button>
 
             {canEdit && (
@@ -123,8 +161,9 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
-        {/* Requisition Hero Banner with Product Photo (No Breadcrumbs) */}
+      {/* 1. Interactive Web Application View (Screen Only) */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full print:hidden">
+        {/* Requisition Hero Banner with Product Photo */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start justify-between gap-6">
           <div className="flex items-start gap-5 min-w-0 flex-1">
             {/* Visual Thumbnail */}
@@ -232,7 +271,7 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
           </div>
         </div>
 
-        {/* 4. Two-Column Detailed Breakdown */}
+        {/* Two-Column Detailed Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main 2-Col Body */}
           <div className="lg:col-span-2 space-y-6">
@@ -254,7 +293,7 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
                 <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/70">
                   <span className="text-[10px] uppercase font-semibold text-neutral-500 block">Estimated Cost</span>
                   <div className="text-base font-bold text-neutral-900 mt-1">
-                    {request.estimatedCost || 'Unspecified'}
+                    {totalCostFormatted}
                   </div>
                 </div>
 
@@ -406,6 +445,207 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 2. DEDICATED OFFICIAL PRINT INVOICE & VOUCHER DOCUMENT (Visible ONLY On Print) */}
+      <div className="hidden print:block w-full font-sans text-neutral-900 bg-white p-2">
+        {/* Invoice Top Letterhead */}
+        <div className="flex items-start justify-between border-b-2 border-neutral-900 pb-3 mb-3">
+          <div className="flex items-center gap-3">
+            <img
+              src={getAssetPath('/logo.png')}
+              alt="RUPP Seal"
+              className="w-14 h-14 object-contain shrink-0"
+            />
+            <div>
+              <div className="text-sm font-black uppercase tracking-wide text-neutral-900 font-serif leading-tight">
+                Royal University of Phnom Penh
+              </div>
+              <div className="text-[11px] font-bold text-neutral-700 leading-tight mt-0.5">
+                Faculty of Engineering • Computer Science & STEM Laboratories
+              </div>
+              <div className="text-[9px] text-neutral-500 tracking-wider mt-0.5">
+                Russian Federation Blvd, Khan Toul Kork, Phnom Penh, Cambodia • CSD Fleet
+              </div>
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            <div className="text-base font-black tracking-tight text-neutral-900 uppercase">
+              PURCHASE REQUISITION
+            </div>
+            <div className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">
+              OFFICIAL INVOICE VOUCHER
+            </div>
+            <div className="mt-1 font-mono text-xs font-bold text-neutral-900">
+              VOUCHER REF: {request.id}
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Metadata Box (2-Column Tabular) */}
+        <div className="grid grid-cols-2 gap-3 mb-3 p-2.5 bg-neutral-50 border border-neutral-300 rounded text-[10px]">
+          <div>
+            <div className="text-[9px] uppercase font-bold text-neutral-500 tracking-wider mb-1 border-b border-neutral-200 pb-0.5">
+              REQUISITION & LAB DETAILS
+            </div>
+            <div className="space-y-0.5 text-neutral-800">
+              <div><span className="font-semibold text-neutral-600">Requisition Ref:</span> <span className="font-mono font-bold text-neutral-900">{request.id}</span></div>
+              <div><span className="font-semibold text-neutral-600">Filing Date:</span> <span>{request.requestDate}</span></div>
+              <div><span className="font-semibold text-neutral-600">Destination Laboratory:</span> <span className="font-bold text-neutral-900">{request.targetRoom} (Engineering Block A)</span></div>
+              <div><span className="font-semibold text-neutral-600">Requisition Priority:</span> <span className="font-bold uppercase text-neutral-900">{request.priority}</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[9px] uppercase font-bold text-neutral-500 tracking-wider mb-1 border-b border-neutral-200 pb-0.5">
+              REQUESTER & APPROVAL STATUS
+            </div>
+            <div className="space-y-0.5 text-neutral-800">
+              <div><span className="font-semibold text-neutral-600">Requested By:</span> <span className="font-bold text-neutral-900">{request.requestedBy}</span></div>
+              <div><span className="font-semibold text-neutral-600">Institutional Role:</span> <span>{request.requesterRole} (Staff ID: RUPP-ENG-2026)</span></div>
+              <div><span className="font-semibold text-neutral-600">Department:</span> <span>Software Engineering Department</span></div>
+              <div><span className="font-semibold text-neutral-600">Current Status:</span> <span className="font-bold uppercase text-neutral-900">{request.status}</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Item Specifications Table */}
+        <table className="w-full text-left border-collapse border border-neutral-300 mb-3 text-[10px]">
+          <thead>
+            <tr className="bg-neutral-100 border-b border-neutral-300 font-bold text-neutral-800 uppercase text-[9px]">
+              <th className="py-1.5 px-2 border-r border-neutral-300 w-8 text-center">#</th>
+              <th className="py-1.5 px-2.5 border-r border-neutral-300">Item Description & Specifications</th>
+              <th className="py-1.5 px-2 border-r border-neutral-300 w-28">Category</th>
+              <th className="py-1.5 px-2 border-r border-neutral-300 w-12 text-center">Qty</th>
+              <th className="py-1.5 px-2 border-r border-neutral-300 w-16 text-center">Unit</th>
+              <th className="py-1.5 px-2 border-r border-neutral-300 w-24 text-right">Est. Unit Price</th>
+              <th className="py-1.5 px-2.5 w-24 text-right">Total Est. Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-neutral-300">
+              <td className="py-2 px-2 border-r border-neutral-300 text-center font-mono font-bold">1</td>
+              <td className="py-2 px-2.5 border-r border-neutral-300 font-medium">
+                <div className="flex items-center gap-2">
+                  {request.imageUrl && (
+                    <img
+                      src={request.imageUrl}
+                      alt={request.title}
+                      className="w-9 h-9 object-cover rounded border border-neutral-300 shrink-0"
+                    />
+                  )}
+                  <div>
+                    <div className="font-bold text-neutral-900">{request.title}</div>
+                    <div className="text-[9px] text-neutral-500">Destination: {request.targetRoom} • RUPP Lab Fleet</div>
+                  </div>
+                </div>
+              </td>
+              <td className="py-2 px-2 border-r border-neutral-300 text-neutral-700">{request.category}</td>
+              <td className="py-2 px-2 border-r border-neutral-300 text-center font-bold font-mono text-neutral-900">{request.quantity}</td>
+              <td className="py-2 px-2 border-r border-neutral-300 text-center text-neutral-600">{request.unit}</td>
+              <td className="py-2 px-2 border-r border-neutral-300 text-right font-mono text-neutral-800">{unitPriceFormatted}</td>
+              <td className="py-2 px-2.5 text-right font-mono font-bold text-neutral-900">{totalCostFormatted}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Invoice Justification & Totals Box */}
+        <div className="grid grid-cols-12 gap-3 mb-3">
+          <div className="col-span-7 space-y-2">
+            <div className="border border-neutral-300 rounded p-2 bg-neutral-50/50">
+              <div className="text-[9px] uppercase font-bold text-neutral-600 tracking-wider mb-0.5">
+                Academic Justification & Practical Purpose:
+              </div>
+              <div className="text-[9px] text-neutral-800 leading-relaxed font-sans">
+                {request.reason}
+              </div>
+            </div>
+
+            <div className="border border-neutral-300 rounded p-2 bg-neutral-50/50">
+              <div className="text-[9px] uppercase font-bold text-neutral-600 tracking-wider mb-0.5">
+                Department Review & Procurement Notes:
+              </div>
+              <div className="text-[9px] text-neutral-800 leading-relaxed font-sans">
+                {request.notes || 'Requisition submitted for department director review. Awaiting budget sign-off.'}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-5">
+            <table className="w-full text-right border-collapse border border-neutral-300 text-[10px]">
+              <tbody>
+                <tr className="border-b border-neutral-200">
+                  <td className="py-1 px-2.5 font-semibold text-neutral-600 bg-neutral-50 border-r border-neutral-200">Subtotal:</td>
+                  <td className="py-1 px-2.5 font-mono font-semibold text-neutral-900">{totalCostFormatted}</td>
+                </tr>
+                <tr className="border-b border-neutral-200">
+                  <td className="py-1 px-2.5 font-semibold text-neutral-600 bg-neutral-50 border-r border-neutral-200">Academic Tax (0%):</td>
+                  <td className="py-1 px-2.5 font-mono text-neutral-500">$0.00</td>
+                </tr>
+                <tr className="border-b border-neutral-300">
+                  <td className="py-1 px-2.5 font-semibold text-neutral-600 bg-neutral-50 border-r border-neutral-200">Shipping / Delivery:</td>
+                  <td className="py-1 px-2.5 font-mono text-neutral-500">Free / Campus Depot</td>
+                </tr>
+                <tr className="bg-neutral-100 font-bold border-t border-neutral-300">
+                  <td className="py-1.5 px-2.5 text-neutral-900 border-r border-neutral-300 uppercase text-[9px]">Total Requisition Estimate:</td>
+                  <td className="py-1.5 px-2.5 font-mono text-neutral-900 text-xs">{totalCostFormatted}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Official 3-Party Authorization & Signatures */}
+        <div className="border-t-2 border-neutral-900 pt-2 mb-2">
+          <div className="text-[8px] font-bold uppercase tracking-wider text-neutral-700 mb-2">
+            OFFICIAL INSTITUTIONAL AUTHORIZATION & SIGN-OFF
+          </div>
+          <div className="grid grid-cols-3 gap-2.5 text-left">
+            <div className="border border-neutral-300 rounded p-2 flex flex-col justify-between h-24 bg-white">
+              <div>
+                <span className="text-[8px] uppercase font-bold text-neutral-500 block">1. Prepared & Requested By</span>
+                <div className="font-bold text-[10px] text-neutral-900 mt-0.5">{request.requestedBy}</div>
+                <div className="text-[8px] text-neutral-500">{request.requesterRole}</div>
+              </div>
+              <div className="border-t border-neutral-400 pt-0.5 text-center">
+                <span className="text-[8px] text-neutral-400 italic block leading-none mb-0.5">Applicant Signature</span>
+                <span className="text-[8px] text-neutral-700 font-mono">Date: {request.requestDate}</span>
+              </div>
+            </div>
+
+            <div className="border border-neutral-300 rounded p-2 flex flex-col justify-between h-24 bg-white">
+              <div>
+                <span className="text-[8px] uppercase font-bold text-neutral-500 block">2. Lab Director / Department Head</span>
+                <div className="font-bold text-[10px] text-neutral-900 mt-0.5">Dr. Heng Sovannarith</div>
+                <div className="text-[8px] text-neutral-500">Primary Lab Administrator</div>
+              </div>
+              <div className="border-t border-neutral-400 pt-0.5 text-center">
+                <span className="text-[8px] text-neutral-400 italic block leading-none mb-0.5">Authorized Signature & Seal</span>
+                <span className="text-[8px] text-neutral-700 font-mono">Date: ____ / ____ / 2026</span>
+              </div>
+            </div>
+
+            <div className="border border-neutral-300 rounded p-2 flex flex-col justify-between h-24 bg-white">
+              <div>
+                <span className="text-[8px] uppercase font-bold text-neutral-500 block">3. Procurement & Finance Office</span>
+                <div className="font-bold text-[10px] text-neutral-900 mt-0.5">Institutional Finance Board</div>
+                <div className="text-[8px] text-neutral-500">Status: {request.status.toUpperCase()}</div>
+              </div>
+              <div className="border-t border-neutral-400 pt-0.5 text-center">
+                <span className="text-[8px] text-neutral-400 italic block leading-none mb-0.5">Disbursement Approval</span>
+                <span className="text-[8px] text-neutral-700 font-mono">Date: ____ / ____ / 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Document Footer */}
+        <div className="border-t border-neutral-300 pt-1.5 flex items-center justify-between text-[8px] text-neutral-500">
+          <span>Royal University of Phnom Penh • Computer Science Laboratory Stock Fleet</span>
+          <span className="font-mono font-semibold">Voucher ID: {request.id} • Destination: {request.targetRoom}</span>
+          <span>Official Institutional Requisition Record • Page 1 of 1</span>
         </div>
       </div>
     </div>

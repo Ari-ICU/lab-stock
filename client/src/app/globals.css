@@ -73,3 +73,83 @@ input, textarea, select {
 input::placeholder, textarea::placeholder {
   color: #9ca3af !important;
 }
+
+/* Root-level @page rule: MUST be outside @media print for Chrome/Edge/Safari to suppress headers/footers */
+@page {
+  size: A4 portrait;
+  margin: 0 !important;
+}
+
+@page :first {
+  margin: 0 !important;
+}
+
+@page :left {
+  margin: 0 !important;
+}
+
+@page :right {
+  margin: 0 !important;
+}
+
+/* Print Stylesheet for Official University Vouchers & Documentation */
+.print-only {
+  display: none;
+}
+
+@media print {
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 8mm 12mm !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Completely strip chrome navigation, sidebar, modals and interactive UI */
+  aside,
+  header,
+  button,
+  .no-print,
+  [role="dialog"],
+  .print\:hidden,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  /* Explicitly display print-only elements */
+  .print-only,
+  .print\:block,
+  [class*="print:block"] {
+    display: block !important;
+  }
+
+  /* Unclip scroll views so the entire document prints without scrollbar cutoffs */
+  main,
+  .flex-1,
+  div {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Ensure colors and borders render faithfully on physical paper */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

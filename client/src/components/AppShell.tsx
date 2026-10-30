@@ -26,17 +26,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="h-full flex overflow-hidden bg-neutral-100 text-neutral-900 font-sans w-full">
+    <div className="h-full flex overflow-hidden bg-neutral-100 text-neutral-900 font-sans w-full print:h-auto print:overflow-visible print:bg-white">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 bg-neutral-50 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 bg-neutral-50 overflow-hidden print:overflow-visible print:h-auto print:bg-white">
         {children}
       </main>
-      <QRScannerModal />
-      <GlobalSearchModal />
-      <AddEntityModal />
-      <ItemDetailsModal />
-      <EditEntityModal />
-      <Toast />
+      <div className="print:hidden">
+        <QRScannerModal />
+        <GlobalSearchModal />
+        <AddEntityModal />
+        <ItemDetailsModal />
+        <EditEntityModal />
+        <Toast />
+      </div>
     </div>
   );
 }
