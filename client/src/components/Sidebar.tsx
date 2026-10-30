@@ -31,12 +31,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
+  { href: '/locations', label: 'Classrooms & Labs', icon: MapPin },
   { href: '/assets', label: 'Hardware Assets', icon: Router },
-  { href: '/stock', label: 'Inventory', icon: Package },
+  { href: '/stock', label: 'Consumables & Stock', icon: Package },
   { href: '/loans', label: 'Device Loans', icon: ArrowLeftRight },
-  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
-  { href: '/locations', label: 'Lab Locations', icon: MapPin },
-  { href: '/users', label: 'User Roles', icon: Users },
+  { href: '/maintenance', label: 'Maintenance & Repairs', icon: Wrench },
+  { href: '/users', label: 'Personnel & Roles', icon: Users },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -60,16 +60,6 @@ export function Sidebar() {
     showToast,
   } = useStock();
   const { user, managedUsers, logout } = useAuth();
-
-  const isAssistant = mounted && (user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant');
-
-  const visibleNavItems = navItems.filter((item) => {
-    // Hide User Roles route for Lab Assistants once mounted
-    if (item.href === '/users' && isAssistant) {
-      return false;
-    }
-    return true;
-  });
 
   const activeLoansCount = loans ? loans.filter((l) => l.status === 'active').length : 0;
 
@@ -170,7 +160,7 @@ export function Sidebar() {
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
             Menu
           </div>
-          {visibleNavItems.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
               item.href === '/'

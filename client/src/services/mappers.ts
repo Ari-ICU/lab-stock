@@ -180,14 +180,6 @@ const CATEGORY_DEFAULT_IMAGES: Record<string, string> = {
 };
 
 export function mapServerPurchaseRequest(r: any): PurchaseRequest {
-  const isAssistant =
-    r.requester_role === 'Lab Assistant' ||
-    r.requesterRole === 'Lab Assistant' ||
-    r.requested_by?.toLowerCase().includes('vicheka') ||
-    r.requestedBy?.toLowerCase().includes('vicheka');
-
-  const defaultSupervisor = isAssistant ? 'Thoeurn Ratha (Faculty Lecturer)' : undefined;
-
   return {
     id: String(r.id),
     title: r.title || 'Purchase Item',
@@ -201,7 +193,7 @@ export function mapServerPurchaseRequest(r: any): PurchaseRequest {
     reason: r.reason || '',
     requestedBy: r.requested_by || r.requestedBy || 'Faculty Lecturer',
     requesterRole: r.requester_role || r.requesterRole || 'Faculty Lecturer',
-    supervisedBy: r.supervised_by || r.supervisedBy || defaultSupervisor,
+    supervisedBy: r.supervised_by || r.supervisedBy,
     requestDate: r.request_date ? (typeof r.request_date === 'string' ? r.request_date.split('T')[0] : new Date(r.request_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     imageUrl: r.image_url || r.imageUrl || DEFAULT_REQUEST_IMAGES[String(r.id)] || CATEGORY_DEFAULT_IMAGES[r.category] || '',
     notes: r.notes || '',

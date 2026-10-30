@@ -39,7 +39,6 @@ import { MockLoan, MockTransfer } from '@/types';
 export default function LoansPage() {
   const router = useRouter();
   const { user, canManageLocation } = useAuth();
-  const isAssistant = user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant';
   const {
     loans,
     transfers,
@@ -257,46 +256,35 @@ export default function LoansPage() {
         subtitle="Faculty Equipment Lending, Student Check-Out & Room Movement"
         onExport={handleExport}
         actions={
-          isAssistant ? undefined : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  if (assets.length > 0) setTransferAssetId(assets[0].id);
-                  setToLocation('');
-                  if (user?.name) setTransferredBy(user.name);
-                  setIsTransferModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-              >
-                <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
-                <span className="hidden sm:inline">Relocate Device</span>
-              </button>
-              <button
-                onClick={() => {
-                  const available = assets.filter((a) => a.loanStatus !== 'on_loan');
-                  if (available.length > 0) setSelectedAssetId(available[0].id);
-                  setIsLendModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Check-Out Device</span>
-              </button>
-            </div>
-          )
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (assets.length > 0) setTransferAssetId(assets[0].id);
+                setToLocation('');
+                if (user?.name) setTransferredBy(user.name);
+                setIsTransferModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden sm:inline">Relocate Device</span>
+            </button>
+            <button
+              onClick={() => {
+                const available = assets.filter((a) => a.loanStatus !== 'on_loan');
+                if (available.length > 0) setSelectedAssetId(available[0].id);
+                setIsLendModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Check-Out Device</span>
+            </button>
+          </div>
         }
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* Assistant View-Only Notice Banner */}
-        {isAssistant && (
-          <div className="p-3.5 bg-neutral-100 border border-neutral-300 rounded-lg flex items-center gap-3 text-neutral-800 text-xs shadow-2xs">
-            <Shield className="w-4 h-4 text-neutral-600 shrink-0" />
-            <div>
-              <span className="font-semibold">View-Only Department Inspection Mode:</span> Lab Assistants have read-only inspection access. Equipment loans and room transfers cannot be processed.
-            </div>
-          </div>
-        )}
         {/* 2. Sleek KPI Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs">
@@ -549,19 +537,17 @@ export default function LoansPage() {
                                 <Eye className="w-3.5 h-3.5 text-neutral-400" />
                                 <span>Details</span>
                               </button>
-                              {!isAssistant && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setReturningLoan(loan);
-                                    setReturnNotes('');
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
-                                >
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Return</span>
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReturningLoan(loan);
+                                  setReturnNotes('');
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Return</span>
+                              </button>
                             </div>
                           </td>
                         </tr>

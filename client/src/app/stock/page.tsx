@@ -22,7 +22,6 @@ export default function StockPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const isSuperAdmin = user?.roleBadge === 'Admin' || user?.assignedLabs?.includes('all');
-  const isAssistant = user?.roleBadge === 'Lab Assistant' || user?.role === 'Lab Assistant';
   const myAssignedRooms = user?.assignedLabs || [];
 
   const labOptions: DropdownOption[] = [
@@ -132,23 +131,14 @@ export default function StockPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
-        title="Department & Laboratory Inventory"
-        subtitle="Department Inventory: Workstation Tables, Chairs, Storage Cabinets, Fixtures & Equipment Count"
-        actionLabel={isAssistant ? undefined : 'Add Inventory Item'}
-        onAction={isAssistant ? undefined : () => router.push('/stock/create')}
+        title="Consumables & Peripheral Stock"
+        subtitle="Department Inventory: Network Cables, Sockets, Connectors, Toner, Consumables & Lab Supplies"
+        actionLabel="Add Consumable Stock"
+        onAction={() => router.push('/stock/create')}
         onExport={handleExport}
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
-        {/* Assistant View-Only Notice Banner */}
-        {isAssistant && (
-          <div className="p-3.5 bg-neutral-100 border border-neutral-300 rounded-lg flex items-center gap-3 text-neutral-800 text-xs shadow-2xs">
-            <Eye className="w-4 h-4 text-neutral-600 shrink-0" />
-            <div>
-              <span className="font-semibold">View-Only Department Inspection Mode:</span> Lab Assistants have read-only inspection access. Department records and inventory counts cannot be modified.
-            </div>
-          </div>
-        )}
 
         {/* Real-time Department Item & Furniture Count KPI Metric Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -270,7 +260,7 @@ export default function StockPage() {
                   </tr>
                 ) : (
                   filteredStock.map((item) => {
-                    const isAllowed = !isAssistant && canManageLocation(item.location);
+                    const isAllowed = canManageLocation(item.location);
                     return (
                       <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
                         {/* Product Image Thumbnail */}

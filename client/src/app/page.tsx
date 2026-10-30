@@ -303,7 +303,7 @@ export default function DashboardPage() {
                     return (
                       <Link
                         key={loc.id}
-                        href="/locations"
+                        href={`/locations/${loc.id}`}
                         className="p-3 rounded border border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50/60 transition-colors block group"
                       >
                         <div className="flex items-start justify-between">
@@ -332,7 +332,7 @@ export default function DashboardPage() {
                     return (
                       <Link
                         key={loc.id}
-                        href="/locations"
+                        href={`/locations/${loc.id}`}
                         className="p-3 rounded border border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50/60 transition-colors block group"
                       >
                         <div className="flex items-start justify-between">
