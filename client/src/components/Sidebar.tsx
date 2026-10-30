@@ -19,7 +19,8 @@ import {
   Search,
   Barcode,
   X,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Users
 } from 'lucide-react';
 
 interface NavItem {
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { href: '/loans', label: 'Device Loans', icon: ArrowLeftRight },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench },
   { href: '/locations', label: 'Lab Locations', icon: MapPin },
+  { href: '/users', label: 'User Roles', icon: Users },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -53,7 +55,7 @@ export function Sidebar() {
     closeMobileSidebar,
     showToast,
   } = useStock();
-  const { user, logout } = useAuth();
+  const { user, managedUsers, logout } = useAuth();
 
   const activeLoansCount = loans.filter((l) => l.status === 'active').length;
 
@@ -185,6 +187,8 @@ export function Sidebar() {
                 ? maintenance.length
                 : item.href === '/locations'
                 ? locations.length
+                : item.href === '/users'
+                ? managedUsers.length
                 : item.badge;
 
             return (
