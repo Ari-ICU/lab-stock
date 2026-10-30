@@ -9,6 +9,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LabThumbnail } from '@/components/LabThumbnail';
 import {
   Building,
   ArrowLeft,
@@ -328,17 +329,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative group">
-                {loc.imageUrl ? (
-                  <img
-                    src={getOptimizedImageUrl(loc.imageUrl, 'card')}
-                    alt={loc.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <Building className="w-6 h-6" />
-                )}
+                <LabThumbnail
+                  src={loc.imageUrl}
+                  alt={loc.name}
+                  size="card"
+                  fallbackType="building"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  iconClassName="w-7 h-7 text-emerald-700"
+                />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">

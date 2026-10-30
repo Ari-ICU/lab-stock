@@ -832,7 +832,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 102',
     totalAssets: 2,
     totalItems: 3,
-    imageUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
