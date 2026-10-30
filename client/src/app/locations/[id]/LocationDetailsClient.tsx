@@ -34,7 +34,7 @@ import {
   CheckCircle,
   Sparkles,
 } from 'lucide-react';
-import { RoomInventoryItem, AssetGroup } from '@/types';
+import {  AssetGroup } from '@/types';
 
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
