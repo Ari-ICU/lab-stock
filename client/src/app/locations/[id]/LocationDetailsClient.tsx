@@ -107,6 +107,27 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     { label: 'Out of Stock', value: 'out_of_stock' },
   ];
 
+  const categoryGroupOptions: DropdownOption[] = [
+    { label: 'Furniture & Fixtures', value: 'FURNITURE' },
+    { label: 'Electrical & HVAC', value: 'ELECTRICAL' },
+    { label: 'Lab & IT Hardware', value: 'IT_HARDWARE' },
+    { label: 'Safety & Misc', value: 'SAFETY_MISC' },
+  ];
+
+  const stockDropdownOptions: DropdownOption[] = useMemo(() => {
+    return stock.map((s) => ({
+      label: `${s.name} (${s.code}) — ${s.quantity} ${s.unit} in Dept`,
+      value: s.code,
+    }));
+  }, [stock]);
+
+  const assetDropdownOptions: DropdownOption[] = useMemo(() => {
+    return assets.map((a) => ({
+      label: `${a.name} (${a.serialNumber}) — ${a.totalUnits ?? 1} units`,
+      value: a.serialNumber,
+    }));
+  }, [assets]);
+
   const getCategoryIcon = (group: AssetGroup) => {
     switch (group) {
       case 'FURNITURE':
@@ -1514,18 +1535,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">
                       Select Item from Central Stock (/stock) *
                     </label>
-                    <select
+                    <Dropdown
                       value={selectedStockCode}
-                      onChange={(e) => handleSelectCentralStock(e.target.value)}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                    >
-                      <option value="">-- Choose Item from /stock --</option>
-                      {stock.map((s) => (
-                        <option key={s.id} value={s.code}>
-                          {s.name} ({s.code}) — {s.quantity} {s.unit} in Dept
-                        </option>
-                      ))}
-                    </select>
+                      options={stockDropdownOptions}
+                      onChange={handleSelectCentralStock}
+                      placeholder="-- Choose Item from /stock --"
+                      searchable
+                      searchPlaceholder="Search Central Stock items or SKUs..."
+                      className="w-full"
+                      buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg"
+                    />
                   </div>
 
                   {selectedStockCode && (
@@ -1551,18 +1570,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">
                       Select Device from Central Hardware Assets (/assets) *
                     </label>
-                    <select
+                    <Dropdown
                       value={selectedAssetSerial}
-                      onChange={(e) => handleSelectCentralAsset(e.target.value)}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                    >
-                      <option value="">-- Choose Hardware from /assets --</option>
-                      {assets.map((a) => (
-                        <option key={a.id} value={a.serialNumber}>
-                          {a.name} ({a.serialNumber}) — {a.totalUnits ?? 1} units
-                        </option>
-                      ))}
-                    </select>
+                      options={assetDropdownOptions}
+                      onChange={handleSelectCentralAsset}
+                      placeholder="-- Choose Hardware from /assets --"
+                      searchable
+                      searchPlaceholder="Search hardware assets or serials..."
+                      className="w-full"
+                      buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg"
+                    />
                   </div>
 
                   {selectedAssetSerial && (
@@ -1603,16 +1620,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   <label className="block text-xs font-semibold text-neutral-700 mb-1">
                     Category Group
                   </label>
-                  <select
+                  <Dropdown
                     value={newItemGroup}
-                    onChange={(e) => setNewItemGroup(e.target.value as AssetGroup)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                  >
-                    <option value="FURNITURE">Furniture & Fixtures</option>
-                    <option value="ELECTRICAL">Electrical & HVAC</option>
-                    <option value="IT_HARDWARE">Lab & IT Hardware</option>
-                    <option value="SAFETY_MISC">Safety & Misc</option>
-                  </select>
+                    options={categoryGroupOptions}
+                    onChange={(val) => setNewItemGroup(val as AssetGroup)}
+                    placeholder="Select Category Group"
+                    className="w-full"
+                    buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg"
+                  />
                 </div>
 
                 <div>
