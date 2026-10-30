@@ -484,7 +484,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                <span>+ Add Item</span>
+                <span>Add Item</span>
               </button>
             </div>
           </div>
