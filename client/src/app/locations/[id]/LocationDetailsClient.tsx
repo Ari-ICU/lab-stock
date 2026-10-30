@@ -39,6 +39,7 @@ import {
   CheckCircle,
   Minus,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import { RoomInventoryItem, AssetGroup } from '@/types';
 
