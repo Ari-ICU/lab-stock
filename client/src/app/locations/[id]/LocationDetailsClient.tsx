@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
+import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import {
@@ -618,21 +619,51 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               { title: 'Safety & Miscellaneous', items: safetyItems, icon: '🧯', desc: 'Fire extinguishers, trash receptacles & access controls' },
             ].map((section, sIdx) => {
               if (section.items.length === 0) return null;
+
+              const sectionTotalWorking = section.items.reduce((sum, i) => sum + i.qtyWorking, 0);
+              const sectionTotalBroken = section.items.reduce((sum, i) => sum + i.qtyBroken, 0);
+              const sectionTotal = sectionTotalWorking + sectionTotalBroken;
+              const sectionHealth = sectionTotal > 0 ? Math.round((sectionTotalWorking / sectionTotal) * 100) : 100;
+
               return (
                 <div key={sIdx} className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden shadow-xs">
-                  <div className="p-4 border-b border-neutral-100 bg-neutral-50/60 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-1.5">
-                        <span className="text-sm">{section.icon}</span>
-                        <span>{section.title}</span>
-                      </h3>
-                      <p className="text-[11px] text-neutral-500 mt-0.5">{section.desc}</p>
+                  {/* Category Header Bar */}
+                  <div className="p-4 border-b border-neutral-200/80 bg-neutral-50/80 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center text-base shadow-2xs">
+                        {section.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
+                          <span>{section.title}</span>
+                          <span className="text-[10px] font-mono font-medium text-neutral-400 lowercase">
+                            ({section.items.length} item types)
+                          </span>
+                        </h3>
+                        <p className="text-[11px] text-neutral-500 mt-0.5">{section.desc}</p>
+                      </div>
                     </div>
-                    <span className="text-xs font-bold font-mono text-neutral-500 bg-white border border-neutral-200 px-2.5 py-1 rounded-md">
-                      {section.items.length} item types
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold font-mono ${
+                        sectionHealth >= 90
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200/80'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${sectionHealth >= 90 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        {sectionHealth}% Health
+                      </span>
+                    </div>
                   </div>
 
+                  {/* Clean Column Header for Grid Alignment */}
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-2.5 bg-neutral-100/60 border-b border-neutral-200/70 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+                    <div className="col-span-5">Item & Specification</div>
+                    <div className="col-span-2 text-center">Usability Status</div>
+                    <div className="col-span-3 text-center">Condition Counts</div>
+                    <div className="col-span-2 text-right">Quick Actions</div>
+                  </div>
+
+                  {/* Items List */}
                   <div className="divide-y divide-neutral-100">
                     {section.items.map((item) => {
                       const total = item.qtyWorking + item.qtyBroken + item.qtyMaintenance;
@@ -642,10 +673,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                         /broken|defect|damage|fault|repair|cracked|stuck|replace/i.test(item.remarks || '');
 
                       return (
-                        <div key={item.id} className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-neutral-50/60 transition-colors">
-                          <div className="space-y-1.5 min-w-0 max-w-lg">
+                        <div
+                          key={item.id}
+                          className="p-4 sm:px-5 sm:py-3.5 grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 items-center hover:bg-neutral-50/60 transition-colors"
+                        >
+                          {/* Col 1: Item & Details (col-span-5) */}
+                          <div className="md:col-span-5 space-y-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="text-sm font-bold text-neutral-900">{item.name}</h4>
+                              <span className="text-sm font-bold text-neutral-900">{item.name}</span>
                               <span className="text-[10px] font-mono font-semibold uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200">
                                 {item.unit}
                               </span>
@@ -653,18 +688,18 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                 Total: {total}
                               </span>
                             </div>
-                            <div className="text-xs text-neutral-600 font-medium">
+                            <div className="text-xs text-neutral-500 font-normal truncate">
                               {item.brandSpec || 'Standard Department Specification'}
                             </div>
                             {item.remarks && (
-                              <div>
+                              <div className="pt-0.5">
                                 {isDefectRemark ? (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-md">
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-900 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-md">
                                     <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
                                     <span><strong>Defect Note:</strong> {item.remarks}</span>
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 bg-neutral-100/90 border border-neutral-200/80 px-2.5 py-0.5 rounded-md">
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-600 bg-neutral-100/90 border border-neutral-200/80 px-2 py-0.5 rounded-md">
                                     <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
                                     <span>{item.remarks}</span>
                                   </span>
@@ -673,17 +708,21 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             )}
                           </div>
 
-                          {/* Condition Counts & Quick Actions */}
-                          <div className="flex items-center gap-4 sm:gap-6 flex-wrap lg:flex-nowrap justify-between lg:justify-end">
-                            {/* Operational Health Indicator */}
-                            <div className="hidden sm:flex flex-col items-end gap-1 min-w-[110px]">
-                              <div className="flex items-center gap-1.5 text-xs">
-                                <span className={`font-mono font-bold ${operationalPercent === 100 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                                  {operationalPercent}%
-                                </span>
-                                <span className="text-neutral-400 text-[10px]">operational</span>
-                              </div>
-                              <div className="w-24 h-1.5 bg-neutral-100 rounded-full overflow-hidden flex border border-neutral-200/60">
+                          {/* Col 2: Usability Status (col-span-2) */}
+                          <div className="md:col-span-2 flex flex-row md:flex-col items-center justify-between md:justify-center gap-1">
+                            <span className="text-xs text-neutral-500 md:hidden font-medium">Usability:</span>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className={`inline-flex items-center gap-1 text-[11px] font-bold font-mono px-2 py-0.5 rounded-full ${
+                                operationalPercent >= 90
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                                  : operationalPercent >= 60
+                                  ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
+                                  : 'bg-rose-50 text-rose-800 border border-rose-200/80'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${operationalPercent >= 90 ? 'bg-emerald-500' : operationalPercent >= 60 ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                                {operationalPercent}% Usable
+                              </span>
+                              <div className="w-20 h-1 bg-neutral-100 rounded-full overflow-hidden flex border border-neutral-200/50">
                                 <div
                                   className="bg-emerald-500 h-full transition-all duration-300"
                                   style={{ width: `${operationalPercent}%` }}
@@ -696,39 +735,44 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                 )}
                               </div>
                             </div>
+                          </div>
 
-                            {/* Condition Badges */}
+                          {/* Col 3: Condition Counts (col-span-3) */}
+                          <div className="md:col-span-3 flex items-center justify-between md:justify-center gap-2">
+                            <span className="text-xs text-neutral-500 md:hidden font-medium">Counts:</span>
                             <div className="flex items-center gap-2">
-                              {/* Working Count Badge */}
-                              <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-lg">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                                <span className="font-mono text-sm font-bold text-emerald-950">{item.qtyWorking}</span>
-                                <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Working</span>
+                              {/* Working Count */}
+                              <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                <span className="font-mono text-xs font-bold text-emerald-950">{item.qtyWorking}</span>
+                                <span className="text-[10px] font-semibold text-emerald-800">working</span>
                               </div>
 
-                              {/* Broken Count Badge */}
-                              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${
+                              {/* Broken Count */}
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
                                 item.qtyBroken > 0
                                   ? 'bg-rose-50 border-rose-200/80 text-rose-950'
                                   : 'bg-neutral-50 border-neutral-200/70 text-neutral-400'
                               }`}>
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${item.qtyBroken > 0 ? 'bg-rose-500' : 'bg-neutral-300'}`} />
-                                <span className="font-mono text-sm font-bold">{item.qtyBroken}</span>
-                                <span className="text-[10px] uppercase font-bold tracking-wider">Broken</span>
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.qtyBroken > 0 ? 'bg-rose-500' : 'bg-neutral-300'}`} />
+                                <span className="font-mono text-xs font-bold">{item.qtyBroken}</span>
+                                <span className="text-[10px] font-semibold">broken</span>
                               </div>
 
-                              {/* In Repair Badge if > 0 */}
+                              {/* Under Maintenance Count if > 0 */}
                               {item.qtyMaintenance > 0 && (
-                                <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 px-2.5 py-1.5 rounded-lg text-amber-900">
-                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                                  <span className="font-mono text-sm font-bold">{item.qtyMaintenance}</span>
-                                  <span className="text-[10px] uppercase font-bold tracking-wider">Repair</span>
+                                <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg text-amber-900 text-xs font-bold">
+                                  <span className="font-mono">{item.qtyMaintenance}</span>
+                                  <span className="text-[10px] font-normal">repair</span>
                                 </div>
                               )}
                             </div>
+                          </div>
 
-                            {/* Quick Defect & Repair Action Controls */}
-                            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-neutral-200 shadow-2xs">
+                          {/* Col 4: Quick Actions (col-span-2) */}
+                          <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-1.5 pt-2 md:pt-0 border-t md:border-t-0 border-neutral-100">
+                            <div className="flex items-center gap-1">
+                              {/* Report Defect */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -739,16 +783,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                     updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
                                   }
                                 }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-neutral-700 hover:text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-md transition-all shadow-2xs cursor-pointer"
                                 title="Report 1 unit broken / defective"
                               >
-                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                                <span className="hidden sm:inline">Report Defect</span>
-                                <span className="sm:hidden">+1</span>
+                                <AlertTriangle className="w-3 h-3 text-rose-500" />
+                                <span>+ Defect</span>
                               </button>
 
-                              <div className="h-4 w-px bg-neutral-200" />
-
+                              {/* Mark Repaired */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -758,12 +800,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                   }
                                 }}
                                 disabled={item.qtyBroken === 0}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-35 disabled:hover:bg-transparent rounded-md transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200/80 disabled:opacity-30 disabled:hover:bg-emerald-50/80 rounded-md transition-all shadow-2xs cursor-pointer"
                                 title="Mark 1 unit repaired (return to working)"
                               >
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                <span className="hidden sm:inline">Mark Repaired</span>
-                                <span className="sm:hidden">Fixed</span>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span>✓ Fixed</span>
                               </button>
                             </div>
 
@@ -772,10 +813,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                               <button
                                 type="button"
                                 onClick={() => deleteRoomInventoryItem(loc.id, item.id)}
-                                className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                title="Delete item from room"
+                                className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                                title="Delete item from room roster"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
