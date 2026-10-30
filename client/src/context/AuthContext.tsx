@@ -122,6 +122,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     status: 'active',
     lastLogin: 'Today, 09:20 AM',
     assignedLabs: ['Room 102B'],
+    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
   },
 ];
 
@@ -289,6 +290,7 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
   let permissions = u.permissions;
   let department = u.department;
   let assignedLabs = u.assignedLabs;
+  let supervisedBy = (u as { supervisedBy?: string }).supervisedBy;
 
   if (assignedLabs && Array.isArray(assignedLabs)) {
     assignedLabs = assignedLabs.map((r) => (typeof r === 'string' ? r.replace(/^Rm\s+/i, 'Room ') : r));
@@ -301,6 +303,7 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     permissions = 'Full Read/Write Access & System Config';
     assignedLabs = ['all'];
     department = 'Engineering Block A - Room 102B';
+    supervisedBy = undefined;
   } else if (u.email === 'admin@lab.edu' || u.name?.includes('Ratha')) {
     role = 'Faculty Lecturer';
     roleBadge = 'Lecturer';
@@ -309,6 +312,7 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
       assignedLabs = ['Room 102B', 'Room 206'];
     }
     department = 'Engineering Block A - Room 102B & Room 206';
+    supervisedBy = undefined;
   } else if (u.email === 'vakhim@lab.edu' || u.name?.includes('Vakhim')) {
     role = 'Lab Assistant';
     roleBadge = 'Lab Assistant';
@@ -317,16 +321,19 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
       assignedLabs = ['Room 102B'];
     }
     department = 'Engineering Block A - Room 102B';
+    supervisedBy = 'Thoeurn Ratha (Faculty Lecturer)';
   } else {
     // Custom registered user
     if (role === 'Primary Lab Administrator') {
       roleBadge = 'Admin';
       assignedLabs = ['all'];
+      supervisedBy = undefined;
     } else if (role === 'Faculty Lecturer') {
       roleBadge = 'Lecturer';
       if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
         assignedLabs = ['Room 102B'];
       }
+      supervisedBy = undefined;
     } else {
       role = 'Lab Assistant';
       roleBadge = 'Lab Assistant';
@@ -336,7 +343,7 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     }
   }
 
-  return {
+  const sanitized: T = {
     ...u,
     role,
     roleBadge,
@@ -344,6 +351,14 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     department,
     assignedLabs,
   };
+
+  if (supervisedBy !== undefined) {
+    (sanitized as { supervisedBy?: string }).supervisedBy = supervisedBy;
+  } else {
+    delete (sanitized as { supervisedBy?: string }).supervisedBy;
+  }
+
+  return sanitized;
 }
 
 const getDefaultUser = (): User => ({
@@ -551,13 +566,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
 
-    // Attempt live public IP detection asynchronously if available
+    // Attempt live public IP detection asynchronously if available (cached in session)
     const detectRealIp = async () => {
       try {
-        const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2500) });
+        const cachedIp = typeof window !== 'undefined' ? sessionStorage.getItem('csd_client_ip') : null;
+        if (cachedIp) {
+          const host = window.location.hostname || 'localhost';
+          const port = window.location.port ? `:${window.location.port}` : '';
+          const realIpText = `${cachedIp} (${host}${port})`;
+          setSessionDevices((prev) => prev.map((s) => (s.isCurrent ? { ...s, ip: realIpText } : s)));
+          return;
+        }
+
+        const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(1200) });
         if (res.ok) {
           const data = await res.json();
           if (data?.ip) {
+            sessionStorage.setItem('csd_client_ip', data.ip);
             const host = window.location.hostname || 'localhost';
             const port = window.location.port ? `:${window.location.port}` : '';
             const realIpText = `${data.ip} (${host}${port})`;
@@ -571,7 +596,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch {
-        // Keeps local IP fallback (e.g. 127.0.0.1)
+        // Keeps local IP fallback (e.g. 127.0.0.1) without blocking
       }
     };
     detectRealIp();
@@ -822,7 +847,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     rememberMe = true
   ): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const cleanEmail = email.trim().toLowerCase();
     const normalizedEmail = cleanEmail.replace('@netlab.edu', '@lab.edu');

@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { Image as ImageIcon, Search, Shield } from 'lucide-react';
 
 export default function StockPage() {
@@ -160,8 +161,10 @@ export default function StockPage() {
                           >
                             {item.imageUrl ? (
                               <img
-                                src={item.imageUrl}
+                                src={getOptimizedImageUrl(item.imageUrl, 'thumb')}
                                 alt={item.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
                               />
                             ) : (

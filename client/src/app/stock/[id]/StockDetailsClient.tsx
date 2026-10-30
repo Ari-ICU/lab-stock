@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import {
   ArrowLeft,
   Edit3,
@@ -177,8 +178,9 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded border border-neutral-200 bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center">
               {item.imageUrl ? (
                 <img
-                  src={item.imageUrl}
+                  src={getOptimizedImageUrl(item.imageUrl, 'thumb')}
                   alt={item.name}
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -314,8 +316,9 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
               <div className="w-full aspect-video rounded border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
                 {item.imageUrl ? (
                   <img
-                    src={item.imageUrl}
+                    src={getOptimizedImageUrl(item.imageUrl, 'card')}
                     alt={item.name}
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                 ) : (

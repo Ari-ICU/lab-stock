@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import {
   ArrowLeft,
   Edit3,
@@ -414,8 +415,9 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
             <div className="w-full md:w-72 h-56 rounded-lg border border-neutral-200 bg-neutral-100 overflow-hidden shrink-0 relative group">
               {asset.imageUrl ? (
                 <img
-                  src={asset.imageUrl}
+                  src={getOptimizedImageUrl(asset.imageUrl, 'card')}
                   alt={asset.name}
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               ) : (

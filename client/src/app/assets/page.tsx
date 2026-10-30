@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { Image as ImageIcon, Plus, Search, Shield } from 'lucide-react';
 
 const statusOptions: DropdownOption[] = [
@@ -156,8 +157,10 @@ export default function AssetsPage() {
                           >
                             {asset.imageUrl ? (
                               <img
-                                src={asset.imageUrl}
+                                src={getOptimizedImageUrl(asset.imageUrl, 'thumb')}
                                 alt={asset.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
                               />
                             ) : (

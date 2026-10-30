@@ -63,7 +63,7 @@ export const getAuthToken = (): string | null => {
  * Core HTTP Request Dispatcher
  */
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, timeoutMs = 8000, headers: customHeaders, ...fetchOptions } = options;
+  const { params, timeoutMs = 4000, headers: customHeaders, ...fetchOptions } = options;
 
   const baseUrl = getApiBaseUrl().replace(/\/+$/, '');
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import {
   Package,
@@ -501,8 +502,10 @@ export default function DashboardPage() {
                       >
                         {asset.imageUrl ? (
                           <img
-                            src={asset.imageUrl}
+                            src={getOptimizedImageUrl(asset.imageUrl, 'thumb')}
                             alt={asset.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
                         ) : (

@@ -37,6 +37,7 @@ export interface ManagedUser {
   status: 'active' | 'offline' | 'suspended';
   lastLogin: string;
   assignedLabs: string[]; // ['all'] or specific room codes
+  supervisedBy?: string;
 }
 
 /**
