@@ -813,18 +813,18 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
             {/* Clean Responsive Table matching /stock and /assets */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[780px]">
+              <table className="w-full text-left text-xs min-w-[850px]">
                 <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                   <tr>
-                    <th className="py-3 px-4 w-12 text-center">Visual</th>
-                    <th className="py-3 px-4">Item & Equipment Name</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Specification / Model</th>
-                    <th className="py-3 px-4 text-center">Total Count</th>
-                    <th className="py-3 px-4 text-center">Working</th>
-                    <th className="py-3 px-4 text-center">Broken</th>
-                    <th className="py-3 px-4">Operational Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-3 w-14 text-center">Visual</th>
+                    <th className="py-3 px-4 min-w-[240px]">Item & Equipment Name</th>
+                    <th className="py-3 px-4 w-36">Category</th>
+                    <th className="py-3 px-4 min-w-[180px]">Specification / Model</th>
+                    <th className="py-3 px-3 w-20 text-center">Total</th>
+                    <th className="py-3 px-3 w-20 text-center">Working</th>
+                    <th className="py-3 px-3 w-20 text-center">Broken</th>
+                    <th className="py-3 px-4 w-36">Operational Status</th>
+                    <th className="py-3 px-4 w-32 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
@@ -854,13 +854,26 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           item.name.toLowerCase().includes(a.name.toLowerCase()) ||
                           a.name.toLowerCase().includes(item.name.toLowerCase())
                       );
+                      const itemThumbnail = linkedStock?.imageUrl || linkedAsset?.imageUrl;
 
                       return (
                         <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
-                          {/* Visual */}
-                          <td className="py-3 px-4 text-center">
-                            <div className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 flex items-center justify-center text-lg shrink-0 shadow-2xs mx-auto">
-                              {getCategoryIcon(item.group)}
+                          {/* Visual Product Thumbnail matching /stock & /assets */}
+                          <td className="py-2.5 px-3 text-center">
+                            <div className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs mx-auto">
+                              {itemThumbnail ? (
+                                <LabThumbnail
+                                  src={itemThumbnail}
+                                  alt={item.name}
+                                  size="thumb"
+                                  fallbackType="item"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-base select-none">
+                                  {getCategoryIcon(item.group)}
+                                </span>
+                              )}
                             </div>
                           </td>
 
@@ -875,36 +888,36 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                             {/* Center Stock / Assets Source Link */}
                             {linkedStock && (
-                              <div className="mt-1">
+                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                 <Link
                                   href="/stock"
-                                  className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-1.5 py-0.5 rounded transition-colors"
-                                  title="Master Item in Central Stock (/stock)"
+                                  className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200/80 px-2 py-0.5 rounded-md transition-colors shadow-2xs"
+                                  title={`Allocated from Central Stock (/stock): ${linkedStock.quantity} ${linkedStock.unit} in Dept`}
                                 >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                                  <span>Center Stock: {linkedStock.code}</span>
-                                  <span className="text-emerald-700 font-bold">• {linkedStock.quantity} in Dept</span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                  <span>{linkedStock.code}</span>
+                                  <span className="text-emerald-700 font-semibold">• {linkedStock.quantity} in Stock</span>
                                 </Link>
                               </div>
                             )}
                             {linkedAsset && (
-                              <div className="mt-1">
+                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                 <Link
                                   href="/assets"
-                                  className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-1.5 py-0.5 rounded transition-colors"
-                                  title="Master Asset in Central Assets (/assets)"
+                                  className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-mono font-medium text-blue-800 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/80 px-2 py-0.5 rounded-md transition-colors shadow-2xs"
+                                  title={`Allocated from Central Assets (/assets): ${linkedAsset.totalUnits ?? 1} units in Dept`}
                                 >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                                  <span>Center Asset: {linkedAsset.serialNumber}</span>
-                                  <span className="text-blue-700 font-bold">• {linkedAsset.totalUnits ?? 1} in Dept</span>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                                  <span>{linkedAsset.serialNumber}</span>
+                                  <span className="text-blue-700 font-semibold">• {linkedAsset.totalUnits ?? 1} in Dept</span>
                                 </Link>
                               </div>
                             )}
 
                             {item.remarks && (
-                              <div className="mt-1">
+                              <div className="mt-1.5">
                                 {isDefectRemark ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-md">
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-900 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-md">
                                     <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
                                     <span>{item.remarks}</span>
                                   </span>
@@ -919,7 +932,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                           {/* Category */}
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200/60">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200/60 whitespace-nowrap">
                               {getCategoryLabel(item.group)}
                             </span>
                           </td>
@@ -930,14 +943,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           </td>
 
                           {/* Total Count */}
-                          <td className="py-3 px-4 text-center font-mono font-bold text-neutral-900">
+                          <td className="py-3 px-3 text-center font-mono font-bold text-neutral-900">
                             <span className="bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
                               {total}
                             </span>
                           </td>
 
                           {/* Working */}
-                          <td className="py-3 px-4 text-center font-mono">
+                          <td className="py-3 px-3 text-center font-mono">
                             <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               {item.qtyWorking}
@@ -945,7 +958,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           </td>
 
                           {/* Broken */}
-                          <td className="py-3 px-4 text-center font-mono">
+                          <td className="py-3 px-3 text-center font-mono">
                             {item.qtyBroken > 0 ? (
                               <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-xs">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
@@ -959,15 +972,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           {/* Operational Status */}
                           <td className="py-3 px-4">
                             {operationalPercent === 100 ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 100% Operational
                               </span>
                             ) : (
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold ${operationalPercent >= 70
+                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap ${
+                                operationalPercent >= 70
                                   ? 'bg-amber-50 text-amber-800 border border-amber-200'
                                   : 'bg-rose-50 text-rose-800 border border-rose-200'
-                                }`}>
+                              }`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${operationalPercent >= 70 ? 'bg-amber-500' : 'bg-rose-500'}`} />
                                 {operationalPercent}% Usable
                               </span>
@@ -976,7 +990,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                           {/* Actions */}
                           <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                               {/* + Defect */}
                               <button
                                 type="button"
@@ -988,10 +1002,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                     updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
                                   }
                                 }}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-neutral-700 hover:text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-md transition-all shadow-2xs cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-lg transition-all shadow-2xs cursor-pointer"
                                 title="Report 1 unit broken / defective"
                               >
-                                <AlertTriangle className="w-3 h-3 text-rose-500" />
+                                <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
                                 <span>+ Defect</span>
                               </button>
 
@@ -1005,11 +1019,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                   }
                                 }}
                                 disabled={item.qtyBroken === 0}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 disabled:opacity-30 rounded-md transition-all shadow-2xs cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition-all shadow-2xs cursor-pointer"
                                 title="Mark 1 unit repaired"
                               >
-                                <Check className="w-3 h-3 text-emerald-600" />
-                                <span>✓ Fixed</span>
+                                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span>Fixed</span>
                               </button>
 
                               {/* Admin Delete */}
@@ -1017,7 +1031,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                 <button
                                   type="button"
                                   onClick={() => deleteRoomInventoryItem(loc.id, item.id)}
-                                  className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer ml-1"
+                                  className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer ml-0.5"
                                   title="Delete from roster"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />

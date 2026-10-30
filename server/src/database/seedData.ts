@@ -1120,6 +1120,7 @@ export async function seedAllData(): Promise<void> {
   console.log(`✅ Seeded ${seedPurchaseRequests.length} Purchase Requisition Requests.`);
 
   // 8. Seed Room Facility Inventory (Bulk Furniture, HVAC, Classroom Equipment)
+  await query('DELETE FROM room_inventory');
   for (const inv of seedRoomInventory) {
     const roomId = locationMap.get(inv.room_code);
     if (roomId) {
