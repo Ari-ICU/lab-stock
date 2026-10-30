@@ -87,6 +87,7 @@ export interface MockLocation {
   room: string;
   totalAssets: number;
   totalItems: number;
+  imageUrl?: string;
 }
 
 export type AnyEntity =

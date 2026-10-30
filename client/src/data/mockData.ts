@@ -787,6 +787,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 102B',
     totalAssets: 5,
     totalItems: 7,
+    imageUrl: 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'L2',
@@ -795,6 +796,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 206',
     totalAssets: 4,
     totalItems: 4,
+    imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'L3',
@@ -803,6 +805,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 201',
     totalAssets: 3,
     totalItems: 3,
+    imageUrl: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'L4',
@@ -811,6 +814,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 203',
     totalAssets: 3,
     totalItems: 3,
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'L5',
@@ -819,6 +823,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 305',
     totalAssets: 3,
     totalItems: 2,
+    imageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'L6',
@@ -827,6 +832,7 @@ export const mockLocations: MockLocation[] = [
     room: 'Room 102',
     totalAssets: 2,
     totalItems: 3,
+    imageUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
   },
 ];
 

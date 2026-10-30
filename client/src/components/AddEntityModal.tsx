@@ -118,6 +118,7 @@ export function AddEntityModal() {
   const [locName, setLocName] = useState('');
   const [locBuilding, setLocBuilding] = useState('Engineering Block A');
   const [locRoom, setLocRoom] = useState('');
+  const [locImageUrl, setLocImageUrl] = useState('');
 
   if (activeModal === 'none') return null;
 
@@ -210,9 +211,11 @@ export function AddEntityModal() {
       room: locRoom,
       totalAssets: 0,
       totalItems: 0,
+      imageUrl: locImageUrl || 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
     });
     setLocName('');
     setLocRoom('');
+    setLocImageUrl('');
     closeModal();
   };
 
@@ -697,6 +700,14 @@ export function AddEntityModal() {
                   className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
                 />
               </div>
+            </div>
+
+            <div className="pt-1">
+              <ImageUpload
+                value={locImageUrl}
+                onChange={setLocImageUrl}
+                label="Laboratory Preview Photo (Optional)"
+              />
             </div>
 
             <div className="pt-2 flex justify-end gap-2">

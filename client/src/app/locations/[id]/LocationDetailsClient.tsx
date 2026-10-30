@@ -8,6 +8,7 @@ import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import {
   Building,
   ArrowLeft,
@@ -35,6 +36,7 @@ import {
   X,
   Server,
   Radio,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
@@ -325,8 +327,18 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 flex items-center justify-center shrink-0 shadow-2xs">
-                <Building className="w-6 h-6" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative group">
+                {loc.imageUrl ? (
+                  <img
+                    src={getOptimizedImageUrl(loc.imageUrl, 'card')}
+                    alt={loc.name}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <Building className="w-6 h-6" />
+                )}
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -561,6 +573,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <table className="w-full text-left text-xs min-w-[800px]">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
+                      <th className="py-3 px-4 w-12">Photo</th>
                       <th className="py-3 px-4">Equipment / Device</th>
                       <th className="py-3 px-4">Model & Specification</th>
                       <th className="py-3 px-4">Serial Number</th>
@@ -574,6 +587,25 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   <tbody className="divide-y divide-neutral-100">
                     {filteredAssets.map((asset) => (
                       <tr key={asset.id} className="hover:bg-neutral-50/80 transition-colors group">
+                        <td className="py-2.5 px-4 w-12">
+                          <Link
+                            href={`/assets/${asset.id}`}
+                            className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
+                            title="Click to view full specifications"
+                          >
+                            {asset.imageUrl ? (
+                              <img
+                                src={getOptimizedImageUrl(asset.imageUrl, 'thumb')}
+                                alt={asset.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-neutral-400" />
+                            )}
+                          </Link>
+                        </td>
                         <td className="py-3.5 px-4">
                           <Link
                             href={`/assets/${asset.id}`}
@@ -705,6 +737,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <table className="w-full text-left text-xs min-w-[800px]">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
+                      <th className="py-3 px-4 w-12">Photo</th>
                       <th className="py-3 px-4">Item Name</th>
                       <th className="py-3 px-4">Part / SKU</th>
                       <th className="py-3 px-4">Category</th>
@@ -718,6 +751,25 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   <tbody className="divide-y divide-neutral-100">
                     {filteredStock.map((item) => (
                       <tr key={item.id} className="hover:bg-neutral-50/80 transition-colors group">
+                        <td className="py-2.5 px-4 w-12">
+                          <Link
+                            href={`/stock/${item.id}`}
+                            className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
+                            title="Click to view details"
+                          >
+                            {item.imageUrl ? (
+                              <img
+                                src={getOptimizedImageUrl(item.imageUrl, 'thumb')}
+                                alt={item.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-neutral-400" />
+                            )}
+                          </Link>
+                        </td>
                         <td className="py-3.5 px-4">
                           <Link
                             href={`/stock/${item.id}`}
