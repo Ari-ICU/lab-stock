@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { Dropdown } from '@/components/Dropdown';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -335,30 +336,24 @@ export function DatePicker({
 
           <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900">
             {/* Month Selector */}
-            <select
-              value={viewMonth}
-              onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
-              className="bg-transparent hover:bg-neutral-100 rounded px-1.5 py-0.5 font-semibold text-neutral-900 cursor-pointer focus:outline-none"
-            >
-              {MONTH_NAMES.map((m, idx) => (
-                <option key={m} value={idx}>
-                  {m}
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              value={String(viewMonth)}
+              options={MONTH_NAMES.map((m, idx) => ({ label: m, value: String(idx) }))}
+              onChange={(val) => setViewMonth(parseInt(val, 10))}
+              className="w-28"
+              buttonClassName="px-2 py-0.5 text-xs font-semibold bg-white border border-neutral-200 rounded hover:bg-neutral-50"
+              searchable={false}
+            />
 
             {/* Year Selector */}
-            <select
-              value={viewYear}
-              onChange={(e) => setViewYear(parseInt(e.target.value, 10))}
-              className="bg-transparent hover:bg-neutral-100 rounded px-1 py-0.5 font-mono font-semibold text-neutral-900 cursor-pointer focus:outline-none"
-            >
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              value={String(viewYear)}
+              options={yearOptions.map((y) => ({ label: String(y), value: String(y) }))}
+              onChange={(val) => setViewYear(parseInt(val, 10))}
+              className="w-20"
+              buttonClassName="px-2 py-0.5 text-xs font-semibold font-mono bg-white border border-neutral-200 rounded hover:bg-neutral-50"
+              searchable={false}
+            />
           </div>
 
           <button

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
+import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
@@ -21,10 +22,45 @@ import {
   FileText,
   Flame,
   CheckCircle2,
-  ChevronRight,
   ShieldAlert,
   Layers,
 } from 'lucide-react';
+
+const CATEGORY_OPTIONS = [
+  { label: 'Networking Equipment', value: 'Networking Equipment' },
+  { label: 'Cables & Accessories', value: 'Cables & Accessories' },
+  { label: 'Computer Hardware', value: 'Computer Hardware' },
+  { label: 'Mice & Keyboards', value: 'Mice & Keyboards' },
+  { label: 'Monitors & Displays', value: 'Monitors & Displays' },
+  { label: 'Electronics & Tools', value: 'Electronics & Tools' },
+  { label: 'Printer Supplies', value: 'Printer Supplies' },
+  { label: 'Stationery & Misc', value: 'Stationery & Misc' },
+];
+
+const UNIT_OPTIONS = [
+  { label: 'Units', value: 'Units' },
+  { label: 'Boxes', value: 'Boxes' },
+  { label: 'Packs', value: 'Packs' },
+  { label: 'Rolls', value: 'Rolls' },
+  { label: 'Cartridges', value: 'Cartridges' },
+  { label: 'Kits', value: 'Kits' },
+  { label: 'Spools', value: 'Spools' },
+];
+
+const PRIORITY_OPTIONS = [
+  { label: 'Low Priority', value: 'low' },
+  { label: 'Medium Priority', value: 'medium' },
+  { label: 'High Priority', value: 'high' },
+  { label: '🔥 Urgent Priority', value: 'urgent' },
+];
+
+const STATUS_OPTIONS = [
+  { label: '⏳ Pending Review', value: 'pending' },
+  { label: '✓ Approved for Purchase', value: 'approved' },
+  { label: '📦 PO Dispatched (Ordered)', value: 'ordered' },
+  { label: '🎉 Fulfilled & Received', value: 'fulfilled' },
+  { label: '✕ Rejected', value: 'rejected' },
+];
 
 export default function EditRequestClient({ id: propId }: { id?: string }) {
   const params = useParams();
@@ -158,35 +194,39 @@ export default function EditRequestClient({ id: propId }: { id?: string }) {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
-      {/* 1. Header */}
+      {/* Top Header with Back Navigation & Action Controls (matching Assets & Inventory style) */}
       <Header
-        title={`Edit Requisition: ${request.id}`}
-        subtitle={`/ Update Procurement Specifications for ${request.targetRoom}`}
+        title={`Edit ${request.title}`}
+        subtitle={`ID: ${request.id} • ${request.targetRoom}`}
+        backHref={`/requests/${request.id}`}
+        backLabel="Requisition Details"
+        showExport={false}
         actions={
-          <Link
-            href={`/requests/${request.id}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Cancel</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/requests/${request.id}`}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+            >
+              Cancel
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                const form = document.getElementById('edit-request-form') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+            >
+              <Save className="w-3.5 h-3.5 text-neutral-300" />
+              <span>Save Changes</span>
+            </button>
+          </div>
         }
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
-        {/* 2. Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-neutral-500">
-          <Link href="/" className="hover:text-neutral-900 transition-colors">Overview</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <Link href="/requests" className="hover:text-neutral-900 transition-colors">Purchase Requests</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <Link href={`/requests/${request.id}`} className="hover:text-neutral-900 transition-colors">{request.id}</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="font-semibold text-neutral-900">Edit</span>
-        </nav>
-
-        {/* 3. Full-Width 12-Column Edit Grid */}
-        <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Full-Width 12-Column Edit Grid (No Breadcrumbs) */}
+        <form id="edit-request-form" onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Form Fields (8 Cols) */}
           <div className="lg:col-span-8 bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs space-y-6">
             <div className="border-b border-neutral-100 pb-4 flex items-center justify-between">
@@ -220,35 +260,25 @@ export default function EditRequestClient({ id: propId }: { id?: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold text-neutral-700 mb-1.5">Category</label>
-                  <select
+                  <Dropdown
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    <option value="Networking Equipment">Networking Equipment</option>
-                    <option value="Cables & Accessories">Cables & Accessories</option>
-                    <option value="Computer Hardware">Computer Hardware</option>
-                    <option value="Mice & Keyboards">Mice & Keyboards</option>
-                    <option value="Monitors & Displays">Monitors & Displays</option>
-                    <option value="Electronics & Tools">Electronics & Tools</option>
-                    <option value="Printer Supplies">Printer Supplies</option>
-                    <option value="Stationery & Misc">Stationery & Misc</option>
-                  </select>
+                    options={CATEGORY_OPTIONS}
+                    onChange={(val) => setCategory(val)}
+                    buttonClassName="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-xs text-neutral-900 font-medium"
+                  />
                 </div>
 
                 <div>
                   <label className="block font-bold text-neutral-700 mb-1.5">Destination Room</label>
-                  <select
+                  <Dropdown
                     value={targetRoom}
-                    onChange={(e) => setTargetRoom(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    {availableRooms.map((room) => (
-                      <option key={room} value={room}>
-                        {room} {canManageLocation(room) ? '(Under Your Management)' : ''}
-                      </option>
-                    ))}
-                  </select>
+                    options={availableRooms.map((room) => ({
+                      label: `${room}${canManageLocation(room) ? ' (Under Your Management)' : ''}`,
+                      value: room,
+                    }))}
+                    onChange={(val) => setTargetRoom(val)}
+                    buttonClassName="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-xs text-neutral-900 font-medium"
+                  />
                 </div>
               </div>
 
@@ -268,19 +298,12 @@ export default function EditRequestClient({ id: propId }: { id?: string }) {
 
                 <div>
                   <label className="block font-bold text-neutral-700 mb-1.5">Packaging Unit</label>
-                  <select
+                  <Dropdown
                     value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    <option value="Units">Units</option>
-                    <option value="Boxes">Boxes</option>
-                    <option value="Packs">Packs</option>
-                    <option value="Rolls">Rolls</option>
-                    <option value="Cartridges">Cartridges</option>
-                    <option value="Kits">Kits</option>
-                    <option value="Spools">Spools</option>
-                  </select>
+                    options={UNIT_OPTIONS}
+                    onChange={(val) => setUnit(val)}
+                    buttonClassName="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-xs text-neutral-900 font-medium"
+                  />
                 </div>
 
                 <div>
@@ -302,32 +325,23 @@ export default function EditRequestClient({ id: propId }: { id?: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold text-neutral-700 mb-1.5">Priority / Urgency</label>
-                  <select
+                  <Dropdown
                     value={priority}
-                    onChange={(e) => setPriority(e.target.value as PurchaseRequest['priority'])}
-                    className="w-full px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white text-xs"
-                  >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
-                    <option value="urgent">🔥 Urgent Priority</option>
-                  </select>
+                    options={PRIORITY_OPTIONS}
+                    onChange={(val) => setPriority(val as PurchaseRequest['priority'])}
+                    buttonClassName="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-xs text-neutral-900 font-medium"
+                  />
                 </div>
 
                 {isPrimaryAdmin ? (
                   <div>
                     <label className="block font-bold text-neutral-700 mb-1.5">Procurement Status (Admin)</label>
-                    <select
+                    <Dropdown
                       value={status}
-                      onChange={(e) => setStatus(e.target.value as PurchaseRequest['status'])}
-                      className="w-full px-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white text-xs font-semibold"
-                    >
-                      <option value="pending">⏳ Pending Review</option>
-                      <option value="approved">✓ Approved for Purchase</option>
-                      <option value="ordered">📦 PO Dispatched (Ordered)</option>
-                      <option value="fulfilled">🎉 Fulfilled & Received</option>
-                      <option value="rejected">✕ Rejected</option>
-                    </select>
+                      options={STATUS_OPTIONS}
+                      onChange={(val) => setStatus(val as PurchaseRequest['status'])}
+                      buttonClassName="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-xs text-neutral-900 font-semibold"
+                    />
                   </div>
                 ) : (
                   <div>

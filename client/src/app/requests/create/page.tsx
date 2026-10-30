@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
+import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { useStock } from '@/context/StockContext';
@@ -24,7 +25,6 @@ import {
   CheckCircle2,
   Flame,
   Layers,
-  ChevronRight,
   Package,
 } from 'lucide-react';
 
@@ -69,6 +69,27 @@ const PRESETS = [
     reason: 'Replacement precision screwdrivers and anti-static wrist straps for hardware maintenance workbench.',
     imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
   },
+];
+
+const CATEGORY_OPTIONS = [
+  { label: 'Networking Equipment', value: 'Networking Equipment' },
+  { label: 'Cables & Accessories', value: 'Cables & Accessories' },
+  { label: 'Computer Hardware', value: 'Computer Hardware' },
+  { label: 'Mice & Keyboards', value: 'Mice & Keyboards' },
+  { label: 'Monitors & Displays', value: 'Monitors & Displays' },
+  { label: 'Electronics & Tools', value: 'Electronics & Tools' },
+  { label: 'Printer Supplies', value: 'Printer Supplies' },
+  { label: 'Stationery & Misc', value: 'Stationery & Misc' },
+];
+
+const UNIT_OPTIONS = [
+  { label: 'Units', value: 'Units' },
+  { label: 'Boxes', value: 'Boxes' },
+  { label: 'Packs', value: 'Packs' },
+  { label: 'Rolls', value: 'Rolls' },
+  { label: 'Cartridges', value: 'Cartridges' },
+  { label: 'Kits', value: 'Kits' },
+  { label: 'Spools', value: 'Spools' },
 ];
 
 export default function CreatePurchaseRequestPage() {
@@ -152,32 +173,38 @@ export default function CreatePurchaseRequestPage() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
-      {/* 1. Page Header */}
+      {/* Top Header with Back Navigation & Action Controls (matching Assets & Inventory style) */}
       <Header
         title="Create Purchase Requisition"
-        subtitle="/ Note Request to Buy Laboratory Supplies, Equipment, or Consumables"
+        subtitle="Note Request to Buy Laboratory Supplies, Equipment, or Consumables"
+        backHref="/requests"
+        backLabel="Purchase Requests"
+        showExport={false}
         actions={
-          <Link
-            href="/requests"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Requisitions</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/requests"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+            >
+              Cancel
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                const form = document.getElementById('new-request-form') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5 text-neutral-300" />
+              <span>Submit Requisition</span>
+            </button>
+          </div>
         }
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
-        {/* 2. Breadcrumbs Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-neutral-500">
-          <Link href="/" className="hover:text-neutral-900 transition-colors">Overview</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <Link href="/requests" className="hover:text-neutral-900 transition-colors">Purchase Requests</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="font-semibold text-neutral-900">New Requisition</span>
-        </nav>
-
-        {/* 3. Quick Preset Suggestions */}
+        {/* Quick Preset Suggestions (No Breadcrumbs) */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-emerald-600" />
@@ -220,8 +247,8 @@ export default function CreatePurchaseRequestPage() {
           </div>
         </div>
 
-        {/* 4. Main Requisition Form: Full-Width 12-Column Responsive Grid */}
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Main Requisition Form: Full-Width 12-Column Responsive Grid */}
+        <form id="new-request-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (8 cols): Primary Specifications */}
           <div className="lg:col-span-8 bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs space-y-6">
             <div className="border-b border-neutral-100 pb-4">
@@ -253,37 +280,27 @@ export default function CreatePurchaseRequestPage() {
                   <label className="block text-xs font-bold text-neutral-700 mb-1.5">
                     Category <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <Dropdown
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white"
-                  >
-                    <option value="Networking Equipment">Networking Equipment</option>
-                    <option value="Cables & Accessories">Cables & Accessories</option>
-                    <option value="Computer Hardware">Computer Hardware</option>
-                    <option value="Mice & Keyboards">Mice & Keyboards</option>
-                    <option value="Monitors & Displays">Monitors & Displays</option>
-                    <option value="Electronics & Tools">Electronics & Tools</option>
-                    <option value="Printer Supplies">Printer Supplies</option>
-                    <option value="Stationery & Misc">Stationery & Misc</option>
-                  </select>
+                    options={CATEGORY_OPTIONS}
+                    onChange={(val) => setCategory(val)}
+                    buttonClassName="w-full px-3.5 py-2.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-neutral-900 font-medium"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1.5">
                     Destination Laboratory <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <Dropdown
                     value={targetRoom}
-                    onChange={(e) => setTargetRoom(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white"
-                  >
-                    {availableRooms.map((room) => (
-                      <option key={room} value={room}>
-                        {room} {canManageLocation(room) ? '(Under Your Management)' : ''}
-                      </option>
-                    ))}
-                  </select>
+                    options={availableRooms.map((room) => ({
+                      label: `${room}${canManageLocation(room) ? ' (Under Your Management)' : ''}`,
+                      value: room,
+                    }))}
+                    onChange={(val) => setTargetRoom(val)}
+                    buttonClassName="w-full px-3.5 py-2.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-neutral-900 font-medium"
+                  />
                 </div>
               </div>
 
@@ -305,19 +322,12 @@ export default function CreatePurchaseRequestPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1.5">Unit Packaging</label>
-                  <select
+                  <Dropdown
                     value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 focus:bg-white"
-                  >
-                    <option value="Units">Units</option>
-                    <option value="Boxes">Boxes</option>
-                    <option value="Packs">Packs</option>
-                    <option value="Rolls">Rolls</option>
-                    <option value="Cartridges">Cartridges</option>
-                    <option value="Kits">Kits</option>
-                    <option value="Spools">Spools</option>
-                  </select>
+                    options={UNIT_OPTIONS}
+                    onChange={(val) => setUnit(val)}
+                    buttonClassName="w-full px-3.5 py-2.5 text-xs bg-neutral-50 border border-neutral-200 rounded-xl hover:border-neutral-400 focus:border-neutral-900 focus:bg-white text-neutral-900 font-medium"
+                  />
                 </div>
 
                 <div>

@@ -26,7 +26,6 @@ import {
   FileText,
   Flame,
   Check,
-  ChevronRight,
   Printer,
   Copy,
 } from 'lucide-react';
@@ -94,26 +93,29 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
-      {/* 1. Header with Actions */}
+      {/* Top Header with Integrated Back Navigation & Action Controls (matching Assets & Inventory style) */}
       <Header
-        title={`Requisition: ${request.id}`}
-        subtitle={`/ Procurement Details for ${request.targetRoom}`}
+        title={request.title}
+        subtitle={`ID: ${request.id} • Destination: ${request.targetRoom}`}
+        backHref="/requests"
+        backLabel="Purchase Requests"
+        showExport={false}
         actions={
           <div className="flex items-center gap-2">
-            <Link
-              href="/requests"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs bg-white border border-neutral-200 hover:border-neutral-300 text-neutral-700 hover:bg-neutral-50 rounded font-medium transition-colors cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
-            </Link>
+              <Printer className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="hidden sm:inline">Print Voucher</span>
+            </button>
 
             {canEdit && (
               <Link
                 href={`/requests/${request.id}/edit`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-900 bg-white border border-neutral-300 hover:border-neutral-400 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors shadow-xs"
               >
-                <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+                <Edit3 className="w-3.5 h-3.5 text-neutral-300" />
                 <span>Edit Requisition</span>
               </Link>
             )}
@@ -122,16 +124,7 @@ export default function RequestDetailsClient({ id: propId }: { id?: string }) {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
-        {/* 2. Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-neutral-500">
-          <Link href="/" className="hover:text-neutral-900 transition-colors">Overview</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <Link href="/requests" className="hover:text-neutral-900 transition-colors">Purchase Requests</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="font-semibold text-neutral-900">{request.id}</span>
-        </nav>
-
-        {/* 3. Requisition Hero Banner with Product Photo */}
+        {/* Requisition Hero Banner with Product Photo (No Breadcrumbs) */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start justify-between gap-6">
           <div className="flex items-start gap-5 min-w-0 flex-1">
             {/* Visual Thumbnail */}

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import { Dropdown } from '@/components/Dropdown';
 import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { systemService } from '@/services';
 import { useStock } from '@/context/StockContext';
@@ -597,20 +598,21 @@ export default function SettingsPage() {
                     <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
                       Deployment Environment Profile
                     </label>
-                    <select
+                    <Dropdown
                       disabled={!isAdmin}
                       value={apiEnvironment}
-                      onChange={(e) => setApiEnvironment(e.target.value)}
-                      className={`w-full border text-xs px-3.5 py-2.5 rounded transition-colors ${
+                      options={[
+                        { label: 'Development (Local Faculty Fleet)', value: 'Development (Local Faculty Fleet)' },
+                        { label: 'Campus Intranet (RUPP STEM Network)', value: 'Campus Intranet (RUPP STEM Network)' },
+                        { label: 'Production Cloud (GitHub Pages / Standalone)', value: 'Production Cloud (GitHub Pages / Standalone)' },
+                      ]}
+                      onChange={(val) => setApiEnvironment(val)}
+                      buttonClassName={`w-full text-xs px-3.5 py-2.5 rounded transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
-                          : 'bg-white border-neutral-300 text-neutral-900 font-medium focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 cursor-pointer'
+                          : 'bg-white border-neutral-300 text-neutral-900 font-medium hover:border-neutral-400 focus:outline-none focus:border-neutral-900 cursor-pointer'
                       }`}
-                    >
-                      <option value="Development (Local Faculty Fleet)">Development (Local Faculty Fleet)</option>
-                      <option value="Campus Intranet (RUPP STEM Network)">Campus Intranet (RUPP STEM Network)</option>
-                      <option value="Production Cloud (GitHub Pages / Standalone)">Production Cloud (GitHub Pages / Standalone)</option>
-                    </select>
+                    />
                   </div>
                 </div>
 

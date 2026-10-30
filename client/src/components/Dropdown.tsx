@@ -17,6 +17,7 @@ interface DropdownProps {
   direction?: 'auto' | 'up' | 'down';
   searchable?: boolean;
   searchPlaceholder?: string;
+  disabled?: boolean;
 }
 
 export function Dropdown({
@@ -30,6 +31,7 @@ export function Dropdown({
   direction = 'auto',
   searchable,
   searchPlaceholder = 'Search options...',
+  disabled = false,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [openUpwards, setOpenUpwards] = useState(false);
@@ -142,14 +144,21 @@ export function Dropdown({
     >
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-xs font-medium text-neutral-900 bg-white border border-neutral-300 rounded hover:border-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors cursor-pointer select-none text-left ${buttonClassName}`}
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={`w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-xs font-medium rounded transition-colors select-none text-left ${
+          disabled
+            ? 'bg-neutral-100/80 border border-neutral-200 text-neutral-400 cursor-not-allowed shadow-none'
+            : 'text-neutral-900 bg-white border border-neutral-300 hover:border-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 cursor-pointer'
+        } ${buttonClassName}`}
         aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-expanded={open && !disabled}
       >
         <span
           className={`truncate ${
-            !selectedOption && (!value || value.trim().length === 0)
+            disabled
+              ? 'text-neutral-400'
+              : !selectedOption && (!value || value.trim().length === 0)
               ? 'text-neutral-400 font-normal'
               : 'text-neutral-900'
           }`}
@@ -157,9 +166,9 @@ export function Dropdown({
           {displayLabel}
         </span>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-neutral-500 transition-transform shrink-0 ${
-            open ? 'rotate-180' : ''
-          }`}
+          className={`w-3.5 h-3.5 transition-transform shrink-0 ${
+            disabled ? 'text-neutral-400' : 'text-neutral-500'
+          } ${open && !disabled ? 'rotate-180' : ''}`}
         />
       </button>
 
