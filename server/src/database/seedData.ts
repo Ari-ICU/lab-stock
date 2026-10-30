@@ -217,7 +217,7 @@ export const seedStock = [
     room: 'Room 102B',
     rack: 'Workstations 1-20 (40 in Room 102B, 32 in Room 206, 48 in Storage)',
     status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1580481077195-c277bb045d47?auto=format&fit=crop&w=600&q=80',
+    image_url: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=600&q=80',
     description: 'Heavy-duty ergonomic mid-back breathable mesh student swivel chairs with adjustable height pneumatics.',
   },
   {
@@ -325,7 +325,7 @@ export const seedStock = [
     room: 'Room 206',
     rack: 'Server Pod Stations 1-16',
     status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1580481077195-c277bb045d47?auto=format&fit=crop&w=600&q=80',
+    image_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80',
     description: 'High-density foam reinforced swivel chairs designed for extended 4-hour networking and ethical hacking practical laboratory sessions.',
   },
   {
@@ -373,7 +373,7 @@ export const seedStock = [
     room: 'Room 201',
     rack: 'Conference Area & Wall Stacks',
     status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1580481077195-c277bb045d47?auto=format&fit=crop&w=600&q=80',
+    image_url: 'https://images.unsplash.com/photo-1505843513577-22bb7d21e455?auto=format&fit=crop&w=600&q=80',
     description: 'Padded chrome-frame conference chairs with durable fabric upholstery, stackable up to 10 high for department seminars and thesis defenses.',
   },
   {
