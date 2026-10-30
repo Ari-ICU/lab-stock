@@ -38,7 +38,6 @@ export function GlobalSearchModal() {
     locations,
     loans,
     maintenance,
-    requests,
   } = useStock();
   const { user, canManageLocation } = useAuth();
 
@@ -88,19 +87,9 @@ export function GlobalSearchModal() {
       });
     }
 
-    // 4. If any purchase requests exist, provide a requisition shortcut
-    if (requests && requests.length > 0) {
-      const pendingReq = requests.find((r) => r.status === 'pending') || requests[0];
-      suggestions.push({
-        label: `Requisition: ${pendingReq.title.length > 28 ? pendingReq.title.slice(0, 28) + '...' : pendingReq.title}`,
-        q: pendingReq.id,
-        type: 'Requisition',
-      });
-    }
-
     // Return first 6 suggestions
     return suggestions.slice(0, 6);
-  }, [locations, assets, stock, requests, canManageLocation]);
+  }, [locations, assets, stock, canManageLocation]);
 
   // Aggregate and filter results
   const results = useMemo<SearchResultItem[]>(() => {
@@ -225,46 +214,8 @@ export function GlobalSearchModal() {
       }
     }
 
-    // 6. Purchase Requests / Procurement Requisitions
-    if (requests) {
-      for (const r of requests) {
-        const match =
-          r.title.toLowerCase().includes(q) ||
-          r.category.toLowerCase().includes(q) ||
-          r.targetRoom.toLowerCase().includes(q) ||
-          r.requestedBy.toLowerCase().includes(q) ||
-          r.reason.toLowerCase().includes(q) ||
-          r.id.toLowerCase().includes(q) ||
-          (r.notes && r.notes.toLowerCase().includes(q)) ||
-          'request'.includes(q) ||
-          'buy'.includes(q);
-
-        if (match) {
-          items.push({
-            id: `req-${r.id}`,
-            type: 'request',
-            title: `[Buy] ${r.title}`,
-            subtitle: `${r.quantity} ${r.unit} for ${r.targetRoom} • Requested by ${r.requestedBy} (${r.requesterRole})`,
-            tag: 'Purchase Requisition',
-            badge: r.status.toUpperCase(),
-            badgeColor:
-              r.status === 'pending'
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : r.status === 'approved'
-                ? 'bg-blue-50 text-blue-800 border-blue-200'
-                : r.status === 'ordered'
-                ? 'bg-purple-50 text-purple-800 border-purple-200'
-                : r.status === 'fulfilled'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-rose-50 text-rose-800 border-rose-200',
-            href: '/requests',
-          });
-        }
-      }
-    }
-
     return items;
-  }, [query, assets, stock, locations, loans, maintenance, requests]);
+  }, [query, assets, stock, locations, loans, maintenance]);
 
   // Keep selected index in bounds
   useEffect(() => {

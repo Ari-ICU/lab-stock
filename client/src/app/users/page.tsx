@@ -54,15 +54,34 @@ export default function UsersPage() {
     if (assistant.roleBadge !== 'Lab Assistant' && assistant.role !== 'Lab Assistant') {
       return [];
     }
-    const assistantRooms = assistant.assignedLabs || [];
     const lecturers = managedUsers.filter(
       (u) => u.roleBadge === 'Lecturer' || u.role === 'Faculty Lecturer'
     );
+    if (assistant.supervisedBy) {
+      const supLower = assistant.supervisedBy.toLowerCase();
+      const explicit = lecturers.filter(
+        (l) => supLower.includes(l.name.toLowerCase()) || l.name.toLowerCase().includes(supLower)
+      );
+      if (explicit.length > 0) return explicit;
+    }
+    const assistantRooms = assistant.assignedLabs || [];
     // Find lecturers who manage at least one room assigned to this assistant
     const matches = lecturers.filter((l) =>
       (l.assignedLabs || []).some((room) => assistantRooms.includes(room))
     );
     return matches.length > 0 ? matches : lecturers.slice(0, 1);
+  };
+
+  const getAssistantSupervisorScope = (target: ManagedUser | null) => {
+    if (!target) return null;
+    const targetIsAssistant = target.roleBadge === 'Lab Assistant' || target.role === 'Lab Assistant';
+    if (!targetIsAssistant) return null;
+    const supervisors = getSupervisorsForAssistant(target);
+    const supervisor = supervisors[0];
+    const rooms = supervisor?.assignedLabs && supervisor.assignedLabs.length > 0
+      ? supervisor.assignedLabs
+      : (isLecturer ? (user?.assignedLabs || ['Room 102B', 'Room 206']) : ['Room 102B', 'Room 206']);
+    return { supervisor, rooms };
   };
 
   const canManageUserLabs = (targetUser: ManagedUser) => {
@@ -244,11 +263,16 @@ export default function UsersPage() {
         ? targetUser.assignedLabs
         : ['Room 102B'];
 
+    const assistantScope = getAssistantSupervisorScope(targetUser);
     if (isLecturer) {
       // For lecturers, only allow selection within the lecturer's managed laboratories
       const lecturerRooms = user?.assignedLabs || ['Room 102B', 'Room 206'];
       const validCurrent = currentLabs.filter((r) => lecturerRooms.includes(r));
       setTempAssignedLabs(validCurrent.length > 0 ? validCurrent : [lecturerRooms[0]]);
+    } else if (assistantScope) {
+      // For assistants, strictly align with supervisor's handled rooms
+      const validCurrent = currentLabs.filter((r) => assistantScope.rooms.includes(r));
+      setTempAssignedLabs(validCurrent.length > 0 ? validCurrent : assistantScope.rooms);
     } else {
       setTempAssignedLabs(currentLabs);
     }
@@ -262,19 +286,23 @@ export default function UsersPage() {
       return;
     }
 
-    if (isLecturer) {
-      const lecturerRooms = user?.assignedLabs || [];
+    const assistantScope = getAssistantSupervisorScope(selectedUserForLabs);
+    if (isLecturer || assistantScope) {
+      const allowedRooms = isLecturer ? (user?.assignedLabs || []) : (assistantScope?.rooms || []);
       if (tempAssignedLabs.length === 0) {
-        showToast('Please assign this assistant to at least one of your managed laboratories.', 'warning');
+        showToast('Please assign this assistant to at least one of their supervisor’s laboratories.', 'warning');
         return;
       }
       if (tempAssignedLabs.includes('all')) {
-        showToast('Faculty Lecturers cannot grant universal access.', 'error');
+        showToast('Lab assistants cannot be granted universal access.', 'error');
         return;
       }
-      const hasInvalidRoom = tempAssignedLabs.some((r) => !lecturerRooms.includes(r));
+      const hasInvalidRoom = tempAssignedLabs.some((r) => !allowedRooms.includes(r));
       if (hasInvalidRoom) {
-        showToast('You can only relocate assistants across your own managed laboratories.', 'error');
+        showToast(
+          `Assistant can only be assigned to supervising lecturer's laboratories (${allowedRooms.join(', ')}).`,
+          'error'
+        );
         return;
       }
     }
@@ -301,10 +329,14 @@ export default function UsersPage() {
   };
 
   const toggleLabInTemp = (roomCode: string) => {
-    if (isLecturer) {
-      const lecturerRooms = user?.assignedLabs || [];
-      if (!lecturerRooms.includes(roomCode)) {
-        showToast(`Room ${roomCode} is outside your managed laboratories`, 'warning');
+    const assistantScope = getAssistantSupervisorScope(selectedUserForLabs);
+    if (isLecturer || assistantScope) {
+      const allowedRooms = isLecturer ? (user?.assignedLabs || []) : (assistantScope?.rooms || []);
+      if (!allowedRooms.includes(roomCode)) {
+        showToast(
+          `Room ${roomCode} is outside supervising lecturer's managed laboratories (${allowedRooms.join(', ')})`,
+          'warning'
+        );
         return;
       }
       if (tempAssignedLabs.includes(roomCode)) {
@@ -954,100 +986,146 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              {isLecturer ? (
-                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-1">
-                  <div className="font-bold flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Supervisory Delegation (ក្រោមការគ្រប់គ្រង់របស់គ្រូ)</span>
-                  </div>
-                  <p className="text-[11px] text-blue-700 leading-relaxed">
-                    You manage <span className="font-mono font-bold">{user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}</span>. Select which of your supervised laboratories to station this assistant in.
-                  </p>
-                </div>
-              ) : (
-                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-1">
-                  <div className="font-bold flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Room-Level Control Guard</span>
-                  </div>
-                  <p className="text-[11px] text-blue-700 leading-relaxed">
-                    Operators can only edit, delete, lend, or transfer equipment located inside their assigned laboratories.
-                  </p>
-                </div>
-              )}
+            {(() => {
+              const assistantScope = getAssistantSupervisorScope(selectedUserForLabs);
+              const isTargetLecturer =
+                selectedUserForLabs?.roleBadge === 'Lecturer' ||
+                selectedUserForLabs?.role === 'Faculty Lecturer';
 
-              {/* Universal All Labs Option (Admin Only) */}
-              {isAdmin && (
-                <label className="flex items-center gap-2 p-2.5 rounded border border-neutral-200 bg-neutral-50 hover:bg-neutral-100/70 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={tempAssignedLabs.includes('all')}
-                    onChange={() => toggleLabInTemp('all')}
-                    className="rounded text-neutral-900 focus:ring-neutral-900"
-                  />
-                  <div>
-                    <div className="text-xs font-bold text-neutral-900">👑 All Laboratories (Universal Access)</div>
-                    <div className="text-[10px] text-neutral-500">Full administrative authority across all current & future facilities</div>
-                  </div>
-                </label>
-              )}
-
-              {!tempAssignedLabs.includes('all') && (
-                <div className="space-y-1.5 max-h-60 overflow-y-auto p-2 bg-neutral-50/70 rounded border border-neutral-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block px-1 mb-1">
-                    {isLecturer
-                      ? 'Your Managed Laboratories (Eligible for Relocation)'
-                      : `Select Authorized Classrooms (${locations.length})`}
-                  </span>
-                  {locations.map((loc) => {
-                    const isUnderLecturer = isLecturer ? (user?.assignedLabs || []).includes(loc.room) : true;
-                    const isChecked = tempAssignedLabs.includes(loc.room);
-
-                    if (isLecturer && !isUnderLecturer) {
-                      return (
-                        <div
-                          key={loc.id}
-                          className="flex items-center justify-between p-2 rounded border border-neutral-200/60 bg-neutral-100/60 text-neutral-400 select-none cursor-not-allowed"
-                          title="This laboratory is managed by other faculty"
+              return (
+                <div className="space-y-4">
+                  {isLecturer ? (
+                    <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <Building className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Supervisory Delegation (ក្រោមការគ្រប់គ្រង់របស់គ្រូ)</span>
+                      </div>
+                      <p className="text-[11px] text-blue-700 leading-relaxed">
+                        You manage <span className="font-mono font-bold">{user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}</span>. Select which of your supervised laboratories to station this assistant in.
+                      </p>
+                    </div>
+                  ) : assistantScope ? (
+                    <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Supervised by {assistantScope.supervisor?.name || 'Thoeurn Ratha'} (Faculty Lecturer)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setTempAssignedLabs([...assistantScope.rooms])}
+                          className="text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-300 hover:bg-blue-50 px-2 py-0.5 rounded cursor-pointer transition-colors"
                         >
-                          <div className="flex items-center gap-2">
-                            <Lock className="w-3 h-3 text-neutral-400" />
-                            <span className="text-xs">{loc.name}</span>
-                          </div>
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200/80 text-neutral-500">
-                            Outside Scope ({loc.room})
-                          </span>
-                        </div>
-                      );
-                    }
+                          ⚡ Sync All ({assistantScope.rooms.join(', ')})
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-blue-700 leading-relaxed">
+                        Supervisor manages: <span className="font-mono font-bold">{assistantScope.rooms.join(', ')}</span>. Lab assistants must strictly operate within their supervising lecturer's managed laboratories.
+                      </p>
+                    </div>
+                  ) : isTargetLecturer ? (
+                    <div className="p-3 bg-indigo-50/80 border border-indigo-200 rounded-lg text-xs text-indigo-900 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Faculty Lecturer Managed Laboratories</span>
+                      </div>
+                      <p className="text-[11px] text-indigo-700 leading-relaxed">
+                        Configuring laboratories managed by {selectedUserForLabs?.name}. Supervised assistants (such as Chan Vicheka) will stay synchronized with these locations.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Room-Level Control Guard</span>
+                      </div>
+                      <p className="text-[11px] text-blue-700 leading-relaxed">
+                        Operators can only edit, delete, lend, or transfer equipment located inside their assigned laboratories.
+                      </p>
+                    </div>
+                  )}
 
-                    return (
-                      <label
-                        key={loc.id}
-                        className={`flex items-center justify-between p-2 rounded border transition-colors cursor-pointer ${
-                          isChecked
-                            ? 'bg-blue-50/70 border-blue-200 text-blue-950 font-semibold'
-                            : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => toggleLabInTemp(loc.room)}
-                            className="rounded text-neutral-900 focus:ring-neutral-900"
-                          />
-                          <span className="text-xs">{loc.name}</span>
-                        </div>
-                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-neutral-200">
-                          {loc.room}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+                  {/* Universal All Labs Option (Admin Only, Not for Assistants) */}
+                  {isAdmin && !assistantScope && (
+                    <label className="flex items-center gap-2 p-2.5 rounded border border-neutral-200 bg-neutral-50 hover:bg-neutral-100/70 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={tempAssignedLabs.includes('all')}
+                        onChange={() => toggleLabInTemp('all')}
+                        className="rounded text-neutral-900 focus:ring-neutral-900"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-neutral-900">👑 All Laboratories (Universal Access)</div>
+                        <div className="text-[10px] text-neutral-500">Full administrative authority across all current & future facilities</div>
+                      </div>
+                    </label>
+                  )}
+
+                  {!tempAssignedLabs.includes('all') && (
+                    <div className="space-y-1.5 max-h-60 overflow-y-auto p-2 bg-neutral-50/70 rounded border border-neutral-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 block px-1 mb-1">
+                        {isLecturer
+                          ? 'Your Managed Laboratories (Eligible for Relocation)'
+                          : assistantScope
+                          ? `Supervised Laboratories (${assistantScope.rooms.join(', ')})`
+                          : `Select Authorized Classrooms (${locations.length})`}
+                      </span>
+                      {locations.map((loc) => {
+                        const isUnderScope = isLecturer
+                          ? (user?.assignedLabs || []).includes(loc.room)
+                          : assistantScope
+                          ? assistantScope.rooms.includes(loc.room)
+                          : true;
+                        const isChecked = tempAssignedLabs.includes(loc.room);
+
+                        if (!isUnderScope) {
+                          return (
+                            <div
+                              key={loc.id}
+                              className="flex items-center justify-between p-2 rounded border border-neutral-200/60 bg-neutral-100/60 text-neutral-400 select-none cursor-not-allowed"
+                              title={
+                                assistantScope
+                                  ? `Outside ${assistantScope.supervisor?.name || 'Supervisor'}'s scope (${assistantScope.rooms.join(', ')})`
+                                  : 'This laboratory is managed by other faculty'
+                              }
+                            >
+                              <div className="flex items-center gap-2">
+                                <Lock className="w-3 h-3 text-neutral-400" />
+                                <span className="text-xs">{loc.name}</span>
+                              </div>
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200/80 text-neutral-500">
+                                Outside Scope ({loc.room})
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <label
+                            key={loc.id}
+                            className={`flex items-center justify-between p-2 rounded border transition-colors cursor-pointer ${
+                              isChecked
+                                ? 'bg-blue-50/70 border-blue-200 text-blue-950 font-semibold'
+                                : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleLabInTemp(loc.room)}
+                                className="rounded text-neutral-900 focus:ring-neutral-900"
+                              />
+                              <span className="text-xs">{loc.name}</span>
+                            </div>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-neutral-200">
+                              {loc.room}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
                 <button
@@ -1066,6 +1144,8 @@ export default function UsersPage() {
                 </button>
               </div>
             </div>
+          );
+        })()}
           </div>
         </div>
       )}

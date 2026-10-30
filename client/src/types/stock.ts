@@ -103,6 +103,7 @@ export interface PurchaseRequest {
   reason: string;
   requestedBy: string;
   requesterRole: string;
+  supervisedBy?: string;
   requestDate: string;
   imageUrl?: string;
   notes?: string;

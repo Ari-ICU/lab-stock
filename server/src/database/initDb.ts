@@ -198,12 +198,14 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log('✅ Seeded purchase requisitions into PostgreSQL.');
     }
 
-    // Ensure all existing purchase requests have valid image_url populated
+    // Ensure all existing purchase requests have valid image_url and supervised_by populated
     await pool.query(`
+      ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS supervised_by VARCHAR(150);
       UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-001' AND (image_url IS NULL OR image_url = '');
       UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-002' AND (image_url IS NULL OR image_url = '');
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-003' AND (image_url IS NULL OR image_url = '');
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-004' AND (image_url IS NULL OR image_url = '');
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', supervised_by = 'Thoeurn Ratha (Faculty Lecturer)' WHERE id = 'REQ-2026-003';
+      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', supervised_by = 'Thoeurn Ratha (Faculty Lecturer)' WHERE id = 'REQ-2026-004';
+      UPDATE purchase_requests SET supervised_by = 'Thoeurn Ratha (Faculty Lecturer)' WHERE requested_by ILIKE '%Vicheka%' OR requester_role = 'Lab Assistant';
     `);
 
     return { success: true, message: 'Database initialized successfully' };

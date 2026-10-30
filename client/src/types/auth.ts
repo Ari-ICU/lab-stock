@@ -8,6 +8,7 @@ export interface User {
   permissions: string;
   department: string;
   assignedLabs: string[]; // ['all'] or specific room codes e.g. ['Room 102B', 'Room 206']
+  supervisedBy?: string;
 }
 
 export interface DemoAccount {
@@ -21,6 +22,7 @@ export interface DemoAccount {
   department: string;
   description: string;
   assignedLabs: string[]; // ['all'] or specific room codes
+  supervisedBy?: string;
 }
 
 export type RoleBadge = 'Admin' | 'Lecturer' | 'Lab Assistant';

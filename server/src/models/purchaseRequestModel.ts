@@ -13,6 +13,7 @@ export interface PurchaseRequestRecord {
   reason: string;
   requested_by: string;
   requester_role: string;
+  supervised_by?: string;
   request_date: string;
   image_url?: string;
   notes?: string;
@@ -52,9 +53,9 @@ export const purchaseRequestModel = {
     const res = await query(
       `INSERT INTO purchase_requests (
          id, title, category, target_room, quantity, unit,
-         estimated_cost, priority, status, reason, requested_by, requester_role, request_date, image_url, notes
+         estimated_cost, priority, status, reason, requested_by, requester_role, supervised_by, request_date, image_url, notes
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        RETURNING *`,
       [
         data.id,
@@ -69,6 +70,7 @@ export const purchaseRequestModel = {
         data.reason,
         data.requested_by,
         data.requester_role,
+        data.supervised_by || null,
         data.request_date || new Date().toISOString().split('T')[0],
         data.image_url || null,
         data.notes || null,

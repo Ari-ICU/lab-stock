@@ -81,6 +81,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     department: 'Hardware Depot & Lab 102B',
     description: 'Lab assistant managing equipment distribution under Faculty Lecturer supervision',
     assignedLabs: ['Room 102B', 'Room 206'],
+    supervisedBy: 'Thoeurn Ratha (Faculty Lecturer)',
   },
   {
     name: 'John Doe',
@@ -360,7 +361,14 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     role = 'Lab Assistant';
     roleBadge = 'Lab Assistant';
     permissions = 'Inventory Check-in/Out & Equipment Prep';
-    if (!assignedLabs || assignedLabs.length === 0 || assignedLabs.includes('all')) {
+    // Assistant supervised by Thoeurn Ratha must strictly match Thoeurn Ratha's handled laboratories (Room 102B, Room 206)
+    if (
+      !assignedLabs ||
+      assignedLabs.length === 0 ||
+      assignedLabs.includes('all') ||
+      assignedLabs.includes('Room 305') ||
+      assignedLabs.some((r) => !['Room 102B', 'Room 206'].includes(r))
+    ) {
       assignedLabs = ['Room 102B', 'Room 206'];
     }
     department = 'Hardware Depot & Lab 102B';
@@ -841,28 +849,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const deptString = assignedLabs.includes('all')
+    const isTargetLecturerRatha =
+      targetUser.email === 'thoeurn.ratha@rupp.edu.kh' ||
+      targetUser.name?.includes('Ratha');
+
+    const isTargetAssistantVicheka =
+      targetUser.email === 'chan.vicheka@rupp.edu.kh' ||
+      targetUser.name?.includes('Vicheka');
+
+    let finalAssignedLabs = assignedLabs;
+    if (isTargetAssistantVicheka) {
+      // Find supervisor Thoeurn Ratha's rooms
+      const ratha = managedUsers.find(
+        (m) => m.email === 'thoeurn.ratha@rupp.edu.kh' || m.name?.includes('Ratha')
+      );
+      const rathaRooms = ratha?.assignedLabs || ['Room 102B', 'Room 206'];
+      // Ensure Chan Vicheka's assigned labs are strictly within supervisor's handled rooms
+      const filtered = assignedLabs.filter((r) => rathaRooms.includes(r));
+      finalAssignedLabs = filtered.length > 0 ? filtered : rathaRooms;
+    }
+
+    const deptString = finalAssignedLabs.includes('all')
       ? 'Faculty Fleet Administration (All Labs)'
-      : `Engineering Block A - ${assignedLabs.join(', ')}`;
+      : `Engineering Block A - ${finalAssignedLabs.join(', ')}`;
 
     const updated = managedUsers.map((u) => {
       if (u.id === userId) {
         return {
           ...u,
-          assignedLabs,
+          assignedLabs: finalAssignedLabs,
           department: deptString,
+        };
+      }
+      // If updating supervisor Thoeurn Ratha's handled rooms, keep supervised assistant Chan Vicheka aligned
+      if (
+        isTargetLecturerRatha &&
+        (u.email === 'chan.vicheka@rupp.edu.kh' || u.name?.includes('Vicheka'))
+      ) {
+        const validAssistantLabs = (u.assignedLabs || []).filter((r) => finalAssignedLabs.includes(r));
+        const finalAssistantLabs = validAssistantLabs.length > 0 ? validAssistantLabs : finalAssignedLabs;
+        return {
+          ...u,
+          assignedLabs: finalAssistantLabs,
         };
       }
       return u;
     });
     saveUsers(updated);
-    authService.updateUserAssignedLabs(userId, assignedLabs).catch(() => {});
+    authService.updateUserAssignedLabs(userId, finalAssignedLabs).catch(() => {});
 
     // If updated user is the currently logged in user, update active session state
     if (user && (user.id === userId || user.email === targetUser.email)) {
       const updatedCurrentUser: User = {
         ...user,
-        assignedLabs,
+        assignedLabs: finalAssignedLabs,
         department: deptString,
       };
       setUser(updatedCurrentUser);
