@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/locations', label: 'Classrooms & Labs', icon: MapPin },
   { href: '/assets', label: 'Hardware Assets', icon: Router },
-  { href: '/stock', label: 'Consumables & Stock', icon: Package },
+  { href: '/stock', label: 'Inventory', icon: Package },
   { href: '/loans', label: 'Device Loans', icon: ArrowLeftRight },
   { href: '/maintenance', label: 'Maintenance & Repairs', icon: Wrench },
   { href: '/users', label: 'Personnel & Roles', icon: Users },

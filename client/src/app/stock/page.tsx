@@ -52,30 +52,6 @@ export default function StockPage() {
     ];
   }, [stock]);
 
-  // Map Central Stock items to their active classroom / lab allocations
-  const itemDeployments = useMemo(() => {
-    const map = new Map<string, Array<{ room: string; count: number; roomId: string }>>();
-    locations.forEach((loc) => {
-      (loc.inventories || []).forEach((inv) => {
-        const matched = stock.find(
-          (s) =>
-            (inv.stockItemId && s.id === inv.stockItemId) ||
-            s.name.toLowerCase() === inv.name.toLowerCase() ||
-            inv.name.toLowerCase().includes(s.name.toLowerCase())
-        );
-        if (matched) {
-          const cur = map.get(matched.id) || [];
-          const count = inv.qtyWorking + inv.qtyBroken + (inv.qtyMaintenance || 0);
-          if (count > 0 && !cur.some((c) => c.roomId === loc.id)) {
-            cur.push({ room: loc.room, count, roomId: loc.id });
-            map.set(matched.id, cur);
-          }
-        }
-      });
-    });
-    return map;
-  }, [locations, stock]);
-
   // Aggregate Department Furniture & Equipment Counts
   const departmentCounts = useMemo(() => {
     let totalUnits = 0;
@@ -334,24 +310,7 @@ export default function StockPage() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-medium text-neutral-900">{item.location}</span>
                           </div>
-                          {itemDeployments.get(item.id) && (itemDeployments.get(item.id)?.length || 0) > 0 ? (
-                            <div className="mt-1 flex items-center gap-1 flex-wrap">
-                              <span className="text-[10px] text-neutral-400 uppercase font-semibold">Allocated:</span>
-                              {itemDeployments.get(item.id)?.map((dep, idx) => (
-                                <Link
-                                  key={idx}
-                                  href={`/locations/${dep.roomId}`}
-                                  className="inline-flex items-center gap-1 text-[10px] font-mono font-medium bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 px-1.5 py-0.5 rounded transition-colors"
-                                  title={`Allocated to ${dep.room}: ${dep.count} ${item.unit || 'units'}`}
-                                >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  <span>{dep.room} ({dep.count})</span>
-                                </Link>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-neutral-400 font-mono mt-0.5">{item.rack}</div>
-                          )}
+                          <div className="text-[11px] text-neutral-400 font-mono mt-0.5">{item.rack}</div>
                         </td>
                         <td className="py-3 px-4 text-neutral-500 text-[11px]">{item.expiryDate}</td>
                         <td className="py-3 px-4">
