@@ -474,7 +474,17 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       return;
     }
 
+    const matchedStockItem = itemSource === 'stock' && selectedStockCode
+      ? stock.find((s) => s.code === selectedStockCode || s.id === selectedStockCode)
+      : undefined;
+
+    const matchedAssetItem = itemSource === 'asset' && selectedAssetSerial
+      ? assets.find((a) => a.serialNumber === selectedAssetSerial || a.id === selectedAssetSerial)
+      : undefined;
+
     addRoomInventoryItem(loc.id, {
+      stockItemId: matchedStockItem?.id,
+      assetId: matchedAssetItem?.id,
       name: newItemName.trim(),
       group: newItemGroup,
       brandSpec: newItemBrandSpec.trim() || undefined,
@@ -848,12 +858,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                       const linkedStock = stock.find(
                         (s) =>
+                          (item.stockItemId && (s.id === item.stockItemId || s.code === item.stockItemId)) ||
                           s.name.toLowerCase() === item.name.toLowerCase() ||
                           item.name.toLowerCase().includes(s.name.toLowerCase()) ||
                           s.name.toLowerCase().includes(item.name.toLowerCase())
                       );
                       const linkedAsset = assets.find(
                         (a) =>
+                          (item.assetId && (a.id === item.assetId || a.serialNumber === item.assetId)) ||
                           a.name.toLowerCase() === item.name.toLowerCase() ||
                           item.name.toLowerCase().includes(a.name.toLowerCase()) ||
                           a.name.toLowerCase().includes(item.name.toLowerCase())
