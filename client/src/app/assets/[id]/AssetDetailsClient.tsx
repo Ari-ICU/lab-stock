@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
@@ -96,6 +96,93 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     ) ||
     (id && (id.includes('-') || id.length > 15) ? assets[0] : undefined);
   const isAllowed = asset ? canManageLocation(asset.location) : false;
+
+  // Active classroom & laboratory allocations
+  const allocations = useMemo(() => {
+    if (!asset || !locations) return [];
+    const list: Array<{
+      inventoryId: string;
+      locationId: string;
+      room: string;
+      building: string;
+      locationName: string;
+      total: number;
+      qtyWorking: number;
+      qtyBroken: number;
+      qtyMaintenance: number;
+      unit: string;
+      remarks?: string;
+      lastAuditedAt?: string;
+    }> = [];
+
+    const assetNameLower = asset.name.toLowerCase();
+
+    locations.forEach((loc) => {
+      (loc.inventories || []).forEach((inv) => {
+        const invNameLower = inv.name.toLowerCase();
+        const isMatch =
+          (inv.assetId && (inv.assetId === asset.id || inv.assetId === asset.serialNumber)) ||
+          invNameLower === assetNameLower ||
+          assetNameLower.includes(invNameLower) ||
+          invNameLower.includes(assetNameLower);
+
+        if (isMatch) {
+          const total = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
+          if (total > 0) {
+            list.push({
+              inventoryId: inv.id,
+              locationId: loc.id,
+              room: loc.room,
+              building: loc.building,
+              locationName: loc.name,
+              total,
+              qtyWorking: inv.qtyWorking || 0,
+              qtyBroken: inv.qtyBroken || 0,
+              qtyMaintenance: inv.qtyMaintenance || 0,
+              unit: inv.unit || asset.unitType || 'Units',
+              remarks: inv.remarks,
+              lastAuditedAt: inv.lastAuditedAt,
+            });
+          }
+        }
+      });
+    });
+
+    // Also check if the asset has a primary assigned location that didn't match via inventories item
+    const matchedLocation = locations.find((l) => {
+      const locKey = l.room.toLowerCase().replace(/^(rm|room)\s*/i, '').trim();
+      const assetLocLower = asset.location.toLowerCase();
+      return (
+        assetLocLower.includes(locKey) ||
+        assetLocLower.includes(l.room.toLowerCase()) ||
+        assetLocLower.includes(l.name.toLowerCase())
+      );
+    });
+
+    // If no inventory item explicitly matched but the asset is placed in a room
+    if (list.length === 0 && matchedLocation) {
+      list.push({
+        inventoryId: `primary-${matchedLocation.id}`,
+        locationId: matchedLocation.id,
+        room: matchedLocation.room,
+        building: matchedLocation.building,
+        locationName: matchedLocation.name,
+        total: asset.totalUnits ?? 1,
+        qtyWorking: asset.status === 'operational' ? (asset.totalUnits ?? 1) : 0,
+        qtyBroken: asset.status === 'maintenance' ? (asset.totalUnits ?? 1) : 0,
+        qtyMaintenance: asset.status === 'maintenance' ? (asset.totalUnits ?? 1) : 0,
+        unit: asset.unitType ?? 'Unit',
+        remarks: `Primary placement (${asset.location})`,
+        lastAuditedAt: asset.nextCalibration,
+      });
+    }
+
+    return list;
+  }, [asset, locations]);
+
+  const totalAllocated = useMemo(() => {
+    return allocations.reduce((sum, a) => sum + a.total, 0);
+  }, [allocations]);
 
   if (!asset) {
     return (
@@ -489,6 +576,21 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   <div className="text-xs font-medium text-neutral-900 mt-0.5 truncate" title={asset.location}>
                     {asset.location}
                   </div>
+                  {allocations.length > 0 && (
+                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      {allocations.map((a) => (
+                        <Link
+                          key={a.inventoryId}
+                          href={`/locations/${a.locationId}`}
+                          className="inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded transition-colors"
+                          title={`Allocated to ${a.room}: ${a.total} ${a.unit}`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>{a.room} ({a.total})</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-2.5 bg-neutral-50 rounded border border-neutral-200/80">
@@ -591,7 +693,27 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 <div className="grid grid-cols-3 p-3">
                   <span className="font-medium text-neutral-500">Laboratory Unit Count</span>
                   <span className="col-span-2 text-neutral-800">
-                    <strong className="text-neutral-900">{asset.totalUnits ?? 1}</strong> {asset.unitType ?? 'Unit(s)'} installed in Room 102B
+                    <strong className="text-neutral-900">{asset.totalUnits ?? 1}</strong> {asset.unitType ?? 'Unit(s)'}
+                    {allocations.length > 0 ? ` (${allocations.map((a) => `${a.room}: ${a.total}`).join(', ')})` : ''}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 p-3">
+                  <span className="font-medium text-neutral-500">Assigned Classroom(s)</span>
+                  <span className="col-span-2 flex items-center gap-1.5 flex-wrap">
+                    {allocations.length > 0 ? (
+                      allocations.map((alloc) => (
+                        <Link
+                          key={alloc.inventoryId}
+                          href={`/locations/${alloc.locationId}`}
+                          className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded transition-colors"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>{alloc.room} ({alloc.total} {alloc.unit})</span>
+                        </Link>
+                      ))
+                    ) : (
+                      <span className="text-neutral-500">{asset.location}</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 p-3">
@@ -613,6 +735,107 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   <span className="col-span-2 font-mono text-neutral-800">{asset.nextCalibration}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Classroom & Laboratory Allocations Card */}
+            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-emerald-600" />
+                    Classroom & Laboratory Allocations
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">
+                    Active deployments across campus classrooms and research laboratories
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="font-semibold text-neutral-900 font-mono">
+                    {totalAllocated} {asset.unitType ?? 'Units'}
+                  </span>
+                  <span className="text-neutral-400">deployed in</span>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-neutral-100 text-neutral-700">
+                    {allocations.length} {allocations.length === 1 ? 'room' : 'rooms'}
+                  </span>
+                </div>
+              </div>
+
+              {allocations.length === 0 ? (
+                <div className="p-6 text-center border border-dashed border-neutral-200 rounded-lg bg-neutral-50/50">
+                  <MapPin className="w-7 h-7 text-neutral-400 mx-auto mb-1.5" />
+                  <div className="text-xs font-semibold text-neutral-800">No Classroom Allocations</div>
+                  <div className="text-[11px] text-neutral-500 mt-0.5">
+                    This hardware asset is not currently allocated to any specific room roster.
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[550px]">
+                    <thead className="bg-neutral-50/70 border-b border-neutral-200 text-neutral-600 font-semibold">
+                      <tr>
+                        <th className="py-2.5 px-3">Room / Facility</th>
+                        <th className="py-2.5 px-3">Location Details</th>
+                        <th className="py-2.5 px-3 text-center">Allocated</th>
+                        <th className="py-2.5 px-3 text-center">Working</th>
+                        <th className="py-2.5 px-3 text-center">Broken</th>
+                        <th className="py-2.5 px-3">Condition Remarks</th>
+                        <th className="py-2.5 px-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100">
+                      {allocations.map((alloc) => (
+                        <tr key={alloc.inventoryId} className="hover:bg-neutral-50/70 transition-colors">
+                          <td className="py-2.5 px-3">
+                            <Link
+                              href={`/locations/${alloc.locationId}`}
+                              className="font-bold text-neutral-900 hover:text-emerald-700 transition-colors inline-flex items-center gap-1.5"
+                            >
+                              <span className="font-mono bg-neutral-900 text-white px-1.5 py-0.5 rounded text-[10px]">
+                                {alloc.room}
+                              </span>
+                              <span>{alloc.locationName}</span>
+                            </Link>
+                          </td>
+                          <td className="py-2.5 px-3 text-neutral-500">
+                            {alloc.building}
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono font-bold text-neutral-900">
+                            {alloc.total} {alloc.unit}
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono">
+                            <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-[11px]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              {alloc.qtyWorking}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono">
+                            {alloc.qtyBroken > 0 ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                {alloc.qtyBroken}
+                              </span>
+                            ) : (
+                              <span className="text-neutral-300">—</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-neutral-500 italic max-w-xs truncate">
+                            {alloc.remarks || 'Standard condition'}
+                          </td>
+                          <td className="py-2.5 px-3 text-right">
+                            <Link
+                              href={`/locations/${alloc.locationId}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                            >
+                              <span>View Room</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             {/* Service & Maintenance History */}
