@@ -145,6 +145,8 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
 CREATE TABLE IF NOT EXISTS room_inventory (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     room_id UUID REFERENCES locations(id) ON DELETE CASCADE,
+    stock_item_id UUID REFERENCES stock_items(id) ON DELETE SET NULL,
+    asset_id UUID REFERENCES assets(id) ON DELETE SET NULL,
     name VARCHAR(150) NOT NULL,
     group_type VARCHAR(50) NOT NULL, -- 'FURNITURE', 'ELECTRICAL', 'IT_HARDWARE', 'SAFETY_MISC'
     brand_spec VARCHAR(150),
@@ -157,6 +159,9 @@ CREATE TABLE IF NOT EXISTS room_inventory (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE room_inventory ADD COLUMN IF NOT EXISTS stock_item_id UUID REFERENCES stock_items(id) ON DELETE SET NULL;
+ALTER TABLE room_inventory ADD COLUMN IF NOT EXISTS asset_id UUID REFERENCES assets(id) ON DELETE SET NULL;
 
 -- Location enhancements for room matrix & auditing
 ALTER TABLE locations ADD COLUMN IF NOT EXISTS floor INT DEFAULT 1;

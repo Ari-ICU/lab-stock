@@ -90,6 +90,8 @@ export function mapServerLocation(l: any): MockLocation {
     ? l.inventories.map((ri: any) => ({
         id: String(ri.id),
         roomId: String(ri.roomId || ri.room_id || l.id),
+        stockItemId: ri.stockItemId || ri.stock_item_id ? String(ri.stockItemId || ri.stock_item_id) : undefined,
+        assetId: ri.assetId || ri.asset_id ? String(ri.assetId || ri.asset_id) : undefined,
         name: ri.name || 'Room Item',
         group: ri.group || ri.group_type || 'FURNITURE',
         brandSpec: ri.brandSpec || ri.brand_spec || '',

@@ -633,6 +633,7 @@ export const seedRoomInventory = [
   // Room 102B
   {
     room_code: 'LOC-102B',
+    stock_code: 'CHR-102B-SWIV',
     name: 'Student Chair',
     group_type: 'FURNITURE',
     brand_spec: 'Heavy-duty Ergonomic Mesh Swivel',
@@ -644,6 +645,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    stock_code: 'TBL-102B-DESK',
     name: 'Student Computer Desk',
     group_type: 'FURNITURE',
     brand_spec: 'Dual-station Wooden Desk with cable channel',
@@ -655,6 +657,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    stock_code: 'HVAC-AC-PANASONIC-25HP',
     name: 'Air Conditioner',
     group_type: 'ELECTRICAL',
     brand_spec: 'Panasonic 2.5HP Inverter Split Unit',
@@ -666,6 +669,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    stock_code: 'ELEC-LED-TUBE-36W',
     name: 'Ceiling LED Tube Light',
     group_type: 'ELECTRICAL',
     brand_spec: 'Philips 36W LED Tube 4000K Neutral White',
@@ -677,6 +681,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    asset_serial: 'OPT-102B-01-TO-24',
     name: 'Desktop PC System Unit',
     group_type: 'IT_HARDWARE',
     brand_spec: 'Dell OptiPlex 7090 Core i7 / 16GB / 512GB SSD',
@@ -688,6 +693,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    asset_serial: 'EPS-L630U-8812',
     name: 'LCD Projector & Screen',
     group_type: 'IT_HARDWARE',
     brand_spec: 'Epson EB-2250U 5000 Lumens Full HD + 120" Motorized Screen',
@@ -699,6 +705,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    stock_code: 'WBD-DEPT-MAG',
     name: 'Whiteboard & Marker Tray',
     group_type: 'FURNITURE',
     brand_spec: 'Porcelain Magnetic 2.4m x 1.2m Wall Mounted',
@@ -710,6 +717,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    stock_code: 'ELEC-PWR-STRIP-8',
     name: 'Wall Power Sockets & Strips',
     group_type: 'ELECTRICAL',
     brand_spec: 'Schneider Electric 8-way Surge Protected Strip',
@@ -721,6 +729,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
+    stock_code: 'SAFE-FIRE-CO2-5KG',
     name: 'Fire Extinguisher',
     group_type: 'SAFETY_MISC',
     brand_spec: 'CO2 5KG Clean Agent Gas Extinguisher',
@@ -981,9 +990,10 @@ export async function seedAllData(): Promise<void> {
   console.log(`✅ Seeded ${seedLocations.length} University Laboratory Locations.`);
 
   // 2. Seed Assets
+  const assetMap = new Map<string, string>();
   for (const a of seedAssets) {
     const locId = locationMap.get(a.room) || null;
-    await query(
+    const res = await query(
       `INSERT INTO assets (
          serial_number, name, model, total_units, unit_type, 
          location_id, placement_rack, status, loan_status, image_url, description
@@ -993,7 +1003,8 @@ export async function seedAllData(): Promise<void> {
        SET name = EXCLUDED.name, model = EXCLUDED.model, total_units = EXCLUDED.total_units,
            unit_type = EXCLUDED.unit_type, location_id = EXCLUDED.location_id,
            placement_rack = EXCLUDED.placement_rack, status = EXCLUDED.status,
-           image_url = EXCLUDED.image_url, description = EXCLUDED.description`,
+           image_url = EXCLUDED.image_url, description = EXCLUDED.description
+       RETURNING id, serial_number`,
       [
         a.serial_number,
         a.name,
@@ -1008,13 +1019,17 @@ export async function seedAllData(): Promise<void> {
         a.description,
       ]
     );
+    if (res.rows[0]) {
+      assetMap.set(a.serial_number, res.rows[0].id);
+    }
   }
   console.log(`✅ Seeded ${seedAssets.length} Hardware Assets.`);
 
   // 3. Seed Stock Items
+  const stockMap = new Map<string, string>();
   for (const s of seedStock) {
     const locId = locationMap.get(s.room) || null;
-    await query(
+    const res = await query(
       `INSERT INTO stock_items (
          code, name, category, quantity, unit, 
          location_id, rack, status, image_url, description
@@ -1023,9 +1038,13 @@ export async function seedAllData(): Promise<void> {
        ON CONFLICT (code) DO UPDATE
        SET name = EXCLUDED.name, category = EXCLUDED.category, quantity = EXCLUDED.quantity,
            unit = EXCLUDED.unit, location_id = EXCLUDED.location_id, rack = EXCLUDED.rack,
-           status = EXCLUDED.status, image_url = EXCLUDED.image_url, description = EXCLUDED.description`,
+           status = EXCLUDED.status, image_url = EXCLUDED.image_url, description = EXCLUDED.description
+       RETURNING id, code`,
       [s.code, s.name, s.category, s.quantity, s.unit, locId, s.rack, s.status, s.image_url, s.description]
     );
+    if (res.rows[0]) {
+      stockMap.set(s.code, res.rows[0].id);
+    }
   }
   console.log(`✅ Seeded ${seedStock.length} Consumable Inventory Items.`);
 
@@ -1123,12 +1142,16 @@ export async function seedAllData(): Promise<void> {
   await query('DELETE FROM room_inventory');
   for (const inv of seedRoomInventory) {
     const roomId = locationMap.get(inv.room_code);
+    const stockId = (inv as any).stock_code ? stockMap.get((inv as any).stock_code) || null : null;
+    const assetId = (inv as any).asset_serial ? assetMap.get((inv as any).asset_serial) || null : null;
     if (roomId) {
       await query(
-        `INSERT INTO room_inventory (room_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        `INSERT INTO room_inventory (room_id, stock_item_id, asset_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [
           roomId,
+          stockId,
+          assetId,
           inv.name,
           inv.group_type,
           inv.brand_spec || null,

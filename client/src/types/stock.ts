@@ -99,6 +99,8 @@ export type AssetGroup =
 export interface RoomInventoryItem {
   id: string;
   roomId: string;
+  stockItemId?: string;
+  assetId?: string;
   name: string;
   group: AssetGroup;
   brandSpec?: string;

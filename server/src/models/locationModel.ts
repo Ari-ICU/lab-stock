@@ -29,6 +29,8 @@ const LOCATION_SELECT_QUERY = `
           json_build_object(
             'id', ri.id,
             'roomId', ri.room_id,
+            'stockItemId', ri.stock_item_id,
+            'assetId', ri.asset_id,
             'name', ri.name,
             'group', ri.group_type,
             'brandSpec', ri.brand_spec,
@@ -161,11 +163,13 @@ export const locationModel = {
   // Room Inventory (Facility Matrix)
   async addRoomInventoryItem(roomId: string, item: any): Promise<any> {
     const res = await query(
-      `INSERT INTO room_inventory (room_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO room_inventory (room_id, stock_item_id, asset_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         roomId,
+        item.stockItemId || item.stock_item_id || null,
+        item.assetId || item.asset_id || null,
         item.name,
         item.group || item.group_type || 'FURNITURE',
         item.brandSpec || item.brand_spec || null,
