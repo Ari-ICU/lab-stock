@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
-import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
@@ -13,26 +12,21 @@ import { LabThumbnail } from '@/components/LabThumbnail';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import {
   ArrowLeft,
-  Boxes,
-  Microscope,
   Search,
   Plus,
   AlertTriangle,
   Edit3,
   Trash2,
-  Layers,
   FileSpreadsheet,
   X,
   QrCode,
   Printer,
-  Sparkles,
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
 
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const id = propId || (params?.id as string);
 
   const {
@@ -72,20 +66,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     { label: 'All Conditions', value: 'all' },
     { label: '100% Operational', value: 'operational' },
     { label: 'Defective / Needs Repair', value: 'defective' },
-  ];
-
-  const hardwareStatusOptions: DropdownOption[] = [
-    { label: 'All Operational Statuses', value: 'all' },
-    { label: 'Operational', value: 'operational' },
-    { label: 'In Production', value: 'in_use' },
-    { label: 'Maintenance / RMA', value: 'maintenance' },
-  ];
-
-  const stockStatusOptions: DropdownOption[] = [
-    { label: 'All Statuses', value: 'all' },
-    { label: 'In Stock', value: 'in_stock' },
-    { label: 'Low Stock', value: 'low_stock' },
-    { label: 'Out of Stock', value: 'out_of_stock' },
   ];
 
   const getCategoryIcon = (group: AssetGroup) => {
@@ -227,41 +207,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     };
   }, [loc]);
 
-  // Filtered hardware assets
-  const filteredAssets = useMemo(() => {
-    const q = filterText.toLowerCase().trim();
-    return matchingAssets.filter((a) => {
-      const matchesQuery =
-        !q ||
-        a.name.toLowerCase().includes(q) ||
-        a.model.toLowerCase().includes(q) ||
-        a.serialNumber.toLowerCase().includes(q) ||
-        a.status.toLowerCase().includes(q);
-
-      const matchesStatus =
-        hardwareStatusFilter === 'all' || a.status === hardwareStatusFilter;
-
-      return matchesQuery && matchesStatus;
-    });
-  }, [matchingAssets, filterText, hardwareStatusFilter]);
-
-  // Filtered consumables & stock items
-  const filteredStock = useMemo(() => {
-    const q = filterText.toLowerCase().trim();
-    return matchingStock.filter((s) => {
-      const matchesQuery =
-        !q ||
-        s.name.toLowerCase().includes(q) ||
-        s.code.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q) ||
-        s.status.toLowerCase().includes(q);
-
-      const matchesStatus =
-        stockStatusFilter === 'all' || s.status === stockStatusFilter;
-
-      return matchesQuery && matchesStatus;
-    });
-  }, [matchingStock, filterText, stockStatusFilter]);
 
   const copyToClipboard = (text: string, label: string, key: string) => {
     navigator.clipboard.writeText(text);
