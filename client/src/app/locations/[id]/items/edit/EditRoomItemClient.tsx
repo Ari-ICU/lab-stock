@@ -8,7 +8,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { AssetGroup } from '@/types';
-import { Boxes, ClipboardList, Microscope, Save, Activity, RotateCcw } from 'lucide-react';
+import { Boxes, ClipboardList, Microscope, Save, Activity, RotateCcw, Trash2 } from 'lucide-react';
 import {
   categoryGroupOptions,
   conditionStatusOptions,
@@ -22,7 +22,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get('item') || '';
-  const { locations, stock, assets, updateRoomInventoryItem, showToast } = useStock();
+  const { locations, stock, assets, updateRoomInventoryItem, deleteRoomInventoryItem, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
@@ -39,6 +39,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   const [status, setStatus] = useState('operational');
   const [loaded, setLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const loadFromItem = () => {
     if (!item) return;
@@ -131,6 +132,12 @@ export default function EditRoomItemClient({ id }: { id: string }) {
     setTimeout(() => router.push(viewHref), 200);
   };
 
+  const handleDelete = () => {
+    deleteRoomInventoryItem(loc.id, item.id);
+    showToast(`Removed "${item.name}" from ${loc.room}`, 'info');
+    router.push(backHref);
+  };
+
   const inputCls =
     'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900';
   const dropdownBtn = 'w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded';
@@ -180,6 +187,16 @@ export default function EditRoomItemClient({ id }: { id: string }) {
               <Save className="w-3.5 h-3.5 text-neutral-300" />
               <span>{submitting ? 'Saving...' : 'Save Changes'}</span>
             </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            )}
           </div>
         }
       />
@@ -332,6 +349,31 @@ export default function EditRoomItemClient({ id }: { id: string }) {
           </div>
         </form>
       </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-neutral-200 rounded-xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <h3 className="text-sm font-bold text-neutral-900">Remove {item.name}?</h3>
+            <p className="text-xs text-neutral-500">This removes the record from {loc.room}.</p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="px-3 py-1.5 text-xs font-semibold border border-neutral-200 rounded text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded cursor-pointer"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

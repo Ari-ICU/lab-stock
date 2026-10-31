@@ -50,17 +50,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     stock,
     loans,
     maintenance,
-    openDetails,
     openEdit,
     deleteLocation,
     updateRoomInventoryCount,
     updateRoomInventoryItem,
     markRoomAudited,
-    addRoomInventoryItem,
     deleteRoomInventoryItem,
     deleteAsset,
     deleteStockItem,
-    updateStockQuantity,
     showToast,
   } = useStock();
   const { user, canManageLocation } = useAuth();
@@ -82,7 +79,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [stockStatusFilter, setStockStatusFilter] = useState<string>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDoorQrModal, setShowDoorQrModal] = useState(false);
-  const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Dropdown Options
@@ -114,27 +110,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     { label: 'Out of Stock', value: 'out_of_stock' },
   ];
 
-  const categoryGroupOptions: DropdownOption[] = [
-    { label: 'Furniture & Fixtures', value: 'FURNITURE' },
-    { label: 'Electrical & HVAC', value: 'ELECTRICAL' },
-    { label: 'Lab & IT Hardware', value: 'IT_HARDWARE' },
-    { label: 'Safety & Misc', value: 'SAFETY_MISC' },
-  ];
-
-  const stockDropdownOptions: DropdownOption[] = useMemo(() => {
-    return stock.map((s) => ({
-      label: `${s.name} (${s.code}) — ${s.quantity} ${s.unit} in Dept`,
-      value: s.code,
-    }));
-  }, [stock]);
-
-  const assetDropdownOptions: DropdownOption[] = useMemo(() => {
-    return assets.map((a) => ({
-      label: `${a.name} (${a.serialNumber}) — ${a.totalUnits ?? 1} units`,
-      value: a.serialNumber,
-    }));
-  }, [assets]);
-
   const getCategoryIcon = (group: AssetGroup) => {
     switch (group) {
       case 'FURNITURE':
@@ -162,67 +137,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         return 'Safety & Misc';
       default:
         return group;
-    }
-  };
-
-  // New Item Form State & Central Stock Integration
-  const [itemSource, setItemSource] = useState<'stock' | 'asset' | 'custom'>('stock');
-  const [selectedStockCode, setSelectedStockCode] = useState<string>('');
-  const [selectedAssetSerial, setSelectedAssetSerial] = useState<string>('');
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemGroup, setNewItemGroup] = useState<AssetGroup>('FURNITURE');
-  const [newItemBrandSpec, setNewItemBrandSpec] = useState('');
-  const [newItemUnit, setNewItemUnit] = useState('pcs');
-  const [newItemQtyWorking, setNewItemQtyWorking] = useState(1);
-  const [newItemQtyBroken, setNewItemQtyBroken] = useState(0);
-  const [newItemRemarks, setNewItemRemarks] = useState('');
-
-  const handleSelectCentralStock = (code: string) => {
-    setSelectedStockCode(code);
-    const item = stock.find((s) => s.code === code || s.id === code);
-    if (item) {
-      setNewItemName(item.name);
-      setNewItemUnit(item.unit || 'pcs');
-      setNewItemBrandSpec(item.description || item.rack || 'Sourced from Central Stock');
-      const cat = (item.category || '').toLowerCase();
-      const n = item.name.toLowerCase();
-      if (
-        cat.includes('chair') ||
-        cat.includes('table') ||
-        cat.includes('desk') ||
-        cat.includes('cabinet') ||
-        cat.includes('fixture') ||
-        n.includes('chair') ||
-        n.includes('desk') ||
-        n.includes('table') ||
-        n.includes('bench') ||
-        n.includes('whiteboard')
-      ) {
-        setNewItemGroup('FURNITURE');
-      } else if (cat.includes('electrical') || cat.includes('cable') || cat.includes('power')) {
-        setNewItemGroup('ELECTRICAL');
-      } else if (cat.includes('tool') || cat.includes('safety')) {
-        setNewItemGroup('SAFETY_MISC');
-      } else {
-        setNewItemGroup('FURNITURE');
-      }
-      setNewItemQtyWorking(Math.min(item.quantity || 1, 24));
-      setNewItemQtyBroken(0);
-      setNewItemRemarks(`Central Stock SKU: ${item.code}`);
-    }
-  };
-
-  const handleSelectCentralAsset = (serial: string) => {
-    setSelectedAssetSerial(serial);
-    const asset = assets.find((a) => a.serialNumber === serial || a.id === serial);
-    if (asset) {
-      setNewItemName(asset.name);
-      setNewItemUnit(asset.unitType || 'Units');
-      setNewItemBrandSpec(`Model: ${asset.model} • S/N: ${asset.serialNumber}`);
-      setNewItemGroup('IT_HARDWARE');
-      setNewItemQtyWorking(asset.totalUnits ?? 1);
-      setNewItemQtyBroken(0);
-      setNewItemRemarks(`Central Asset Tag: ${asset.serialNumber}`);
     }
   };
 
@@ -469,58 +383,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     markRoomAudited(loc.id, auditorName);
   };
 
-  const handleCreateFacilityItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemName.trim()) {
-      showToast('Please enter or select an equipment item', 'warning');
-      return;
-    }
-
-    const matchedStockItem = itemSource === 'stock' && selectedStockCode
-      ? stock.find((s) => s.code === selectedStockCode || s.id === selectedStockCode)
-      : undefined;
-
-    const matchedAssetItem = itemSource === 'asset' && selectedAssetSerial
-      ? assets.find((a) => a.serialNumber === selectedAssetSerial || a.id === selectedAssetSerial)
-      : undefined;
-
-    addRoomInventoryItem(loc.id, {
-      stockItemId: matchedStockItem?.id,
-      assetId: matchedAssetItem?.id,
-      name: newItemName.trim(),
-      group: newItemGroup,
-      brandSpec: newItemBrandSpec.trim() || undefined,
-      unit: newItemUnit.trim() || 'pcs',
-      qtyWorking: Number(newItemQtyWorking) || 0,
-      qtyBroken: Number(newItemQtyBroken) || 0,
-      qtyMaintenance: 0,
-      remarks: newItemRemarks.trim() || undefined,
-    });
-
-    if (itemSource === 'stock' && selectedStockCode) {
-      updateStockQuantity(selectedStockCode, -(Number(newItemQtyWorking) + Number(newItemQtyBroken)));
-      showToast(
-        `Allocated ${newItemQtyWorking + newItemQtyBroken} ${newItemUnit} of "${newItemName}" from Central Stock to ${loc.room}`,
-        'success'
-      );
-    } else if (itemSource === 'asset' && selectedAssetSerial) {
-      showToast(`Allocated "${newItemName}" from Central Assets to ${loc.room}`, 'success');
-    } else {
-      showToast(`Registered "${newItemName}" in ${loc.room}`, 'success');
-    }
-
-    setNewItemName('');
-    setNewItemBrandSpec('');
-    setNewItemUnit('pcs');
-    setNewItemQtyWorking(1);
-    setNewItemQtyBroken(0);
-    setNewItemRemarks('');
-    setSelectedStockCode('');
-    setSelectedAssetSerial('');
-    setItemSource('stock');
-    setShowAddItemModal(false);
-  };
-
   const handleDelete = () => {
     if (!isAdmin) {
       showToast('Permission denied: Only Primary Administrators can remove laboratory facilities.', 'error');
@@ -664,14 +526,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               </button>
 
               {isAllowed && (
-                <button
-                  type="button"
-                  onClick={() => setShowAddItemModal(true)}
+                <Link
+                  href={`/locations/${loc.id}/items/new`}
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Add Room Item</span>
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -815,14 +676,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   Showing <span className="font-semibold text-neutral-900">{filteredRoomInventories.length}</span> items
                 </div>
                 {isAllowed && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddItemModal(true)}
+                  <Link
+                    href={`/locations/${loc.id}/items/new`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Allocate from Center Stock</span>
-                  </button>
+                  </Link>
                 )}
               </div>
             </div>
@@ -878,7 +738,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                         <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
                           {/* Visual Product Thumbnail matching /stock & /assets */}
                           <td className="py-2.5 px-3 text-center">
-                            <div className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs mx-auto">
+                            <Link
+                              href={`/locations/${loc.id}/items/view?item=${item.id}`}
+                              className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs mx-auto hover:opacity-85 transition-opacity block"
+                              title="View equipment details"
+                            >
                               {itemThumbnail ? (
                                 <LabThumbnail
                                   src={itemThumbnail}
@@ -892,20 +756,19 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                   {getCategoryIcon(item.group)}
                                 </span>
                               )}
-                            </div>
+                            </Link>
                           </td>
 
                           {/* Item & Equipment Name */}
                           <td className="py-3 px-4">
                             <div className="font-semibold text-neutral-900 flex items-center gap-1.5 flex-wrap">
-                              <button
-                                type="button"
-                                onClick={() => openDetails(item)}
+                              <Link
+                                href={`/locations/${loc.id}/items/view?item=${item.id}`}
                                 className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
                                 title="Click to view full equipment details"
                               >
                                 {item.name}
-                              </button>
+                              </Link>
                               <span className="text-[10px] font-mono font-medium uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200/70">
                                 {item.unit}
                               </span>
@@ -1055,55 +918,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             />
                           </td>
 
-                          {/* Actions (Three-Dots Menu matching /assets & /stock with View Details & Edit) */}
+                          {/* Actions (Three-Dots Menu: View Details & Edit dedicated webpages) */}
                           <td className="py-3 px-4 text-right">
                             <RowActionMenu
-                              onViewDetails={() => openDetails(item)}
-                              onEdit={() => openEdit(item)}
-                              actions={[
-                                {
-                                  label: 'Report Defect (+1)',
-                                  icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />,
-                                  variant: 'danger',
-                                  onClick: () => {
-                                    if (item.qtyWorking > 0) {
-                                      updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', -1);
-                                      updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
-                                    } else {
-                                      updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
-                                    }
-                                  },
-                                },
-                                {
-                                  label: 'Mark Repaired (-1)',
-                                  icon: <Check className="w-3.5 h-3.5 text-emerald-600" />,
-                                  variant: 'success',
-                                  disabled: item.qtyBroken === 0,
-                                  onClick: () => {
-                                    if (item.qtyBroken > 0) {
-                                      updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', -1);
-                                      updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', 1);
-                                    }
-                                  },
-                                },
-                                ...(linkedStock
-                                  ? [
-                                      {
-                                        label: 'View Central Stock',
-                                        icon: <Boxes className="w-3.5 h-3.5 text-neutral-500" />,
-                                        onClick: () => router.push(`/stock/${linkedStock.id}`),
-                                      },
-                                    ]
-                                  : linkedAsset
-                                  ? [
-                                      {
-                                        label: 'View Central Asset',
-                                        icon: <Eye className="w-3.5 h-3.5 text-neutral-500" />,
-                                        onClick: () => router.push(`/assets/${linkedAsset.id}`),
-                                      },
-                                    ]
-                                  : []),
-                              ]}
+                              onViewDetails={() => router.push(`/locations/${loc.id}/items/view?item=${item.id}`)}
+                              onEdit={isAllowed ? () => router.push(`/locations/${loc.id}/items/edit?item=${item.id}`) : undefined}
                               onDelete={isAdmin ? () => deleteRoomInventoryItem(loc.id, item.id) : undefined}
                             />
                           </td>
@@ -1593,278 +1412,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         </div>
       )}
 
-      {/* 9. Allocate from Center Stock / Assets Modal */}
-      {showAddItemModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 space-y-5 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">
-                  Center Stock Allocation
-                </span>
-                <h3 className="text-base font-bold text-neutral-900 mt-1">
-                  Allocate Equipment to {loc.room}
-                </h3>
-                <p className="text-xs text-neutral-500 mt-0.5">
-                  Draw furniture, chairs, or hardware directly from Central Stock (/stock) or Assets (/assets).
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddItemModal(false)}
-                className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Source Segmented Selector */}
-            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => {
-                  setItemSource('stock');
-                  if (stock.length > 0) {
-                    handleSelectCentralStock(stock[0].code);
-                  }
-                }}
-                className={`flex-1 py-1.5 px-2 rounded-md transition-all text-center cursor-pointer ${itemSource === 'stock'
-                    ? 'bg-white text-neutral-900 shadow-2xs font-bold'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                  }`}
-              >
-                📦 Center Stock (/stock)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setItemSource('asset');
-                  if (assets.length > 0) {
-                    handleSelectCentralAsset(assets[0].serialNumber);
-                  }
-                }}
-                className={`flex-1 py-1.5 px-2 rounded-md transition-all text-center cursor-pointer ${itemSource === 'asset'
-                    ? 'bg-white text-neutral-900 shadow-2xs font-bold'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                  }`}
-              >
-                🖥️ Center Assets (/assets)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setItemSource('custom');
-                  setNewItemName('');
-                  setNewItemBrandSpec('');
-                  setNewItemUnit('pcs');
-                  setNewItemRemarks('');
-                  setSelectedStockCode('');
-                  setSelectedAssetSerial('');
-                }}
-                className={`py-1.5 px-3 rounded-md transition-all text-center cursor-pointer ${itemSource === 'custom'
-                    ? 'bg-white text-neutral-900 shadow-2xs font-bold'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                  }`}
-              >
-                ✏️ Custom
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateFacilityItem} className="space-y-4">
-              {/* Option A: Pick from Central Stock */}
-              {itemSource === 'stock' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Select Item from Central Stock (/stock) *
-                    </label>
-                    <Dropdown
-                      value={selectedStockCode}
-                      options={stockDropdownOptions}
-                      onChange={handleSelectCentralStock}
-                      placeholder="-- Choose Item from /stock --"
-                      searchable
-                      searchPlaceholder="Search Central Stock items or SKUs..."
-                      className="w-full"
-                      buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg"
-                    />
-                  </div>
-
-                  {selectedStockCode && (
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs text-neutral-600 space-y-1">
-                      <div className="font-semibold text-neutral-900 flex items-center justify-between">
-                        <span>{newItemName}</span>
-                        <span className="font-mono text-[10px] bg-neutral-200 text-neutral-800 px-1.5 py-0.5 rounded">
-                          {selectedStockCode}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-neutral-500">
-                        {newItemBrandSpec}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Option B: Pick from Central Assets */}
-              {itemSource === 'asset' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Select Device from Central Hardware Assets (/assets) *
-                    </label>
-                    <Dropdown
-                      value={selectedAssetSerial}
-                      options={assetDropdownOptions}
-                      onChange={handleSelectCentralAsset}
-                      placeholder="-- Choose Hardware from /assets --"
-                      searchable
-                      searchPlaceholder="Search hardware assets or serials..."
-                      className="w-full"
-                      buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg"
-                    />
-                  </div>
-
-                  {selectedAssetSerial && (
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs text-neutral-600 space-y-1">
-                      <div className="font-semibold text-neutral-900 flex items-center justify-between">
-                        <span>{newItemName}</span>
-                        <span className="font-mono text-[10px] bg-neutral-200 text-neutral-800 px-1.5 py-0.5 rounded">
-                          {selectedAssetSerial}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-neutral-500">
-                        {newItemBrandSpec}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Option C: Custom Item Name */}
-              {itemSource === 'custom' && (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Item / Equipment Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Student Chair, Air Conditioner, Whiteboard..."
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 font-medium"
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Category Group
-                  </label>
-                  <Dropdown
-                    value={newItemGroup}
-                    options={categoryGroupOptions}
-                    onChange={(val) => setNewItemGroup(val as AssetGroup)}
-                    placeholder="Select Category Group"
-                    className="w-full"
-                    buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Counting Unit
-                  </label>
-                  <input
-                    type="text"
-                    value={newItemUnit}
-                    onChange={(e) => setNewItemUnit(e.target.value)}
-                    placeholder="pcs, chairs, tables, sets..."
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-              </div>
-
-              {itemSource === 'custom' && (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Brand & Specification
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Panasonic 2.5HP Inverter, Wooden 2-Seater Desk..."
-                    value={newItemBrandSpec}
-                    onChange={(e) => setNewItemBrandSpec(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Working Units (Allocated to {loc.room})
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={newItemQtyWorking}
-                    onChange={(e) => setNewItemQtyWorking(parseInt(e.target.value) || 0)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 font-mono font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Defective / Broken Units
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={newItemQtyBroken}
-                    onChange={(e) => setNewItemQtyBroken(parseInt(e.target.value) || 0)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Placement Details / Defect Remarks (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Student Rows 1-4, Instructor podium..."
-                  value={newItemRemarks}
-                  onChange={(e) => setNewItemRemarks(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddItemModal(false)}
-                  className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5"
-                >
-                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Allocate to {loc.room}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 10. Delete Confirmation Modal */}
+      {/* 9. Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-neutral-200 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
