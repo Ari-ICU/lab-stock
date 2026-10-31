@@ -54,7 +54,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     deleteLocation,
     updateRoomInventoryCount,
     updateRoomInventoryItem,
-    markRoomAudited,
     deleteRoomInventoryItem,
     deleteAsset,
     deleteStockItem,
@@ -378,11 +377,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     showToast(`Exported complete room condition inventory for ${loc.name}`);
   };
 
-  const handleMarkAudited = () => {
-    const auditorName = user?.name || 'Faculty Lecturer';
-    markRoomAudited(loc.id, auditorName);
-  };
-
   const handleDelete = () => {
     if (!isAdmin) {
       showToast('Permission denied: Only Primary Administrators can remove laboratory facilities.', 'error');
@@ -515,16 +509,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
-              <button
-                type="button"
-                onClick={handleMarkAudited}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-2xs cursor-pointer"
-                title="Stamp room with today's audit date"
-              >
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span>Mark Audited Today</span>
-              </button>
-
               {isAllowed && (
                 <Link
                   href={`/locations/${loc.id}/items/new`}
@@ -954,15 +938,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   Tap <span className="font-bold">+</span> or <span className="font-bold">-</span> to update working and broken counts as you inspect the room.
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={handleMarkAudited}
-                className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-emerald-800 hover:bg-emerald-900 rounded-lg shadow-sm transition-colors cursor-pointer"
-              >
-                <CheckCircle className="w-4 h-4 text-emerald-300" />
-                <span>Mark Room Audited Today</span>
-              </button>
             </div>
 
             <div className="space-y-4">
@@ -1042,17 +1017,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   )}
                 </div>
               ))}
-            </div>
-
-            <div className="text-center pt-4">
-              <button
-                type="button"
-                onClick={handleMarkAudited}
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl shadow-md transition-colors cursor-pointer"
-              >
-                <CheckCircle className="w-4 h-4 text-emerald-400" />
-                <span>Complete Room Audit & Save Timestamp</span>
-              </button>
             </div>
           </div>
         )}
