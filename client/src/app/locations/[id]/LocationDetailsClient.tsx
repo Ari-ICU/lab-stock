@@ -38,7 +38,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     openEdit,
     deleteLocation,
     updateRoomInventoryCount,
-    updateRoomInventoryItem,
     deleteRoomInventoryItem,
     deleteAsset,
     deleteStockItem,
@@ -466,24 +465,19 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     <th className="py-3 px-3 w-20 text-center">Total</th>
                     <th className="py-3 px-3 w-20 text-center">Working</th>
                     <th className="py-3 px-3 w-20 text-center">Broken</th>
-                    <th className="py-3 px-4 w-36">Operational Status</th>
                     <th className="py-3 px-4 w-12 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
                   {filteredRoomInventories.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-neutral-500">
+                      <td colSpan={8} className="py-8 text-center text-neutral-500">
                         No facility or equipment records found matching your filter criteria.
                       </td>
                     </tr>
                   ) : (
                     filteredRoomInventories.map((item) => {
                       const total = item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0);
-                      const operationalPercent = total > 0 ? Math.round((item.qtyWorking / total) * 100) : 100;
-                      const isDefectRemark =
-                        item.qtyBroken > 0 ||
-                        /broken|defect|damage|fault|repair|cracked|stuck|replace/i.test(item.remarks || '');
 
                       const linkedStock = stock.find(
                         (s) =>
@@ -577,67 +571,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             ) : (
                               <span className="text-neutral-300">—</span>
                             )}
-                          </td>
-
-                          {/* Operational Status Dropdown following style maintenance */}
-                          <td className="py-3 px-4">
-                            <Dropdown
-                              value={
-                                item.qtyBroken > 0
-                                  ? 'defective'
-                                  : (item.qtyMaintenance || 0) > 0
-                                  ? 'maintenance'
-                                  : 'operational'
-                              }
-                              options={[
-                                {
-                                  label: operationalPercent === 100 ? '100% Operational' : `${operationalPercent}% Usable`,
-                                  value: 'operational',
-                                },
-                                {
-                                  label: item.qtyBroken > 0 ? `Defective (${item.qtyBroken})` : 'Defective / Repair',
-                                  value: 'defective',
-                                },
-                                {
-                                  label: (item.qtyMaintenance || 0) > 0 ? `In Service (${item.qtyMaintenance})` : 'In Maintenance',
-                                  value: 'maintenance',
-                                },
-                              ]}
-                              onChange={(newStatus) => {
-                                if (newStatus === 'operational') {
-                                  const totalWorking = Number(item.qtyWorking) + Number(item.qtyBroken) + Number(item.qtyMaintenance || 0);
-                                  updateRoomInventoryItem(loc.id, item.id, {
-                                    qtyWorking: totalWorking,
-                                    qtyBroken: 0,
-                                    qtyMaintenance: 0,
-                                    remarks: 'All units inspected & 100% operational',
-                                  });
-                                } else if (newStatus === 'defective') {
-                                  if (Number(item.qtyBroken) === 0) {
-                                    updateRoomInventoryItem(loc.id, item.id, {
-                                      qtyWorking: Math.max(0, Number(item.qtyWorking) - 1),
-                                      qtyBroken: 1,
-                                      remarks: item.remarks && !item.remarks.toLowerCase().includes('operational') ? item.remarks : 'Requires repair or replacement parts',
-                                    });
-                                  }
-                                } else if (newStatus === 'maintenance') {
-                                  if (Number(item.qtyMaintenance || 0) === 0) {
-                                    updateRoomInventoryItem(loc.id, item.id, {
-                                      qtyWorking: Math.max(0, Number(item.qtyWorking) - 1),
-                                      qtyMaintenance: 1,
-                                      remarks: 'Sent for maintenance & routine diagnostics',
-                                    });
-                                  }
-                                }
-                              }}
-                              buttonClassName={`py-1 px-2.5 text-[11px] font-semibold rounded-md transition-all shadow-2xs ${
-                                operationalPercent === 100
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                                  : operationalPercent >= 70
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-                                  : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                              }`}
-                            />
                           </td>
 
                           {/* Actions (Three-Dots Menu: View Details & Edit dedicated webpages) */}
