@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { LabThumbnail } from '@/components/LabThumbnail';
+import { RowActionMenu } from '@/components/RowActionMenu';
 import {
   ArrowLeft,
   Boxes,
@@ -33,6 +34,7 @@ import {
   Users,
   CheckCircle,
   Sparkles,
+  Eye,
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
 
@@ -54,6 +56,8 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     markRoomAudited,
     addRoomInventoryItem,
     deleteRoomInventoryItem,
+    deleteAsset,
+    deleteStockItem,
     updateStockQuantity,
     showToast,
   } = useStock();
@@ -824,7 +828,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     <th className="py-3 px-3 w-20 text-center">Working</th>
                     <th className="py-3 px-3 w-20 text-center">Broken</th>
                     <th className="py-3 px-4 w-36">Operational Status</th>
-                    <th className="py-3 px-4 w-32 text-right">Actions</th>
+                    <th className="py-3 px-4 w-12 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
@@ -988,56 +992,55 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             )}
                           </td>
 
-                          {/* Actions */}
+                          {/* Actions (Three-Dots Menu matching /assets & /stock) */}
                           <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                              {/* + Defect */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (item.qtyWorking > 0) {
-                                    updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', -1);
-                                    updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
-                                  } else {
-                                    updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
-                                  }
-                                }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-neutral-700 hover:text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-lg transition-all shadow-2xs cursor-pointer"
-                                title="Report 1 unit broken / defective"
-                              >
-                                <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
-                                <span>+ Defect</span>
-                              </button>
-
-                              {/* ✓ Fixed */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (item.qtyBroken > 0) {
-                                    updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', -1);
-                                    updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', 1);
-                                  }
-                                }}
-                                disabled={item.qtyBroken === 0}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 disabled:opacity-30 disabled:pointer-events-none rounded-lg transition-all shadow-2xs cursor-pointer"
-                                title="Mark 1 unit repaired"
-                              >
-                                <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                                <span>Fixed</span>
-                              </button>
-
-                              {/* Admin Delete */}
-                              {isAdmin && (
-                                <button
-                                  type="button"
-                                  onClick={() => deleteRoomInventoryItem(loc.id, item.id)}
-                                  className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer ml-0.5"
-                                  title="Delete from roster"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
+                            <RowActionMenu
+                              actions={[
+                                {
+                                  label: 'Report Defect (+1)',
+                                  icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />,
+                                  variant: 'danger',
+                                  onClick: () => {
+                                    if (item.qtyWorking > 0) {
+                                      updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', -1);
+                                      updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
+                                    } else {
+                                      updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', 1);
+                                    }
+                                  },
+                                },
+                                {
+                                  label: 'Mark Repaired (-1)',
+                                  icon: <Check className="w-3.5 h-3.5 text-emerald-600" />,
+                                  variant: 'success',
+                                  disabled: item.qtyBroken === 0,
+                                  onClick: () => {
+                                    if (item.qtyBroken > 0) {
+                                      updateRoomInventoryCount(loc.id, item.id, 'qtyBroken', -1);
+                                      updateRoomInventoryCount(loc.id, item.id, 'qtyWorking', 1);
+                                    }
+                                  },
+                                },
+                                ...(linkedStock
+                                  ? [
+                                      {
+                                        label: 'View Central Stock',
+                                        icon: <Boxes className="w-3.5 h-3.5 text-neutral-500" />,
+                                        onClick: () => router.push(`/stock/${linkedStock.id}`),
+                                      },
+                                    ]
+                                  : linkedAsset
+                                  ? [
+                                      {
+                                        label: 'View Central Asset',
+                                        icon: <Eye className="w-3.5 h-3.5 text-neutral-500" />,
+                                        onClick: () => router.push(`/assets/${linkedAsset.id}`),
+                                      },
+                                    ]
+                                  : []),
+                              ]}
+                              onDelete={isAdmin ? () => deleteRoomInventoryItem(loc.id, item.id) : undefined}
+                            />
                           </td>
                         </tr>
                       );
@@ -1296,13 +1299,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           )}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <Link
-                            href={`/assets/${asset.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 px-2.5 py-1 rounded-md hover:bg-neutral-50 shadow-2xs transition-all"
-                          >
-                            <span>Inspect</span>
-                            <ChevronRight className="w-3 h-3 text-neutral-400" />
-                          </Link>
+                          <RowActionMenu
+                            onViewDetails={() => router.push(`/assets/${asset.id}`)}
+                            onEdit={isAllowed ? () => router.push(`/assets/${asset.id}/edit`) : undefined}
+                            onDelete={isAdmin ? () => deleteAsset(asset.id) : undefined}
+                          />
                         </td>
                       </tr>
                     ))}
@@ -1428,13 +1429,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <Link
-                            href={`/stock/${item.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white border border-neutral-200 px-2.5 py-1 rounded-md hover:bg-neutral-50 shadow-2xs transition-all"
-                          >
-                            <span>Inspect</span>
-                            <ChevronRight className="w-3 h-3 text-neutral-400" />
-                          </Link>
+                          <RowActionMenu
+                            onViewDetails={() => router.push(`/stock/${item.id}`)}
+                            onEdit={isAllowed ? () => router.push(`/stock/${item.id}/edit`) : undefined}
+                            onDelete={isAdmin ? () => deleteStockItem(item.id) : undefined}
+                          />
                         </td>
                       </tr>
                     ))}
