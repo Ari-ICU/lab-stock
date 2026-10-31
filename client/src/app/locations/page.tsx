@@ -24,6 +24,7 @@ import {
   Users,
   Eye,
   SlidersHorizontal,
+  Building,
 } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { RoomInventoryItem } from '@/types';
@@ -228,231 +229,155 @@ export default function LocationsPage() {
     showToast(`Exported ${departmentBrokenItems.length} repair records for administration/procurement.`);
   };
 
+  const totalHardwareDevicesCount = assets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title="Laboratory & Classroom Facilities"
-        subtitle="Location-Centric Room Matrix, Bulk Furniture & Condition Auditing"
-        actionLabel={isAdmin ? "Add Location" : undefined}
+        title="Classrooms & Laboratories"
+        subtitle={`${locations.length} Connected Learning Spaces • Engineering & Science Facilities`}
+        actionLabel={isAdmin ? "Add Classroom" : undefined}
         onAction={isAdmin ? () => openModal('add_location') : undefined}
         onExport={handleExport}
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* 1. Department Telemetry Matrix Cards */}
+        {/* 1. Classroom & Campus Telemetry Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider">CS Facilities</span>
-              <span className="text-[10px] bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded font-mono font-bold">
-                {departmentStats.totalCapacity} Seats
-              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Campus Facilities</span>
+              <Building className="w-4 h-4 text-neutral-500" />
             </div>
             <div className="text-2xl font-bold text-neutral-900 font-mono">
               {departmentStats.totalRooms} <span className="text-sm font-sans font-normal text-neutral-500">Rooms</span>
             </div>
             <div className="text-xs text-neutral-500 mt-1">
-              Classrooms, computer labs, server rooms & depots
+              Computer labs, seminar rooms & server depots
+            </div>
+          </div>
+
+          <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">Student Seating</span>
+              <Users className="w-4 h-4 text-neutral-500" />
+            </div>
+            <div className="text-2xl font-bold text-neutral-900 font-mono">
+              {departmentStats.totalCapacity} <span className="text-sm font-sans font-normal text-neutral-500">Seats</span>
+            </div>
+            <div className="text-xs text-neutral-500 mt-1">
+              Active workstation seats & lecture benches
             </div>
           </div>
 
           <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-emerald-700 mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider">All Operational</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs font-semibold uppercase tracking-wider">Central Inventory</span>
+              <Boxes className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="text-2xl font-bold text-emerald-700 font-mono">
-              {departmentStats.goodRooms} <span className="text-sm font-sans font-normal text-neutral-500">Rooms</span>
+              {stock.length} <span className="text-sm font-sans font-normal text-neutral-500">SKUs</span>
             </div>
             <div className="text-xs text-emerald-600 mt-1">
-              100% of chairs, tables, ACs & PCs working
+              Network cables, peripherals & lab supplies
             </div>
           </div>
 
           <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-amber-700 mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider">Needs Attention</span>
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <div className="flex items-center justify-between text-blue-700 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">Hardware Devices</span>
+              <Microscope className="w-4 h-4 text-blue-600" />
             </div>
-            <div className="text-2xl font-bold text-amber-700 font-mono">
-              {departmentStats.warningRooms + departmentStats.criticalRooms} <span className="text-sm font-sans font-normal text-neutral-500">Rooms</span>
+            <div className="text-2xl font-bold text-blue-700 font-mono">
+              {totalHardwareDevicesCount} <span className="text-sm font-sans font-normal text-neutral-500">Units</span>
             </div>
-            <div className="text-xs text-amber-700 mt-1">
-              {departmentStats.criticalRooms > 0 ? `${departmentStats.criticalRooms} critical (AC/Projector repair)` : 'Minor defects reported'}
+            <div className="text-xs text-blue-600 mt-1">
+              {assets.length} equipment models deployed campus-wide
             </div>
-          </div>
-
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-rose-700 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider">Repairs Needed</span>
-                <Wrench className="w-4 h-4 text-rose-600" />
-              </div>
-              <div className="text-2xl font-bold text-rose-700 font-mono">
-                {departmentStats.totalBrokenUnits} <span className="text-sm font-sans font-normal text-neutral-500">Defective Items</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowBrokenReportModal(true)}
-              className="mt-2 inline-flex items-center justify-between text-xs font-bold text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-            >
-              <span>View Repair Report</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
 
         {/* 2. Controls & Search Filter Bar */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-1 flex-wrap">
-            <div className="relative w-full sm:w-72">
+            <div className="relative w-full sm:w-80">
               <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search room name, code, building..."
+                placeholder="Search classroom name, room code, building..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
                 className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs transition-all"
               />
             </div>
 
-            {/* Health Status Filter Pills */}
+            {/* Scope Filter: All vs Assigned */}
             <div className="flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs">
               <button
                 type="button"
-                onClick={() => setStatusFilter('all')}
-                className={`px-2.5 py-1.5 rounded-md font-medium transition-all ${
-                  statusFilter === 'all'
+                onClick={() => setScopeFilter('all')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-all ${
+                  scopeFilter === 'all'
                     ? 'bg-white text-neutral-900 font-semibold shadow-2xs'
                     : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
-                All Status ({locations.length})
+                All Classrooms ({locations.length})
               </button>
               <button
                 type="button"
-                onClick={() => setStatusFilter('good')}
-                className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center gap-1 ${
-                  statusFilter === 'good'
+                onClick={() => setScopeFilter('assigned')}
+                className={`px-3 py-1.5 rounded-md font-medium transition-all flex items-center gap-1 ${
+                  scopeFilter === 'assigned'
                     ? 'bg-white text-emerald-800 font-semibold shadow-2xs'
                     : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>Good ({departmentStats.goodRooms})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('warning')}
-                className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center gap-1 ${
-                  statusFilter === 'warning'
-                    ? 'bg-white text-amber-800 font-semibold shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                <span>Attention ({departmentStats.warningRooms})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatusFilter('critical')}
-                className={`px-2.5 py-1.5 rounded-md font-medium transition-all flex items-center gap-1 ${
-                  statusFilter === 'critical'
-                    ? 'bg-white text-rose-800 font-semibold shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                <span>Critical ({departmentStats.criticalRooms})</span>
+                <span>My Assigned ({myAssignedCount})</span>
               </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowBrokenReportModal(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
-            >
-              <Wrench className="w-3.5 h-3.5 text-rose-600" />
-              <span>Department Broken Items ({departmentBrokenItems.length})</span>
-            </button>
+          <div className="text-xs text-neutral-500 font-medium">
+            Showing <span className="font-semibold text-neutral-900">{filtered.length}</span> classrooms
           </div>
         </div>
 
-        {/* 3. Location-Centric Room Matrix Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* 3. Clean Classroom & Laboratory Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((loc) => {
             const isAllowed = canManageLocation(loc.room) || canManageLocation(loc.name);
-
-            // Badge styling
-            let statusBadge = (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                100% Operational
-              </span>
-            );
-            if (loc.healthStatus === 'critical') {
-              statusBadge = (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-200 animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  Critical Issue ({loc.totalBrokenCount} broken)
-                </span>
-              );
-            } else if (loc.healthStatus === 'warning') {
-              statusBadge = (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  Minor Attention ({loc.totalBrokenCount} broken)
-                </span>
-              );
-            }
 
             return (
               <div
                 key={loc.id}
-                className="bg-white border border-neutral-200 rounded-2xl p-5 space-y-4 hover:border-neutral-300 transition-all shadow-2xs hover:shadow-xs flex flex-col justify-between"
+                className="bg-white border border-neutral-200 rounded-2xl overflow-hidden hover:border-neutral-300 transition-all shadow-2xs hover:shadow-md flex flex-col justify-between group"
               >
-                <div className="space-y-4">
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <Link
-                        href={`/locations/${loc.id}`}
-                        className="w-12 h-12 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-700 cursor-pointer hover:border-neutral-400 transition-colors shrink-0 shadow-2xs overflow-hidden border border-neutral-200"
-                      >
-                        <LabThumbnail
-                          src={loc.imageUrl}
-                          alt={loc.name}
-                          size="thumb"
-                          fallbackType="building"
-                          className="w-full h-full object-cover"
-                          iconClassName="w-5 h-5 text-neutral-500"
-                        />
-                      </Link>
+                {/* 1. Classroom Visual Image Banner */}
+                <div className="relative w-full h-44 bg-neutral-100 overflow-hidden border-b border-neutral-200">
+                  <Link href={`/locations/${loc.id}`} className="block w-full h-full cursor-pointer">
+                    <LabThumbnail
+                      src={loc.imageUrl}
+                      alt={loc.name}
+                      size="card"
+                      fallbackType="building"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      iconClassName="w-10 h-10 text-neutral-400"
+                    />
+                  </Link>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-[10px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
-                            {loc.room}
-                          </span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">
-                            {loc.type?.replace('_', ' ') || 'LAB'}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/locations/${loc.id}`}
-                          className="text-sm font-bold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block truncate mt-1"
-                        >
-                          {loc.name}
-                        </Link>
-                        <div className="text-[11px] text-neutral-500 truncate mt-0.5">
-                          {loc.building} • Floor {loc.floor ?? 1}
-                        </div>
-                      </div>
-                    </div>
+                  {/* Overlaid Badges: Room Code & Type */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap pointer-events-none">
+                    <span className="font-mono text-xs font-bold bg-neutral-900/90 text-white backdrop-blur-xs px-2.5 py-1 rounded-md shadow-xs">
+                      {loc.room}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-800 bg-white/95 backdrop-blur-xs px-2 py-1 rounded-md shadow-xs border border-neutral-200/60">
+                      {loc.type?.replace('_', ' ') || 'LAB'}
+                    </span>
+                  </div>
 
+                  {/* Top Right Actions Menu */}
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs rounded-lg shadow-xs border border-neutral-200/80">
                     <RowActionMenu
                       onViewDetails={() => router.push(`/locations/${loc.id}`)}
                       onEdit={isAllowed ? () => openEdit(loc) : undefined}
@@ -460,108 +385,90 @@ export default function LocationsPage() {
                     />
                   </div>
 
-                  {/* Room Health & Status Pill */}
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-100">
-                    <div>{statusBadge}</div>
-                    <div className="text-[11px] font-semibold text-neutral-500 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>{loc.capacity || 30} seats</span>
-                    </div>
-                  </div>
-
-                  {/* Room Health Matrix Tags (Chairs, Tables, AC, PCs) */}
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    {loc.chairItem && (
-                      <div className={`p-2 rounded-lg border flex flex-col justify-between ${
-                        loc.chairItem.qtyBroken > 0
-                          ? 'bg-amber-50/70 border-amber-200 text-amber-900'
-                          : 'bg-neutral-50 border-neutral-200/80 text-neutral-700'
-                      }`}>
-                        <div className="text-[10px] font-semibold text-neutral-500">Student Chairs</div>
-                        <div className="font-bold flex items-center justify-between mt-0.5">
-                          <span>{loc.chairItem.qtyWorking}/{loc.chairItem.qtyWorking + loc.chairItem.qtyBroken} OK</span>
-                          {loc.chairItem.qtyBroken > 0 && (
-                            <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1 py-0.2 rounded">
-                              {loc.chairItem.qtyBroken} Broken
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {loc.tableItem && (
-                      <div className="p-2 rounded-lg border bg-neutral-50 border-neutral-200/80 text-neutral-700 flex flex-col justify-between">
-                        <div className="text-[10px] font-semibold text-neutral-500">Desks / Tables</div>
-                        <div className="font-bold flex items-center justify-between mt-0.5">
-                          <span>{loc.tableItem.qtyWorking}/{loc.tableItem.qtyWorking + loc.tableItem.qtyBroken} OK</span>
-                          <span className="text-[9px] text-emerald-700 font-semibold">100%</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {loc.acItem && (
-                      <div className={`p-2 rounded-lg border flex flex-col justify-between ${
-                        loc.acItem.qtyBroken > 0
-                          ? 'bg-rose-50/70 border-rose-200 text-rose-900'
-                          : 'bg-neutral-50 border-neutral-200/80 text-neutral-700'
-                      }`}>
-                        <div className="text-[10px] font-semibold text-neutral-500">Air Conditioning</div>
-                        <div className="font-bold flex items-center justify-between mt-0.5">
-                          <span>{loc.acItem.qtyWorking}/{loc.acItem.qtyWorking + loc.acItem.qtyBroken} OK</span>
-                          {loc.acItem.qtyBroken > 0 && (
-                            <span className="text-[9px] font-bold bg-rose-200 text-rose-900 px-1 py-0.2 rounded">
-                              {loc.acItem.qtyBroken} Broken
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {loc.pcItem && (
-                      <div className={`p-2 rounded-lg border flex flex-col justify-between ${
-                        (loc.pcItem.qtyBroken > 0 || loc.pcItem.qtyMaintenance > 0)
-                          ? 'bg-amber-50/70 border-amber-200 text-amber-900'
-                          : 'bg-neutral-50 border-neutral-200/80 text-neutral-700'
-                      }`}>
-                        <div className="text-[10px] font-semibold text-neutral-500">Desktop PCs</div>
-                        <div className="font-bold flex items-center justify-between mt-0.5">
-                          <span>{loc.pcItem.qtyWorking}/{loc.pcItem.qtyWorking + loc.pcItem.qtyBroken + loc.pcItem.qtyMaintenance} OK</span>
-                          {(loc.pcItem.qtyBroken > 0 || loc.pcItem.qtyMaintenance > 0) && (
-                            <span className="text-[9px] font-bold bg-amber-200 text-amber-900 px-1 py-0.2 rounded">
-                              {loc.pcItem.qtyBroken + loc.pcItem.qtyMaintenance} Issue
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                  {/* Bottom Overlay Pill: Seats / Capacity */}
+                  <div className="absolute bottom-2.5 right-3 bg-neutral-900/80 text-white backdrop-blur-xs px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-xs pointer-events-none">
+                    <Users className="w-3.5 h-3.5 text-neutral-300" />
+                    <span>{loc.capacity || 30} Seats</span>
                   </div>
                 </div>
 
-                {/* Card Footer: Audit Stamp & Action Buttons */}
-                <div className="pt-3 border-t border-neutral-100 space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px] text-neutral-400">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-neutral-400" />
-                      <span>Audited: {loc.lastAuditedAt || 'Pending'}</span>
-                    </span>
-                    <span className="truncate max-w-[120px] font-medium text-neutral-500">
-                      {loc.auditedBy || 'Faculty'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/locations/${loc.id}?tab=audit`}
-                      className="flex-1 text-center py-1.5 px-2 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                    >
-                      Quick Audit
-                    </Link>
+                {/* 2. Classroom Details Body */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
                     <Link
                       href={`/locations/${loc.id}`}
-                      className="flex-1 text-center py-1.5 px-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      className="text-base font-bold text-neutral-900 hover:text-emerald-700 transition-colors block line-clamp-1"
                     >
-                      <span>Room View</span>
-                      <ArrowRight className="w-3 h-3" />
+                      {loc.name}
+                    </Link>
+                    <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span>{loc.building}</span>
+                      <span>•</span>
+                      <span>Floor {loc.floor ?? 1}</span>
+                      {isAllowed ? (
+                        <>
+                          <span>•</span>
+                          <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.2 rounded text-[10px]">
+                            Assigned Lab
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>•</span>
+                          <span className="text-neutral-500 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded text-[10px] flex items-center gap-0.5">
+                            <Shield className="w-2.5 h-2.5 text-neutral-400" /> Read-only
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Clean Equipment Count Badges (Stock & Assets) */}
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <Link
+                      href={`/locations/${loc.id}?tab=stock`}
+                      className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
+                        <Boxes className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Inventory</div>
+                        <div className="text-xs font-bold text-neutral-900 truncate">
+                          {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
+                        </div>
+                        <div className="text-[10px] text-neutral-500">{loc.totalStockUnits} units</div>
+                      </div>
+                    </Link>
+
+                    <Link
+                      href={`/locations/${loc.id}?tab=hardware`}
+                      className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
+                        <Microscope className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Hardware</div>
+                        <div className="text-xs font-bold text-neutral-900 truncate">
+                          {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
+                        </div>
+                        <div className="text-[10px] text-neutral-500">{loc.totalHardwareUnits} units</div>
+                      </div>
+                    </Link>
+                  </div>
+
+                  {/* Card Footer: Action Link */}
+                  <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-neutral-400 font-mono">
+                      Room: {loc.room}
+                    </span>
+                    <Link
+                      href={`/locations/${loc.id}`}
+                      className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <span>View Room Fleet</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
