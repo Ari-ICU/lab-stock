@@ -377,7 +377,13 @@ export default function LocationsPage() {
                   </div>
 
                   {/* Top Right Actions Menu */}
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs rounded-lg shadow-xs border border-neutral-200/80">
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    className="absolute top-3 right-3 z-20 bg-white/95 backdrop-blur-xs rounded-lg shadow-xs border border-neutral-200/80 hover:bg-white transition-colors"
+                  >
                     <RowActionMenu
                       onViewDetails={() => router.push(`/locations/${loc.id}`)}
                       onEdit={isAllowed ? () => openEdit(loc) : undefined}
