@@ -7,6 +7,7 @@ import {
   deleteLocation,
   addRoomInventory,
   updateRoomInventoryCount,
+  updateRoomInventoryItem,
   deleteRoomInventory,
   markRoomAudited,
 } from '@/controllers/locationController.js';
@@ -90,6 +91,16 @@ router.patch(
   '/inventory/:itemId',
   requirePermission(Permission.LOCATION_MANAGE),
   updateRoomInventoryCount
+);
+
+/**
+ * @route   PUT /api/v1/locations/inventory/:itemId
+ * @desc    Update room inventory item details, status, counts, remarks
+ */
+router.put(
+  '/inventory/:itemId',
+  requirePermission(Permission.LOCATION_MANAGE),
+  updateRoomInventoryItem
 );
 
 /**

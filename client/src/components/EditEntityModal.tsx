@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useStock } from '@/context/StockContext';
 import { X } from 'lucide-react';
-import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/types';
+import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation, RoomInventoryItem } from '@/types';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
+import { Boxes, ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export function EditEntityModal() {
   const {
@@ -17,7 +18,10 @@ export function EditEntityModal() {
     updateRack,
     updateMaintenance,
     updateLocation,
+    updateRoomInventoryItem,
     locations,
+    stock,
+    assets,
   } = useStock();
 
   const locationOptions = locations.map((loc) => ({
@@ -30,6 +34,7 @@ export function EditEntityModal() {
   const isRack = editingItem ? 'totalSlots' in editingItem && 'usedSlots' in editingItem : false;
   const isMaintenance = editingItem ? 'technician' in editingItem && 'notes' in editingItem : false;
   const isLocation = editingItem ? 'building' in editingItem && 'room' in editingItem : false;
+  const isRoomInventory = editingItem ? 'qtyWorking' in editingItem && 'qtyBroken' in editingItem : false;
 
   // General fields
   const [name, setName] = useState('');
@@ -43,6 +48,14 @@ export function EditEntityModal() {
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
+
+  // Room Inventory specific fields
+  const [brandSpec, setBrandSpec] = useState('');
+  const [qtyWorking, setQtyWorking] = useState(0);
+  const [qtyBroken, setQtyBroken] = useState(0);
+  const [qtyMaintenance, setQtyMaintenance] = useState(0);
+  const [remarks, setRemarks] = useState('');
+  const [conditionStatus, setConditionStatus] = useState<string>('operational');
 
   // Location fields
   const [building, setBuilding] = useState('Engineering Block A');
@@ -93,10 +106,36 @@ export function EditEntityModal() {
     { label: 'Completed', value: 'Completed' },
   ];
 
+  const roomConditionStatusOptions = [
+    { label: '100% Operational', value: 'operational' },
+    { label: 'Defective / Needs Repair', value: 'defective' },
+    { label: 'Under Maintenance / Service', value: 'maintenance' },
+  ];
+
+  const roomCategoryOptions = [
+    { label: 'Furniture & Fixtures', value: 'FURNITURE' },
+    { label: 'Electrical & HVAC', value: 'ELECTRICAL' },
+    { label: 'Lab & IT Hardware', value: 'IT_HARDWARE' },
+    { label: 'Safety & Misc', value: 'SAFETY_MISC' },
+  ];
+
   useEffect(() => {
     if (!editingItem) return;
 
-    if (isStock) {
+    if (isRoomInventory) {
+      const inv = editingItem as RoomInventoryItem;
+      setName(inv.name);
+      setBrandSpec(inv.brandSpec || '');
+      setUnit(inv.unit || 'pcs');
+      setCategory(inv.group || 'FURNITURE');
+      setQtyWorking(inv.qtyWorking || 0);
+      setQtyBroken(inv.qtyBroken || 0);
+      setQtyMaintenance(inv.qtyMaintenance || 0);
+      setRemarks(inv.remarks || '');
+      const st =
+        inv.qtyBroken > 0 ? 'defective' : inv.qtyMaintenance > 0 ? 'maintenance' : 'operational';
+      setConditionStatus(st);
+    } else if (isStock) {
       const item = editingItem as MockItem;
       setName(item.name);
       setCode(item.code);
@@ -150,7 +189,19 @@ export function EditEntityModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isStock) {
+    if (isRoomInventory) {
+      const inv = editingItem as RoomInventoryItem;
+      updateRoomInventoryItem(inv.roomId, inv.id, {
+        name,
+        brandSpec,
+        unit,
+        group: category as any,
+        qtyWorking: Number(qtyWorking),
+        qtyBroken: Number(qtyBroken),
+        qtyMaintenance: Number(qtyMaintenance),
+        remarks,
+      });
+    } else if (isStock) {
       const item = editingItem as MockItem;
       updateStockItem({
         ...item,
@@ -217,6 +268,7 @@ export function EditEntityModal() {
   };
 
   const getModalTitle = () => {
+    if (isRoomInventory) return 'Edit Room Facility Equipment & Status';
     if (isStock) return 'Edit Stock Item';
     if (isAsset) return 'Edit Network Device';
     if (isLocation) return 'Edit Laboratory Location';
@@ -249,6 +301,217 @@ export function EditEntityModal() {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-3.5 text-xs">
+          {/* ROOM INVENTORY FORM */}
+          {isRoomInventory && (() => {
+            const inv = editingItem as RoomInventoryItem;
+            const linkedStock = inv.stockItemId
+              ? stock.find((s) => s.id === inv.stockItemId || s.code === inv.stockItemId)
+              : stock.find((s) => s.name.toLowerCase() === inv.name.toLowerCase());
+            const linkedAsset = inv.assetId
+              ? assets.find((a) => a.id === inv.assetId || a.serialNumber === inv.assetId)
+              : assets.find((a) => a.name.toLowerCase() === inv.name.toLowerCase());
+
+            const totalCount = Number(qtyWorking) + Number(qtyBroken) + Number(qtyMaintenance);
+            const operationalPercent = totalCount > 0 ? Math.round((Number(qtyWorking) / totalCount) * 100) : 100;
+
+            return (
+              <>
+                {/* Linked Central Stock/Asset Banner */}
+                {linkedStock && (
+                  <div className="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-lg flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Boxes className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <div>
+                        <span className="font-semibold text-emerald-950">Linked to Central Stock (/stock):</span>{' '}
+                        <span className="font-mono font-bold text-emerald-800">{linkedStock.code}</span>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                      {linkedStock.quantity} in Dept
+                    </span>
+                  </div>
+                )}
+                {linkedAsset && (
+                  <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Boxes className="w-4 h-4 text-blue-700 shrink-0" />
+                      <div>
+                        <span className="font-semibold text-blue-950">Linked to Central Assets (/assets):</span>{' '}
+                        <span className="font-mono font-bold text-blue-800">{linkedAsset.serialNumber}</span>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200">
+                      {linkedAsset.totalUnits ?? 1} units in Dept
+                    </span>
+                  </div>
+                )}
+
+                {/* Equipment Name */}
+                <div>
+                  <label className="block font-semibold text-neutral-800 mb-1">Equipment / Item Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-semibold"
+                  />
+                </div>
+
+                {/* Category & Unit */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-neutral-800 mb-1">Category Group</label>
+                    <Dropdown
+                      value={category}
+                      options={roomCategoryOptions}
+                      onChange={(val) => setCategory(val)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-neutral-800 mb-1">Unit of Measurement</label>
+                    <input
+                      type="text"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      placeholder="e.g. PCS, SETS, UNITS"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono uppercase"
+                    />
+                  </div>
+                </div>
+
+                {/* Specification / Model */}
+                <div>
+                  <label className="block font-semibold text-neutral-800 mb-1">Specification / Brand Model</label>
+                  <input
+                    type="text"
+                    value={brandSpec}
+                    onChange={(e) => setBrandSpec(e.target.value)}
+                    placeholder="e.g. Heavy-duty Ergonomic Mesh Swivel, 5000 Lumens..."
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  />
+                </div>
+
+                {/* STATUS DROPDOWN (Clean dropdown following maintenance style!) */}
+                <div className="p-3 bg-neutral-50/70 border border-neutral-200 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-semibold text-neutral-800">
+                      Operational / Service Status
+                    </label>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                      operationalPercent === 100
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : operationalPercent >= 70
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {operationalPercent}% Usable
+                    </span>
+                  </div>
+                  <Dropdown
+                    value={conditionStatus}
+                    options={roomConditionStatusOptions}
+                    onChange={(val) => {
+                      setConditionStatus(val);
+                      if (val === 'operational') {
+                        setQtyWorking((prev) => Number(prev) + Number(qtyBroken) + Number(qtyMaintenance));
+                        setQtyBroken(0);
+                        setQtyMaintenance(0);
+                        if (!remarks || remarks.toLowerCase().includes('broken') || remarks.toLowerCase().includes('defect') || remarks.toLowerCase().includes('failure')) {
+                          setRemarks('Routine check completed. 100% operational.');
+                        }
+                      } else if (val === 'defective') {
+                        if (Number(qtyBroken) === 0) {
+                          setQtyBroken(1);
+                          setQtyWorking((prev) => Math.max(0, Number(prev) - 1));
+                        }
+                      } else if (val === 'maintenance') {
+                        if (Number(qtyMaintenance) === 0) {
+                          setQtyMaintenance(1);
+                          setQtyWorking((prev) => Math.max(0, Number(prev) - 1));
+                        }
+                      }
+                    }}
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Quantities Grid */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="p-2.5 bg-emerald-50/40 border border-emerald-200/80 rounded-lg">
+                    <label className="block text-[11px] font-bold text-emerald-800 mb-1">Working Units</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={qtyWorking}
+                      onChange={(e) => {
+                        const w = Math.max(0, Number(e.target.value));
+                        setQtyWorking(w);
+                        if (w > 0 && Number(qtyBroken) === 0 && Number(qtyMaintenance) === 0) {
+                          setConditionStatus('operational');
+                        }
+                      }}
+                      className="w-full bg-white border border-emerald-300 text-emerald-950 font-bold px-2.5 py-1.5 rounded focus:outline-none focus:border-emerald-600 font-mono text-center"
+                    />
+                  </div>
+
+                  <div className="p-2.5 bg-rose-50/40 border border-rose-200/80 rounded-lg">
+                    <label className="block text-[11px] font-bold text-rose-800 mb-1">Broken / Defective</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={qtyBroken}
+                      onChange={(e) => {
+                        const b = Math.max(0, Number(e.target.value));
+                        setQtyBroken(b);
+                        if (b > 0) {
+                          setConditionStatus('defective');
+                        } else if (Number(qtyMaintenance) === 0) {
+                          setConditionStatus('operational');
+                        }
+                      }}
+                      className="w-full bg-white border border-rose-300 text-rose-950 font-bold px-2.5 py-1.5 rounded focus:outline-none focus:border-rose-600 font-mono text-center"
+                    />
+                  </div>
+
+                  <div className="p-2.5 bg-blue-50/40 border border-blue-200/80 rounded-lg">
+                    <label className="block text-[11px] font-bold text-blue-800 mb-1">In Maintenance</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={qtyMaintenance}
+                      onChange={(e) => {
+                        const m = Math.max(0, Number(e.target.value));
+                        setQtyMaintenance(m);
+                        if (m > 0) {
+                          setConditionStatus('maintenance');
+                        } else if (Number(qtyBroken) === 0) {
+                          setConditionStatus('operational');
+                        }
+                      }}
+                      className="w-full bg-white border border-blue-300 text-blue-950 font-bold px-2.5 py-1.5 rounded focus:outline-none focus:border-blue-600 font-mono text-center"
+                    />
+                  </div>
+                </div>
+
+                {/* Condition Remarks & Defect Notes */}
+                <div>
+                  <label className="block font-semibold text-neutral-800 mb-1">
+                    Condition Remarks & Defect Notes
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    placeholder="e.g. 2 chairs have broken castor wheels in back row..."
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 text-xs"
+                  />
+                </div>
+              </>
+            );
+          })()}
+
           {/* LOCATION FORM */}
           {isLocation && (
             <>

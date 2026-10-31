@@ -105,6 +105,21 @@ export const updateRoomInventoryCount = asyncHandler(async (req: Request, res: R
 });
 
 /**
+ * PUT /api/v1/locations/inventory/:itemId
+ * Update entire room inventory item specifications, status, counts, and remarks
+ */
+export const updateRoomInventoryItem = asyncHandler(async (req: Request, res: Response) => {
+  const itemId = String(req.params.itemId);
+  const item = await locationService.updateRoomInventoryItem(itemId, req.body);
+
+  return res.status(200).json({
+    status: 'ok',
+    message: 'Room inventory item updated successfully',
+    data: item,
+  });
+});
+
+/**
  * DELETE /api/v1/locations/inventory/:itemId
  * Remove an item from room inventory
  */

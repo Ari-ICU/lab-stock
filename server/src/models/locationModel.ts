@@ -186,9 +186,68 @@ export const locationModel = {
   async updateRoomInventoryCount(itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number): Promise<any> {
     const col = field === 'qtyWorking' ? 'qty_working' : field === 'qtyBroken' ? 'qty_broken' : 'qty_maintenance';
     const res = await query(
-      `UPDATE room_inventory SET ${col} = GREATEST(0, ${col} + $1) WHERE id = $2 RETURNING *`,
+      `UPDATE room_inventory SET ${col} = GREATEST(0, ${col} + $1), updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
       [delta, itemId]
     );
+    return res.rows[0];
+  },
+
+  async updateRoomInventoryItem(itemId: string, data: any): Promise<any> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (data.name !== undefined) {
+      fields.push(`name = $${idx++}`);
+      values.push(data.name);
+    }
+    if (data.group !== undefined || data.group_type !== undefined) {
+      fields.push(`group_type = $${idx++}`);
+      values.push(data.group || data.group_type);
+    }
+    if (data.brandSpec !== undefined || data.brand_spec !== undefined) {
+      fields.push(`brand_spec = $${idx++}`);
+      values.push(data.brandSpec ?? data.brand_spec);
+    }
+    if (data.unit !== undefined) {
+      fields.push(`unit = $${idx++}`);
+      values.push(data.unit);
+    }
+    if (data.qtyWorking !== undefined || data.qty_working !== undefined) {
+      fields.push(`qty_working = $${idx++}`);
+      values.push(data.qtyWorking ?? data.qty_working);
+    }
+    if (data.qtyBroken !== undefined || data.qty_broken !== undefined) {
+      fields.push(`qty_broken = $${idx++}`);
+      values.push(data.qtyBroken ?? data.qty_broken);
+    }
+    if (data.qtyMaintenance !== undefined || data.qty_maintenance !== undefined) {
+      fields.push(`qty_maintenance = $${idx++}`);
+      values.push(data.qtyMaintenance ?? data.qty_maintenance);
+    }
+    if (data.remarks !== undefined) {
+      fields.push(`remarks = $${idx++}`);
+      values.push(data.remarks);
+    }
+    if (data.stockItemId !== undefined || data.stock_item_id !== undefined) {
+      fields.push(`stock_item_id = $${idx++}`);
+      values.push(data.stockItemId ?? data.stock_item_id);
+    }
+    if (data.assetId !== undefined || data.asset_id !== undefined) {
+      fields.push(`asset_id = $${idx++}`);
+      values.push(data.assetId ?? data.asset_id);
+    }
+
+    if (fields.length === 0) {
+      const res = await query('SELECT * FROM room_inventory WHERE id = $1', [itemId]);
+      return res.rows[0];
+    }
+
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(itemId);
+
+    const sql = `UPDATE room_inventory SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
+    const res = await query(sql, values);
     return res.rows[0];
   },
 

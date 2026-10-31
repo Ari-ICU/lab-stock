@@ -77,6 +77,7 @@ interface StockContextType {
   updateLocation: (loc: MockLocation) => void;
   deleteLocation: (id: string) => void;
   updateRoomInventoryCount: (roomId: string, itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number) => void;
+  updateRoomInventoryItem: (roomId: string, itemId: string, updates: Partial<RoomInventoryItem>) => void;
   markRoomAudited: (roomId: string, auditorName: string) => void;
   addRoomInventoryItem: (roomId: string, item: Omit<RoomInventoryItem, 'id' | 'roomId'>) => void;
   deleteRoomInventoryItem: (roomId: string, itemId: string) => void;
@@ -741,6 +742,28 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateRoomInventoryItem = (
+    roomId: string,
+    itemId: string,
+    updates: Partial<RoomInventoryItem>
+  ) => {
+    setLocations((prev) =>
+      prev.map((loc) => {
+        if (loc.id !== roomId) return loc;
+        return {
+          ...loc,
+          inventories: (loc.inventories || []).map((inv) =>
+            inv.id === itemId ? { ...inv, ...updates } : inv
+          ),
+        };
+      })
+    );
+    showToast(`Updated facility equipment record`, 'success');
+    if (getAuthToken()) {
+      locationService.updateRoomInventoryItem(itemId, updates).catch(() => {});
+    }
+  };
+
   const addPurchaseRequest = (reqData: Omit<PurchaseRequest, 'id' | 'requestDate' | 'status'> & { id?: string; status?: PurchaseRequest['status'] }): PurchaseRequest => {
     const newReq: PurchaseRequest = {
       id: reqData.id || `REQ-2026-${String(requests.length + 1).padStart(3, '0')}`,
@@ -825,6 +848,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         updateLocation,
         deleteLocation,
         updateRoomInventoryCount,
+        updateRoomInventoryItem,
         markRoomAudited,
         addRoomInventoryItem,
         deleteRoomInventoryItem,

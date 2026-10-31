@@ -74,6 +74,13 @@ export const locationService = {
   },
 
   /**
+   * Update full room inventory item details, status, counts, or remarks
+   */
+  async updateRoomInventoryItem(itemId: string, data: any): Promise<{ status: string; data: any }> {
+    return apiClient.put(`/locations/inventory/${itemId}`, data);
+  },
+
+  /**
    * Remove an item from room inventory
    */
   async deleteRoomInventory(itemId: string): Promise<{ status: string; message: string }> {

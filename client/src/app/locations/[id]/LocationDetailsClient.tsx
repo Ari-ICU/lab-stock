@@ -50,9 +50,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     stock,
     loans,
     maintenance,
+    openDetails,
     openEdit,
     deleteLocation,
     updateRoomInventoryCount,
+    updateRoomInventoryItem,
     markRoomAudited,
     addRoomInventoryItem,
     deleteRoomInventoryItem,
@@ -896,7 +898,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           {/* Item & Equipment Name */}
                           <td className="py-3 px-4">
                             <div className="font-semibold text-neutral-900 flex items-center gap-1.5 flex-wrap">
-                              <span>{item.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => openDetails(item)}
+                                className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
+                                title="Click to view full equipment details"
+                              >
+                                {item.name}
+                              </button>
                               <span className="text-[10px] font-mono font-medium uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200/70">
                                 {item.unit}
                               </span>
@@ -985,28 +994,72 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             )}
                           </td>
 
-                          {/* Operational Status */}
+                          {/* Operational Status Dropdown following style maintenance */}
                           <td className="py-3 px-4">
-                            {operationalPercent === 100 ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                100% Operational
-                              </span>
-                            ) : (
-                              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap ${
-                                operationalPercent >= 70
-                                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                  : 'bg-rose-50 text-rose-800 border border-rose-200'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${operationalPercent >= 70 ? 'bg-amber-500' : 'bg-rose-500'}`} />
-                                {operationalPercent}% Usable
-                              </span>
-                            )}
+                            <Dropdown
+                              value={
+                                item.qtyBroken > 0
+                                  ? 'defective'
+                                  : (item.qtyMaintenance || 0) > 0
+                                  ? 'maintenance'
+                                  : 'operational'
+                              }
+                              options={[
+                                {
+                                  label: operationalPercent === 100 ? '100% Operational' : `${operationalPercent}% Usable`,
+                                  value: 'operational',
+                                },
+                                {
+                                  label: item.qtyBroken > 0 ? `Defective (${item.qtyBroken})` : 'Defective / Repair',
+                                  value: 'defective',
+                                },
+                                {
+                                  label: (item.qtyMaintenance || 0) > 0 ? `In Service (${item.qtyMaintenance})` : 'In Maintenance',
+                                  value: 'maintenance',
+                                },
+                              ]}
+                              onChange={(newStatus) => {
+                                if (newStatus === 'operational') {
+                                  const totalWorking = Number(item.qtyWorking) + Number(item.qtyBroken) + Number(item.qtyMaintenance || 0);
+                                  updateRoomInventoryItem(loc.id, item.id, {
+                                    qtyWorking: totalWorking,
+                                    qtyBroken: 0,
+                                    qtyMaintenance: 0,
+                                    remarks: 'All units inspected & 100% operational',
+                                  });
+                                } else if (newStatus === 'defective') {
+                                  if (Number(item.qtyBroken) === 0) {
+                                    updateRoomInventoryItem(loc.id, item.id, {
+                                      qtyWorking: Math.max(0, Number(item.qtyWorking) - 1),
+                                      qtyBroken: 1,
+                                      remarks: item.remarks && !item.remarks.toLowerCase().includes('operational') ? item.remarks : 'Requires repair or replacement parts',
+                                    });
+                                  }
+                                } else if (newStatus === 'maintenance') {
+                                  if (Number(item.qtyMaintenance || 0) === 0) {
+                                    updateRoomInventoryItem(loc.id, item.id, {
+                                      qtyWorking: Math.max(0, Number(item.qtyWorking) - 1),
+                                      qtyMaintenance: 1,
+                                      remarks: 'Sent for maintenance & routine diagnostics',
+                                    });
+                                  }
+                                }
+                              }}
+                              buttonClassName={`py-1 px-2.5 text-[11px] font-semibold rounded-md transition-all shadow-2xs ${
+                                operationalPercent === 100
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                  : operationalPercent >= 70
+                                  ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                                  : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+                              }`}
+                            />
                           </td>
 
-                          {/* Actions (Three-Dots Menu matching /assets & /stock) */}
+                          {/* Actions (Three-Dots Menu matching /assets & /stock with View Details & Edit) */}
                           <td className="py-3 px-4 text-right">
                             <RowActionMenu
+                              onViewDetails={() => openDetails(item)}
+                              onEdit={() => openEdit(item)}
                               actions={[
                                 {
                                   label: 'Report Defect (+1)',

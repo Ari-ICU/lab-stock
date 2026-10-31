@@ -63,6 +63,12 @@ export const locationService = {
     return updated;
   },
 
+  async updateRoomInventoryItem(itemId: string, data: any): Promise<any> {
+    const updated = await locationModel.updateRoomInventoryItem(itemId, data);
+    cache.invalidatePattern('location:');
+    return updated;
+  },
+
   async deleteRoomInventoryItem(itemId: string): Promise<boolean> {
     const deleted = await locationModel.deleteRoomInventoryItem(itemId);
     cache.invalidatePattern('location:');

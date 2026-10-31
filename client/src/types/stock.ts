@@ -157,7 +157,8 @@ export type AnyEntity =
   | MockLocation
   | MockLoan
   | MockTransfer
-  | PurchaseRequest;
+  | PurchaseRequest
+  | RoomInventoryItem;
 
 export type ModalType =
   | 'none'
