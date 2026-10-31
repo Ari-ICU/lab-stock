@@ -17,24 +17,15 @@ import {
   Microscope,
   Search,
   Plus,
-  CheckCircle2,
-  Wrench,
   AlertTriangle,
   Edit3,
   Trash2,
-  MapPin,
   Layers,
   FileSpreadsheet,
-  Check,
-  ChevronRight,
   X,
   QrCode,
   Printer,
-  Calendar,
-  Users,
-  CheckCircle,
   Sparkles,
-  Eye,
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
 
@@ -451,173 +442,81 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* 2. Room Overview Hero Card */}
-        <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-2xs">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs relative group">
-                <LabThumbnail
-                  src={loc.imageUrl}
-                  alt={loc.name}
-                  size="card"
-                  fallbackType="building"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  iconClassName="w-7 h-7 text-emerald-700"
-                />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
-                    {loc.room}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded">
-                    {loc.type?.replace('_', ' ') || 'LAB'}
-                  </span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${inventorySummary.totalBroken > 0
-                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${inventorySummary.totalBroken > 0 ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
-                    {inventorySummary.totalBroken > 0 ? `${inventorySummary.totalBroken} Defective Items` : '100% Operational'}
-                  </span>
-                </div>
-
-                <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
-                  {loc.name}
-                </h1>
-
-                <div className="flex items-center gap-3 text-xs text-neutral-500 flex-wrap pt-0.5">
-                  <span className="inline-flex items-center gap-1 text-neutral-700 font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-neutral-400" />
-                    {loc.building} • Floor {loc.floor ?? 1}
-                  </span>
-                  <span className="text-neutral-300">•</span>
-                  <span className="inline-flex items-center gap-1 text-neutral-700 font-medium">
-                    <Users className="w-3.5 h-3.5 text-neutral-400" />
-                    Student Capacity: <span className="font-bold text-neutral-900">{loc.capacity || 30} seats</span>
-                  </span>
-                  <span className="text-neutral-300">•</span>
-                  <span className="inline-flex items-center gap-1 text-neutral-600">
-                    <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-                    Last Audited: <span className="font-semibold text-neutral-800">{loc.lastAuditedAt || 'Pending Audit'}</span>
-                    {loc.auditedBy && <span className="text-neutral-400">by {loc.auditedBy}</span>}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
-              {isAllowed && (
-                <Link
-                  href={`/locations/${loc.id}/items/new`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Add Room Item</span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Condition KPI Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-neutral-500 mb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Operational Units</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-2xl font-bold text-neutral-900 font-mono">
-              {inventorySummary.totalWorking} <span className="text-xs font-sans font-normal text-neutral-500">Units OK</span>
-            </div>
-            <div className="text-[11px] text-emerald-700 font-medium mt-1">
-              {inventorySummary.healthRate}% Operational Usability
-            </div>
-          </div>
-
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-neutral-500 mb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Defective / Repair</span>
-              <Wrench className="w-4 h-4 text-rose-600" />
-            </div>
-            <div className="text-2xl font-bold text-rose-700 font-mono">
-              {inventorySummary.totalBroken} <span className="text-xs font-sans font-normal text-neutral-500">Defective</span>
-            </div>
-            <div className="text-[11px] text-neutral-500 mt-1">
-              {inventorySummary.totalBroken > 0 ? 'Reported on repair roster' : 'Zero broken equipment'}
-            </div>
-          </div>
-
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-neutral-500 mb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Serialized Assets</span>
-              <Microscope className="w-4 h-4 text-blue-600" />
-            </div>
-            <div className="text-2xl font-bold text-neutral-900 font-mono">
-              {totalHardwareUnits} <span className="text-xs font-sans font-normal text-neutral-500">Devices</span>
-            </div>
-            <div className="text-[11px] text-neutral-500 mt-1">{matchingAssets.length} model classes registered</div>
-          </div>
-
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-neutral-500 mb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Student Capacity</span>
-              <Users className="w-4 h-4 text-neutral-400" />
-            </div>
-            <div className="text-2xl font-bold text-neutral-900 font-mono">
-              {loc.capacity || 30} <span className="text-xs font-sans font-normal text-neutral-500">Stations</span>
-            </div>
-            <div className="text-[11px] text-neutral-500 mt-1">Assigned student seating capacity</div>
-          </div>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 max-w-8xl w-full mx-auto">
+        {/* 2. Compact Room Info Strip */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1">
+          <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
+            {loc.room}
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded">
+            {loc.type?.replace('_', ' ') || 'LAB'}
+          </span>
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${inventorySummary.totalBroken > 0
+              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+            }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${inventorySummary.totalBroken > 0 ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
+            {inventorySummary.totalBroken > 0 ? `${inventorySummary.totalBroken} Defective` : 'All Operational'}
+          </span>
+          <span className="text-neutral-300 hidden sm:inline">|</span>
+          <span className="text-xs text-neutral-500">
+            <span className="font-medium text-neutral-700">{loc.building}</span> · Floor {loc.floor ?? 1}
+          </span>
+          <span className="text-neutral-300 hidden sm:inline">|</span>
+          <span className="text-xs text-neutral-500">
+            <span className="font-medium text-neutral-700">{loc.capacity || 30}</span> seats
+          </span>
+          <span className="text-neutral-300 hidden sm:inline">|</span>
+          <span className="text-xs text-neutral-400">
+            Audited: <span className="text-neutral-600">{loc.lastAuditedAt || 'Pending'}</span>
+          </span>
         </div>
 
         {/* 4. Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-neutral-200 overflow-x-auto">
+        <div className="flex items-center gap-1 border-b border-neutral-200 overflow-x-auto">
           <button
             type="button"
             onClick={() => handleTabChange('matrix')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'matrix'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'matrix'
                 ? 'border-neutral-900 text-neutral-900 font-bold'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
           >
-            <Layers className="w-4 h-4 text-neutral-600" />
+            <Layers className="w-3.5 h-3.5" />
             <span>Facility & Condition ({loc.inventories?.length || 0})</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('hardware')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'hardware'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'hardware'
                 ? 'border-neutral-900 text-neutral-900 font-bold'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
           >
-            <Microscope className="w-4 h-4 text-blue-600" />
+            <Microscope className="w-3.5 h-3.5" />
             <span>Hardware Assets ({matchingAssets.length})</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('stock')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'stock'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'stock'
                 ? 'border-neutral-900 text-neutral-900 font-bold'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
           >
-            <Boxes className="w-4 h-4 text-emerald-600" />
+            <Boxes className="w-3.5 h-3.5" />
             <span>Consumables & Stock ({matchingStock.length})</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('audit')}
-            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-2 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'audit'
-                ? 'border-emerald-600 text-emerald-800 font-bold'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800'
+            className={`pb-3 px-3 text-xs font-semibold flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${activeTab === 'audit'
+                ? 'border-emerald-600 text-emerald-700 font-bold'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
           >
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <span>Quick Audit Mode</span>
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Quick Audit</span>
           </button>
         </div>
 
@@ -745,7 +644,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                           {/* Item & Equipment Name */}
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-neutral-900 flex items-center gap-1.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <Link
                                 href={`/locations/${loc.id}/items/view?item=${item.id}`}
                                 className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
@@ -753,52 +652,15 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                               >
                                 {item.name}
                               </Link>
-                              <span className="text-[10px] font-mono font-medium uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200/70">
+                              <span className="text-[10px] font-mono font-medium uppercase bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded border border-neutral-200/70">
                                 {item.unit}
                               </span>
                             </div>
 
-                            {/* Center Stock / Assets Source Link */}
-                            {linkedStock && (
-                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                <Link
-                                  href="/stock"
-                                  className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200/80 px-2 py-0.5 rounded-md transition-colors shadow-2xs"
-                                  title={`Allocated from Central Stock (/stock): ${linkedStock.quantity} ${linkedStock.unit} in Dept`}
-                                >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                  <span>{linkedStock.code}</span>
-                                  <span className="text-emerald-700 font-semibold">• {linkedStock.quantity} in Stock</span>
-                                </Link>
-                              </div>
-                            )}
-                            {linkedAsset && (
-                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                <Link
-                                  href="/assets"
-                                  className="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-mono font-medium text-blue-800 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/80 px-2 py-0.5 rounded-md transition-colors shadow-2xs"
-                                  title={`Allocated from Central Assets (/assets): ${linkedAsset.totalUnits ?? 1} units in Dept`}
-                                >
-                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                                  <span>{linkedAsset.serialNumber}</span>
-                                  <span className="text-blue-700 font-semibold">• {linkedAsset.totalUnits ?? 1} in Dept</span>
-                                </Link>
-                              </div>
-                            )}
-
                             {item.remarks && (
-                              <div className="mt-1.5">
-                                {isDefectRemark ? (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-900 bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 rounded-md">
-                                    <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                                    <span>{item.remarks}</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-[11px] text-neutral-500 line-clamp-1">
-                                    {item.remarks}
-                                  </span>
-                                )}
-                              </div>
+                              <p className="mt-0.5 text-[11px] text-neutral-400 italic line-clamp-1">
+                                {item.remarks}
+                              </p>
                             )}
                           </td>
 
@@ -815,29 +677,21 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           </td>
 
                           {/* Total Count */}
-                          <td className="py-3 px-3 text-center font-mono font-bold text-neutral-900">
-                            <span className="bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
-                              {total}
-                            </span>
+                          <td className="py-3 px-3 text-center font-mono font-semibold text-neutral-700">
+                            {total}
                           </td>
 
                           {/* Working */}
-                          <td className="py-3 px-3 text-center font-mono">
-                            <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              {item.qtyWorking}
-                            </span>
+                          <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">
+                            {item.qtyWorking}
                           </td>
 
                           {/* Broken */}
-                          <td className="py-3 px-3 text-center font-mono">
+                          <td className="py-3 px-3 text-center font-mono font-bold">
                             {item.qtyBroken > 0 ? (
-                              <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-xs">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                {item.qtyBroken}
-                              </span>
+                              <span className="text-rose-600">{item.qtyBroken}</span>
                             ) : (
-                              <span className="text-neutral-400 text-xs font-normal">0</span>
+                              <span className="text-neutral-300">—</span>
                             )}
                           </td>
 
