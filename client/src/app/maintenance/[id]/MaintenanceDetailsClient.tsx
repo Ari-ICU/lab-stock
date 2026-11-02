@@ -234,6 +234,10 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
                   <Calendar className="w-3 h-3 text-neutral-400" />
                   {item.date}
                 </span>
+
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono">
+                  {item.quantity || 1} {item.unit || 'Units'}
+                </span>
               </div>
 
               <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">

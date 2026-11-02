@@ -48,13 +48,15 @@ export default function MaintenanceCreateClient() {
   const [status, setStatus] = useState<'Completed' | 'Pending' | 'In Progress'>('In Progress');
   const [location, setLocation] = useState('');
   const [cost, setCost] = useState('');
+  const [quantity, setQuantity] = useState<number>(1);
+  const [unit, setUnit] = useState<string>('Units');
   const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Quick equipment pickers from registered assets & stock
   const equipmentOptions = useMemo(() => {
-    const list: Array<{ label: string; value: string; name: string; serial: string; image?: string; loc?: string }> = [];
+    const list: Array<{ label: string; value: string; name: string; serial: string; image?: string; loc?: string; qty?: number; unit?: string }> = [];
 
     assets.forEach((a) => {
       list.push({
@@ -64,6 +66,8 @@ export default function MaintenanceCreateClient() {
         serial: a.serialNumber,
         image: a.imageUrl,
         loc: a.location,
+        qty: a.totalUnits || 1,
+        unit: a.unitType || 'Units',
       });
     });
 
@@ -75,6 +79,8 @@ export default function MaintenanceCreateClient() {
         serial: s.code,
         image: s.imageUrl,
         loc: s.location,
+        qty: s.quantity || 1,
+        unit: s.unit || 'Units',
       });
     });
 
@@ -87,6 +93,8 @@ export default function MaintenanceCreateClient() {
     setAssetName(found.name);
     setSerialNumber(found.serial);
     if (found.loc) setLocation(found.loc);
+    if (found.qty) setQuantity(found.qty);
+    if (found.unit) setUnit(found.unit);
     if (found.image && !imageUrl) setImageUrl(found.image);
   };
 
@@ -118,6 +126,8 @@ export default function MaintenanceCreateClient() {
       imageUrl: imageUrl.trim() || resolveMaintenanceImage({ assetName, serialNumber }, assets, stock),
       location: location.trim() || undefined,
       cost: cost.trim() ? Number(cost) || cost.trim() : undefined,
+      quantity: quantity > 0 ? quantity : 1,
+      unit: unit.trim() || 'Units',
     });
 
     showToast(`Scheduled maintenance log for ${assetName}`, 'success');
@@ -240,7 +250,7 @@ export default function MaintenanceCreateClient() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-neutral-800 mb-1">
                       Assigned Technician / Team *
@@ -257,6 +267,35 @@ export default function MaintenanceCreateClient() {
 
                   <div>
                     <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                      Quantity Serviced *
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className={inputCls}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                      Unit (e.g. Switches, Units)
+                    </label>
+                    <input
+                      type="text"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      placeholder="e.g. Switches, Units, Desktops"
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
                       Room Location (Optional)
                     </label>
                     <input
@@ -267,21 +306,21 @@ export default function MaintenanceCreateClient() {
                       className={inputCls}
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                    Repair / Service Cost (USD, optional)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={cost}
-                      onChange={(e) => setCost(e.target.value)}
-                      placeholder="e.g. 45.00"
-                      className={`${inputCls} pl-8 font-mono`}
-                    />
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                      Repair / Service Cost (USD, optional)
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={cost}
+                        onChange={(e) => setCost(e.target.value)}
+                        placeholder="e.g. 45.00"
+                        className={`${inputCls} pl-8 font-mono`}
+                      />
+                    </div>
                   </div>
                 </div>
 

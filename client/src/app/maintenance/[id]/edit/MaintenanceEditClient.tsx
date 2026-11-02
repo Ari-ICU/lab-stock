@@ -48,6 +48,8 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
   const [status, setStatus] = useState<'Completed' | 'Pending' | 'In Progress'>('In Progress');
   const [location, setLocation] = useState('');
   const [cost, setCost] = useState('');
+  const [quantity, setQuantity] = useState<number>(1);
+  const [unit, setUnit] = useState<string>('Units');
   const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -63,6 +65,8 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
       setStatus(item.status || 'In Progress');
       setLocation(item.location || '');
       setCost(item.cost ? String(item.cost) : '');
+      setQuantity(item.quantity && item.quantity > 0 ? Number(item.quantity) : 1);
+      setUnit(item.unit || 'Units');
       setNotes(item.notes || '');
       setImageUrl(item.imageUrl || resolveMaintenanceImage(item, assets, stock));
     }
@@ -129,6 +133,8 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
       imageUrl: imageUrl.trim() || undefined,
       location: location.trim() || undefined,
       cost: cost.trim() ? Number(cost) || cost.trim() : undefined,
+      quantity: quantity > 0 ? quantity : 1,
+      unit: unit.trim() || 'Units',
     });
 
     showToast(`Updated service log for ${assetName}`, 'success');
@@ -243,7 +249,7 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-neutral-800 mb-1">
                       Assigned Technician / Team *
@@ -259,6 +265,34 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
 
                   <div>
                     <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                      Quantity Serviced *
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className={inputCls}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                      Unit (e.g. Switches, Units)
+                    </label>
+                    <input
+                      type="text"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
                       Room Location (Optional)
                     </label>
                     <input
@@ -268,15 +302,23 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
                       className={inputCls}
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                    Repair / Service Cost (USD, optional)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                      Repair / Service Cost (USD, optional)
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={cost}
+                        onChange={(e) => setCost(e.target.value)}
+                        placeholder="0.00"
+                        className={`${inputCls} pl-8 font-mono`}
+                      />
+                    </div>
+                  </div>
+                </div>
                       type="text"
                       value={cost}
                       onChange={(e) => setCost(e.target.value)}
