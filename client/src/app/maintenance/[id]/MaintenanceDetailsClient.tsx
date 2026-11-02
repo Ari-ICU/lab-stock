@@ -67,6 +67,17 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
 
   const displayImage = item ? resolveMaintenanceImage(item, assets, stock) : '';
 
+  const siblingLogs = useMemo(() => {
+    if (!item) return [];
+    return maintenance
+      .filter(
+        (m) =>
+          (m.serialNumber && m.serialNumber.toLowerCase() === item.serialNumber.toLowerCase()) ||
+          (m.assetName && m.assetName.toLowerCase() === item.assetName.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [item, maintenance]);
+
   if (!item) {
     return (
       <div className="flex-1 flex flex-col min-w-0">
@@ -483,6 +494,89 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
                     No diagnostic findings recorded. Click &quot;Edit Log&quot; to add technician remarks or error logs.
                   </p>
                 )}
+              </div>
+            </div>
+
+            {/* All Maintenance Dates & Service History for this Item */}
+            <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Maintenance Dates & Event History ({siblingLogs.length})
+                  </h3>
+                </div>
+                <Link
+                  href="/maintenance/create"
+                  className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                >
+                  + Schedule Next Date
+                </Link>
+              </div>
+
+              <div className="space-y-3">
+                {siblingLogs.map((log) => {
+                  const isCurrent = log.id === item.id;
+                  return (
+                    <div
+                      key={log.id}
+                      className={`p-3.5 rounded-lg border transition-all ${
+                        isCurrent
+                          ? 'bg-neutral-50 border-neutral-300 ring-1 ring-neutral-900/10'
+                          : 'bg-white border-neutral-200/80 hover:bg-neutral-50/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-xs text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded">
+                            {log.date}
+                          </span>
+                          <span className="text-xs font-semibold text-neutral-800">
+                            {log.type}
+                          </span>
+                          {isCurrent && (
+                            <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                              Current Record
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
+                              log.status === 'Completed'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : log.status === 'In Progress'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}
+                          >
+                            {log.status}
+                          </span>
+                          {!isCurrent && (
+                            <Link
+                              href={`/maintenance/${log.id}`}
+                              className="text-[11px] text-neutral-600 hover:text-neutral-900 font-medium px-2 py-0.5 rounded hover:bg-neutral-100"
+                            >
+                              Inspect
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-[11px] text-neutral-500 mt-1.5 flex items-center gap-3">
+                        <span>Technician: <strong className="text-neutral-700 font-medium">{log.technician}</strong></span>
+                        {log.cost ? <span>Cost: <strong className="text-neutral-700 font-medium font-mono">${log.cost}</strong></span> : null}
+                      </div>
+
+                      {log.notes && (
+                        <p className="text-xs text-neutral-600 mt-2 bg-neutral-50/50 p-2 rounded border border-neutral-100 italic">
+                          &quot;{log.notes}&quot;
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

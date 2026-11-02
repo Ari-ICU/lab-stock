@@ -32,6 +32,9 @@ interface GroupedMaintenanceItem {
   totalCost: number;
   imageUrl?: string;
   latestDate: string;
+  distinctDates: string[];
+  lastCompletedDate?: string;
+  nextScheduledDate?: string;
   latestType: string;
   latestTechnician: string;
   primaryStatus: 'Completed' | 'Pending' | 'In Progress';
@@ -91,6 +94,9 @@ export default function MaintenancePage() {
           totalCost: costVal,
           imageUrl: item.imageUrl,
           latestDate: item.date,
+          distinctDates: [item.date],
+          lastCompletedDate: item.status === 'Completed' ? item.date : undefined,
+          nextScheduledDate: item.status !== 'Completed' ? item.date : undefined,
           latestType: item.type,
           latestTechnician: item.technician,
           primaryStatus: item.status,
@@ -109,9 +115,23 @@ export default function MaintenancePage() {
         group.totalCost += costVal;
         group.logs.push(item);
 
-        if (item.status === 'Completed') group.statusCounts.completed += qty;
-        else if (item.status === 'Pending') group.statusCounts.pending += qty;
-        else if (item.status === 'In Progress') group.statusCounts.inProgress += qty;
+        if (!group.distinctDates.includes(item.date)) {
+          group.distinctDates.push(item.date);
+        }
+
+        if (item.status === 'Completed') {
+          group.statusCounts.completed += qty;
+          if (!group.lastCompletedDate || new Date(item.date).getTime() > new Date(group.lastCompletedDate).getTime()) {
+            group.lastCompletedDate = item.date;
+          }
+        } else {
+          if (item.status === 'Pending') group.statusCounts.pending += qty;
+          else if (item.status === 'In Progress') group.statusCounts.inProgress += qty;
+
+          if (!group.nextScheduledDate || new Date(item.date).getTime() > new Date(group.nextScheduledDate).getTime()) {
+            group.nextScheduledDate = item.date;
+          }
+        }
 
         if (new Date(item.date).getTime() >= new Date(group.latestDate).getTime()) {
           group.latestDate = item.date;
@@ -120,6 +140,11 @@ export default function MaintenancePage() {
           group.primaryStatus = item.status;
         }
       }
+    }
+
+    // Sort distinct dates descending for each item
+    for (const group of map.values()) {
+      group.distinctDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
     }
 
     return Array.from(map.values());
@@ -315,8 +340,40 @@ export default function MaintenancePage() {
                             </span>
                           </td>
 
-                          {/* Latest Date */}
-                          <td className="py-3 px-4 text-neutral-600">{group.latestDate}</td>
+                          {/* Maintenance Dates */}
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col gap-0.5">
+                              {group.nextScheduledDate && (
+                                <div className="flex items-center gap-1.5 text-amber-700 font-semibold text-[11px]" title="Next scheduled service / maintenance date">
+                                  <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+                                  <span>Next: {group.nextScheduledDate}</span>
+                                </div>
+                              )}
+                              {group.lastCompletedDate && (
+                                <div className="flex items-center gap-1.5 text-neutral-600 text-[11px]" title="Last completed service date">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                  <span>Last: {group.lastCompletedDate}</span>
+                                </div>
+                              )}
+                              {!group.nextScheduledDate && !group.lastCompletedDate && (
+                                <span className="text-neutral-600 font-mono text-[11px]">{group.latestDate}</span>
+                              )}
+                              {group.distinctDates.length > 1 && (
+                                <div className="flex items-center gap-1 flex-wrap mt-0.5" title={`All ${group.distinctDates.length} service dates for this equipment`}>
+                                  {group.distinctDates.slice(0, 2).map((d) => (
+                                    <span key={d} className="px-1.5 py-0.2 rounded bg-neutral-100 text-neutral-600 text-[10px] font-mono">
+                                      {d}
+                                    </span>
+                                  ))}
+                                  {group.distinctDates.length > 2 && (
+                                    <span className="text-[10px] text-neutral-400 font-medium">
+                                      +{group.distinctDates.length - 2} more
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
 
                           {/* Technician */}
                           <td className="py-3 px-4 text-neutral-600">{group.latestTechnician}</td>
