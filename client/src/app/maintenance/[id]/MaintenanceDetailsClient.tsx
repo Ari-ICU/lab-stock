@@ -427,6 +427,13 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
                 </div>
 
                 <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
+                  <div className="text-neutral-400 text-[11px] font-medium">Quantity Serviced</div>
+                  <div className="font-bold text-neutral-900 font-mono">
+                    {item.quantity || 1} {item.unit || 'Units'}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
                   <div className="text-neutral-400 text-[11px] font-medium">Assigned Technician</div>
                   <div className="font-semibold text-neutral-900">{item.technician}</div>
                 </div>

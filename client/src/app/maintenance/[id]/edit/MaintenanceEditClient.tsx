@@ -319,14 +319,6 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
                     </div>
                   </div>
                 </div>
-                      type="text"
-                      value={cost}
-                      onChange={(e) => setCost(e.target.value)}
-                      placeholder="e.g. 45.00"
-                      className={`${inputCls} pl-8 font-mono`}
-                    />
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-800 mb-1">
