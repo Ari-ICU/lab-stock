@@ -530,6 +530,8 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 0,
+    quantity: 24,
+    unit: 'Desktops',
     notes: 'Golden master OS image deployed across all 24 student workstations. Deep Freeze enabled for disk freeze.',
   },
   {
@@ -542,6 +544,8 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 45.0,
+    quantity: 2,
+    unit: 'AC Units',
     notes: 'Bimonthly dust filter wash, evaporator coil sanitizing, and refrigerant pressure test for dual units.',
   },
   {
@@ -554,6 +558,8 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 20.0,
+    quantity: 1,
+    unit: 'Projector',
     notes: 'Laser optical engine cleaned, motorized screen limit switches calibrated, HDMI 2.1 signal verified at 4K.',
   },
   {
@@ -566,6 +572,8 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 150.0,
+    quantity: 5,
+    unit: 'Switches',
     notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 24 port VLAN mappings.',
   },
 ];

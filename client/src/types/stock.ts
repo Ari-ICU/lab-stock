@@ -85,6 +85,8 @@ export interface MockMaintenance {
   imageUrl?: string;
   location?: string;
   cost?: string | number;
+  quantity?: number;
+  unit?: string;
 }
 
 export type RoomType =

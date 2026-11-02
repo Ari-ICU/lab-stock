@@ -138,11 +138,33 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log('✅ Seeded device loans into PostgreSQL.');
     }
 
-    // Ensure maintenance table has image_url, location, cost
+    // Ensure maintenance table has image_url, location, cost, quantity, unit
     await pool.query(`
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS location TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS cost NUMERIC(12, 2);
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'units';
+
+      -- Remove duplicate rows keeping one canonical record per equipment service
+      DELETE FROM maintenance_records a USING maintenance_records b
+      WHERE a.id > b.id
+        AND a.serial_number = b.serial_number
+        AND a.asset_name = b.asset_name
+        AND a.type = b.type;
+
+      -- Set counts per equipment item
+      UPDATE maintenance_records SET quantity = 5, unit = 'Switches'
+      WHERE asset_name ILIKE '%cisco%' OR asset_name ILIKE '%switch%' OR serial_number ILIKE '%FCW%';
+
+      UPDATE maintenance_records SET quantity = 2, unit = 'AC Units'
+      WHERE asset_name ILIKE '%air%' OR asset_name ILIKE '%daikin%' OR serial_number ILIKE '%DKN%';
+
+      UPDATE maintenance_records SET quantity = 24, unit = 'Desktops'
+      WHERE asset_name ILIKE '%optiplex%' OR asset_name ILIKE '%dell%' OR serial_number ILIKE '%OPT-%';
+
+      UPDATE maintenance_records SET quantity = 1, unit = 'Projector'
+      WHERE asset_name ILIKE '%projector%' OR asset_name ILIKE '%epson%' OR serial_number ILIKE '%EPS-%';
 
       -- Backfill realistic photos for maintenance logs based on equipment classification
       UPDATE maintenance_records

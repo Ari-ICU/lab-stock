@@ -14,6 +14,8 @@ export interface MaintenanceRecordDto {
   image_url?: string;
   location?: string;
   cost?: string | number;
+  quantity?: number;
+  unit?: string;
 }
 
 export const maintenanceService = {

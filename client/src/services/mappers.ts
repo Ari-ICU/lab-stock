@@ -179,6 +179,8 @@ export function mapServerMaintenance(m: any): MockMaintenance {
     imageUrl: m.image_url || m.imageUrl || undefined,
     location: m.location || undefined,
     cost: m.cost || undefined,
+    quantity: m.quantity !== undefined && m.quantity !== null ? Number(m.quantity) : 1,
+    unit: m.unit || 'units',
   };
 }
 
@@ -194,6 +196,8 @@ export function toServerMaintenance(m: Partial<MockMaintenance>): Record<string,
     image_url: m.imageUrl,
     location: m.location,
     cost: m.cost,
+    quantity: m.quantity,
+    unit: m.unit,
   };
 }
 
