@@ -51,6 +51,7 @@ export default function MaintenancePage() {
   const router = useRouter();
   const { maintenance, assets, stock, deleteMaintenance } = useStock();
   const [filterText, setFilterText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'In Progress' | 'Pending' | 'Completed'>('all');
   const [viewMode, setViewMode] = useState<'by_item' | 'all_logs'>('by_item');
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
 
@@ -62,13 +63,17 @@ export default function MaintenancePage() {
   const pendingCount = maintenance.filter((m) => m.status === 'Pending').length;
   const completedCount = maintenance.filter((m) => m.status === 'Completed').length;
 
-  const filtered = maintenance.filter(
-    (item) =>
+  const filtered = maintenance.filter((item) => {
+    const matchesSearch =
       item.assetName.toLowerCase().includes(filterText.toLowerCase()) ||
       item.serialNumber.toLowerCase().includes(filterText.toLowerCase()) ||
       item.technician.toLowerCase().includes(filterText.toLowerCase()) ||
-      (item.location && item.location.toLowerCase().includes(filterText.toLowerCase()))
-  );
+      (item.location && item.location.toLowerCase().includes(filterText.toLowerCase()));
+
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const getDisplayImage = (item: Partial<MockMaintenance>) => {
     return resolveMaintenanceImage(item, assets, stock);
@@ -181,9 +186,18 @@ export default function MaintenancePage() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* KPI stats */}
+        {/* KPI stats (Interactive Filters) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white border border-neutral-200 rounded p-4">
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === 'In Progress' ? 'all' : 'In Progress'))}
+            className={`text-left bg-white border rounded p-4 transition-all cursor-pointer ${
+              statusFilter === 'In Progress'
+                ? 'ring-2 ring-blue-500 border-blue-500 shadow-sm bg-blue-50/20'
+                : 'border-neutral-200 hover:border-neutral-300'
+            }`}
+            title="Click to filter by active diagnostics & repairs"
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-neutral-500">In Progress</span>
               <Clock className="w-4 h-4 text-blue-500" />
@@ -191,10 +205,21 @@ export default function MaintenancePage() {
             <div className="text-2xl font-bold text-neutral-900 mt-2">
               {inProgressCount} <span className="text-xs font-normal text-neutral-500">Active</span>
             </div>
-            <div className="text-[11px] text-neutral-500 mt-1">Active diagnostics & hardware work</div>
-          </div>
+            <div className="text-[11px] text-neutral-500 mt-1">
+              {statusFilter === 'In Progress' ? '✓ Showing active diagnostics' : 'Active diagnostics & hardware work'}
+            </div>
+          </button>
 
-          <div className="bg-white border border-neutral-200 rounded p-4">
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === 'Pending' ? 'all' : 'Pending'))}
+            className={`text-left bg-white border rounded p-4 transition-all cursor-pointer ${
+              statusFilter === 'Pending'
+                ? 'ring-2 ring-amber-500 border-amber-500 shadow-sm bg-amber-50/20'
+                : 'border-neutral-200 hover:border-neutral-300'
+            }`}
+            title="Click to filter by scheduled & pending jobs"
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-neutral-500">Scheduled Firmware</span>
               <Wrench className="w-4 h-4 text-amber-500" />
@@ -202,19 +227,32 @@ export default function MaintenancePage() {
             <div className="text-2xl font-bold text-neutral-900 mt-2">
               {pendingCount} <span className="text-xs font-normal text-neutral-500">Pending</span>
             </div>
-            <div className="text-[11px] text-neutral-500 mt-1">Scheduled calibrations & OS patches</div>
-          </div>
+            <div className="text-[11px] text-neutral-500 mt-1">
+              {statusFilter === 'Pending' ? '✓ Showing scheduled calibrations' : 'Scheduled calibrations & OS patches'}
+            </div>
+          </button>
 
-          <div className="bg-white border border-neutral-200 rounded p-4">
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === 'Completed' ? 'all' : 'Completed'))}
+            className={`text-left bg-white border rounded p-4 transition-all cursor-pointer ${
+              statusFilter === 'Completed'
+                ? 'ring-2 ring-emerald-500 border-emerald-500 shadow-sm bg-emerald-50/20'
+                : 'border-neutral-200 hover:border-neutral-300'
+            }`}
+            title="Click to view all old & historical completed records"
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-neutral-500">Completed (Audited)</span>
+              <span className="text-xs font-medium text-neutral-500">Completed (Old Records & Archives)</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
-              {completedCount} <span className="text-xs font-normal text-neutral-500">Verified</span>
+              {completedCount} <span className="text-xs font-normal text-neutral-500">Verified Archives</span>
             </div>
-            <div className="text-[11px] text-neutral-500 mt-1">All service logs signed off</div>
-          </div>
+            <div className="text-[11px] text-neutral-500 mt-1">
+              {statusFilter === 'Completed' ? '✓ Showing completed historical archives' : 'All signed-off past maintenance records'}
+            </div>
+          </button>
         </div>
 
         {/* Main Records Container */}
@@ -232,6 +270,18 @@ export default function MaintenancePage() {
                   className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs"
                 />
               </div>
+
+              {statusFilter !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('all')}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shrink-0"
+                  title="Click to clear filter"
+                >
+                  <span>Filter: {statusFilter === 'Completed' ? 'Old / Completed Records' : statusFilter}</span>
+                  <span className="text-neutral-400 font-normal">✕</span>
+                </button>
+              )}
 
               {/* View Mode Segmented Controls */}
               <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5 shrink-0">
@@ -440,41 +490,60 @@ export default function MaintenancePage() {
                                   </Link>
                                 </div>
                                 <div className="divide-y divide-neutral-100 text-xs">
-                                  {group.logs.map((log) => (
-                                    <div key={log.id} className="py-2 flex items-center justify-between gap-4">
-                                      <div className="flex items-center gap-3">
-                                        <span className="font-mono text-neutral-500 text-[11px]">{log.date}</span>
-                                        <span className="bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded text-[11px] font-medium">
-                                          {log.type}
-                                        </span>
-                                        <span className="text-neutral-700 font-medium">
-                                          Technician: <span className="text-neutral-900">{log.technician}</span>
-                                        </span>
-                                        <span className="text-neutral-500 text-[11px] italic max-w-sm truncate">
-                                          {log.notes || 'Routine service'}
-                                        </span>
+                                  {group.logs
+                                    .slice()
+                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                    .map((log) => (
+                                      <div key={log.id} className="py-2.5 flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                          <span className="font-mono text-neutral-600 font-semibold text-[11px] bg-neutral-100 px-2 py-0.5 rounded">
+                                            {log.date}
+                                          </span>
+                                          <span className="bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded text-[11px] font-medium">
+                                            {log.type}
+                                          </span>
+                                          {log.status === 'Completed' ? (
+                                            <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                              Old / Archived Log
+                                            </span>
+                                          ) : (
+                                            <span className="text-[10px] uppercase font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                                              Active / Scheduled
+                                            </span>
+                                          )}
+                                          <span className="text-neutral-700 font-medium">
+                                            Technician: <span className="text-neutral-900">{log.technician}</span>
+                                          </span>
+                                          {log.cost ? (
+                                            <span className="text-neutral-500 font-mono text-[11px]">
+                                              ${Number(log.cost).toFixed(2)}
+                                            </span>
+                                          ) : null}
+                                          <span className="text-neutral-500 text-[11px] italic max-w-sm truncate">
+                                            {log.notes || 'Routine check completed'}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span
+                                            className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                              log.status === 'Completed'
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                : log.status === 'In Progress'
+                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                            }`}
+                                          >
+                                            {log.status}
+                                          </span>
+                                          <Link
+                                            href={`/maintenance/${log.id}`}
+                                            className="text-neutral-600 hover:text-neutral-900 text-[11px] font-medium px-2 py-1 rounded hover:bg-neutral-100"
+                                          >
+                                            Inspect
+                                          </Link>
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                            log.status === 'Completed'
-                                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                              : log.status === 'In Progress'
-                                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                              : 'bg-amber-50 text-amber-700 border border-amber-200'
-                                          }`}
-                                        >
-                                          {log.status}
-                                        </span>
-                                        <Link
-                                          href={`/maintenance/${log.id}`}
-                                          className="text-neutral-600 hover:text-neutral-900 text-[11px] font-medium px-2 py-1 rounded hover:bg-neutral-100"
-                                        >
-                                          Inspect
-                                        </Link>
-                                      </div>
-                                    </div>
-                                  ))}
+                                    ))}
                                 </div>
                               </div>
                             </td>
