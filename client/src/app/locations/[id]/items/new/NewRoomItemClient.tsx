@@ -15,7 +15,7 @@ type Source = 'stock' | 'asset' | 'custom';
 
 export default function NewRoomItemClient({ id }: { id: string }) {
   const router = useRouter();
-  const { locations, stock, assets, addRoomInventoryItem, updateStockQuantity, showToast } = useStock();
+  const { locations, stock, assets, addRoomInventoryItem, addStockItem, updateStockQuantity, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
@@ -126,8 +126,60 @@ export default function NewRoomItemClient({ id }: { id: string }) {
     }
 
     setSubmitting(true);
+
+    let linkedStockId: string | undefined = undefined;
+
+    if (source === 'stock') {
+      linkedStockId = selectedStock?.id;
+    } else if (source === 'custom') {
+      // Find if an item with the same name already exists in Central Stock
+      const existingStock = stock.find(
+        (s) => s.name.trim().toLowerCase() === name.trim().toLowerCase()
+      );
+
+      if (existingStock) {
+        linkedStockId = existingStock.id;
+      } else {
+        // Automatically register new item in Central Stock (/stock)
+        const prefix =
+          group === 'FURNITURE'
+            ? 'FURN'
+            : group === 'ELECTRICAL'
+            ? 'ELEC'
+            : group === 'IT_HARDWARE'
+            ? 'IT'
+            : 'SAFE';
+        const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
+        const randId = Math.floor(100 + Math.random() * 900);
+        const generatedCode = `${prefix}-${cleanName || 'ITEM'}-${randId}`;
+
+        const categoryLabel =
+          group === 'FURNITURE'
+            ? 'Department Furniture & Seating'
+            : group === 'ELECTRICAL'
+            ? 'Electrical & HVAC'
+            : group === 'IT_HARDWARE'
+            ? 'Lab & IT Hardware'
+            : 'Safety & Miscellaneous';
+
+        const createdStock = addStockItem({
+          name: name.trim(),
+          code: generatedCode,
+          category: categoryLabel,
+          quantity: totalAllocated,
+          unit: unit.trim() || 'pcs',
+          location: `${loc.name} (${loc.room})`,
+          rack: `Room ${loc.room.replace(/^(rm|room)\s*/i, '')} Storage`,
+          expiryDate: 'Active',
+          description: brandSpec.trim() || remarks.trim() || `Allocated in ${loc.name} (${loc.room})`,
+        });
+
+        linkedStockId = createdStock.id;
+      }
+    }
+
     addRoomInventoryItem(loc.id, {
-      stockItemId: source === 'stock' ? selectedStock?.id : undefined,
+      stockItemId: linkedStockId,
       assetId: source === 'asset' ? selectedAsset?.id : undefined,
       name: name.trim(),
       group,
@@ -142,6 +194,8 @@ export default function NewRoomItemClient({ id }: { id: string }) {
     if (source === 'stock' && selectedStock) {
       updateStockQuantity(selectedStock.code, -totalAllocated);
       showToast(`Allocated ${totalAllocated} ${unit} of "${name}" from Central Stock to ${loc.room}`, 'success');
+    } else if (source === 'custom') {
+      showToast(`Added "${name}" to ${loc.room} and registered in Central Stock`, 'success');
     } else {
       showToast(`Added "${name}" to ${loc.room}`, 'success');
     }
@@ -261,8 +315,9 @@ export default function NewRoomItemClient({ id }: { id: string }) {
               )}
 
               {source === 'custom' && (
-                <p className="text-[11px] text-neutral-500">
-                  Custom items are registered in this room only and are not deducted from Central Stock.
+                <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded px-2.5 py-1.5 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <span>Custom items will be added to this room and automatically registered in Central Stock (<code className="font-mono font-semibold">/stock</code>).</span>
                 </p>
               )}
             </div>
@@ -387,6 +442,18 @@ export default function NewRoomItemClient({ id }: { id: string }) {
                   {exceedsStock && (
                     <p className="text-[11px] text-rose-700 mt-2">Not enough units in Central Stock.</p>
                   )}
+                </div>
+              )}
+
+              {source === 'custom' && (
+                <div className="p-3 rounded border bg-emerald-50/80 border-emerald-200 text-emerald-950">
+                  <div className="font-semibold text-emerald-900 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span>Auto-register in Central Stock</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800 mt-1 leading-relaxed">
+                    Will automatically create an inventory item in Central Stock (<span className="font-mono font-semibold">/stock</span>) and link it directly to {loc.room}.
+                  </p>
                 </div>
               )}
 
