@@ -29,6 +29,7 @@ import {
   Laptop,
   Boxes,
 } from 'lucide-react';
+import { resolveMaintenanceImage } from '../shared';
 
 export default function MaintenanceDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
@@ -64,7 +65,7 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
     );
   }, [item, stock]);
 
-  const displayImage = item?.imageUrl || matchedAsset?.imageUrl || matchedStock?.imageUrl;
+  const displayImage = item ? resolveMaintenanceImage(item, assets, stock) : '';
 
   if (!item) {
     return (

@@ -10,6 +10,7 @@ import { Wrench, CheckCircle2, Clock, Search } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { MockMaintenance } from '@/types/stock';
+import { resolveMaintenanceImage } from './shared';
 
 export default function MaintenancePage() {
   const router = useRouter();
@@ -29,19 +30,7 @@ export default function MaintenancePage() {
   );
 
   const getDisplayImage = (item: MockMaintenance) => {
-    if (item.imageUrl) return item.imageUrl;
-    const assetMatch = assets.find(
-      (a) =>
-        (item.serialNumber && a.serialNumber.toLowerCase() === item.serialNumber.toLowerCase()) ||
-        (item.assetName && a.name.toLowerCase() === item.assetName.toLowerCase())
-    );
-    if (assetMatch?.imageUrl) return assetMatch.imageUrl;
-    const stockMatch = stock.find(
-      (s) =>
-        (item.serialNumber && s.code.toLowerCase() === item.serialNumber.toLowerCase()) ||
-        (item.assetName && s.name.toLowerCase() === item.assetName.toLowerCase())
-    );
-    return stockMatch?.imageUrl;
+    return resolveMaintenanceImage(item, assets, stock);
   };
 
   const handleExport = () => {

@@ -143,6 +143,27 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS location TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS cost NUMERIC(12, 2);
+
+      -- Backfill realistic photos for maintenance logs based on equipment classification
+      UPDATE maintenance_records
+      SET image_url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80'
+      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%switch%' OR asset_name ILIKE '%cisco%' OR asset_name ILIKE '%catalyst%');
+
+      UPDATE maintenance_records
+      SET image_url = 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80'
+      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%air%' OR asset_name ILIKE '%daikin%' OR asset_name ILIKE '%conditioner%' OR asset_name ILIKE '%hvac%');
+
+      UPDATE maintenance_records
+      SET image_url = 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80'
+      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%projector%' OR asset_name ILIKE '%epson%' OR asset_name ILIKE '%laser%');
+
+      UPDATE maintenance_records
+      SET image_url = 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80'
+      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%dell%' OR asset_name ILIKE '%optiplex%' OR asset_name ILIKE '%desktop%' OR asset_name ILIKE '%workstation%');
+
+      UPDATE maintenance_records
+      SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+      WHERE (image_url IS NULL OR image_url = '');
     `);
 
     // Ensure maintenance records are populated in PostgreSQL

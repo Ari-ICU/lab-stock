@@ -28,6 +28,7 @@ import {
   MAINTENANCE_TYPES,
   MAINTENANCE_STATUS_OPTIONS,
   DEFAULT_MAINTENANCE_PRESETS,
+  resolveMaintenanceImage,
 } from '../shared';
 
 export default function MaintenanceCreateClient() {
@@ -114,7 +115,7 @@ export default function MaintenanceCreateClient() {
       technician: technician.trim(),
       status,
       notes: notes.trim() || 'Service and diagnostic checks performed.',
-      imageUrl: imageUrl.trim() || undefined,
+      imageUrl: imageUrl.trim() || resolveMaintenanceImage({ assetName, serialNumber }, assets, stock),
       location: location.trim() || undefined,
       cost: cost.trim() ? Number(cost) || cost.trim() : undefined,
     });

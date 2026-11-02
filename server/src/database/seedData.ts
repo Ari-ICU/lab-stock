@@ -527,6 +527,9 @@ export const seedMaintenance = [
     date: '2026-10-25',
     technician: 'Thoeurn Ratha',
     status: 'Completed',
+    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    location: 'Computer & Network Lab 102B',
+    cost: 0,
     notes: 'Golden master OS image deployed across all 24 student workstations. Deep Freeze enabled for disk freeze.',
   },
   {
@@ -536,6 +539,9 @@ export const seedMaintenance = [
     date: '2026-11-02',
     technician: 'HVAC Maintenance Team',
     status: 'In Progress',
+    image_url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+    location: 'Computer & Network Lab 102B',
+    cost: 45.0,
     notes: 'Bimonthly dust filter wash, evaporator coil sanitizing, and refrigerant pressure test for dual units.',
   },
   {
@@ -545,6 +551,9 @@ export const seedMaintenance = [
     date: '2026-10-20',
     technician: 'Audio-Visual Staff',
     status: 'Completed',
+    image_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
+    location: 'Computer & Network Lab 102B',
+    cost: 20.0,
     notes: 'Laser optical engine cleaned, motorized screen limit switches calibrated, HDMI 2.1 signal verified at 4K.',
   },
   {
@@ -554,6 +563,9 @@ export const seedMaintenance = [
     date: '2026-11-15',
     technician: 'Cisco TAC Support',
     status: 'Pending',
+    image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    location: 'Computer & Network Lab 102B',
+    cost: 150.0,
     notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 24 port VLAN mappings.',
   },
 ];

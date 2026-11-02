@@ -27,6 +27,7 @@ import {
   MAINTENANCE_TYPES,
   MAINTENANCE_STATUS_OPTIONS,
   DEFAULT_MAINTENANCE_PRESETS,
+  resolveMaintenanceImage,
 } from '../../shared';
 
 export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
@@ -34,7 +35,7 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { maintenance, updateMaintenance, deleteMaintenance, showToast } = useStock();
+  const { maintenance, assets, stock, updateMaintenance, deleteMaintenance, showToast } = useStock();
   const { user } = useAuth();
 
   const item = maintenance.find((m) => m.id === id || String(m.id) === String(id));
@@ -63,7 +64,7 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
       setLocation(item.location || '');
       setCost(item.cost ? String(item.cost) : '');
       setNotes(item.notes || '');
-      setImageUrl(item.imageUrl || '');
+      setImageUrl(item.imageUrl || resolveMaintenanceImage(item, assets, stock));
     }
   }, [item]);
 
