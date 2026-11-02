@@ -211,7 +211,7 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
         {/* Top Summary Banner */}
         <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           <div className="flex items-start gap-4">

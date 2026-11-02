@@ -173,11 +173,11 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-5xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left 7 Cols: Form Inputs */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* Left 8 Cols: Form Inputs */}
+            <div className="lg:col-span-8 space-y-6">
               <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <Wrench className="w-4 h-4 text-neutral-700" />
@@ -334,8 +334,8 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
               </div>
             </div>
 
-            {/* Right 5 Cols: Image Upload & Presets */}
-            <div className="lg:col-span-5 space-y-6">
+            {/* Right 4 Cols: Image Upload & Presets */}
+            <div className="lg:col-span-4 space-y-6">
               <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="border-b border-neutral-100 pb-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">

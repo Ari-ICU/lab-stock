@@ -150,7 +150,7 @@ export default function MaintenanceCreateClient() {
         showExport={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-5xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Quick Select Banner */}
           <div className="bg-white border border-neutral-200 rounded-lg p-4 sm:p-5 shadow-2xs space-y-3">
