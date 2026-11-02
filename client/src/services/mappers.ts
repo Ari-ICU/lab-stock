@@ -176,6 +176,9 @@ export function mapServerMaintenance(m: any): MockMaintenance {
     technician: m.technician || 'Technician',
     status: (m.status as MockMaintenance['status']) || 'Pending',
     notes: m.notes || '',
+    imageUrl: m.image_url || m.imageUrl || undefined,
+    location: m.location || undefined,
+    cost: m.cost || undefined,
   };
 }
 
@@ -188,6 +191,9 @@ export function toServerMaintenance(m: Partial<MockMaintenance>): Record<string,
     technician: m.technician,
     status: m.status,
     notes: m.notes,
+    image_url: m.imageUrl,
+    location: m.location,
+    cost: m.cost,
   };
 }
 

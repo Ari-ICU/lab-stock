@@ -74,13 +74,17 @@ export interface MockRack {
 
 export interface MockMaintenance {
   id: string;
+  serverId?: string;
   assetName: string;
   serialNumber: string;
-  type: 'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement';
+  type: 'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement' | 'Routine Inspection' | 'Preventive Maintenance' | string;
   date: string;
   technician: string;
   status: 'Completed' | 'Pending' | 'In Progress';
   notes: string;
+  imageUrl?: string;
+  location?: string;
+  cost?: string | number;
 }
 
 export type RoomType =

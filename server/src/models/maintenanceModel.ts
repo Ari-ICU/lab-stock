@@ -10,6 +10,9 @@ export interface MaintenanceRecord {
   technician: string;
   status: 'Completed' | 'Pending' | 'In Progress';
   notes?: string;
+  image_url?: string | null;
+  location?: string | null;
+  cost?: string | number | null;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -44,8 +47,8 @@ export const maintenanceModel = {
 
   async create(data: Omit<MaintenanceRecord, 'id' | 'created_at' | 'updated_at'>): Promise<MaintenanceRecord> {
     const res = await query(
-      `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes, image_url, location, cost)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         data.asset_id || null,
@@ -56,6 +59,9 @@ export const maintenanceModel = {
         data.technician,
         data.status || 'Pending',
         data.notes || null,
+        data.image_url || null,
+        data.location || null,
+        data.cost || null,
       ]
     );
     return res.rows[0];
@@ -93,6 +99,18 @@ export const maintenanceModel = {
     if (data.notes !== undefined) {
       fields.push(`notes = $${idx++}`);
       values.push(data.notes);
+    }
+    if (data.image_url !== undefined) {
+      fields.push(`image_url = $${idx++}`);
+      values.push(data.image_url);
+    }
+    if (data.location !== undefined) {
+      fields.push(`location = $${idx++}`);
+      values.push(data.location);
+    }
+    if (data.cost !== undefined) {
+      fields.push(`cost = $${idx++}`);
+      values.push(data.cost);
     }
 
     if (fields.length === 0) return this.findById(id);

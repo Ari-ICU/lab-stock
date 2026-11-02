@@ -1,14 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Wrench, CheckCircle2, Clock, Search } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
+import { LabThumbnail } from '@/components/LabThumbnail';
+import { MockMaintenance } from '@/types/stock';
 
 export default function MaintenancePage() {
-  const { maintenance, openModal, showToast, openDetails, openEdit, deleteMaintenance } = useStock();
+  const router = useRouter();
+  const { maintenance, assets, stock, deleteMaintenance } = useStock();
   const [filterText, setFilterText] = useState('');
 
   const inProgressCount = maintenance.filter((m) => m.status === 'In Progress').length;
@@ -19,8 +24,25 @@ export default function MaintenancePage() {
     (item) =>
       item.assetName.toLowerCase().includes(filterText.toLowerCase()) ||
       item.serialNumber.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.technician.toLowerCase().includes(filterText.toLowerCase())
+      item.technician.toLowerCase().includes(filterText.toLowerCase()) ||
+      (item.location && item.location.toLowerCase().includes(filterText.toLowerCase()))
   );
+
+  const getDisplayImage = (item: MockMaintenance) => {
+    if (item.imageUrl) return item.imageUrl;
+    const assetMatch = assets.find(
+      (a) =>
+        (item.serialNumber && a.serialNumber.toLowerCase() === item.serialNumber.toLowerCase()) ||
+        (item.assetName && a.name.toLowerCase() === item.assetName.toLowerCase())
+    );
+    if (assetMatch?.imageUrl) return assetMatch.imageUrl;
+    const stockMatch = stock.find(
+      (s) =>
+        (item.serialNumber && s.code.toLowerCase() === item.serialNumber.toLowerCase()) ||
+        (item.assetName && s.name.toLowerCase() === item.assetName.toLowerCase())
+    );
+    return stockMatch?.imageUrl;
+  };
 
   const handleExport = () => {
     exportToCsv(
@@ -29,9 +51,11 @@ export default function MaintenancePage() {
         'Log ID': m.id,
         'Equipment Name': m.assetName,
         'Serial Number': m.serialNumber,
+        'Location': m.location || 'Central Facility',
         'Service Type': m.type,
         'Service Date': m.date,
         'Assigned Technician': m.technician,
+        'Service Cost ($)': m.cost || 0,
         'Service Status': m.status,
         'Diagnostic Notes & Findings': m.notes || 'Routine check completed',
       }))
@@ -44,7 +68,7 @@ export default function MaintenancePage() {
         title="Maintenance & Audits"
         subtitle="Firmware Upgrades & Calibration Logs"
         actionLabel="Schedule Service"
-        onAction={() => openModal('add_maintenance')}
+        onAction={() => router.push('/maintenance/create')}
         onExport={handleExport}
       />
 
@@ -57,7 +81,7 @@ export default function MaintenancePage() {
               <Clock className="w-4 h-4 text-blue-500" />
             </div>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
-              {inProgressCount} <span className="text-xs font-normal text-neutral-500">{inProgressCount === 1 ? 'Active' : 'Active'}</span>
+              {inProgressCount} <span className="text-xs font-normal text-neutral-500">Active</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-1">Active diagnostics & hardware work</div>
           </div>
@@ -68,7 +92,7 @@ export default function MaintenancePage() {
               <Wrench className="w-4 h-4 text-amber-500" />
             </div>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
-              {pendingCount} <span className="text-xs font-normal text-neutral-500">{pendingCount === 1 ? 'Pending' : 'Pending'}</span>
+              {pendingCount} <span className="text-xs font-normal text-neutral-500">Pending</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-1">Scheduled calibrations & OS patches</div>
           </div>
@@ -79,7 +103,7 @@ export default function MaintenancePage() {
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             </div>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
-              {completedCount} <span className="text-xs font-normal text-neutral-500">{completedCount === 1 ? 'Verified' : 'Verified'}</span>
+              {completedCount} <span className="text-xs font-normal text-neutral-500">Verified</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-1">All service logs signed off</div>
           </div>
@@ -104,9 +128,10 @@ export default function MaintenancePage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[640px]">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                 <tr>
+                  <th className="py-3 px-3 w-14 text-center">Visual</th>
                   <th className="py-3 px-4">Instrument</th>
                   <th className="py-3 px-4">Serial Number</th>
                   <th className="py-3 px-4">Service Type</th>
@@ -120,13 +145,31 @@ export default function MaintenancePage() {
               <tbody className="divide-y divide-neutral-100">
                 {filtered.map((item) => (
                   <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors">
+                    <td className="py-3 px-3 w-14 text-center">
+                      <Link
+                        href={`/maintenance/${item.id}`}
+                        className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors inline-block"
+                        title="Click to view maintenance details"
+                      >
+                        <LabThumbnail
+                          src={getDisplayImage(item)}
+                          alt={item.assetName}
+                          size="thumb"
+                          fallbackType="item"
+                          className="w-full h-full object-cover"
+                        />
+                      </Link>
+                    </td>
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => openDetails(item)}
-                        className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
+                      <Link
+                        href={`/maintenance/${item.id}`}
+                        className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors block"
                       >
                         {item.assetName}
-                      </button>
+                      </Link>
+                      {item.location && (
+                        <div className="text-[11px] text-neutral-400 mt-0.5">{item.location}</div>
+                      )}
                     </td>
                     <td className="py-3 px-4 font-mono text-neutral-600">{item.serialNumber}</td>
                     <td className="py-3 px-4">
@@ -152,8 +195,8 @@ export default function MaintenancePage() {
                     <td className="py-3 px-4 text-neutral-500 max-w-xs truncate">{item.notes}</td>
                     <td className="py-3 px-4 text-right">
                       <RowActionMenu
-                        onViewDetails={() => openDetails(item)}
-                        onEdit={() => openEdit(item)}
+                        onViewDetails={() => router.push(`/maintenance/${item.id}`)}
+                        onEdit={() => router.push(`/maintenance/${item.id}/edit`)}
                         onDelete={() => deleteMaintenance(item.id)}
                       />
                     </td>

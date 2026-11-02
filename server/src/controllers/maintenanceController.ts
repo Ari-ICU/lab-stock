@@ -42,7 +42,7 @@ export async function getMaintenanceById(req: Request, res: Response) {
 
 export async function createMaintenanceRecord(req: Request, res: Response) {
   try {
-    const { asset_id, asset_name, serial_number, type, date, technician, status, notes } = req.body;
+    const { asset_id, asset_name, serial_number, type, date, technician, status, notes, image_url, location, cost } = req.body;
     if (!asset_name || !serial_number || !type || !technician) {
       return res.status(400).json({
         success: false,
@@ -59,6 +59,9 @@ export async function createMaintenanceRecord(req: Request, res: Response) {
       technician,
       status: status || 'Pending',
       notes,
+      image_url,
+      location,
+      cost,
     });
 
     return res.status(201).json({

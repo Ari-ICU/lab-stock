@@ -213,24 +213,6 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Network Lab Status Notice */}
-        <div className="p-3 border-t border-neutral-100">
-          <div className="bg-neutral-50 border border-neutral-200 rounded p-2.5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold text-neutral-700">Faculty Lab Fleet</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            </div>
-            <p className="text-[11px] text-neutral-800 font-semibold">{locations.length} Connected Labs</p>
-            <div className="mt-1 text-[10px] text-neutral-500">
-              {assets.length} Hardware Assets • {stock.length} Peripheral Items
-            </div>
-            <div className="mt-2 text-[10px] text-neutral-400 flex items-center justify-between">
-              <span>Campus Backbone</span>
-              <span className="text-emerald-700 font-medium">All Online</span>
-            </div>
-          </div>
-        </div>
-
         {/* User Footer */}
         <div className="p-3 border-t border-neutral-200 flex items-center justify-between" suppressHydrationWarning>
           <div className="flex items-center gap-2.5 min-w-0">

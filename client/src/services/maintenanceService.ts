@@ -11,6 +11,9 @@ export interface MaintenanceRecordDto {
   technician: string;
   status: 'Completed' | 'Pending' | 'In Progress';
   notes?: string;
+  image_url?: string;
+  location?: string;
+  cost?: string | number;
 }
 
 export const maintenanceService = {

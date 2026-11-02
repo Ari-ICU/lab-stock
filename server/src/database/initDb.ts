@@ -138,6 +138,13 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log('✅ Seeded device loans into PostgreSQL.');
     }
 
+    // Ensure maintenance table has image_url, location, cost
+    await pool.query(`
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS image_url TEXT;
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS location TEXT;
+      ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS cost NUMERIC(12, 2);
+    `);
+
     // Ensure maintenance records are populated in PostgreSQL
     const maintCountRes = await pool.query('SELECT COUNT(*)::int as count FROM maintenance_records');
     const maintCount = maintCountRes.rows[0]?.count || 0;
