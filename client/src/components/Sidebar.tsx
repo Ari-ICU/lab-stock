@@ -62,6 +62,14 @@ export function Sidebar() {
   const { user, managedUsers, logout } = useAuth();
 
   const activeLoansCount = loans ? loans.filter((l) => l.status === 'active').length : 0;
+  const uniqueMaintenanceCount = React.useMemo(() => {
+    const keys = new Set(
+      maintenance.map(
+        (m) => `${(m.assetName || '').trim().toLowerCase()}__${(m.serialNumber || '').trim().toLowerCase()}`
+      )
+    );
+    return keys.size;
+  }, [maintenance]);
 
   return (
     <>
@@ -175,7 +183,7 @@ export function Sidebar() {
                 : item.href === '/loans'
                 ? (activeLoansCount > 0 ? activeLoansCount : undefined)
                 : item.href === '/maintenance'
-                ? maintenance.length
+                ? uniqueMaintenanceCount
                 : item.href === '/locations'
                 ? locations.length
                 : item.href === '/users'
