@@ -518,3 +518,4 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
     </div>
   );
 }
+

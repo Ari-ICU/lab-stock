@@ -41,3 +41,4 @@ export const DEFAULT_MAINTENANCE_PRESETS = [
     imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
   },
 ];
+

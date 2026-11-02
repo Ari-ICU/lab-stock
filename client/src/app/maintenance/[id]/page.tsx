@@ -12,3 +12,4 @@ export default async function MaintenanceDetailsPage({ params }: Props) {
   const { id } = await params;
   return <MaintenanceDetailsClient id={id} />;
 }
+

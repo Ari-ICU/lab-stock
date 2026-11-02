@@ -12,3 +12,4 @@ export default async function MaintenanceEditPage({ params }: Props) {
   const { id } = await params;
   return <MaintenanceEditClient id={id} />;
 }
+
