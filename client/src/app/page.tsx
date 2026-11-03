@@ -502,7 +502,7 @@ export default function DashboardPage() {
                           {asset.status === 'operational'
                             ? 'Operational'
                             : asset.status === 'in_use'
-                            ? 'In Production'
+                            ? 'In Use'
                             : 'Maintenance'}
                         </span>
                       )}

@@ -55,10 +55,12 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
 
   const statusBadge =
     percent === 100
-      ? { text: '100% Operational', cls: 'bg-emerald-50 text-emerald-800 border-emerald-200', dot: 'bg-emerald-500' }
-      : percent >= 70
-      ? { text: `${percent}% Usable`, cls: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500' }
-      : { text: `${percent}% Usable`, cls: 'bg-rose-50 text-rose-800 border-rose-200', dot: 'bg-rose-500' };
+      ? { text: 'Operational', cls: 'bg-emerald-50 text-emerald-800 border-emerald-200', dot: 'bg-emerald-500' }
+      : total > 0 && item.qtyBroken === total
+      ? { text: 'Broken', cls: 'bg-rose-50 text-rose-800 border-rose-200', dot: 'bg-rose-500' }
+      : total > 0 && (item.qtyMaintenance || 0) === total
+      ? { text: 'In Repair', cls: 'bg-blue-50 text-blue-800 border-blue-200', dot: 'bg-blue-500' }
+      : { text: `${item.qtyBroken} Broken`, cls: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500' };
 
   const handleDelete = () => {
     deleteRoomInventoryItem(loc.id, item.id);

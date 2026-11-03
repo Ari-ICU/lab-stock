@@ -28,9 +28,9 @@ import {
 } from 'lucide-react';
 
 const statusOptions = [
-  { label: 'Operational (Ready for use)', value: 'operational' },
-  { label: 'In Production (Active in lab)', value: 'in_use' },
-  { label: 'Maintenance / Servicing', value: 'maintenance' },
+  { label: 'Operational', value: 'operational' },
+  { label: 'In Use', value: 'in_use' },
+  { label: 'Maintenance', value: 'maintenance' },
 ];
 
 export default function EditAssetClient({ id: propId }: { id?: string }) {
@@ -527,7 +527,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
                     {status === 'operational'
                       ? 'Operational'
                       : status === 'in_use'
-                      ? 'In Production'
+                      ? 'In Use'
                       : 'Maintenance'}
                   </span>
                 </div>

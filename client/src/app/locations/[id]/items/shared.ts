@@ -26,9 +26,9 @@ export const categoryGroupOptions = [
 ];
 
 export const conditionStatusOptions = [
-  { label: '100% Operational', value: 'operational' },
-  { label: 'Defective / Needs Repair', value: 'defective' },
-  { label: 'Under Maintenance / Service', value: 'maintenance' },
+  { label: 'Operational', value: 'operational' },
+  { label: 'Broken', value: 'defective' },
+  { label: 'In Repair', value: 'maintenance' },
 ];
 
 export function getCategoryLabel(group: AssetGroup | string) {

@@ -632,7 +632,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 cursor-pointer'
                   }`}
                 >
-                  In Production
+                  In Use
                 </button>
                 <button
                   type="button"
@@ -646,7 +646,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 cursor-pointer'
                   }`}
                 >
-                  Under Maintenance
+                  Maintenance
                 </button>
               </div>
             </div>

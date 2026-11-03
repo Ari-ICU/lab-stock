@@ -221,7 +221,7 @@ export default function AssetsPage() {
                               {asset.status === 'operational'
                                 ? 'Operational'
                                 : asset.status === 'in_use'
-                                ? 'In Production'
+                                ? 'In Use'
                                 : 'Maintenance'}
                             </span>
                             {asset.loanStatus === 'on_loan' && (

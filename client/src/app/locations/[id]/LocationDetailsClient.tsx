@@ -62,9 +62,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   ];
 
   const conditionOptions: DropdownOption[] = [
-    { label: 'All Conditions', value: 'all' },
-    { label: '100% Operational', value: 'operational' },
-    { label: 'Defective / Needs Repair', value: 'defective' },
+    { label: 'All Equipment', value: 'all' },
+    { label: 'Operational', value: 'operational' },
+    { label: 'Broken', value: 'defective' },
+    { label: 'In Repair', value: 'maintenance' },
   ];
 
   const getCategoryIcon = (group: AssetGroup) => {
@@ -388,7 +389,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
             }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${inventorySummary.totalBroken > 0 ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
-            {inventorySummary.totalBroken > 0 ? `${inventorySummary.totalBroken} Defective` : 'All Operational'}
+            {inventorySummary.totalBroken > 0 ? `${inventorySummary.totalBroken} Broken` : 'All Operational'}
           </span>
           <span className="text-neutral-300 hidden sm:inline">|</span>
           <span className="text-xs text-neutral-500">
