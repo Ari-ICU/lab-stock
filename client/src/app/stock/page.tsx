@@ -312,7 +312,6 @@ export default function StockPage() {
                   <th className="py-3 px-4">Part / SKU</th>
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4 text-center">Count / Qty</th>
-                  <th className="py-3 px-4">Department Location</th>
                   <th className="py-3 px-4">Warranty / Note</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
@@ -321,7 +320,7 @@ export default function StockPage() {
               <tbody className="divide-y divide-neutral-100">
                 {filteredStock.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-8 text-center text-neutral-500">
+                    <td colSpan={8} className="py-8 text-center text-neutral-500">
                       No department inventory items found matching your filter criteria.
                     </td>
                   </tr>
@@ -354,6 +353,11 @@ export default function StockPage() {
                           >
                             {item.name}
                           </Link>
+                          {item.rack && (
+                            <div className="text-[11px] text-neutral-400 font-normal truncate max-w-sm mt-0.5" title={item.rack}>
+                              {item.rack}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-4 font-mono text-neutral-600">
                           <Link
@@ -378,8 +382,11 @@ export default function StockPage() {
                                   {grandTotal} {item.unit || 'Units'}
                                 </span>
                                 {alloc.total > 0 ? (
-                                  <span className="text-[10px] text-neutral-500 font-medium mt-0.5 whitespace-nowrap">
-                                    {item.quantity} depot + {alloc.total} in rooms
+                                  <span
+                                    className="text-[10px] text-emerald-700 font-medium mt-0.5 whitespace-nowrap cursor-help"
+                                    title={alloc.roomBreakdown.map((r) => `${r.room}: ${r.qty}`).join(', ')}
+                                  >
+                                    {item.quantity} depot • {alloc.total} in {alloc.roomBreakdown.length} {alloc.roomBreakdown.length === 1 ? 'room' : 'rooms'}
                                   </span>
                                 ) : (
                                   <span className="text-[10px] text-neutral-400 font-mono mt-0.5 whitespace-nowrap">
@@ -389,27 +396,6 @@ export default function StockPage() {
                               </div>
                             );
                           })()}
-                        </td>
-                        <td className="py-3 px-4 text-neutral-600">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-medium text-neutral-900">{item.location}</span>
-                            {(() => {
-                              const alloc = allocatedMap[item.id];
-                              if (alloc && alloc.total > 0) {
-                                const tooltip = alloc.roomBreakdown.map((r) => `${r.room}: ${r.qty}`).join(', ');
-                                return (
-                                  <span
-                                    className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200"
-                                    title={tooltip}
-                                  >
-                                    +{alloc.total} in {alloc.roomBreakdown.length} {alloc.roomBreakdown.length === 1 ? 'room' : 'rooms'}
-                                  </span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                          <div className="text-[11px] text-neutral-400 font-mono mt-0.5">{item.rack}</div>
                         </td>
                         <td className="py-3 px-4 text-neutral-500 text-[11px]">{item.expiryDate}</td>
                         <td className="py-3 px-4">
