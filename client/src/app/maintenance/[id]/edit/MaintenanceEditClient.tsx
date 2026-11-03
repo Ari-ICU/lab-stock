@@ -30,7 +30,6 @@ import {
 import {
   MAINTENANCE_TYPES,
   MAINTENANCE_STATUS_OPTIONS,
-  DEFAULT_MAINTENANCE_PRESETS,
   resolveMaintenanceImage,
 } from '../../shared';
 
@@ -580,27 +579,6 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
                   onChange={setImageUrl}
                   label="Service / Equipment Photo"
                 />
-
-                <div className="space-y-2 pt-2 border-t border-neutral-100">
-                  <div className="text-[11px] font-semibold text-neutral-700">Quick Presets:</div>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {DEFAULT_MAINTENANCE_PRESETS.map((p, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setImageUrl(p.imageUrl)}
-                        className={`text-left text-xs p-2 rounded border flex items-center gap-2 transition-all cursor-pointer ${
-                          imageUrl === p.imageUrl
-                            ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold'
-                            : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-neutral-100'
-                        }`}
-                      >
-                        <img src={p.imageUrl} alt={p.name} className="w-8 h-8 rounded object-cover shrink-0" />
-                        <span className="truncate">{p.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* Form Action Controls */}
