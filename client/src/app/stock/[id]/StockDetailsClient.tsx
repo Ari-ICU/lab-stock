@@ -653,7 +653,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                                   return (
                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                      Defective
+                                      Broken
                                     </span>
                                   );
                                 }
@@ -671,7 +671,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                                     title={`${working} working, ${broken} broken, ${maintenance} in repair`}
                                   >
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                    {broken > 0 ? `${broken} Defective` : `${maintenance} In Repair`}
+                                    {broken > 0 ? `${broken} Broken` : `${maintenance} In Repair`}
                                   </span>
                                 );
                               })()}
