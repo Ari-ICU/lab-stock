@@ -139,6 +139,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
 
       if (existingStock) {
         linkedStockId = existingStock.id;
+        updateStockQuantity(existingStock.id, -totalAllocated);
       } else {
         // Automatically register new item in Central Stock (/stock)
         const prefix =
@@ -192,7 +193,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
     });
 
     if (source === 'stock' && selectedStock) {
-      updateStockQuantity(selectedStock.code, -totalAllocated);
+      updateStockQuantity(selectedStock.id, -totalAllocated);
       showToast(`Allocated ${totalAllocated} ${unit} of "${name}" from Central Stock to ${loc.room}`, 'success');
     } else if (source === 'custom') {
       showToast(`Added "${name}" to ${loc.room} and registered in Central Stock`, 'success');

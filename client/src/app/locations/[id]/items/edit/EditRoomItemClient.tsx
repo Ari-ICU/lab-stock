@@ -22,7 +22,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get('item') || '';
-  const { locations, stock, assets, updateRoomInventoryItem, deleteRoomInventoryItem, showToast } = useStock();
+  const { locations, stock, assets, updateRoomInventoryItem, deleteRoomInventoryItem, updateStockQuantity, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
@@ -119,6 +119,11 @@ export default function EditRoomItemClient({ id }: { id: string }) {
       return;
     }
     setSubmitting(true);
+
+    const prevTotal = (item.qtyWorking || 0) + (item.qtyBroken || 0) + (item.qtyMaintenance || 0);
+    const newTotal = qtyWorking + qtyBroken + qtyMaintenance;
+    const diff = newTotal - prevTotal;
+
     updateRoomInventoryItem(loc.id, item.id, {
       name: name.trim(),
       group,
@@ -129,10 +134,18 @@ export default function EditRoomItemClient({ id }: { id: string }) {
       qtyMaintenance,
       remarks: remarks.trim(),
     });
+
+    if (linkedStock && diff !== 0) {
+      updateStockQuantity(linkedStock.id, -diff);
+    }
+
     setTimeout(() => router.push(viewHref), 200);
   };
 
   const handleDelete = () => {
+    if (linkedStock && total > 0) {
+      updateStockQuantity(linkedStock.id, total);
+    }
     deleteRoomInventoryItem(loc.id, item.id);
     showToast(`Removed "${item.name}" from ${loc.room}`, 'info');
     router.push(backHref);

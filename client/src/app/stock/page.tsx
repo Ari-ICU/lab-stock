@@ -374,13 +374,12 @@ export default function StockPage() {
                         <td className="py-3 px-4 text-center">
                           {(() => {
                             const alloc = allocatedMap[item.id] || { total: 0, roomBreakdown: [] };
-                            const grandTotal = item.quantity + alloc.total;
                             return (
                               <span
                                 className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono"
-                                title={alloc.total > 0 ? `${item.quantity} in depot + ${alloc.total} in ${alloc.roomBreakdown.length} rooms` : undefined}
+                                title={alloc.total > 0 ? `${item.quantity} in stock + ${alloc.total} deployed across ${alloc.roomBreakdown.length} rooms` : undefined}
                               >
-                                {grandTotal} {item.unit || 'Units'}
+                                {item.quantity} {item.unit || 'Units'}
                               </span>
                             );
                           })()}
