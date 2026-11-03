@@ -52,31 +52,92 @@ export default function StockPage() {
     ];
   }, [stock]);
 
-  // Aggregate Department Furniture & Equipment Counts
+  // Aggregate Department Furniture & Equipment Counts across Central Stock & All Classroom/Lab Locations
   const departmentCounts = useMemo(() => {
     let totalUnits = 0;
     let tablesCount = 0;
     let chairsCount = 0;
     let storageCount = 0;
 
-    stock.forEach((item) => {
-      const qty = Number(item.quantity) || 0;
+    const countItem = (name: string, category: string, qty: number) => {
       totalUnits += qty;
+      const catLower = (category || '').toLowerCase();
+      const nameLower = (name || '').toLowerCase();
 
-      const catLower = (item.category || '').toLowerCase();
-      const nameLower = (item.name || '').toLowerCase();
-
-      if (catLower.includes('table') || catLower.includes('desk') || nameLower.includes('table') || nameLower.includes('desk') || nameLower.includes('workbench')) {
+      if (
+        catLower.includes('table') ||
+        catLower.includes('desk') ||
+        nameLower.includes('table') ||
+        nameLower.includes('desk') ||
+        nameLower.includes('workbench')
+      ) {
         tablesCount += qty;
-      } else if (catLower.includes('chair') || catLower.includes('seating') || nameLower.includes('chair') || nameLower.includes('swivel')) {
+      } else if (
+        catLower.includes('chair') ||
+        catLower.includes('seating') ||
+        nameLower.includes('chair') ||
+        nameLower.includes('swivel')
+      ) {
         chairsCount += qty;
-      } else if (catLower.includes('cabinet') || catLower.includes('storage') || catLower.includes('fixture') || nameLower.includes('cabinet') || nameLower.includes('whiteboard')) {
+      } else if (
+        catLower.includes('cabinet') ||
+        catLower.includes('storage') ||
+        catLower.includes('fixture') ||
+        nameLower.includes('cabinet') ||
+        nameLower.includes('whiteboard') ||
+        nameLower.includes('shelf')
+      ) {
         storageCount += qty;
       }
+    };
+
+    // 1. Central Stock Items
+    stock.forEach((item) => {
+      countItem(item.name, item.category || '', Number(item.quantity) || 0);
+    });
+
+    // 2. Classroom & Laboratory Facility Equipment
+    (locations || []).forEach((loc) => {
+      (loc.inventories || []).forEach((inv) => {
+        const qty = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
+        countItem(inv.name, inv.group || '', qty);
+      });
     });
 
     return { totalUnits, tablesCount, chairsCount, storageCount };
-  }, [stock]);
+  }, [stock, locations]);
+
+  // Map each stock item to its active room allocations
+  const allocatedMap = useMemo(() => {
+    const map: Record<string, { total: number; roomBreakdown: Array<{ room: string; qty: number }> }> = {};
+    stock.forEach((s) => {
+      const sNameLower = s.name.toLowerCase();
+      let total = 0;
+      const breakdown: Array<{ room: string; qty: number }> = [];
+
+      (locations || []).forEach((loc) => {
+        let roomTotal = 0;
+        (loc.inventories || []).forEach((inv) => {
+          const invNameLower = inv.name.toLowerCase();
+          const isMatch =
+            (inv.stockItemId && (inv.stockItemId === s.id || inv.stockItemId === s.code)) ||
+            invNameLower === sNameLower ||
+            sNameLower.includes(invNameLower) ||
+            invNameLower.includes(sNameLower);
+          if (isMatch) {
+            const count = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
+            roomTotal += count;
+          }
+        });
+        if (roomTotal > 0) {
+          total += roomTotal;
+          breakdown.push({ room: loc.room, qty: roomTotal });
+        }
+      });
+      map[s.id] = { total, roomBreakdown: breakdown };
+    });
+    return map;
+  }, [stock, locations]);
 
   const filteredStock = stock
     .filter((item) => {
@@ -113,18 +174,24 @@ export default function StockPage() {
   const handleExport = () => {
     exportToCsv(
       'department_inventory_count_audit',
-      filteredStock.map((i) => ({
-        'Item Name': i.name,
-        'Part / SKU Code': i.code,
-        Category: i.category,
-        'Count / Quantity': i.quantity,
-        'Unit Measure': i.unit,
-        'Department Location': i.location,
-        'Storage Shelf / Bay': i.rack,
-        'Stock Status': i.status,
-        'Warranty / Condition': i.expiryDate || 'Active',
-        'Technical Description': i.description || '',
-      }))
+      filteredStock.map((i) => {
+        const alloc = allocatedMap[i.id] || { total: 0, roomBreakdown: [] };
+        return {
+          'Item Name': i.name,
+          'Part / SKU Code': i.code,
+          Category: i.category,
+          'Total Counted Units': i.quantity + alloc.total,
+          'Central Depot Quantity': i.quantity,
+          'Deployed Room Allocations': alloc.total,
+          'Room Breakdown': alloc.roomBreakdown.map((r) => `${r.room}: ${r.qty}`).join('; '),
+          'Unit Measure': i.unit,
+          'Department Location': i.location,
+          'Storage Shelf / Bay': i.rack,
+          'Stock Status': i.status,
+          'Warranty / Condition': i.expiryDate || 'Active',
+          'Technical Description': i.description || '',
+        };
+      })
     );
   };
 
@@ -302,13 +369,45 @@ export default function StockPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono">
-                            {item.quantity} {item.unit || 'Units'}
-                          </span>
+                          {(() => {
+                            const alloc = allocatedMap[item.id] || { total: 0, roomBreakdown: [] };
+                            const grandTotal = item.quantity + alloc.total;
+                            return (
+                              <div className="flex flex-col items-center">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono">
+                                  {grandTotal} {item.unit || 'Units'}
+                                </span>
+                                {alloc.total > 0 ? (
+                                  <span className="text-[10px] text-neutral-500 font-medium mt-0.5 whitespace-nowrap">
+                                    {item.quantity} depot + {alloc.total} in rooms
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-neutral-400 font-mono mt-0.5 whitespace-nowrap">
+                                    in central depot
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-4 text-neutral-600">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-medium text-neutral-900">{item.location}</span>
+                            {(() => {
+                              const alloc = allocatedMap[item.id];
+                              if (alloc && alloc.total > 0) {
+                                const tooltip = alloc.roomBreakdown.map((r) => `${r.room}: ${r.qty}`).join(', ');
+                                return (
+                                  <span
+                                    className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                    title={tooltip}
+                                  >
+                                    +{alloc.total} in {alloc.roomBreakdown.length} {alloc.roomBreakdown.length === 1 ? 'room' : 'rooms'}
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                           <div className="text-[11px] text-neutral-400 font-mono mt-0.5">{item.rack}</div>
                         </td>

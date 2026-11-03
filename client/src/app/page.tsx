@@ -52,6 +52,16 @@ export default function DashboardPage() {
   const lowStockItems = stock.filter((i) => i.status !== 'in_stock');
   const totalHardwareUnits = assets.reduce((sum, a) => sum + (a.totalUnits || 1), 0);
   const totalStockUnits = stock.reduce((sum, i) => sum + i.quantity, 0);
+  const totalRoomUnits = locations.reduce((sum, loc) => {
+    return (
+      sum +
+      (loc.inventories || []).reduce(
+        (iSum, inv) => iSum + (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0),
+        0
+      )
+    );
+  }, 0);
+  const totalDepartmentUnits = totalStockUnits + totalRoomUnits;
 
 
   return (
@@ -117,7 +127,8 @@ export default function DashboardPage() {
                 Equipment Loans
               </span>
               <Laptop className={`w-4 h-4 ${activeLoans.length > 0 ? 'text-amber-500' : 'text-neutral-400'}`} />
-            </div>
+            </di
+            v>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
               {activeLoans.length} <span className="text-sm font-normal text-neutral-500">Checked Out</span>
             </div>
@@ -141,8 +152,10 @@ export default function DashboardPage() {
               {stock.length} <span className="text-sm font-normal text-neutral-500">SKUs</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-1 flex items-center justify-between">
-              <span>{totalStockUnits} Total Stock Items</span>
-              <span className="text-emerald-700 font-semibold">Stationery & Tools</span>
+              <span>{totalDepartmentUnits.toLocaleString()} Counted Items</span>
+              <span className="text-emerald-700 font-semibold" title={`${totalStockUnits} Depot + ${totalRoomUnits} in Classrooms`}>
+                {totalStockUnits} Depot + {totalRoomUnits} Rooms
+              </span>
             </div>
           </div>
         </section>

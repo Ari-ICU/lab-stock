@@ -48,9 +48,15 @@ export function findLocation(locations: MockLocation[], id: string): MockLocatio
 
 export function findLinkedStock(item: RoomInventoryItem, stock: MockItem[]) {
   if (item.stockItemId) {
-    return stock.find((s) => s.id === item.stockItemId || s.code === item.stockItemId);
+    const matched = stock.find((s) => s.id === item.stockItemId || s.code === item.stockItemId);
+    if (matched) return matched;
   }
-  return undefined;
+  const nameNorm = (item.name || '').trim().toLowerCase();
+  if (!nameNorm) return undefined;
+  return stock.find((s) => {
+    const sNameNorm = (s.name || '').trim().toLowerCase();
+    return sNameNorm === nameNorm || sNameNorm.includes(nameNorm) || nameNorm.includes(sNameNorm);
+  });
 }
 
 export function findLinkedAsset(item: RoomInventoryItem, assets: MockAsset[]) {

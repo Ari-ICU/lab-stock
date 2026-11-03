@@ -394,7 +394,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const updateStockQuantity = (id: string, delta: number) => {
     setStock((prev) =>
       prev.map((item) => {
-        if (item.id === id) {
+        if (item.id === id || item.code.toLowerCase() === id.toLowerCase()) {
           const newQty = Math.max(0, item.quantity + delta);
           return {
             ...item,
@@ -407,7 +407,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     );
     showToast(`Quantity adjusted (${delta > 0 ? `+${delta}` : delta})`);
     if (getAuthToken()) {
-      stockService.adjustStockQuantity(id, delta).catch(() => {});
+      const targetItem = stock.find((i) => i.id === id || i.code.toLowerCase() === id.toLowerCase());
+      const targetId = targetItem ? targetItem.id : id;
+      stockService.adjustStockQuantity(targetId, delta).catch(() => {});
     }
   };
 

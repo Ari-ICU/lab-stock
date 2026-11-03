@@ -276,6 +276,17 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log(`✅ Seeded ${seedRoomInventory.length} Room Facility Inventory Records into PostgreSQL.`);
     }
 
+    // Ensure room_inventory items link with matching stock_items by name or SKU
+    await pool.query(`
+      UPDATE room_inventory ri
+      SET stock_item_id = s.id
+      FROM stock_items s
+      WHERE ri.stock_item_id IS NULL AND (
+        LOWER(TRIM(ri.name)) = LOWER(TRIM(s.name)) OR
+        LOWER(TRIM(ri.name)) = LOWER(TRIM(s.code))
+      )
+    `).catch(() => {});
+
     return { success: true, message: 'Database initialized successfully' };
   } catch (err: any) {
     return { success: false, message: `Database initialization failed: ${err.message}` };
