@@ -7,7 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
-import { Dropdown } from '@/components/Dropdown';
+import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import {
   ArrowLeft,
@@ -23,6 +23,8 @@ import {
   FileText,
   AlertTriangle,
   Sparkles,
+  Package,
+  Edit3,
 } from 'lucide-react';
 import {
   MAINTENANCE_TYPES,
@@ -53,49 +55,97 @@ export default function MaintenanceCreateClient() {
   const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [entryMode, setEntryMode] = useState<'inventory' | 'manual'>(prefillName ? 'manual' : 'inventory');
+  const [selectedInventoryValue, setSelectedInventoryValue] = useState<string>('');
 
-  // Quick equipment pickers from registered assets & stock
-  const equipmentOptions = useMemo(() => {
-    const list: Array<{ label: string; value: string; name: string; serial: string; image?: string; loc?: string; qty?: number; unit?: string }> = [];
+  // Comprehensive inventory options: Hardware Assets, Central Stock, and Classroom Equipment
+  const inventoryOptions = useMemo<DropdownOption[]>(() => {
+    const list: DropdownOption[] = [];
 
     assets.forEach((a) => {
       list.push({
-        label: `[Asset] ${a.name} (${a.serialNumber}) — ${a.location}`,
-        value: `asset-${a.id}`,
-        name: a.name,
-        serial: a.serialNumber,
-        image: a.imageUrl,
-        loc: a.location,
-        qty: a.totalUnits || 1,
-        unit: a.unitType || 'Units',
+        label: `[Asset] ${a.name} (${a.serialNumber}) • ${a.location || 'Facility'}`,
+        value: `asset:${a.id}`,
       });
     });
 
     stock.forEach((s) => {
       list.push({
-        label: `[Stock] ${s.name} (${s.code}) — ${s.location}`,
-        value: `stock-${s.id}`,
-        name: s.name,
-        serial: s.code,
-        image: s.imageUrl,
-        loc: s.location,
-        qty: s.quantity || 1,
-        unit: s.unit || 'Units',
+        label: `[Stock] ${s.name} (${s.code}) • ${s.quantity} ${s.unit || 'units'} in ${s.location || 'Depot'}`,
+        value: `stock:${s.id}`,
+      });
+    });
+
+    locations.forEach((loc) => {
+      loc.inventories?.forEach((inv) => {
+        const serialTag = inv.brandSpec ? `${inv.brandSpec}` : `${loc.room || 'LOC'}-${inv.id}`;
+        list.push({
+          label: `[${loc.room || loc.name}] ${inv.name} (${serialTag}) • ${loc.name}`,
+          value: `loc:${loc.id}:${inv.id}`,
+        });
       });
     });
 
     return list;
-  }, [assets, stock]);
+  }, [assets, stock, locations]);
 
-  const handleSelectEquipment = (val: string) => {
-    const found = equipmentOptions.find((o) => o.value === val);
+  // Map inventory key to full equipment attributes
+  const inventoryMap = useMemo(() => {
+    const map = new Map<
+      string,
+      { name: string; serial: string; location?: string; quantity?: number; unit?: string; imageUrl?: string }
+    >();
+
+    assets.forEach((a) => {
+      map.set(`asset:${a.id}`, {
+        name: a.name,
+        serial: a.serialNumber,
+        location: a.location,
+        quantity: a.totalUnits || 1,
+        unit: a.unitType || 'Units',
+        imageUrl: a.imageUrl,
+      });
+    });
+
+    stock.forEach((s) => {
+      map.set(`stock:${s.id}`, {
+        name: s.name,
+        serial: s.code,
+        location: s.location,
+        quantity: s.quantity || 1,
+        unit: s.unit || 'Units',
+        imageUrl: s.imageUrl,
+      });
+    });
+
+    locations.forEach((loc) => {
+      loc.inventories?.forEach((inv) => {
+        const serialTag = inv.brandSpec ? `${inv.brandSpec}` : `${loc.room || 'LOC'}-${inv.id}`;
+        map.set(`loc:${loc.id}:${inv.id}`, {
+          name: inv.name,
+          serial: serialTag,
+          location: loc.name,
+          quantity: (inv.qtyWorking || 0) + (inv.qtyBroken || 0) || 1,
+          unit: inv.unit || 'Units',
+          imageUrl: undefined,
+        });
+      });
+    });
+
+    return map;
+  }, [assets, stock, locations]);
+
+  const handleSelectInventory = (val: string) => {
+    setSelectedInventoryValue(val);
+    const found = inventoryMap.get(val);
     if (!found) return;
     setAssetName(found.name);
     setSerialNumber(found.serial);
-    if (found.loc) setLocation(found.loc);
-    if (found.qty) setQuantity(found.qty);
+    if (found.location) setLocation(found.location);
+    if (found.quantity) setQuantity(found.quantity);
     if (found.unit) setUnit(found.unit);
-    if (found.image && !imageUrl) setImageUrl(found.image);
+    if (found.imageUrl) setImageUrl(found.imageUrl);
+    showToast(`Loaded ${found.name} (${found.serial}) from Inventory`, 'info');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -152,67 +202,165 @@ export default function MaintenanceCreateClient() {
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Quick Select Banner */}
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 sm:p-5 shadow-2xs space-y-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                Quick Select Registered Equipment (Optional)
-              </label>
-            </div>
-            <p className="text-xs text-neutral-500">
-              Pick a registered Hardware Asset or Central Stock item to auto-populate equipment name, serial tag, location, and photo:
-            </p>
-            <Dropdown
-              value=""
-              options={[{ label: '-- Search & Select Equipment from Database --', value: '' }, ...equipmentOptions]}
-              onChange={handleSelectEquipment}
-              searchable
-              searchPlaceholder="Search by name, serial, or room location..."
-              className="w-full"
-              buttonClassName={dropdownBtn}
-            />
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left 7 Cols: Service & Equipment Details */}
             <div className="lg:col-span-7 space-y-6">
               <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                  <Wrench className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Service Information
-                  </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-neutral-700" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                      Service Information
+                    </h3>
+                  </div>
+
+                  {/* Mode switcher: Select from Inventory vs Type Manually */}
+                  <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5 text-xs self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setEntryMode('inventory')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 font-semibold rounded-md transition-all cursor-pointer ${
+                        entryMode === 'inventory'
+                          ? 'bg-white text-neutral-900 shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      <Package className="w-3.5 h-3.5 text-emerald-600" />
+                      Select from Inventory
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEntryMode('manual')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 font-semibold rounded-md transition-all cursor-pointer ${
+                        entryMode === 'manual'
+                          ? 'bg-white text-neutral-900 shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-neutral-500" />
+                      Type Manually
+                    </button>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                    Equipment / Instrument Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={assetName}
-                    onChange={(e) => setAssetName(e.target.value)}
-                    placeholder="e.g. Dell OptiPlex 7090 or Daikin 2.5 HP AC"
-                    className={inputCls}
-                  />
-                </div>
+                {/* INVENTORY SELECTOR MODE */}
+                {entryMode === 'inventory' && (
+                  <div className="space-y-3 bg-neutral-50/70 border border-neutral-200 rounded-lg p-3.5">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Select Equipment from Inventory *</span>
+                        </label>
+                        <span className="text-[11px] font-medium text-neutral-500">
+                          {inventoryOptions.length} registered items
+                        </span>
+                      </div>
+                      <Dropdown
+                        value={selectedInventoryValue}
+                        options={[
+                          { label: '-- Search & select an equipment from inventory --', value: '' },
+                          ...inventoryOptions,
+                        ]}
+                        onChange={handleSelectInventory}
+                        searchable
+                        searchPlaceholder="Type name, serial code, or room..."
+                        placeholder="Search & select from Inventory (Assets, Stock, Rooms)..."
+                        className="w-full"
+                        buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2.5 rounded font-medium shadow-2xs"
+                      />
+                    </div>
+
+                    {/* Selected Item Summary Card */}
+                    {assetName ? (
+                      <div className="flex items-center justify-between p-3 bg-white border border-neutral-200 rounded-lg shadow-2xs">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded border border-neutral-200 bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center font-bold text-neutral-600 text-xs">
+                            {imageUrl ? (
+                              <img src={imageUrl} alt={assetName} className="w-full h-full object-cover" />
+                            ) : (
+                              assetName.charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-neutral-900 text-xs truncate flex items-center gap-2">
+                              <span>{assetName}</span>
+                              <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                                ✓ From Inventory
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-neutral-500 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
+                              <span>Tag: <strong className="text-neutral-800 font-semibold">{serialNumber}</strong></span>
+                              {location && <span>• {location}</span>}
+                              <span>• {quantity} {unit}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setEntryMode('manual')}
+                          className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline shrink-0 cursor-pointer ml-3"
+                          title="Switch to typing custom name or serial"
+                        >
+                          Edit text
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-neutral-500 italic">
+                        Tip: Select any registered item above to automatically fill the equipment name, serial tag, location, and photo without typing.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* MANUAL TYPING MODE */}
+                {entryMode === 'manual' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-neutral-500">
+                        Entering custom equipment details manually:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEntryMode('inventory')}
+                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline cursor-pointer"
+                      >
+                        Prefer to select from inventory? Click here
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                        Equipment / Instrument Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={assetName}
+                        onChange={(e) => setAssetName(e.target.value)}
+                        placeholder="e.g. Dell OptiPlex 7090 or Daikin 2.5 HP AC"
+                        className={inputCls}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                        Serial Number / Equipment Tag *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={serialNumber}
+                        onChange={(e) => setSerialNumber(e.target.value)}
+                        placeholder="e.g. OPT-102B-01 or USG-405-SEC"
+                        className={`${inputCls} font-mono`}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                      Serial Number / Equipment Tag *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={serialNumber}
-                      onChange={(e) => setSerialNumber(e.target.value)}
-                      placeholder="e.g. OPT-102B-01 or USG-405-SEC"
-                      className={`${inputCls} font-mono`}
-                    />
-                  </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-neutral-800 mb-1">

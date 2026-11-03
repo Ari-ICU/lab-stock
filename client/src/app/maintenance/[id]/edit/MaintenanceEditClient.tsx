@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
-import { Dropdown } from '@/components/Dropdown';
+import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import {
   ArrowLeft,
@@ -22,6 +22,10 @@ import {
   User,
   Layers,
   FileText,
+  Sparkles,
+  CheckCircle2,
+  Package,
+  Edit3,
 } from 'lucide-react';
 import {
   MAINTENANCE_TYPES,
@@ -35,7 +39,7 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { maintenance, assets, stock, updateMaintenance, deleteMaintenance, showToast } = useStock();
+  const { maintenance, assets, stock, locations, updateMaintenance, deleteMaintenance, showToast } = useStock();
   const { user } = useAuth();
 
   const item = maintenance.find((m) => m.id === id || String(m.id) === String(id));
@@ -54,6 +58,85 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
   const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [entryMode, setEntryMode] = useState<'inventory' | 'manual'>('inventory');
+  const [selectedInventoryValue, setSelectedInventoryValue] = useState<string>('');
+
+  // Comprehensive inventory options: Hardware Assets, Central Stock, and Classroom Equipment
+  const inventoryOptions = useMemo<DropdownOption[]>(() => {
+    const list: DropdownOption[] = [];
+
+    assets.forEach((a) => {
+      list.push({
+        label: `[Asset] ${a.name} (${a.serialNumber}) • ${a.location || 'Facility'}`,
+        value: `asset:${a.id}`,
+      });
+    });
+
+    stock.forEach((s) => {
+      list.push({
+        label: `[Stock] ${s.name} (${s.code}) • ${s.quantity} ${s.unit || 'units'} in ${s.location || 'Depot'}`,
+        value: `stock:${s.id}`,
+      });
+    });
+
+    locations.forEach((loc) => {
+      loc.inventories?.forEach((inv) => {
+        const serialTag = inv.brandSpec ? `${inv.brandSpec}` : `${loc.room || 'LOC'}-${inv.id}`;
+        list.push({
+          label: `[${loc.room || loc.name}] ${inv.name} (${serialTag}) • ${loc.name}`,
+          value: `loc:${loc.id}:${inv.id}`,
+        });
+      });
+    });
+
+    return list;
+  }, [assets, stock, locations]);
+
+  // Map inventory key to full equipment attributes
+  const inventoryMap = useMemo(() => {
+    const map = new Map<
+      string,
+      { name: string; serial: string; location?: string; quantity?: number; unit?: string; imageUrl?: string }
+    >();
+
+    assets.forEach((a) => {
+      map.set(`asset:${a.id}`, {
+        name: a.name,
+        serial: a.serialNumber,
+        location: a.location,
+        quantity: a.totalUnits || 1,
+        unit: a.unitType || 'Units',
+        imageUrl: a.imageUrl,
+      });
+    });
+
+    stock.forEach((s) => {
+      map.set(`stock:${s.id}`, {
+        name: s.name,
+        serial: s.code,
+        location: s.location,
+        quantity: s.quantity || 1,
+        unit: s.unit || 'Units',
+        imageUrl: s.imageUrl,
+      });
+    });
+
+    locations.forEach((loc) => {
+      loc.inventories?.forEach((inv) => {
+        const serialTag = inv.brandSpec ? `${inv.brandSpec}` : `${loc.room || 'LOC'}-${inv.id}`;
+        map.set(`loc:${loc.id}:${inv.id}`, {
+          name: inv.name,
+          serial: serialTag,
+          location: loc.name,
+          quantity: (inv.qtyWorking || 0) + (inv.qtyBroken || 0) || 1,
+          unit: inv.unit || 'Units',
+          imageUrl: undefined,
+        });
+      });
+    });
+
+    return map;
+  }, [assets, stock, locations]);
 
   useEffect(() => {
     if (item) {
@@ -69,8 +152,32 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
       setUnit(item.unit || 'Units');
       setNotes(item.notes || '');
       setImageUrl(item.imageUrl || resolveMaintenanceImage(item, assets, stock));
+
+      // Try matching current equipment with inventory
+      for (const [val, data] of inventoryMap.entries()) {
+        if (
+          (item.serialNumber && data.serial.toLowerCase() === item.serialNumber.toLowerCase()) ||
+          (item.assetName && data.name.toLowerCase() === item.assetName.toLowerCase())
+        ) {
+          setSelectedInventoryValue(val);
+          break;
+        }
+      }
     }
-  }, [item]);
+  }, [item, inventoryMap, assets, stock]);
+
+  const handleSelectInventory = (val: string) => {
+    setSelectedInventoryValue(val);
+    const found = inventoryMap.get(val);
+    if (!found) return;
+    setAssetName(found.name);
+    setSerialNumber(found.serial);
+    if (found.location) setLocation(found.location);
+    if (found.quantity) setQuantity(found.quantity);
+    if (found.unit) setUnit(found.unit);
+    if (found.imageUrl) setImageUrl(found.imageUrl);
+    showToast(`Loaded ${found.name} (${found.serial}) from Inventory`, 'info');
+  };
 
   if (!item) {
     return (
@@ -179,39 +286,161 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
             {/* Left 8 Cols: Form Inputs */}
             <div className="lg:col-span-8 space-y-6">
               <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                  <Wrench className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Service Record Details
-                  </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-neutral-700" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                      Service Record Details
+                    </h3>
+                  </div>
+
+                  {/* Mode switcher: Select from Inventory vs Type Manually */}
+                  <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5 text-xs self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setEntryMode('inventory')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 font-semibold rounded-md transition-all cursor-pointer ${
+                        entryMode === 'inventory'
+                          ? 'bg-white text-neutral-900 shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      <Package className="w-3.5 h-3.5 text-emerald-600" />
+                      Select from Inventory
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEntryMode('manual')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 font-semibold rounded-md transition-all cursor-pointer ${
+                        entryMode === 'manual'
+                          ? 'bg-white text-neutral-900 shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-neutral-500" />
+                      Type Manually
+                    </button>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                    Equipment / Instrument Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={assetName}
-                    onChange={(e) => setAssetName(e.target.value)}
-                    className={inputCls}
-                  />
-                </div>
+                {/* INVENTORY SELECTOR MODE */}
+                {entryMode === 'inventory' && (
+                  <div className="space-y-3 bg-neutral-50/70 border border-neutral-200 rounded-lg p-3.5">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Select Equipment from Inventory *</span>
+                        </label>
+                        <span className="text-[11px] font-medium text-neutral-500">
+                          {inventoryOptions.length} registered items
+                        </span>
+                      </div>
+                      <Dropdown
+                        value={selectedInventoryValue}
+                        options={[
+                          { label: '-- Search & select an equipment from inventory --', value: '' },
+                          ...inventoryOptions,
+                        ]}
+                        onChange={handleSelectInventory}
+                        searchable
+                        searchPlaceholder="Type name, serial code, or room..."
+                        placeholder="Search & select from Inventory (Assets, Stock, Rooms)..."
+                        className="w-full"
+                        buttonClassName="w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2.5 rounded font-medium shadow-2xs"
+                      />
+                    </div>
+
+                    {/* Selected Item Summary Card */}
+                    {assetName ? (
+                      <div className="flex items-center justify-between p-3 bg-white border border-neutral-200 rounded-lg shadow-2xs">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded border border-neutral-200 bg-neutral-100 overflow-hidden shrink-0 flex items-center justify-center font-bold text-neutral-600 text-xs">
+                            {imageUrl ? (
+                              <img src={imageUrl} alt={assetName} className="w-full h-full object-cover" />
+                            ) : (
+                              assetName.charAt(0)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-neutral-900 text-xs truncate flex items-center gap-2">
+                              <span>{assetName}</span>
+                              <span className="text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                                ✓ From Inventory
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-neutral-500 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
+                              <span>Tag: <strong className="text-neutral-800 font-semibold">{serialNumber}</strong></span>
+                              {location && <span>• {location}</span>}
+                              <span>• {quantity} {unit}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setEntryMode('manual')}
+                          className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline shrink-0 cursor-pointer ml-3"
+                          title="Switch to typing custom name or serial"
+                        >
+                          Edit text
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-neutral-500 italic">
+                        Tip: Select any item above to automatically fill the equipment name, serial tag, location, and photo without typing.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* MANUAL TYPING MODE */}
+                {entryMode === 'manual' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-neutral-500">
+                        Entering custom equipment details manually:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEntryMode('inventory')}
+                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline cursor-pointer"
+                      >
+                        Prefer to select from inventory? Click here
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                        Equipment / Instrument Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={assetName}
+                        onChange={(e) => setAssetName(e.target.value)}
+                        placeholder="e.g. Cisco C9300 48P Switch or Dell OptiPlex 7090"
+                        className={inputCls}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-800 mb-1">
+                        Serial Number / Equipment Tag *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={serialNumber}
+                        onChange={(e) => setSerialNumber(e.target.value)}
+                        placeholder="e.g. FCW2348L09M or OPT-102B-01"
+                        className={`${inputCls} font-mono`}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                      Serial Number / Equipment Tag *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={serialNumber}
-                      onChange={(e) => setSerialNumber(e.target.value)}
-                      className={`${inputCls} font-mono`}
-                    />
-                  </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-neutral-800 mb-1">
