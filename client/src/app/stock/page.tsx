@@ -312,7 +312,6 @@ export default function StockPage() {
                   <th className="py-3 px-4">Part / SKU</th>
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4 text-center">Count / Qty</th>
-                  <th className="py-3 px-4">Warranty / Note</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
@@ -320,7 +319,7 @@ export default function StockPage() {
               <tbody className="divide-y divide-neutral-100">
                 {filteredStock.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-neutral-500">
+                    <td colSpan={7} className="py-8 text-center text-neutral-500">
                       No department inventory items found matching your filter criteria.
                     </td>
                   </tr>
@@ -397,7 +396,6 @@ export default function StockPage() {
                             );
                           })()}
                         </td>
-                        <td className="py-3 px-4 text-neutral-500 text-[11px]">{item.expiryDate}</td>
                         <td className="py-3 px-4">
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
