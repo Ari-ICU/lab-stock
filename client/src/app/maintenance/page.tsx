@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
+import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import {
@@ -16,6 +17,8 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
+  Calendar,
+  RotateCcw,
 } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { LabThumbnail } from '@/components/LabThumbnail';
@@ -52,6 +55,9 @@ export default function MaintenancePage() {
   const { maintenance, assets, stock, deleteMaintenance } = useStock();
   const [filterText, setFilterText] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'In Progress' | 'Pending' | 'Completed'>('all');
+  const [datePreset, setDatePreset] = useState<string>('all');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
   const [viewMode, setViewMode] = useState<'by_item' | 'all_logs'>('by_item');
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
 
@@ -63,16 +69,49 @@ export default function MaintenancePage() {
   const pendingCount = maintenance.filter((m) => m.status === 'Pending').length;
   const completedCount = maintenance.filter((m) => m.status === 'Completed').length;
 
+  const datePresetOptions: DropdownOption[] = [
+    { label: 'All Dates (Full History)', value: 'all' },
+    { label: 'Past 30 Days (Recent)', value: '30d' },
+    { label: 'Past 90 Days (Quarterly)', value: '90d' },
+    { label: 'Year 2026 Logs', value: '2026' },
+    { label: 'Year 2025 (Old Archives)', value: '2025' },
+    { label: 'Custom Date Range...', value: 'custom' },
+  ];
+
   const filtered = maintenance.filter((item) => {
+    const q = filterText.toLowerCase().trim();
     const matchesSearch =
-      item.assetName.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.serialNumber.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.technician.toLowerCase().includes(filterText.toLowerCase()) ||
-      (item.location && item.location.toLowerCase().includes(filterText.toLowerCase()));
+      !q ||
+      item.assetName.toLowerCase().includes(q) ||
+      item.serialNumber.toLowerCase().includes(q) ||
+      item.technician.toLowerCase().includes(q) ||
+      (item.location && item.location.toLowerCase().includes(q)) ||
+      (item.date && item.date.toLowerCase().includes(q)) ||
+      (item.type && item.type.toLowerCase().includes(q)) ||
+      (item.notes && item.notes.toLowerCase().includes(q));
 
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    // Fast Date Filtering
+    let matchesDate = true;
+    if (datePreset === '30d') {
+      const itemTime = new Date(item.date).getTime();
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      matchesDate = Math.abs(Date.now() - itemTime) <= thirtyDays;
+    } else if (datePreset === '90d') {
+      const itemTime = new Date(item.date).getTime();
+      const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+      matchesDate = Math.abs(Date.now() - itemTime) <= ninetyDays;
+    } else if (datePreset === '2026') {
+      matchesDate = item.date.startsWith('2026');
+    } else if (datePreset === '2025') {
+      matchesDate = item.date.startsWith('2025');
+    } else if (datePreset === 'custom') {
+      if (customStart && item.date < customStart) matchesDate = false;
+      if (customEnd && item.date > customEnd) matchesDate = false;
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const getDisplayImage = (item: Partial<MockMaintenance>) => {
@@ -106,17 +145,19 @@ export default function MaintenancePage() {
           latestTechnician: item.technician,
           primaryStatus: item.status,
           statusCounts: {
-            completed: item.status === 'Completed' ? qty : 0,
-            pending: item.status === 'Pending' ? qty : 0,
-            inProgress: item.status === 'In Progress' ? qty : 0,
+            completed: item.status === 'Completed' ? 1 : 0,
+            pending: item.status === 'Pending' ? 1 : 0,
+            inProgress: item.status === 'In Progress' ? 1 : 0,
           },
           logs: [item],
           primaryId: item.id,
         });
       } else {
         const group = map.get(key)!;
-        // If the item had explicit quantity > 1, add it; otherwise increment by 1
-        group.totalQuantity += (item.quantity && item.quantity > 1 ? Number(item.quantity) : 1);
+        // Keep the canonical equipment unit quantity (e.g. 24 Desktops, 5 Switches, 2 AC Units)
+        if (qty > group.totalQuantity) {
+          group.totalQuantity = qty;
+        }
         group.totalCost += costVal;
         group.logs.push(item);
 
@@ -125,14 +166,17 @@ export default function MaintenancePage() {
         }
 
         if (item.status === 'Completed') {
-          group.statusCounts.completed += qty;
+          group.statusCounts.completed += 1;
           if (!group.lastCompletedDate || new Date(item.date).getTime() > new Date(group.lastCompletedDate).getTime()) {
             group.lastCompletedDate = item.date;
           }
-        } else {
-          if (item.status === 'Pending') group.statusCounts.pending += qty;
-          else if (item.status === 'In Progress') group.statusCounts.inProgress += qty;
-
+        } else if (item.status === 'Pending') {
+          group.statusCounts.pending += 1;
+          if (!group.nextScheduledDate || new Date(item.date).getTime() > new Date(group.nextScheduledDate).getTime()) {
+            group.nextScheduledDate = item.date;
+          }
+        } else if (item.status === 'In Progress') {
+          group.statusCounts.inProgress += 1;
           if (!group.nextScheduledDate || new Date(item.date).getTime() > new Date(group.nextScheduledDate).getTime()) {
             group.nextScheduledDate = item.date;
           }
@@ -142,8 +186,14 @@ export default function MaintenancePage() {
           group.latestDate = item.date;
           group.latestType = item.type;
           group.latestTechnician = item.technician;
-          group.primaryStatus = item.status;
         }
+
+        // Determine primary status prioritizing active or pending service work
+        const hasInProgress = group.logs.some((l) => l.status === 'In Progress');
+        const hasPending = group.logs.some((l) => l.status === 'Pending');
+        if (hasInProgress) group.primaryStatus = 'In Progress';
+        else if (hasPending) group.primaryStatus = 'Pending';
+        else group.primaryStatus = 'Completed';
       }
     }
 
@@ -257,33 +307,106 @@ export default function MaintenancePage() {
 
         {/* Main Records Container */}
         <div className="bg-white border border-neutral-200 rounded shadow-2xs">
-          {/* Top Bar with Search & View Mode Switcher */}
-          <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="relative w-full sm:w-80">
+          {/* Top Bar with Search, Date Filter & View Mode Switcher */}
+          <div className="p-4 border-b border-neutral-200 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2.5 flex-1">
+              {/* Search text input */}
+              <div className="relative w-full sm:w-64">
                 <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search by equipment, serial, technician..."
+                  placeholder="Search equipment, serial, date..."
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
                   className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs"
                 />
               </div>
 
+              {/* Fast Date Filter Dropdown */}
+              <div className="w-52 sm:w-56 shrink-0">
+                <Dropdown
+                  value={datePreset}
+                  options={datePresetOptions}
+                  onChange={(val) => setDatePreset(val)}
+                  placeholder="Filter by Date"
+                />
+              </div>
+
+              {/* Custom Date Range pickers (shown only if Custom is selected) */}
+              {datePreset === 'custom' && (
+                <div className="flex items-center gap-1.5 bg-neutral-50 px-2 py-1 rounded-lg border border-neutral-200 text-xs">
+                  <span className="text-neutral-500 font-medium text-[11px]">From:</span>
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                    className="px-1.5 py-0.5 text-xs border border-neutral-300 rounded bg-white font-mono text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  />
+                  <span className="text-neutral-500 font-medium text-[11px]">To:</span>
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                    className="px-1.5 py-0.5 text-xs border border-neutral-300 rounded bg-white font-mono text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                  />
+                </div>
+              )}
+
+              {/* Active Filter Badges */}
               {statusFilter !== 'all' && (
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shrink-0"
-                  title="Click to clear filter"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-neutral-900 text-white hover:bg-neutral-800 transition-colors shrink-0 cursor-pointer shadow-2xs"
+                  title="Click to clear status filter"
                 >
-                  <span>Filter: {statusFilter === 'Completed' ? 'Old / Completed Records' : statusFilter}</span>
+                  <span>Status: {statusFilter === 'Completed' ? 'Old / Completed' : statusFilter}</span>
                   <span className="text-neutral-400 font-normal">✕</span>
                 </button>
               )}
 
-              {/* View Mode Segmented Controls */}
+              {datePreset !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDatePreset('all');
+                    setCustomStart('');
+                    setCustomEnd('');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors shrink-0 cursor-pointer shadow-2xs"
+                  title="Click to clear date filter"
+                >
+                  <Calendar className="w-3 h-3 text-blue-200" />
+                  <span>
+                    {datePresetOptions.find((o) => o.value === datePreset)?.label.split(' ')[0] || datePreset}
+                    {datePreset === 'custom' && (customStart || customEnd) ? ` (${customStart || '...'} to ${customEnd || '...'})` : ''}
+                  </span>
+                  <span className="text-blue-200 font-normal">✕</span>
+                </button>
+              )}
+
+              {/* Clear All Filters Button */}
+              {(statusFilter !== 'all' || datePreset !== 'all' || filterText) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setDatePreset('all');
+                    setFilterText('');
+                    setCustomStart('');
+                    setCustomEnd('');
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-neutral-500 hover:text-neutral-900 font-medium px-2 py-1 rounded hover:bg-neutral-100 transition-colors"
+                  title="Reset all filters"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset
+                </button>
+              )}
+            </div>
+
+            {/* Right side: View Mode Switcher & Counter */}
+            <div className="flex items-center gap-3 shrink-0">
               <div className="inline-flex rounded-lg border border-neutral-200 bg-neutral-100 p-0.5 shrink-0">
                 <button
                   type="button"
@@ -312,11 +435,11 @@ export default function MaintenancePage() {
                   All Logs ({filtered.length})
                 </button>
               </div>
-            </div>
 
-            <span className="text-xs text-neutral-500 font-medium shrink-0">
-              Showing <span className="font-semibold text-neutral-900">{viewMode === 'by_item' ? groupedItems.length : filtered.length}</span> {viewMode === 'by_item' ? 'instruments' : 'records'}
-            </span>
+              <span className="text-xs text-neutral-500 font-medium shrink-0 hidden sm:inline">
+                Showing <span className="font-semibold text-neutral-900">{viewMode === 'by_item' ? groupedItems.length : filtered.length}</span> {viewMode === 'by_item' ? 'instruments' : 'records'}
+              </span>
+            </div>
           </div>
 
           {/* TABLE VIEW: COUNT PER ITEM (DEFAULT) */}
@@ -552,6 +675,32 @@ export default function MaintenancePage() {
                       </React.Fragment>
                     );
                   })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={10} className="py-12 text-center text-neutral-500">
+                        <div className="max-w-sm mx-auto space-y-2">
+                          <Clock className="w-8 h-8 text-neutral-300 mx-auto" />
+                          <p className="text-sm font-semibold text-neutral-700">No maintenance records found</p>
+                          <p className="text-xs text-neutral-500">
+                            Try adjusting your search keywords, status filter, or date range.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter('all');
+                              setDatePreset('all');
+                              setFilterText('');
+                              setCustomStart('');
+                              setCustomEnd('');
+                            }}
+                            className="mt-2 text-xs text-emerald-700 hover:text-emerald-800 font-semibold underline cursor-pointer"
+                          >
+                            Reset all filters
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -640,6 +789,32 @@ export default function MaintenancePage() {
                       </td>
                     </tr>
                   ))}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={10} className="py-12 text-center text-neutral-500">
+                        <div className="max-w-sm mx-auto space-y-2">
+                          <Clock className="w-8 h-8 text-neutral-300 mx-auto" />
+                          <p className="text-sm font-semibold text-neutral-700">No maintenance records found</p>
+                          <p className="text-xs text-neutral-500">
+                            Try adjusting your search keywords, status filter, or date range.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter('all');
+                              setDatePreset('all');
+                              setFilterText('');
+                              setCustomStart('');
+                              setCustomEnd('');
+                            }}
+                            className="mt-2 text-xs text-emerald-700 hover:text-emerald-800 font-semibold underline cursor-pointer"
+                          >
+                            Reset all filters
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
