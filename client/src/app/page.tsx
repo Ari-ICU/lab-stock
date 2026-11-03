@@ -127,8 +127,7 @@ export default function DashboardPage() {
                 Equipment Loans
               </span>
               <Laptop className={`w-4 h-4 ${activeLoans.length > 0 ? 'text-amber-500' : 'text-neutral-400'}`} />
-            </di
-            v>
+            </div>
             <div className="text-2xl font-bold text-neutral-900 mt-2">
               {activeLoans.length} <span className="text-sm font-normal text-neutral-500">Checked Out</span>
             </div>
