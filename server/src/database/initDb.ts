@@ -146,12 +146,13 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'units';
 
-      -- Remove duplicate rows keeping one canonical record per equipment service
+      -- Remove duplicate rows keeping one canonical record per equipment service on the exact same date
       DELETE FROM maintenance_records a USING maintenance_records b
       WHERE a.id > b.id
         AND a.serial_number = b.serial_number
         AND a.asset_name = b.asset_name
-        AND a.type = b.type;
+        AND a.type = b.type
+        AND a.date::text = b.date::text;
 
       -- Set counts per equipment item
       UPDATE maintenance_records SET quantity = 5, unit = 'Switches'
@@ -188,22 +189,37 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       WHERE (image_url IS NULL OR image_url = '');
     `);
 
-    // Ensure maintenance records are populated in PostgreSQL
-    const maintCountRes = await pool.query('SELECT COUNT(*)::int as count FROM maintenance_records');
-    const maintCount = maintCountRes.rows[0]?.count || 0;
-    if (maintCount === 0) {
-      for (const m of seedMaintenance) {
+    // Ensure all historical maintenance records are populated in PostgreSQL
+    for (const m of seedMaintenance) {
+      const exists = await query(
+        `SELECT id FROM maintenance_records WHERE serial_number = $1 AND date = $2 AND type = $3`,
+        [m.serial_number, m.date, m.type]
+      );
+      if (exists.rows.length === 0) {
         const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [m.serial_number]);
         const assetId = assetRes.rows[0]?.id || null;
         await query(
-          `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT DO NOTHING`,
-          [assetId, m.asset_name, m.serial_number, m.type, m.date, m.technician, m.status, m.notes]
+          `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes, image_url, location, cost, quantity, unit)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [
+            assetId,
+            m.asset_name,
+            m.serial_number,
+            m.type,
+            m.date,
+            m.technician,
+            m.status,
+            m.notes,
+            m.image_url,
+            m.location,
+            m.cost,
+            m.quantity,
+            m.unit,
+          ]
         );
       }
-      console.log('✅ Seeded maintenance & audit records into PostgreSQL.');
     }
+    console.log(`✅ Verified and synced ${seedMaintenance.length} historical maintenance records in PostgreSQL.`);
 
     // Ensure purchase requests are populated in PostgreSQL
     const reqCountRes = await pool.query('SELECT COUNT(*)::int as count FROM purchase_requests');
