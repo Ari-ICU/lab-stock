@@ -376,19 +376,12 @@ export default function StockPage() {
                             const alloc = allocatedMap[item.id] || { total: 0, roomBreakdown: [] };
                             const grandTotal = item.quantity + alloc.total;
                             return (
-                              <div className="flex flex-col items-center">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono">
-                                  {grandTotal} {item.unit || 'Units'}
-                                </span>
-                                {alloc.total > 0 && (
-                                  <span
-                                    className="text-[10px] text-emerald-700 font-medium mt-0.5 whitespace-nowrap cursor-help"
-                                    title={alloc.roomBreakdown.map((r) => `${r.room}: ${r.qty}`).join(', ')}
-                                  >
-                                    +{alloc.total} in {alloc.roomBreakdown.length} {alloc.roomBreakdown.length === 1 ? 'room' : 'rooms'}
-                                  </span>
-                                )}
-                              </div>
+                              <span
+                                className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono"
+                                title={alloc.total > 0 ? `${item.quantity} in depot + ${alloc.total} in ${alloc.roomBreakdown.length} rooms` : undefined}
+                              >
+                                {grandTotal} {item.unit || 'Units'}
+                              </span>
                             );
                           })()}
                         </td>
