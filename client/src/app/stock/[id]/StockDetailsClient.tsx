@@ -597,16 +597,15 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   <table className="w-full text-left text-xs min-w-[620px]">
                     <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                       <tr>
-                        <th className="py-3 px-4">Classroom & Laboratory</th>
-                        <th className="py-3 px-4 text-center">Allocated Count</th>
-                        <th className="py-3 px-4 text-center">Usability & Health</th>
-                        <th className="py-3 px-4">Condition & Inspection Remarks</th>
+                        <th className="py-3 px-4">Classroom & Lab</th>
+                        <th className="py-3 px-4 text-center">Count</th>
+                        <th className="py-3 px-4 text-center">Status</th>
+                        <th className="py-3 px-4">Remarks</th>
                         <th className="py-3 px-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
                       {allocations.map((alloc) => {
-                        const isAllWorking = (alloc.qtyBroken || 0) === 0 && (alloc.qtyMaintenance || 0) === 0;
                         return (
                           <tr key={alloc.inventoryId} className="hover:bg-neutral-50/70 transition-colors group">
                             <td className="py-3 px-4">
@@ -637,31 +636,45 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                             </td>
 
                             <td className="py-3 px-4 text-center">
-                              {isAllWorking ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  100% Operational ({alloc.qtyWorking})
-                                </span>
-                              ) : (
-                                <div className="inline-flex items-center gap-1.5 flex-wrap justify-center">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    {alloc.qtyWorking} Working
-                                  </span>
-                                  {alloc.qtyBroken > 0 && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              {(() => {
+                                const broken = alloc.qtyBroken || 0;
+                                const maintenance = alloc.qtyMaintenance || 0;
+                                const working = alloc.qtyWorking || 0;
+
+                                if (broken === 0 && maintenance === 0) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      Operational
+                                    </span>
+                                  );
+                                }
+                                if (working === 0 && broken > 0) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                      {alloc.qtyBroken} Defective
+                                      Defective
                                     </span>
-                                  )}
-                                  {(alloc.qtyMaintenance || 0) > 0 && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                  );
+                                }
+                                if (working === 0 && maintenance > 0) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                      {alloc.qtyMaintenance} In Repair
+                                      In Repair
                                     </span>
-                                  )}
-                                </div>
-                              )}
+                                  );
+                                }
+                                return (
+                                  <span
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200"
+                                    title={`${working} working, ${broken} broken, ${maintenance} in repair`}
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    {broken > 0 ? `${broken} Defective` : `${maintenance} In Repair`}
+                                  </span>
+                                );
+                              })()}
                             </td>
 
                             <td className="py-3 px-4">
