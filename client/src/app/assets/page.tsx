@@ -17,7 +17,7 @@ const statusOptions: DropdownOption[] = [
   { label: 'All Operational Statuses', value: 'all' },
   { label: 'Operational', value: 'operational' },
   { label: 'In Production', value: 'in_use' },
-  { label: 'Maintenance / RMA', value: 'maintenance' },
+  { label: 'Repair / RMA', value: 'maintenance' },
 ];
 
 export default function AssetsPage() {
@@ -153,7 +153,7 @@ export default function AssetsPage() {
               {assetsStats.maintenanceUnits > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-blue-500/90 text-white shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  {assetsStats.maintenanceUnits} In Maintenance
+                  {assetsStats.maintenanceUnits} In Repair
                 </span>
               )}
             </div>
@@ -322,7 +322,7 @@ export default function AssetsPage() {
                                 ? 'Operational'
                                 : asset.status === 'in_use'
                                 ? 'In Use'
-                                : 'Maintenance'}
+                                : 'In Repair'}
                             </span>
                             {asset.loanStatus === 'on_loan' && (
                               <span

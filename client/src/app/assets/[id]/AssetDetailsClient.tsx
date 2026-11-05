@@ -293,7 +293,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       dotClass: 'bg-blue-500',
     },
     maintenance: {
-      text: 'Maintenance / Servicing',
+      text: 'In Repair',
       badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
       dotClass: 'bg-amber-500',
     },
@@ -577,7 +577,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                           : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
                       }`}
                     >
-                      Maintenance
+                      Repair
                     </button>
                   </div>
                 </div>
