@@ -7,10 +7,8 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { getAssetPath } from '@/lib/basePath';
 import {
-  Network,
   LayoutDashboard,
   Package,
-  Cable,
   Router,
   Wrench,
   MapPin,
