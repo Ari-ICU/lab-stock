@@ -56,21 +56,6 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
 
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showLendModal, setShowLendModal] = useState(false);
-
-  // Lend form state
-  const [borrowQuantity, setBorrowQuantity] = useState(1);
-  const [borrowerName, setBorrowerName] = useState('');
-  const [borrowerRole, setBorrowerRole] = useState<'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician'>('Student');
-  const [borrowerContact, setBorrowerContact] = useState('');
-  const [courseOrClass, setCourseOrClass] = useState('');
-  const [borrowDate, setBorrowDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [expectedReturnDate, setExpectedReturnDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
-  });
-  const [loanNotes, setLoanNotes] = useState('');
 
   const item =
     stock.find(
@@ -171,31 +156,6 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
     return activeItemLoans.reduce((sum, l) => sum + (l.quantity || 1), 0);
   }, [activeItemLoans]);
 
-  const handleLend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!item) return;
-    if (!borrowerName.trim()) {
-      showToast('Please enter borrower name', 'error');
-      return;
-    }
-    const result = lendStockItem(item.id, borrowQuantity, {
-      borrowerName: borrowerName.trim(),
-      borrowerRole,
-      borrowerContact: borrowerContact.trim() || 'No contact provided',
-      courseOrClass: courseOrClass.trim() || undefined,
-      borrowDate,
-      expectedReturnDate,
-      notes: loanNotes.trim() || undefined,
-    });
-    if (result) {
-      setShowLendModal(false);
-      setBorrowerName('');
-      setBorrowerContact('');
-      setCourseOrClass('');
-      setLoanNotes('');
-    }
-  };
-
   if (!item) {
     return (
       <div className="flex-1 flex flex-col min-w-0">
@@ -279,19 +239,14 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setBorrowQuantity(1);
-                  setShowLendModal(true);
-                }}
-                disabled={item.quantity === 0}
+              <Link
+                href={`/stock/${item.id}/lend`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                 title={item.quantity === 0 ? "No units in stock to lend" : "Check-out item to student or faculty"}
               >
                 <Laptop className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Lend / Check-Out</span>
-              </button>
+              </Link>
 
               <Link
                 href={`/stock/${item.id}/edit`}
@@ -524,13 +479,8 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                 Inventory Quick Operations
               </h4>
               <div className="space-y-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBorrowQuantity(1);
-                    setShowLendModal(true);
-                  }}
-                  disabled={item.quantity === 0 || !isAllowed}
+                <Link
+                  href={`/stock/${item.id}/lend`}
                   className="w-full py-2 px-3 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 rounded flex items-center justify-between transition-colors cursor-pointer shadow-xs"
                 >
                   <span className="flex items-center gap-2">
@@ -540,7 +490,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   <span className="text-[10px] text-neutral-300 font-mono">
                     {item.quantity} in stock
                   </span>
-                </button>
+                </Link>
 
                 <button
                   type="button"
@@ -868,18 +818,13 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                       {totalBorrowedUnits} {item.unit || 'units'} Borrowed
                     </span>
                   ) : null}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBorrowQuantity(1);
-                      setShowLendModal(true);
-                    }}
-                    disabled={item.quantity === 0 || !isAllowed}
+                  <Link
+                    href={`/stock/${item.id}/lend`}
                     className="inline-flex items-center gap-1.5 px-3 py-1 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Lend Out Units</span>
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -965,176 +910,6 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
         </div>
 
       </div>
-
-      {/* Lend Stock Item Modal */}
-      {showLendModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50/80">
-              <div className="flex items-center gap-2">
-                <Laptop className="w-4 h-4 text-emerald-600" />
-                <h3 className="font-semibold text-sm text-neutral-900">
-                  Lend {item.name}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowLendModal(false)}
-                className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleLend} className="flex-1 overflow-y-auto p-5 pb-8 space-y-4 text-xs">
-              {/* Item Info Box */}
-              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-neutral-900">{item.name}</span>
-                  <span className="font-mono text-[11px] text-neutral-500">SKU: {item.code}</span>
-                </div>
-                <div className="text-[11px] text-neutral-500 flex items-center gap-3">
-                  <span>Available in Stock: <strong className="text-emerald-700">{item.quantity} {item.unit || 'units'}</strong></span>
-                  <span>•</span>
-                  <span>Location: <strong className="text-neutral-800">{item.location}</strong></span>
-                </div>
-              </div>
-
-              {/* Quantity to Borrow */}
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
-                  <span>Quantity to Check Out</span>
-                  <span className="text-[10px] font-mono text-neutral-400">Max available: {item.quantity}</span>
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={item.quantity}
-                  value={borrowQuantity}
-                  onChange={(e) => setBorrowQuantity(Math.max(1, Math.min(item.quantity, parseInt(e.target.value) || 1)))}
-                  className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 font-mono font-bold focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              {/* Borrower Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Borrower Full Name <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Chan Vutha"
-                    value={borrowerName}
-                    onChange={(e) => setBorrowerName(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Borrower Role
-                  </label>
-                  <select
-                    value={borrowerRole}
-                    onChange={(e) => setBorrowerRole(e.target.value as any)}
-                    className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  >
-                    <option value="Student">Student</option>
-                    <option value="Lecturer">Lecturer</option>
-                    <option value="Lab Assistant">Lab Assistant</option>
-                    <option value="Technician">Technician</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Contact / Student ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ID: e20230012 / Tel: 012 999 888"
-                    value={borrowerContact}
-                    onChange={(e) => setBorrowerContact(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Class / Course / Bench
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. CS Networking Lab"
-                    value={courseOrClass}
-                    onChange={(e) => setCourseOrClass(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Check-Out Date
-                  </label>
-                  <input
-                    type="date"
-                    value={borrowDate}
-                    onChange={(e) => setBorrowDate(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 font-mono focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Expected Return Date
-                  </label>
-                  <input
-                    type="date"
-                    value={expectedReturnDate}
-                    onChange={(e) => setExpectedReturnDate(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 font-mono focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Purpose / Loan Notes
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Borrowed for graduation capstone project demonstration"
-                  value={loanNotes}
-                  onChange={(e) => setLoanNotes(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 rounded-lg p-2.5 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
-                <button
-                  type="button"
-                  onClick={() => setShowLendModal(false)}
-                  className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg cursor-pointer shadow-xs"
-                >
-                  Confirm Check-Out
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

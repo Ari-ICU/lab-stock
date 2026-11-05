@@ -64,7 +64,6 @@ export default function LoansPage() {
   const [filterText, setFilterText] = useState('');
 
   // Modals state
-  const [isLendModalOpen, setIsLendModalOpen] = useState(false);
   const [returningLoan, setReturningLoan] = useState<MockLoan | null>(null);
   const [returnNotes, setReturnNotes] = useState('');
 
@@ -72,23 +71,6 @@ export default function LoansPage() {
   const [selectedLoanDetails, setSelectedLoanDetails] = useState<MockLoan | null>(null);
   const [selectedTransferDetails, setSelectedTransferDetails] = useState<MockTransfer | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  // Form states for Lend Device / Stock
-  const [lendTargetType, setLendTargetType] = useState<'asset' | 'stock'>('asset');
-  const [selectedAssetId, setSelectedAssetId] = useState('');
-  const [selectedStockId, setSelectedStockId] = useState('');
-  const [stockQuantity, setStockQuantity] = useState(1);
-  const [borrowerName, setBorrowerName] = useState('');
-  const [borrowerRole, setBorrowerRole] = useState<'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician'>('Student');
-  const [borrowerContact, setBorrowerContact] = useState('');
-  const [courseOrClass, setCourseOrClass] = useState('');
-  const [borrowDate, setBorrowDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [expectedReturnDate, setExpectedReturnDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
-  });
-  const [loanNotes, setLoanNotes] = useState('');
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -164,81 +146,6 @@ export default function LoansPage() {
     }
   };
 
-  const handleCreateLoan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!borrowerName.trim()) {
-      showToast('Please enter the borrower name.', 'error');
-      return;
-    }
-
-    if (lendTargetType === 'stock') {
-      if (!selectedStockId) {
-        showToast('Please select a stock inventory item.', 'error');
-        return;
-      }
-      const stockItem = stock.find((s) => s.id === selectedStockId);
-      if (!stockItem) return;
-
-      if (!canManageLocation(stockItem.location)) {
-        showToast('Action restricted: stock item is stationed outside your assigned laboratory room.', 'error');
-        return;
-      }
-
-      const res = lendStockItem(stockItem.id, stockQuantity, {
-        borrowerName: borrowerName.trim(),
-        borrowerRole,
-        borrowerContact: borrowerContact.trim() || 'No contact provided',
-        courseOrClass: courseOrClass.trim() || undefined,
-        borrowDate,
-        expectedReturnDate,
-        notes: loanNotes.trim() || undefined,
-      });
-
-      if (res) {
-        setIsLendModalOpen(false);
-        setSelectedStockId('');
-        setStockQuantity(1);
-        setBorrowerName('');
-        setBorrowerContact('');
-        setCourseOrClass('');
-        setLoanNotes('');
-      }
-      return;
-    }
-
-    if (!selectedAssetId) {
-      showToast('Please select a device.', 'error');
-      return;
-    }
-    const asset = assets.find((a) => a.id === selectedAssetId);
-    if (!asset) return;
-
-    if (!canManageLocation(asset.location)) {
-      showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
-      return;
-    }
-
-    lendAsset({
-      assetId: asset.id,
-      assetName: asset.name,
-      serialNumber: asset.serialNumber,
-      borrowerName: borrowerName.trim(),
-      borrowerRole,
-      borrowerContact: borrowerContact.trim() || 'No contact provided',
-      courseOrClass: courseOrClass.trim() || undefined,
-      borrowDate,
-      expectedReturnDate,
-      notes: loanNotes.trim() || undefined,
-    });
-
-    setIsLendModalOpen(false);
-    setSelectedAssetId('');
-    setBorrowerName('');
-    setBorrowerContact('');
-    setCourseOrClass('');
-    setLoanNotes('');
-  };
-
   const handleConfirmReturn = () => {
     if (!returningLoan) return;
 
@@ -288,17 +195,13 @@ export default function LoansPage() {
               <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
               <span className="hidden sm:inline">Relocate Device</span>
             </Link>
-            <button
-              onClick={() => {
-                const available = assets.filter((a) => a.loanStatus !== 'on_loan');
-                if (available.length > 0) setSelectedAssetId(available[0].id);
-                setIsLendModalOpen(true);
-              }}
+            <Link
+              href="/loans/checkout"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Check-Out Device</span>
-            </button>
+              <span>Check-Out Item</span>
+            </Link>
           </div>
         }
       />
@@ -515,18 +418,13 @@ export default function LoansPage() {
                     ? `No active loans matching "${filterText}".`
                     : 'No devices currently checked out to students or faculty.'}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const available = assets.filter((a) => a.loanStatus !== 'on_loan');
-                    if (available.length > 0) setSelectedAssetId(available[0].id);
-                    setIsLendModalOpen(true);
-                  }}
+                <Link
+                  href="/loans/checkout"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Check Out Equipment
-                </button>
+                </Link>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1138,232 +1036,6 @@ export default function LoansPage() {
                 className="px-4 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg cursor-pointer"
               >
                 Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 9. Lend Device Modal */}
-      {isLendModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50/80">
-              <div className="flex items-center gap-2">
-                <Laptop className="w-4 h-4 text-emerald-600" />
-                <h3 className="font-semibold text-sm text-neutral-900">Check-Out / Lend Equipment</h3>
-              </div>
-              <button
-                onClick={() => setIsLendModalOpen(false)}
-                className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form id="lend-device-form" onSubmit={handleCreateLoan} className="flex-1 overflow-y-auto p-5 pb-12 space-y-4">
-              {/* Type Switcher: Hardware Device vs Consumable/Tool Stock */}
-              <div className="flex p-1 bg-neutral-100 rounded-xl gap-1">
-                <button
-                  type="button"
-                  onClick={() => setLendTargetType('asset')}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    lendTargetType === 'asset'
-                      ? 'bg-white text-neutral-900 shadow-2xs'
-                      : 'text-neutral-500 hover:text-neutral-900'
-                  }`}
-                >
-                  Hardware Device / Equipment
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLendTargetType('stock')}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    lendTargetType === 'stock'
-                      ? 'bg-white text-neutral-900 shadow-2xs'
-                      : 'text-neutral-500 hover:text-neutral-900'
-                  }`}
-                >
-                  Consumables, Tools & Stock
-                </button>
-              </div>
-
-              {lendTargetType === 'asset' ? (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Select Equipment / Device <span className="text-rose-500">*</span>
-                  </label>
-                  <Dropdown
-                    value={selectedAssetId}
-                    onChange={(val) => setSelectedAssetId(val)}
-                    options={assets
-                      .filter((a) => canManageLocation(a.location))
-                      .map((a) => ({
-                        value: a.id,
-                        label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
-                      }))}
-                    placeholder="Select device to check out"
-                    searchable={true}
-                    searchPlaceholder="Search device by name, model or serial number..."
-                  />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Select Stock Item / Tool <span className="text-rose-500">*</span>
-                    </label>
-                    <Dropdown
-                      value={selectedStockId}
-                      onChange={(val) => {
-                        setSelectedStockId(val);
-                        setStockQuantity(1);
-                      }}
-                      options={stock
-                        .filter((s) => canManageLocation(s.location))
-                        .map((s) => ({
-                          value: s.id,
-                          label: `${s.name} (SKU: ${s.code}) — ${s.quantity} ${s.unit} in ${s.location}${s.quantity === 0 ? ' [OUT OF STOCK]' : ''}`,
-                        }))}
-                      placeholder="Select stock item to check out"
-                      searchable={true}
-                      searchPlaceholder="Search stock item by name or SKU..."
-                    />
-                  </div>
-
-                  {selectedStockId && (() => {
-                    const chosen = stock.find((s) => s.id === selectedStockId);
-                    if (!chosen) return null;
-                    return (
-                      <div>
-                        <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center justify-between">
-                          <span>Quantity to Borrow</span>
-                          <span className="text-[10px] text-neutral-400 font-mono">
-                            Available: {chosen.quantity} {chosen.unit}
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          max={chosen.quantity}
-                          value={stockQuantity}
-                          onChange={(e) =>
-                            setStockQuantity(
-                              Math.max(1, Math.min(chosen.quantity, parseInt(e.target.value) || 1))
-                            )
-                          }
-                          className="w-full bg-white text-xs border border-neutral-300 rounded-lg px-3 py-2 font-mono font-bold text-neutral-900 focus:outline-none focus:border-neutral-900"
-                        />
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Borrower Full Name <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Sokha Chan"
-                    value={borrowerName}
-                    onChange={(e) => setBorrowerName(e.target.value)}
-                    className="w-full bg-white text-xs border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Borrower Role
-                  </label>
-                  <Dropdown
-                    value={borrowerRole}
-                    onChange={(val) => setBorrowerRole(val as any)}
-                    options={[
-                      { value: 'Student', label: 'Student' },
-                      { value: 'Lecturer', label: 'Lecturer' },
-                      { value: 'Lab Assistant', label: 'Lab Assistant' },
-                      { value: 'Technician', label: 'Technician' },
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Contact / Student ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ID: e20230114 / Tel: 012 345 678"
-                    value={borrowerContact}
-                    onChange={(e) => setBorrowerContact(e.target.value)}
-                    className="w-full bg-white text-xs border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Class / Course / Subject
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. CS Year 4 Advanced Networks"
-                    value={courseOrClass}
-                    onChange={(e) => setCourseOrClass(e.target.value)}
-                    className="w-full bg-white text-xs border border-neutral-300 rounded-lg px-3 py-2 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Borrow Date
-                  </label>
-                  <DatePicker value={borrowDate} onChange={setBorrowDate} />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                    Expected Return Date
-                  </label>
-                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} align="right" openDirection="auto" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Purpose / Notes
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Capstone presentation rehearsal, returned with charger and cables"
-                  value={loanNotes}
-                  onChange={(e) => setLoanNotes(e.target.value)}
-                  className="w-full bg-white text-xs border border-neutral-300 rounded-lg p-2.5 text-neutral-900 focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-            </form>
-
-            <div className="h-14 px-5 border-t border-neutral-200 bg-neutral-50/90 flex items-center justify-end gap-2 shrink-0 rounded-b-2xl">
-              <button
-                type="button"
-                onClick={() => setIsLendModalOpen(false)}
-                className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg cursor-pointer transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="lend-device-form"
-                className="px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg cursor-pointer transition-colors shadow-2xs"
-              >
-                Confirm Check-Out
               </button>
             </div>
           </div>

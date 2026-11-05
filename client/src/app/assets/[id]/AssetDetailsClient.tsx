@@ -60,20 +60,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddLogModal, setShowAddLogModal] = useState(false);
-  const [showLendModal, setShowLendModal] = useState(false);
-
-  // Lend form state
-  const [borrowerName, setBorrowerName] = useState('');
-  const [borrowerRole, setBorrowerRole] = useState<'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician'>('Student');
-  const [borrowerContact, setBorrowerContact] = useState('');
-  const [courseOrClass, setCourseOrClass] = useState('');
-  const [borrowDate, setBorrowDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [expectedReturnDate, setExpectedReturnDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
-  });
-  const [loanNotes, setLoanNotes] = useState('');
 
   // Maintenance form state
   const [logType, setLogType] = useState<'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement'>('Port Audit');
@@ -272,31 +258,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     showToast(`Added service log for ${asset.name}`);
   };
 
-  const handleLend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!borrowerName.trim()) {
-      showToast('Please enter borrower name', 'error');
-      return;
-    }
-    lendAsset({
-      assetId: asset.id,
-      assetName: asset.name,
-      serialNumber: asset.serialNumber,
-      borrowerName: borrowerName.trim(),
-      borrowerRole,
-      borrowerContact: borrowerContact.trim() || 'No contact provided',
-      courseOrClass: courseOrClass.trim() || undefined,
-      borrowDate,
-      expectedReturnDate,
-      notes: loanNotes.trim() || undefined,
-    });
-    setShowLendModal(false);
-    setBorrowerName('');
-    setBorrowerContact('');
-    setCourseOrClass('');
-    setLoanNotes('');
-  };
-
   const handleReturnFromDetails = () => {
     const activeLoan = loans.find((l) => l.assetId === asset.id && l.status === 'active');
     if (activeLoan) {
@@ -373,14 +334,13 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   <span>Return to Lab</span>
                 </button>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowLendModal(true)}
+                <Link
+                  href={`/assets/${asset.id}/lend`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                 >
                   <Laptop className="w-3.5 h-3.5 text-neutral-600" />
                   <span>Lend Out</span>
-                </button>
+                </Link>
               )}
 
               <Link
@@ -1036,9 +996,8 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                     </span>
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowLendModal(true)}
+                  <Link
+                    href={`/assets/${asset.id}/lend`}
                     className="w-full flex items-center justify-between p-2.5 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors text-xs font-medium text-neutral-800 cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
@@ -1046,7 +1005,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                       Lend Device / Student Check-Out
                     </span>
                     <Plus className="w-3 h-3 text-neutral-400" />
-                  </button>
+                  </Link>
                 )}
 
                 <Link
@@ -1176,133 +1135,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded"
                 >
                   Save Service Record
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* Lend Device Modal */}
-      {showLendModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg border border-neutral-300 shadow-xl max-w-md w-full p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                <Laptop className="w-4 h-4 text-emerald-600" />
-                Lend / Check Out {asset.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowLendModal(false)}
-                className="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleLend} className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Borrower Name <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Sokha Chan"
-                    value={borrowerName}
-                    onChange={(e) => setBorrowerName(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Role
-                  </label>
-                  <Dropdown
-                    value={borrowerRole}
-                    options={[
-                      { label: 'Student', value: 'Student' },
-                      { label: 'Lecturer', value: 'Lecturer' },
-                      { label: 'Lab Assistant', value: 'Lab Assistant' },
-                      { label: 'Technician', value: 'Technician' },
-                    ]}
-                    onChange={(val) => setBorrowerRole(val as any)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Student ID / Phone
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ID: e20230114"
-                    value={borrowerContact}
-                    onChange={(e) => setBorrowerContact(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Class / Course
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Network Routing Lab"
-                    value={courseOrClass}
-                    onChange={(e) => setCourseOrClass(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Borrow Date
-                  </label>
-                  <DatePicker value={borrowDate} onChange={setBorrowDate} />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1">
-                    Expected Due Date
-                  </label>
-                  <DatePicker value={expectedReturnDate} onChange={setExpectedReturnDate} align="right" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Purpose / Notes
-                </label>
-                <textarea
-                  rows={2}
-                  value={loanNotes}
-                  onChange={(e) => setLoanNotes(e.target.value)}
-                  placeholder="e.g. Checked out for semester capstone thesis presentation"
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 p-2 rounded focus:outline-none focus:border-neutral-900 placeholder:text-neutral-400"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200">
-                <button
-                  type="button"
-                  onClick={() => setShowLendModal(false)}
-                  className="px-3 py-1.5 border border-neutral-300 text-neutral-700 font-medium rounded hover:bg-neutral-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded cursor-pointer"
-                >
-                  Confirm Check-Out
                 </button>
               </div>
             </form>
