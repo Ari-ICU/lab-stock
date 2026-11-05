@@ -20,7 +20,7 @@ export function LoadingScreen({
 
   return (
     <div className={containerClasses}>
-      <div className="flex flex-col items-center max-w-sm mx-auto space-y-4 animate-in fade-in duration-300">
+      <div className="flex flex-col items-center max-w-sm mx-auto space-y-4">
         {/* Animated Icon Container */}
         <div className="relative flex items-center justify-center">
           <div className="w-14 h-14 rounded-2xl bg-white border border-neutral-200/80 shadow-xs flex items-center justify-center text-neutral-800">
@@ -42,8 +42,8 @@ export function LoadingScreen({
         </div>
 
         {/* Subtle Progress Shimmer */}
-        <div className="w-40 h-1 bg-neutral-200/80 rounded-full overflow-hidden mt-1">
-          <div className="w-full h-full bg-emerald-500 rounded-full animate-indeterminate" />
+        <div className="w-36 h-1 bg-neutral-200/80 rounded-full overflow-hidden mt-1 relative">
+          <div className="w-full h-full bg-emerald-500 rounded-full animate-pulse" />
         </div>
       </div>
     </div>

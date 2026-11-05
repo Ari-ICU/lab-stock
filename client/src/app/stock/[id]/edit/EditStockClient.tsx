@@ -96,7 +96,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
     }
   }, [item]);
 
-  if (isLoading) {
+  if (!item && isLoading) {
     return <LoadingScreen message="Loading stock item editor..." />;
   }
 

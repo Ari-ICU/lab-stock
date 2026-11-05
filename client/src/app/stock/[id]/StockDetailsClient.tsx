@@ -158,7 +158,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
     return activeItemLoans.reduce((sum, l) => sum + (l.quantity || 1), 0);
   }, [activeItemLoans]);
 
-  if (isLoading) {
+  if (!item && isLoading) {
     return <LoadingScreen message="Loading stock inventory details..." />;
   }
 

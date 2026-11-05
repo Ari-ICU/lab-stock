@@ -183,7 +183,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     };
   }, [allocations]);
 
-  if (isLoading) {
+  if (!asset && isLoading) {
     return <LoadingScreen message="Loading hardware asset details..." />;
   }
 

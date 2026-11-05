@@ -235,7 +235,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     );
   }
 
-  if (isLoading) {
+  if (!loc && isLoading) {
     return <LoadingScreen message="Loading laboratory facility..." />;
   }
 

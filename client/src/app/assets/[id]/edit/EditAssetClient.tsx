@@ -74,7 +74,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
     }
   }, [asset]);
 
-  if (isLoading) {
+  if (!asset && isLoading) {
     return <LoadingScreen message="Loading hardware asset editor..." />;
   }
 

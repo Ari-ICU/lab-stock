@@ -205,7 +205,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (isLoading) {
+  if (!asset && isLoading) {
     return <LoadingScreen message="Loading asset relocation terminal..." />;
   }
 

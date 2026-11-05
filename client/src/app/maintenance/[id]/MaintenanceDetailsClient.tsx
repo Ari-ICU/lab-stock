@@ -79,7 +79,7 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [item, maintenance]);
 
-  if (isLoading) {
+  if (!item && isLoading) {
     return <LoadingScreen message="Loading repair & service record..." />;
   }
 

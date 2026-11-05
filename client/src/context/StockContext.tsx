@@ -136,17 +136,44 @@ interface StockContextType {
 
 const StockContext = createContext<StockContextType | undefined>(undefined);
 
+function getCachedData<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = localStorage.getItem(`csd_cache_${key}`);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setCachedData<T>(key: string, data: T) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`csd_cache_${key}`, JSON.stringify(data));
+  } catch {
+    // ignore
+  }
+}
+
 export function StockProvider({ children }: { children: React.ReactNode }) {
-  const [stock, setStock] = useState<MockItem[]>([]);
-  const [assets, setAssets] = useState<MockAsset[]>([]);
-  const [racks, setRacks] = useState<MockRack[]>([]);
-  const [maintenance, setMaintenance] = useState<MockMaintenance[]>([]);
-  const [locations, setLocations] = useState<MockLocation[]>([]);
-  const [loans, setLoans] = useState<MockLoan[]>([]);
-  const [transfers, setTransfers] = useState<MockTransfer[]>([]);
-  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [stock, setStock] = useState<MockItem[]>(() => getCachedData('stock', []));
+  const [assets, setAssets] = useState<MockAsset[]>(() => getCachedData('assets', []));
+  const [racks, setRacks] = useState<MockRack[]>(() => getCachedData('racks', []));
+  const [maintenance, setMaintenance] = useState<MockMaintenance[]>(() => getCachedData('maintenance', []));
+  const [locations, setLocations] = useState<MockLocation[]>(() => getCachedData('locations', []));
+  const [loans, setLoans] = useState<MockLoan[]>(() => getCachedData('loans', []));
+  const [transfers, setTransfers] = useState<MockTransfer[]>(() => getCachedData('transfers', []));
+  const [requests, setRequests] = useState<PurchaseRequest[]>(() => getCachedData('requests', []));
   const [isBackendConnected, setIsBackendConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const cached = localStorage.getItem('csd_cache_assets');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
 
   const refreshBackendData = async () => {
     try {
@@ -187,32 +214,42 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       if (assetsRes.status === 'fulfilled' && Array.isArray(assetsRes.value?.data)) {
         fetchedAssets = assetsRes.value.data.map(mapServerAsset);
         setAssets(fetchedAssets);
+        setCachedData('assets', fetchedAssets);
         connected = true;
       }
 
       if (stockRes.status === 'fulfilled' && Array.isArray(stockRes.value?.data)) {
         fetchedStock = stockRes.value.data.map(mapServerStock);
         setStock(fetchedStock);
+        setCachedData('stock', fetchedStock);
         connected = true;
       }
 
       if (locsRes.status === 'fulfilled' && Array.isArray(locsRes.value?.data)) {
-        setLocations(locsRes.value.data.map(mapServerLocation));
+        const fetchedLocs = locsRes.value.data.map(mapServerLocation);
+        setLocations(fetchedLocs);
+        setCachedData('locations', fetchedLocs);
         connected = true;
       }
 
       if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value?.data)) {
-        setLoans(loansRes.value.data.map(mapServerLoan));
+        const fetchedLoans = loansRes.value.data.map(mapServerLoan);
+        setLoans(fetchedLoans);
+        setCachedData('loans', fetchedLoans);
         connected = true;
       }
 
       if (maintRes.status === 'fulfilled' && Array.isArray(maintRes.value?.data)) {
-        setMaintenance(maintRes.value.data.map(mapServerMaintenance));
+        const fetchedMaint = maintRes.value.data.map(mapServerMaintenance);
+        setMaintenance(fetchedMaint);
+        setCachedData('maintenance', fetchedMaint);
         connected = true;
       }
 
       if (reqsRes.status === 'fulfilled' && Array.isArray(reqsRes.value?.data)) {
-        setRequests(reqsRes.value.data.map(mapServerPurchaseRequest));
+        const fetchedReqs = reqsRes.value.data.map(mapServerPurchaseRequest);
+        setRequests(fetchedReqs);
+        setCachedData('requests', fetchedReqs);
         connected = true;
       }
 
@@ -224,17 +261,17 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         ])
       );
       if (uniqueRackNames.length > 0) {
-        setRacks(
-          uniqueRackNames.map((name, idx) => ({
-            id: `rack-${idx + 1}`,
-            name,
-            code: `RCK-${String(idx + 1).padStart(2, '0')}`,
-            location: 'Laboratory Facility',
-            totalSlots: 24,
-            usedSlots: 12,
-            type: 'Storage Shelf' as const,
-          }))
-        );
+        const genRacks = uniqueRackNames.map((name, idx) => ({
+          id: `rack-${idx + 1}`,
+          name,
+          code: `RCK-${String(idx + 1).padStart(2, '0')}`,
+          location: 'Laboratory Facility',
+          totalSlots: 24,
+          usedSlots: 12,
+          type: 'Storage Shelf' as const,
+        }));
+        setRacks(genRacks);
+        setCachedData('racks', genRacks);
       }
 
       setIsBackendConnected(connected);

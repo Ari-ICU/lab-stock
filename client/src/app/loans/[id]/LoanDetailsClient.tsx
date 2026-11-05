@@ -65,7 +65,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  if (isLoading) {
+  if (!loan && isLoading) {
     return <LoadingScreen message="Loading loan record dossier..." />;
   }
 
