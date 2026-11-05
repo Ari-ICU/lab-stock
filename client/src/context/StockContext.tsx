@@ -285,6 +285,56 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // 1. Immediately hydrate cached data on client mount without causing SSR mismatch
+    try {
+      const cachedAssets = localStorage.getItem('csd_cache_assets');
+      if (cachedAssets) {
+        const parsed = JSON.parse(cachedAssets);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAssets(parsed);
+          setIsLoading(false);
+        }
+      }
+      const cachedStock = localStorage.getItem('csd_cache_stock');
+      if (cachedStock) {
+        const parsed = JSON.parse(cachedStock);
+        if (Array.isArray(parsed) && parsed.length > 0) setStock(parsed);
+      }
+      const cachedLocations = localStorage.getItem('csd_cache_locations');
+      if (cachedLocations) {
+        const parsed = JSON.parse(cachedLocations);
+        if (Array.isArray(parsed) && parsed.length > 0) setLocations(parsed);
+      }
+      const cachedLoans = localStorage.getItem('csd_cache_loans');
+      if (cachedLoans) {
+        const parsed = JSON.parse(cachedLoans);
+        if (Array.isArray(parsed)) setLoans(parsed);
+      }
+      const cachedMaint = localStorage.getItem('csd_cache_maintenance');
+      if (cachedMaint) {
+        const parsed = JSON.parse(cachedMaint);
+        if (Array.isArray(parsed)) setMaintenance(parsed);
+      }
+      const cachedTransfers = localStorage.getItem('csd_cache_transfers');
+      if (cachedTransfers) {
+        const parsed = JSON.parse(cachedTransfers);
+        if (Array.isArray(parsed)) setTransfers(parsed);
+      }
+      const cachedRequests = localStorage.getItem('csd_cache_requests');
+      if (cachedRequests) {
+        const parsed = JSON.parse(cachedRequests);
+        if (Array.isArray(parsed)) setRequests(parsed);
+      }
+      const cachedRacks = localStorage.getItem('csd_cache_racks');
+      if (cachedRacks) {
+        const parsed = JSON.parse(cachedRacks);
+        if (Array.isArray(parsed)) setRacks(parsed);
+      }
+    } catch {
+      // ignore
+    }
+
+    // 2. Fetch fresh data from backend
     refreshBackendData();
 
     // Listen for live token acquisition from AuthContext
