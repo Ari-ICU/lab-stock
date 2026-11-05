@@ -54,7 +54,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     transfers,
     lendAsset,
     returnAsset,
-    transferAsset,
     showToast,
   } = useStock();
   const { user, canManageLocation } = useAuth();
@@ -62,7 +61,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddLogModal, setShowAddLogModal] = useState(false);
   const [showLendModal, setShowLendModal] = useState(false);
-  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Lend form state
   const [borrowerName, setBorrowerName] = useState('');
@@ -76,13 +74,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     return d.toISOString().split('T')[0];
   });
   const [loanNotes, setLoanNotes] = useState('');
-
-  // Transfer form state
-  const [sourceLocation, setSourceLocation] = useState('');
-  const [targetLocation, setTargetLocation] = useState('');
-  const [transferQuantity, setTransferQuantity] = useState(1);
-  const [transferReason, setTransferReason] = useState('');
-  const [transferredBy, setTransferredBy] = useState('Thoeurn Ratha');
 
   // Maintenance form state
   const [logType, setLogType] = useState<'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement'>('Port Audit');
@@ -321,43 +312,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     }
   };
 
-  const openTransferModal = (initialFrom?: string) => {
-    const from = initialFrom || asset?.location || (locations[0] ? `${locations[0].name} (${locations[0].room})` : '');
-    setSourceLocation(from);
-    const otherLoc = locations.find((l) => `${l.name} (${l.room})` !== from);
-    setTargetLocation(otherLoc ? `${otherLoc.name} (${otherLoc.room})` : '');
-    setTransferQuantity(asset?.totalUnits ?? 1);
-    setTransferReason('');
-    setShowTransferModal(true);
-  };
-
-  const handleTransfer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sourceLocation) {
-      showToast('Please select a source lab room to transfer from', 'error');
-      return;
-    }
-    if (!targetLocation) {
-      showToast('Please select a destination lab room to transfer to', 'error');
-      return;
-    }
-    if (sourceLocation === targetLocation) {
-      showToast('Source and destination rooms cannot be the same', 'error');
-      return;
-    }
-    transferAsset(
-      asset.id,
-      targetLocation,
-      transferReason.trim(),
-      transferredBy.trim(),
-      sourceLocation,
-      transferQuantity
-    );
-    setShowTransferModal(false);
-    setTargetLocation('');
-    setTransferReason('');
-  };
-
   // Find related maintenance logs
   const assetLogs = maintenance.filter(
     (m) =>
@@ -401,14 +355,13 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => openTransferModal()}
+              <Link
+                href={`/assets/${asset.id}/relocate`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
                 <span className="hidden sm:inline">Relocate</span>
-              </button>
+              </Link>
 
               {asset.loanStatus === 'on_loan' ? (
                 <button
@@ -908,17 +861,14 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openTransferModal(`${alloc.locationName} (${alloc.room})`)
-                                }
+                              <Link
+                                href={`/assets/${asset.id}/relocate?from=${encodeURIComponent(`${alloc.locationName} (${alloc.room})`)}`}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs hover:text-blue-600 cursor-pointer"
                                 title={`Relocate units stationed in ${alloc.room}`}
                               >
                                 <ArrowLeftRight className="w-3 h-3 text-neutral-400 hover:text-blue-600" />
                                 <span>Relocate</span>
-                              </button>
+                              </Link>
 
                               <Link
                                 href={`/locations/${alloc.locationId}`}
@@ -1099,9 +1049,8 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => openTransferModal()}
+                <Link
+                  href={`/assets/${asset.id}/relocate`}
                   className="w-full flex items-center justify-between p-2.5 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors text-xs font-medium text-neutral-800 cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
@@ -1109,7 +1058,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                     Move / Relocate to Another Lab
                   </span>
                   <Plus className="w-3 h-3 text-neutral-400" />
-                </button>
+                </Link>
 
                 <button
                   type="button"
@@ -1354,169 +1303,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded cursor-pointer"
                 >
                   Confirm Check-Out
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Relocate Device Modal */}
-      {showTransferModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg border border-neutral-300 shadow-xl max-w-md w-full p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                <ArrowLeftRight className="w-4 h-4 text-blue-600" />
-                Relocate {asset.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowTransferModal(false)}
-                className="text-neutral-400 hover:text-neutral-700 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleTransfer} className="space-y-4 text-xs">
-              {/* Dynamic Relocation Route Box */}
-              <div className="p-3 bg-neutral-50/80 border border-neutral-200/80 rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
-                    Equipment Relocation Route
-                  </span>
-                  <span className="text-[10px] font-mono text-neutral-500">
-                    SN: {asset.serialNumber}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {/* From Room Dropdown */}
-                  <div>
-                    <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                        <span>Source Room (Transfer From)</span> <span className="text-rose-500">*</span>
-                      </span>
-                      <span className="text-[10px] font-normal text-neutral-400">Current Placement</span>
-                    </label>
-                    <Dropdown
-                      value={sourceLocation}
-                      options={locations.map((l) => ({
-                        value: `${l.name} (${l.room})`,
-                        label: `${l.room} — ${l.name} (${l.building})`,
-                      }))}
-                      onChange={(val) => {
-                        setSourceLocation(val);
-                        if (val === targetLocation) {
-                          setTargetLocation('');
-                        }
-                      }}
-                      placeholder="Select source lab room"
-                    />
-                  </div>
-
-                  {/* To Room Dropdown */}
-                  <div>
-                    <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Destination Room (Transfer To)</span> <span className="text-rose-500">*</span>
-                      </span>
-                      <span className="text-[10px] font-normal text-neutral-400">New Placement</span>
-                    </label>
-                    <Dropdown
-                      value={targetLocation}
-                      options={locations
-                        .filter((l) => `${l.name} (${l.room})` !== sourceLocation)
-                        .map((l) => ({
-                          value: `${l.name} (${l.room})`,
-                          label: `${l.room} — ${l.name} (${l.building})`,
-                        }))}
-                      onChange={(val) => setTargetLocation(val)}
-                      placeholder="Select destination lab room"
-                    />
-                  </div>
-                </div>
-
-                {/* Live Route Summary Pill */}
-                {sourceLocation && targetLocation && (
-                  <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-2 font-mono text-neutral-700">
-                      <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded border border-neutral-200">
-                        {sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation}
-                      </span>
-                      <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
-                      <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        {targetLocation.split('(')[1]?.replace(')', '') || targetLocation}
-                      </span>
-                    </div>
-                    <span className="text-neutral-500 text-[10px] font-medium">Ready to relocate</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Multi-unit Quantity Selector (if asset has multiple units) */}
-              {(asset.totalUnits ?? 1) > 1 && (
-                <div>
-                  <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
-                    <span>Units to Relocate</span>
-                    <span className="text-[10px] text-neutral-400">Total available: {asset.totalUnits} {asset.unitType ?? 'units'}</span>
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={asset.totalUnits ?? 1}
-                    value={transferQuantity}
-                    onChange={(e) =>
-                      setTransferQuantity(
-                        Math.max(1, Math.min(asset.totalUnits ?? 1, parseInt(e.target.value) || 1))
-                      )
-                    }
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 font-mono font-bold"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Transferred By
-                </label>
-                <input
-                  type="text"
-                  value={transferredBy}
-                  onChange={(e) => setTransferredBy(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Reason for Movement
-                </label>
-                <textarea
-                  rows={2}
-                  value={transferReason}
-                  onChange={(e) => setTransferReason(e.target.value)}
-                  placeholder="e.g. Relocated to Room 206 for server administration lab course"
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 p-2 rounded focus:outline-none focus:border-neutral-900 placeholder:text-neutral-400"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200">
-                <button
-                  type="button"
-                  onClick={() => setShowTransferModal(false)}
-                  className="px-3 py-1.5 border border-neutral-300 text-neutral-700 font-medium rounded hover:bg-neutral-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded cursor-pointer"
-                >
-                  Confirm Relocation
                 </button>
               </div>
             </form>
