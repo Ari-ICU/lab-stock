@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Shield,
+  ArrowRight,
 } from 'lucide-react';
 import { MockLoan, MockTransfer } from '@/types';
 
@@ -87,6 +88,7 @@ export default function LoansPage() {
 
   // Form states for Relocate Device
   const [transferAssetId, setTransferAssetId] = useState('');
+  const [fromLocation, setFromLocation] = useState('');
   const [toLocation, setToLocation] = useState('');
   const [transferReason, setTransferReason] = useState('');
   const [transferredBy, setTransferredBy] = useState(() => user?.name || 'Dr. Heng Sovannarith');
@@ -216,14 +218,21 @@ export default function LoansPage() {
     const asset = assets.find((a) => a.id === transferAssetId);
     if (!asset) return;
 
+    const source = fromLocation || asset.location;
+    if (source === toLocation) {
+      showToast('Source and destination rooms cannot be the same', 'error');
+      return;
+    }
+
     if (!canManageLocation(asset.location)) {
       showToast('Action restricted: equipment is stationed outside your assigned laboratory room.', 'error');
       return;
     }
 
-    transferAsset(transferAssetId, toLocation, transferReason.trim(), transferredBy.trim());
+    transferAsset(transferAssetId, toLocation, transferReason.trim(), transferredBy.trim(), source);
     setIsTransferModalOpen(false);
     setTransferAssetId('');
+    setFromLocation('');
     setToLocation('');
     setTransferReason('');
   };
@@ -1278,7 +1287,19 @@ export default function LoansPage() {
                 </label>
                 <Dropdown
                   value={transferAssetId}
-                  onChange={(val) => setTransferAssetId(val)}
+                  onChange={(val) => {
+                    setTransferAssetId(val);
+                    const selected = assets.find((a) => a.id === val);
+                    if (selected) {
+                      setFromLocation(selected.location);
+                      const otherLoc = locations.find(
+                        (l) => !selected.location.toLowerCase().includes(l.room.toLowerCase())
+                      );
+                      if (otherLoc) {
+                        setToLocation(`${otherLoc.name} (${otherLoc.room})`);
+                      }
+                    }
+                  }}
                   options={assets
                     .filter((a) => canManageLocation(a.location))
                     .map((a) => ({
@@ -1292,41 +1313,87 @@ export default function LoansPage() {
               </div>
 
               {selectedTransferAsset && (
-                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs space-y-1">
-                  <div className="flex items-center justify-between">
+                <div className="p-3 bg-neutral-50/80 border border-neutral-200/80 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
-                      Current Room Placement
+                      Relocation Route
                     </span>
                     <span className="text-[10px] font-mono text-neutral-500">
                       SN: {selectedTransferAsset.serialNumber}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 font-bold text-neutral-900">
-                    <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>{selectedTransferAsset.location}</span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Dynamic From Room Dropdown */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Source Room (From)</span> <span className="text-rose-500">*</span>
+                        </span>
+                        <span className="text-[10px] text-neutral-400">Current</span>
+                      </label>
+                      <Dropdown
+                        value={fromLocation || selectedTransferAsset.location}
+                        onChange={(val) => {
+                          setFromLocation(val);
+                          if (val === toLocation) {
+                            setToLocation('');
+                          }
+                        }}
+                        options={locations.map((l) => ({
+                          value: `${l.name} (${l.room})`,
+                          label: `${l.room} — ${l.name} (${l.building})`,
+                        }))}
+                        placeholder="Select source lab room"
+                        searchable={true}
+                      />
+                    </div>
+
+                    {/* Dynamic To Room Dropdown */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Destination Room (To)</span> <span className="text-rose-500">*</span>
+                        </span>
+                        <span className="text-[10px] text-neutral-400">New Target</span>
+                      </label>
+                      <Dropdown
+                        value={toLocation}
+                        onChange={(val) => setToLocation(val)}
+                        options={locations
+                          .filter(
+                            (l) =>
+                              `${l.name} (${l.room})` !== (fromLocation || selectedTransferAsset.location)
+                          )
+                          .map((l) => ({
+                            value: `${l.name} (${l.room})`,
+                            label: `${l.room} — ${l.name} (${l.building})`,
+                          }))}
+                        placeholder="Select target lab room"
+                        searchable={true}
+                      />
+                    </div>
                   </div>
+
+                  {/* Visual Route Tag */}
+                  {(fromLocation || selectedTransferAsset.location) && toLocation && (
+                    <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-2 font-mono text-neutral-700">
+                        <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded border border-neutral-200">
+                          {(fromLocation || selectedTransferAsset.location).split('(')[1]?.replace(')', '') || (fromLocation || selectedTransferAsset.location)}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {toLocation.split('(')[1]?.replace(')', '') || toLocation}
+                        </span>
+                      </div>
+                      <span className="text-neutral-500 text-[10px] font-medium">Ready to transfer</span>
+                    </div>
+                  )}
                 </div>
               )}
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Target Destination Lab Room <span className="text-rose-500">*</span>
-                </label>
-                <Dropdown
-                  value={toLocation}
-                  onChange={(val) => setToLocation(val)}
-                  options={locations.map((l) => {
-                    const isSameRoom = selectedTransferAsset?.location.toLowerCase().includes(l.room.toLowerCase());
-                    return {
-                      value: `${l.name} (${l.room})`,
-                      label: `${l.name} — ${l.room} (${l.building})${isSameRoom ? ' (CURRENT ROOM)' : ''}`,
-                    };
-                  })}
-                  placeholder="Select target lab room"
-                  searchable={true}
-                  searchPlaceholder="Search room by name, number, or building..."
-                />
-              </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">

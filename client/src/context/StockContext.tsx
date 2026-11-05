@@ -66,7 +66,14 @@ interface StockContextType {
   deleteAsset: (id: string) => void;
   lendAsset: (data: Omit<MockLoan, 'id' | 'status'> & { id?: string }) => MockLoan;
   returnAsset: (loanId: string, notes?: string) => void;
-  transferAsset: (assetId: string, toLocation: string, reason?: string, transferredBy?: string) => MockTransfer;
+  transferAsset: (
+    assetId: string,
+    toLocation: string,
+    reason?: string,
+    transferredBy?: string,
+    fromLocation?: string,
+    quantity?: number
+  ) => MockTransfer;
   addRack: (rack: Omit<MockRack, 'id'> & { id?: string }) => void;
   updateRack: (rack: MockRack) => void;
   deleteRack: (id: string) => void;
@@ -524,10 +531,13 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     assetId: string,
     toLocation: string,
     reason?: string,
-    transferredBy?: string
+    transferredBy?: string,
+    fromLocation?: string,
+    quantity?: number
   ): MockTransfer => {
     const asset = assets.find((a) => a.id === assetId);
-    const fromLoc = asset?.location || 'Unknown';
+    const fromLoc = fromLocation || asset?.location || 'Unknown';
+    const moveQty = quantity && quantity > 0 ? quantity : (asset?.totalUnits || 1);
 
     const newTransfer: MockTransfer = {
       id: `TR-${Date.now().toString().slice(-4)}`,
@@ -550,7 +560,79 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       );
     }
 
-    showToast(`Moved ${asset?.name || 'Device'} to ${toLocation}`);
+    // Also update room inventories in locations if matching rooms exist
+    setLocations((prevLocations) => {
+      const fromLocRecord = prevLocations.find((l) =>
+        fromLoc.toLowerCase().includes(l.room.toLowerCase()) ||
+        fromLoc.toLowerCase().includes(l.name.toLowerCase())
+      );
+      const toLocRecord = prevLocations.find((l) =>
+        toLocation.toLowerCase().includes(l.room.toLowerCase()) ||
+        toLocation.toLowerCase().includes(l.name.toLowerCase())
+      );
+
+      if (!fromLocRecord || !toLocRecord || fromLocRecord.id === toLocRecord.id) {
+        return prevLocations;
+      }
+
+      return prevLocations.map((loc) => {
+        if (loc.id === fromLocRecord.id) {
+          const existingInvs = loc.inventories || [];
+          const updatedInvs = existingInvs
+            .map((inv) => {
+              const isMatch =
+                (inv.assetId && inv.assetId === assetId) ||
+                inv.name.toLowerCase() === (asset?.name || '').toLowerCase();
+              if (isMatch) {
+                const newWorking = Math.max(0, (inv.qtyWorking || 0) - moveQty);
+                return { ...inv, qtyWorking: newWorking };
+              }
+              return inv;
+            })
+            .filter((inv) => (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0) > 0);
+          return { ...loc, inventories: updatedInvs };
+        }
+
+        if (loc.id === toLocRecord.id) {
+          const existingInvs = loc.inventories || [];
+          const matchIndex = existingInvs.findIndex(
+            (inv) =>
+              (inv.assetId && inv.assetId === assetId) ||
+              inv.name.toLowerCase() === (asset?.name || '').toLowerCase()
+          );
+
+          if (matchIndex >= 0) {
+            const updatedInvs = [...existingInvs];
+            const target = updatedInvs[matchIndex];
+            updatedInvs[matchIndex] = {
+              ...target,
+              qtyWorking: (target.qtyWorking || 0) + moveQty,
+            };
+            return { ...loc, inventories: updatedInvs };
+          } else {
+            const newInv: RoomInventoryItem = {
+              id: `inv-move-${Date.now()}`,
+              roomId: loc.id,
+              assetId: assetId,
+              name: asset?.name || 'Transferred Equipment',
+              group: 'IT_HARDWARE',
+              brandSpec: asset?.model || 'Standard Specification',
+              unit: asset?.unitType || 'Units',
+              qtyWorking: moveQty,
+              qtyBroken: 0,
+              qtyMaintenance: 0,
+              remarks: `Transferred from ${fromLocRecord.room} (${newTransfer.transferDate})`,
+              lastAuditedAt: new Date().toISOString(),
+            };
+            return { ...loc, inventories: [newInv, ...existingInvs] };
+          }
+        }
+
+        return loc;
+      });
+    });
+
+    showToast(`Relocated ${asset?.name || 'Device'} from ${fromLoc} to ${toLocation}`);
     return newTransfer;
   };
 

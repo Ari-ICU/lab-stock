@@ -11,6 +11,7 @@ import { DatePicker } from '@/components/DatePicker';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import {
   ArrowLeft,
+  ArrowRight,
   Edit3,
   Trash2,
   Copy,
@@ -77,7 +78,9 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   const [loanNotes, setLoanNotes] = useState('');
 
   // Transfer form state
+  const [sourceLocation, setSourceLocation] = useState('');
   const [targetLocation, setTargetLocation] = useState('');
+  const [transferQuantity, setTransferQuantity] = useState(1);
   const [transferReason, setTransferReason] = useState('');
   const [transferredBy, setTransferredBy] = useState('Thoeurn Ratha');
 
@@ -318,13 +321,38 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     }
   };
 
+  const openTransferModal = (initialFrom?: string) => {
+    const from = initialFrom || asset?.location || (locations[0] ? `${locations[0].name} (${locations[0].room})` : '');
+    setSourceLocation(from);
+    const otherLoc = locations.find((l) => `${l.name} (${l.room})` !== from);
+    setTargetLocation(otherLoc ? `${otherLoc.name} (${otherLoc.room})` : '');
+    setTransferQuantity(asset?.totalUnits ?? 1);
+    setTransferReason('');
+    setShowTransferModal(true);
+  };
+
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetLocation) {
-      showToast('Please select a destination lab room', 'error');
+    if (!sourceLocation) {
+      showToast('Please select a source lab room to transfer from', 'error');
       return;
     }
-    transferAsset(asset.id, targetLocation, transferReason.trim(), transferredBy.trim());
+    if (!targetLocation) {
+      showToast('Please select a destination lab room to transfer to', 'error');
+      return;
+    }
+    if (sourceLocation === targetLocation) {
+      showToast('Source and destination rooms cannot be the same', 'error');
+      return;
+    }
+    transferAsset(
+      asset.id,
+      targetLocation,
+      transferReason.trim(),
+      transferredBy.trim(),
+      sourceLocation,
+      transferQuantity
+    );
     setShowTransferModal(false);
     setTargetLocation('');
     setTransferReason('');
@@ -375,10 +403,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  if (locations.length > 0) setTargetLocation(`${locations[0].name} (${locations[0].room})`);
-                  setShowTransferModal(true);
-                }}
+                onClick={() => openTransferModal()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
@@ -882,13 +907,27 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                             )}
                           </td>
                           <td className="py-3 px-3 text-right">
-                            <Link
-                              href={`/locations/${alloc.locationId}`}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs group-hover:text-emerald-700"
-                            >
-                              <span>View Room</span>
-                              <ExternalLink className="w-3 h-3 text-neutral-400 group-hover:text-emerald-600" />
-                            </Link>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openTransferModal(`${alloc.locationName} (${alloc.room})`)
+                                }
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs hover:text-blue-600 cursor-pointer"
+                                title={`Relocate units stationed in ${alloc.room}`}
+                              >
+                                <ArrowLeftRight className="w-3 h-3 text-neutral-400 hover:text-blue-600" />
+                                <span>Relocate</span>
+                              </button>
+
+                              <Link
+                                href={`/locations/${alloc.locationId}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs group-hover:text-emerald-700"
+                              >
+                                <span>View Room</span>
+                                <ExternalLink className="w-3 h-3 text-neutral-400 group-hover:text-emerald-600" />
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1062,10 +1101,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    if (locations.length > 0) setTargetLocation(`${locations[0].name} (${locations[0].room})`);
-                    setShowTransferModal(true);
-                  }}
+                  onClick={() => openTransferModal()}
                   className="w-full flex items-center justify-between p-2.5 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors text-xs font-medium text-neutral-800 cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
@@ -1343,25 +1379,105 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
               </button>
             </div>
 
-            <form onSubmit={handleTransfer} className="space-y-3.5 text-xs">
-              <div className="p-2.5 bg-neutral-50 border border-neutral-200 rounded text-neutral-600">
-                Current Placement: <span className="font-semibold text-neutral-900">{asset.location}</span>
+            <form onSubmit={handleTransfer} className="space-y-4 text-xs">
+              {/* Dynamic Relocation Route Box */}
+              <div className="p-3 bg-neutral-50/80 border border-neutral-200/80 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
+                    Equipment Relocation Route
+                  </span>
+                  <span className="text-[10px] font-mono text-neutral-500">
+                    SN: {asset.serialNumber}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {/* From Room Dropdown */}
+                  <div>
+                    <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Source Room (Transfer From)</span> <span className="text-rose-500">*</span>
+                      </span>
+                      <span className="text-[10px] font-normal text-neutral-400">Current Placement</span>
+                    </label>
+                    <Dropdown
+                      value={sourceLocation}
+                      options={locations.map((l) => ({
+                        value: `${l.name} (${l.room})`,
+                        label: `${l.room} — ${l.name} (${l.building})`,
+                      }))}
+                      onChange={(val) => {
+                        setSourceLocation(val);
+                        if (val === targetLocation) {
+                          setTargetLocation('');
+                        }
+                      }}
+                      placeholder="Select source lab room"
+                    />
+                  </div>
+
+                  {/* To Room Dropdown */}
+                  <div>
+                    <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Destination Room (Transfer To)</span> <span className="text-rose-500">*</span>
+                      </span>
+                      <span className="text-[10px] font-normal text-neutral-400">New Placement</span>
+                    </label>
+                    <Dropdown
+                      value={targetLocation}
+                      options={locations
+                        .filter((l) => `${l.name} (${l.room})` !== sourceLocation)
+                        .map((l) => ({
+                          value: `${l.name} (${l.room})`,
+                          label: `${l.room} — ${l.name} (${l.building})`,
+                        }))}
+                      onChange={(val) => setTargetLocation(val)}
+                      placeholder="Select destination lab room"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Route Summary Pill */}
+                {sourceLocation && targetLocation && (
+                  <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-2 font-mono text-neutral-700">
+                      <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded border border-neutral-200">
+                        {sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation}
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {targetLocation.split('(')[1]?.replace(')', '') || targetLocation}
+                      </span>
+                    </div>
+                    <span className="text-neutral-500 text-[10px] font-medium">Ready to relocate</span>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Destination Lab Room <span className="text-rose-500">*</span>
-                </label>
-                <Dropdown
-                  value={targetLocation}
-                  options={locations.map((l) => ({
-                    value: `${l.name} (${l.room})`,
-                    label: `${l.name} — ${l.room} (${l.building})`,
-                  }))}
-                  onChange={(val) => setTargetLocation(val)}
-                  placeholder="Select destination lab"
-                />
-              </div>
+              {/* Multi-unit Quantity Selector (if asset has multiple units) */}
+              {(asset.totalUnits ?? 1) > 1 && (
+                <div>
+                  <label className="block font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                    <span>Units to Relocate</span>
+                    <span className="text-[10px] text-neutral-400">Total available: {asset.totalUnits} {asset.unitType ?? 'units'}</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={asset.totalUnits ?? 1}
+                    value={transferQuantity}
+                    onChange={(e) =>
+                      setTransferQuantity(
+                        Math.max(1, Math.min(asset.totalUnits ?? 1, parseInt(e.target.value) || 1))
+                      )
+                    }
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 font-mono font-bold"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block font-semibold text-neutral-700 mb-1">
