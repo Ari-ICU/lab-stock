@@ -228,8 +228,8 @@ export default function MaintenancePage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <Header
-        title="Maintenance & Audits"
-        subtitle="Firmware Upgrades & Calibration Logs"
+        title="Equipment Repairs"
+        subtitle="Diagnostics, Servicing & Calibration Logs"
         actionLabel="Schedule Service"
         onAction={() => router.push('/maintenance/create')}
         onExport={handleExport}
