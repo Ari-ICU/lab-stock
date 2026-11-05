@@ -119,6 +119,22 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
     return allocations.reduce((sum, a) => sum + a.total, 0);
   }, [allocations]);
 
+  const allocationSummary = useMemo(() => {
+    const totalWorking = allocations.reduce((sum, a) => sum + (a.qtyWorking || 0), 0);
+    const totalMaintenance = allocations.reduce((sum, a) => sum + (a.qtyMaintenance || 0), 0);
+    const totalBroken = allocations.reduce((sum, a) => sum + (a.qtyBroken || 0), 0);
+    const totalDeployed = totalWorking + totalMaintenance + totalBroken;
+    const operationalRate = totalDeployed > 0 ? Math.round((totalWorking / totalDeployed) * 100) : 100;
+
+    return {
+      totalWorking,
+      totalMaintenance,
+      totalBroken,
+      totalDeployed,
+      operationalRate,
+    };
+  }, [allocations]);
+
   if (!item) {
     return (
       <div className="flex-1 flex flex-col min-w-0">
@@ -560,27 +576,59 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
             </div>
 
             {/* Classroom & Laboratory Allocations Card */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4 shadow-2xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-emerald-600" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
                     Classroom & Laboratory Allocations
                   </h3>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-bold text-neutral-900 font-mono text-xs">
-                    {totalAllocated} {item.unit || 'units'}
+                <div className="flex items-center gap-2 text-xs flex-wrap">
+                  <span className="font-bold text-neutral-900 font-mono text-xs bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200/80">
+                    {totalAllocated} {item.unit || 'units'} Deployed
                   </span>
-                  <span className="text-neutral-400">deployed across</span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-neutral-100 text-neutral-700 border border-neutral-200/60 font-mono">
+                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-neutral-900 text-white shadow-2xs font-mono">
                     {allocations.length} {allocations.length === 1 ? 'room' : 'rooms'}
                   </span>
                 </div>
               </div>
 
+              {/* Telemetry Status Strip */}
+              {allocations.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-neutral-50/80 p-3 rounded-xl border border-neutral-200/60 text-xs">
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase font-bold text-neutral-500">Working Fleet</div>
+                    <div className="font-mono font-bold text-emerald-700 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      {allocationSummary.totalWorking} {item.unit || 'units'}
+                    </div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase font-bold text-neutral-500">In Maintenance</div>
+                    <div className="font-mono font-bold text-blue-700 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      {allocationSummary.totalMaintenance} {item.unit || 'units'}
+                    </div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase font-bold text-neutral-500">Defect / Broken</div>
+                    <div className="font-mono font-bold text-rose-700 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      {allocationSummary.totalBroken} {item.unit || 'units'}
+                    </div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase font-bold text-neutral-500">Readiness Rate</div>
+                    <div className="font-mono font-bold text-neutral-900">
+                      {allocationSummary.operationalRate}% Operational
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {allocations.length === 0 ? (
-                <div className="py-8 text-center space-y-1.5 bg-neutral-50/50 rounded-lg border border-dashed border-neutral-200">
+                <div className="py-8 text-center space-y-1.5 bg-neutral-50/50 rounded-xl border border-dashed border-neutral-200">
                   <Package className="w-6 h-6 text-neutral-400 mx-auto mb-1 stroke-1" />
                   <p className="text-xs text-neutral-600 font-semibold">
                     No active classroom or laboratory allocations for this stock item.
@@ -590,93 +638,82 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[620px]">
+                <div className="overflow-x-auto rounded-xl border border-neutral-200/80">
+                  <table className="w-full text-left text-xs min-w-[680px]">
                     <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                       <tr>
-                        <th className="py-3 px-4">Classroom & Lab</th>
-                        <th className="py-3 px-4 text-center">Count</th>
-                        <th className="py-3 px-4 text-center">Status</th>
-                        <th className="py-3 px-4">Remarks</th>
-                        <th className="py-3 px-4 text-right">Action</th>
+                        <th className="py-3 px-3.5">Classroom & Lab</th>
+                        <th className="py-3 px-3">Building & Floor</th>
+                        <th className="py-3 px-3 text-center">Allocated</th>
+                        <th className="py-3 px-3 text-center">Working</th>
+                        <th className="py-3 px-3 text-center">Maintenance</th>
+                        <th className="py-3 px-3 text-center">Broken</th>
+                        <th className="py-3 px-3">Condition Remarks</th>
+                        <th className="py-3 px-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
                       {allocations.map((alloc) => {
                         return (
                           <tr key={alloc.inventoryId} className="hover:bg-neutral-50/70 transition-colors group">
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-3.5">
                               <Link
                                 href={`/locations/${alloc.locationId}`}
-                                className="group-hover:text-emerald-700 transition-colors block"
+                                className="group-hover:text-emerald-700 transition-colors inline-flex items-center gap-2"
                               >
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono bg-neutral-900 text-white px-2 py-0.5 rounded text-[10px] font-bold shrink-0 shadow-2xs">
-                                    {alloc.room}
-                                  </span>
-                                  <span className="font-semibold text-neutral-900 group-hover:text-emerald-700 transition-colors">
-                                    {alloc.locationName}
-                                  </span>
-                                </div>
-                                {alloc.building && (
-                                  <div className="text-[11px] text-neutral-400 font-normal pl-0.5 mt-0.5">
-                                    {alloc.building}
-                                  </div>
-                                )}
+                                <span className="font-mono bg-neutral-900 text-white px-2 py-0.5 rounded text-[10px] font-bold shrink-0 shadow-2xs">
+                                  {alloc.room}
+                                </span>
+                                <span className="font-semibold text-neutral-900 group-hover:text-emerald-700 transition-colors">
+                                  {alloc.locationName}
+                                </span>
                               </Link>
                             </td>
 
-                            <td className="py-3 px-4 text-center">
+                            <td className="py-3 px-3 text-neutral-500 font-medium">
+                              {alloc.building || 'Engineering Block A'}
+                            </td>
+
+                            <td className="py-3 px-3 text-center">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono">
                                 {alloc.total} {alloc.unit}
                               </span>
                             </td>
 
-                            <td className="py-3 px-4 text-center">
-                              {(() => {
-                                const broken = alloc.qtyBroken || 0;
-                                const maintenance = alloc.qtyMaintenance || 0;
-                                const working = alloc.qtyWorking || 0;
-
-                                if (broken === 0 && maintenance === 0) {
-                                  return (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                      Operational
-                                    </span>
-                                  );
-                                }
-                                if (working === 0 && broken > 0) {
-                                  return (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                      Broken
-                                    </span>
-                                  );
-                                }
-                                if (working === 0 && maintenance > 0) {
-                                  return (
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                      In Repair
-                                    </span>
-                                  );
-                                }
-                                return (
-                                  <span
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200"
-                                    title={`${working} working, ${broken} broken, ${maintenance} in repair`}
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                    {broken > 0 ? `${broken} Broken` : `${maintenance} In Repair`}
-                                  </span>
-                                );
-                              })()}
+                            <td className="py-3 px-3 text-center font-mono">
+                              <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {alloc.qtyWorking}
+                              </span>
                             </td>
 
-                            <td className="py-3 px-4">
-                              <div className="text-xs text-neutral-700 font-normal max-w-md">
-                                {alloc.remarks || 'Standard condition • inspected'}
+                            <td className="py-3 px-3 text-center font-mono">
+                              {alloc.qtyMaintenance > 0 ? (
+                                <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-[11px]">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                  {alloc.qtyMaintenance}
+                                </span>
+                              ) : (
+                                <span className="text-neutral-300 font-normal">—</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-3 text-center font-mono">
+                              {alloc.qtyBroken > 0 ? (
+                                <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md text-[11px]">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  {alloc.qtyBroken}
+                                </span>
+                              ) : (
+                                <span className="text-neutral-300 font-normal">—</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-3 text-neutral-500 text-[11px] max-w-xs truncate">
+                              <div>
+                                {alloc.remarks || (
+                                  <span className="text-neutral-400 italic">Standard condition</span>
+                                )}
                               </div>
                               {alloc.lastAuditedAt && (
                                 <div className="text-[10px] text-neutral-400 font-mono mt-0.5">
@@ -685,13 +722,13 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                               )}
                             </td>
 
-                            <td className="py-3 px-4 text-right">
+                            <td className="py-3 px-3 text-right">
                               <Link
                                 href={`/locations/${alloc.locationId}`}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 rounded hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900 transition-all shadow-2xs"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900 transition-all shadow-2xs group-hover:text-emerald-700"
                               >
                                 <span>View Room</span>
-                                <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-700" />
+                                <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-emerald-600" />
                               </Link>
                             </td>
                           </tr>
