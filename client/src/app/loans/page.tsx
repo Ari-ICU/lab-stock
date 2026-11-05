@@ -44,8 +44,10 @@ export default function LoansPage() {
     loans,
     transfers,
     assets,
+    stock,
     locations,
     lendAsset,
+    lendStockItem,
     returnAsset,
     transferAsset,
     showToast,
@@ -71,8 +73,11 @@ export default function LoansPage() {
   const [selectedTransferDetails, setSelectedTransferDetails] = useState<MockTransfer | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Form states for Lend Device
+  // Form states for Lend Device / Stock
+  const [lendTargetType, setLendTargetType] = useState<'asset' | 'stock'>('asset');
   const [selectedAssetId, setSelectedAssetId] = useState('');
+  const [selectedStockId, setSelectedStockId] = useState('');
+  const [stockQuantity, setStockQuantity] = useState(1);
   const [borrowerName, setBorrowerName] = useState('');
   const [borrowerRole, setBorrowerRole] = useState<'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician'>('Student');
   const [borrowerContact, setBorrowerContact] = useState('');
@@ -161,8 +166,48 @@ export default function LoansPage() {
 
   const handleCreateLoan = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedAssetId || !borrowerName.trim()) {
-      showToast('Please select a device and enter the borrower name.', 'error');
+    if (!borrowerName.trim()) {
+      showToast('Please enter the borrower name.', 'error');
+      return;
+    }
+
+    if (lendTargetType === 'stock') {
+      if (!selectedStockId) {
+        showToast('Please select a stock inventory item.', 'error');
+        return;
+      }
+      const stockItem = stock.find((s) => s.id === selectedStockId);
+      if (!stockItem) return;
+
+      if (!canManageLocation(stockItem.location)) {
+        showToast('Action restricted: stock item is stationed outside your assigned laboratory room.', 'error');
+        return;
+      }
+
+      const res = lendStockItem(stockItem.id, stockQuantity, {
+        borrowerName: borrowerName.trim(),
+        borrowerRole,
+        borrowerContact: borrowerContact.trim() || 'No contact provided',
+        courseOrClass: courseOrClass.trim() || undefined,
+        borrowDate,
+        expectedReturnDate,
+        notes: loanNotes.trim() || undefined,
+      });
+
+      if (res) {
+        setIsLendModalOpen(false);
+        setSelectedStockId('');
+        setStockQuantity(1);
+        setBorrowerName('');
+        setBorrowerContact('');
+        setCourseOrClass('');
+        setLoanNotes('');
+      }
+      return;
+    }
+
+    if (!selectedAssetId) {
+      showToast('Please select a device.', 'error');
       return;
     }
     const asset = assets.find((a) => a.id === selectedAssetId);
@@ -196,10 +241,24 @@ export default function LoansPage() {
 
   const handleConfirmReturn = () => {
     if (!returningLoan) return;
-    const loanAsset = assets.find((a) => a.id === returningLoan.assetId);
-    if (loanAsset && !canManageLocation(loanAsset.location)) {
-      showToast('Action restricted: equipment belongs to a room outside your assigned laboratory scope.', 'error');
-      return;
+
+    if (returningLoan.itemType === 'stock' || returningLoan.stockId) {
+      const stockItem = stock.find(
+        (s) =>
+          s.id === returningLoan.stockId ||
+          s.code === returningLoan.serialNumber ||
+          s.name === returningLoan.assetName
+      );
+      if (stockItem && !canManageLocation(stockItem.location)) {
+        showToast('Action restricted: stock item belongs to a room outside your assigned laboratory scope.', 'error');
+        return;
+      }
+    } else {
+      const loanAsset = assets.find((a) => a.id === returningLoan.assetId);
+      if (loanAsset && !canManageLocation(loanAsset.location)) {
+        showToast('Action restricted: equipment belongs to a room outside your assigned laboratory scope.', 'error');
+        return;
+      }
     }
 
     returnAsset(returningLoan.id, returnNotes.trim() || undefined);
@@ -493,8 +552,17 @@ export default function LoansPage() {
                           className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                         >
                           <td className="py-3.5 px-4">
-                            <div className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5">
+                            <div className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5 flex-wrap">
                               <span>{loan.assetName}</span>
+                              {loan.itemType === 'stock' || loan.stockId ? (
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Stock ({loan.quantity || 1} units)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                  Device
+                                </span>
+                              )}
                               <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <button
@@ -504,9 +572,9 @@ export default function LoansPage() {
                                 copyToClipboard(loan.serialNumber, 'Serial Number', loan.id);
                               }}
                               className="mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-neutral-600 bg-neutral-100 hover:bg-neutral-200/80 px-1.5 py-0.5 rounded transition-colors"
-                              title="Click to copy serial"
+                              title="Click to copy identifier"
                             >
-                              <span>SN: {loan.serialNumber}</span>
+                              <span>{loan.itemType === 'stock' || loan.stockId ? 'SKU' : 'SN'}: {loan.serialNumber}</span>
                               {copiedKey === loan.id ? (
                                 <Check className="w-2.5 h-2.5 text-emerald-600" />
                               ) : (
@@ -629,12 +697,21 @@ export default function LoansPage() {
                         className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                       >
                         <td className="py-3.5 px-4">
-                          <div className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5">
+                          <div className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5 flex-wrap">
                             <span>{loan.assetName}</span>
+                            {loan.itemType === 'stock' || loan.stockId ? (
+                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Stock ({loan.quantity || 1} units)
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                Device
+                              </span>
+                            )}
                             <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                           <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
-                            SN: {loan.serialNumber}
+                            {loan.itemType === 'stock' || loan.stockId ? 'SKU' : 'SN'}: {loan.serialNumber}
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
@@ -1085,24 +1162,103 @@ export default function LoansPage() {
             </div>
 
             <form id="lend-device-form" onSubmit={handleCreateLoan} className="flex-1 overflow-y-auto p-5 pb-12 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                  Select Equipment / Device <span className="text-rose-500">*</span>
-                </label>
-                <Dropdown
-                  value={selectedAssetId}
-                  onChange={(val) => setSelectedAssetId(val)}
-                  options={assets
-                    .filter((a) => canManageLocation(a.location))
-                    .map((a) => ({
-                      value: a.id,
-                      label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
-                    }))}
-                  placeholder="Select device to check out"
-                  searchable={true}
-                  searchPlaceholder="Search device by name, model or serial number..."
-                />
+              {/* Type Switcher: Hardware Device vs Consumable/Tool Stock */}
+              <div className="flex p-1 bg-neutral-100 rounded-xl gap-1">
+                <button
+                  type="button"
+                  onClick={() => setLendTargetType('asset')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    lendTargetType === 'asset'
+                      ? 'bg-white text-neutral-900 shadow-2xs'
+                      : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  Hardware Device / Equipment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLendTargetType('stock')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    lendTargetType === 'stock'
+                      ? 'bg-white text-neutral-900 shadow-2xs'
+                      : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  Consumables, Tools & Stock
+                </button>
               </div>
+
+              {lendTargetType === 'asset' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                    Select Equipment / Device <span className="text-rose-500">*</span>
+                  </label>
+                  <Dropdown
+                    value={selectedAssetId}
+                    onChange={(val) => setSelectedAssetId(val)}
+                    options={assets
+                      .filter((a) => canManageLocation(a.location))
+                      .map((a) => ({
+                        value: a.id,
+                        label: `${a.name} (SN: ${a.serialNumber}) — ${a.location}${a.loanStatus === 'on_loan' ? ' [ON LOAN]' : ''}`,
+                      }))}
+                    placeholder="Select device to check out"
+                    searchable={true}
+                    searchPlaceholder="Search device by name, model or serial number..."
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      Select Stock Item / Tool <span className="text-rose-500">*</span>
+                    </label>
+                    <Dropdown
+                      value={selectedStockId}
+                      onChange={(val) => {
+                        setSelectedStockId(val);
+                        setStockQuantity(1);
+                      }}
+                      options={stock
+                        .filter((s) => canManageLocation(s.location))
+                        .map((s) => ({
+                          value: s.id,
+                          label: `${s.name} (SKU: ${s.code}) — ${s.quantity} ${s.unit} in ${s.location}${s.quantity === 0 ? ' [OUT OF STOCK]' : ''}`,
+                        }))}
+                      placeholder="Select stock item to check out"
+                      searchable={true}
+                      searchPlaceholder="Search stock item by name or SKU..."
+                    />
+                  </div>
+
+                  {selectedStockId && (() => {
+                    const chosen = stock.find((s) => s.id === selectedStockId);
+                    if (!chosen) return null;
+                    return (
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                          <span>Quantity to Borrow</span>
+                          <span className="text-[10px] text-neutral-400 font-mono">
+                            Available: {chosen.quantity} {chosen.unit}
+                          </span>
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={chosen.quantity}
+                          value={stockQuantity}
+                          onChange={(e) =>
+                            setStockQuantity(
+                              Math.max(1, Math.min(chosen.quantity, parseInt(e.target.value) || 1))
+                            )
+                          }
+                          className="w-full bg-white text-xs border border-neutral-300 rounded-lg px-3 py-2 font-mono font-bold text-neutral-900 focus:outline-none focus:border-neutral-900"
+                        />
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>

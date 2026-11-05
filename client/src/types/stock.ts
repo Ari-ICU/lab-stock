@@ -17,9 +17,12 @@ export interface MockItem {
 export interface MockLoan {
   id: string;
   serverId?: string;
-  assetId: string;
+  assetId?: string;
+  stockId?: string;
+  itemType?: 'asset' | 'stock';
+  quantity?: number;
   assetName: string;
-  serialNumber: string;
+  serialNumber: string; // Serial number for asset or SKU for stock item
   borrowerName: string;
   borrowerRole: 'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician';
   borrowerContact: string; // email or phone or student ID

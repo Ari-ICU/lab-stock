@@ -65,6 +65,19 @@ interface StockContextType {
   updateAsset: (asset: MockAsset) => void;
   deleteAsset: (id: string) => void;
   lendAsset: (data: Omit<MockLoan, 'id' | 'status'> & { id?: string }) => MockLoan;
+  lendStockItem: (
+    stockId: string,
+    quantity: number,
+    data: {
+      borrowerName: string;
+      borrowerRole: 'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician';
+      borrowerContact: string;
+      courseOrClass?: string;
+      borrowDate: string;
+      expectedReturnDate: string;
+      notes?: string;
+    }
+  ) => MockLoan | null;
   returnAsset: (loanId: string, notes?: string) => void;
   transferAsset: (
     assetId: string,
@@ -464,28 +477,109 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     const newLoan: MockLoan = {
       id: data.id || `LN-${Date.now().toString().slice(-4)}`,
       status: 'active',
+      itemType: data.itemType || (data.stockId ? 'stock' : 'asset'),
       ...data,
     };
     setLoans((prev) => [newLoan, ...prev]);
 
-    // Update asset loan status
-    setAssets((prev) =>
-      prev.map((a) =>
-        a.id === data.assetId
-          ? {
-              ...a,
-              loanStatus: 'on_loan',
-              currentBorrower: data.borrowerName,
-              loanDueDate: data.expectedReturnDate,
-            }
-          : a
-      )
-    );
+    if (newLoan.itemType === 'stock' || newLoan.stockId) {
+      // Deduct from stock
+      const stockId = newLoan.stockId || newLoan.assetId;
+      const qtyToLend = newLoan.quantity || 1;
+      setStock((prev) =>
+        prev.map((s) => {
+          if (s.id === stockId || s.code === newLoan.serialNumber) {
+            const newQty = Math.max(0, s.quantity - qtyToLend);
+            return {
+              ...s,
+              quantity: newQty,
+              status: newQty === 0 ? 'out_of_stock' : newQty <= 5 ? 'low_stock' : 'in_stock',
+            };
+          }
+          return s;
+        })
+      );
+    } else {
+      // Update asset loan status
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === data.assetId
+            ? {
+                ...a,
+                loanStatus: 'on_loan',
+                currentBorrower: data.borrowerName,
+                loanDueDate: data.expectedReturnDate,
+              }
+            : a
+        )
+      );
+    }
 
     showToast(`Checked out ${data.assetName} to ${data.borrowerName}`);
     if (getAuthToken()) {
       loanService.createLoan(toServerLoan(newLoan) as any).catch(() => {});
     }
+    return newLoan;
+  };
+
+  const lendStockItem = (
+    stockId: string,
+    quantity: number,
+    data: {
+      borrowerName: string;
+      borrowerRole: 'Student' | 'Lecturer' | 'Lab Assistant' | 'Technician';
+      borrowerContact: string;
+      courseOrClass?: string;
+      borrowDate: string;
+      expectedReturnDate: string;
+      notes?: string;
+    }
+  ): MockLoan | null => {
+    const stockItem = stock.find((s) => s.id === stockId || s.code === stockId);
+    if (!stockItem) {
+      showToast('Inventory stock item not found', 'error');
+      return null;
+    }
+
+    const qtyToLend = Math.max(1, Math.min(stockItem.quantity, quantity));
+    if (stockItem.quantity < qtyToLend) {
+      showToast(`Cannot lend ${qtyToLend} units. Only ${stockItem.quantity} ${stockItem.unit} available.`, 'error');
+      return null;
+    }
+
+    const newLoan: MockLoan = {
+      id: `LN-${Date.now().toString().slice(-4)}`,
+      itemType: 'stock',
+      stockId: stockItem.id,
+      quantity: qtyToLend,
+      assetName: stockItem.name,
+      serialNumber: stockItem.code,
+      borrowerName: data.borrowerName,
+      borrowerRole: data.borrowerRole,
+      borrowerContact: data.borrowerContact,
+      courseOrClass: data.courseOrClass,
+      borrowDate: data.borrowDate,
+      expectedReturnDate: data.expectedReturnDate,
+      status: 'active',
+      notes: data.notes,
+    };
+
+    setLoans((prev) => [newLoan, ...prev]);
+
+    // Deduct quantity from stock
+    const newQty = Math.max(0, stockItem.quantity - qtyToLend);
+    const updatedStockItem: MockItem = {
+      ...stockItem,
+      quantity: newQty,
+      status: newQty === 0 ? 'out_of_stock' : newQty <= 5 ? 'low_stock' : 'in_stock',
+    };
+    setStock((prev) => prev.map((s) => (s.id === stockItem.id ? updatedStockItem : s)));
+
+    if (getAuthToken()) {
+      stockService.updateStockItem(stockItem.id, toServerStock(updatedStockItem) as any).catch(() => {});
+    }
+
+    showToast(`Checked out ${qtyToLend} ${stockItem.unit} of ${stockItem.name} to ${data.borrowerName}`);
     return newLoan;
   };
 
@@ -507,23 +601,47 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       )
     );
 
-    // Update asset loan status back to available
-    setAssets((prev) =>
-      prev.map((a) =>
-        a.id === targetLoan.assetId
-          ? {
-              ...a,
-              loanStatus: 'available',
-              currentBorrower: undefined,
-              loanDueDate: undefined,
+    // If it is a stock item loan, return units back to stock
+    if (targetLoan.itemType === 'stock' || targetLoan.stockId) {
+      const stockId = targetLoan.stockId || targetLoan.assetId;
+      const qtyReturned = targetLoan.quantity || 1;
+      setStock((prev) =>
+        prev.map((s) => {
+          if (s.id === stockId || s.code === targetLoan.serialNumber || s.name === targetLoan.assetName) {
+            const newQty = s.quantity + qtyReturned;
+            const updated: MockItem = {
+              ...s,
+              quantity: newQty,
+              status: newQty > 5 ? 'in_stock' : 'low_stock',
+            };
+            if (getAuthToken()) {
+              stockService.updateStockItem(s.id, toServerStock(updated) as any).catch(() => {});
             }
-          : a
-      )
-    );
+            return updated;
+          }
+          return s;
+        })
+      );
+      showToast(`${qtyReturned} unit(s) of ${targetLoan.assetName} returned to stock`);
+    } else {
+      // Update asset loan status back to available
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === targetLoan.assetId
+            ? {
+                ...a,
+                loanStatus: 'available',
+                currentBorrower: undefined,
+                loanDueDate: undefined,
+              }
+            : a
+        )
+      );
 
-    showToast(`Device ${targetLoan.assetName} returned to lab stock`);
-    if (getAuthToken()) {
-      loanService.returnLoan(loanId, notes).catch(() => {});
+      showToast(`Device ${targetLoan.assetName} returned to lab stock`);
+      if (getAuthToken()) {
+        loanService.returnLoan(loanId, notes).catch(() => {});
+      }
     }
   };
 
@@ -920,6 +1038,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         updateAsset,
         deleteAsset,
         lendAsset,
+        lendStockItem,
         returnAsset,
         transferAsset,
         addRack,

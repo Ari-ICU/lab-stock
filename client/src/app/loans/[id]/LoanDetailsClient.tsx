@@ -35,7 +35,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { loans, assets, returnAsset, showToast } = useStock();
+  const { loans, assets, stock, returnAsset, showToast } = useStock();
 
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
@@ -45,6 +45,14 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
     loans.find((l) => l.id === id || (l as any).serverId === id) ||
     (id && (id.includes('-') || id.length > 15) ? loans[0] : undefined);
   const asset = loan ? assets.find((a) => a.id === loan.assetId || (a as any).serverId === loan.assetId) : null;
+  const stockItem = loan
+    ? stock.find(
+        (s) =>
+          s.id === loan.stockId ||
+          s.code === loan.serialNumber ||
+          s.name === loan.assetName
+      )
+    : null;
 
   const todayStr = new Date().toISOString().split('T')[0];
   const isOverdue = loan ? loan.status === 'active' && loan.expectedReturnDate < todayStr : false;
@@ -356,6 +364,35 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                     <div className="space-y-1">
                       <span className="text-neutral-400 font-medium block text-[11px]">Next Scheduled Audit / Calibration</span>
                       <span className="font-medium text-neutral-700">{asset.nextCalibration || 'Active'}</span>
+                    </div>
+                  </>
+                )}
+
+                {stockItem && (
+                  <>
+                    <div className="space-y-1">
+                      <span className="text-neutral-400 font-medium block text-[11px]">Item Category & SKU</span>
+                      <span className="font-semibold text-neutral-800">{stockItem.category} ({stockItem.code})</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-neutral-400 font-medium block text-[11px]">Storage Facility Room</span>
+                      <span className="font-semibold text-neutral-800 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-neutral-400" />
+                        {stockItem.location}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-neutral-400 font-medium block text-[11px]">Units Checked Out</span>
+                      <span className="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {loan.quantity || 1} {stockItem.unit || 'units'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-neutral-400 font-medium block text-[11px]">Current Remaining In Stock</span>
+                      <span className="font-medium text-neutral-700">{stockItem.quantity} {stockItem.unit || 'units'}</span>
                     </div>
                   </>
                 )}

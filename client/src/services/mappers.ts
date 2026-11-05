@@ -136,7 +136,10 @@ export function mapServerLoan(l: any): MockLoan {
   return {
     id: String(l.id),
     serverId: String(l.id),
-    assetId: String(l.asset_id || l.assetId || ''),
+    assetId: l.asset_id || l.assetId ? String(l.asset_id || l.assetId) : undefined,
+    stockId: l.stock_id || l.stockId ? String(l.stock_id || l.stockId) : undefined,
+    itemType: (l.item_type || l.itemType || (l.stock_id || l.stockId ? 'stock' : 'asset')) as MockLoan['itemType'],
+    quantity: l.quantity ? Number(l.quantity) : 1,
     assetName: l.asset_name || l.assetName || 'Lab Device',
     serialNumber: l.serial_number || l.serialNumber || 'SN-N/A',
     borrowerName: l.borrower_name || l.borrowerName || 'Borrower',
@@ -154,6 +157,9 @@ export function mapServerLoan(l: any): MockLoan {
 export function toServerLoan(l: Partial<MockLoan>): Record<string, any> {
   return {
     asset_id: l.assetId,
+    stock_id: l.stockId,
+    item_type: l.itemType,
+    quantity: l.quantity,
     borrower_name: l.borrowerName,
     borrower_role: l.borrowerRole,
     borrower_contact: l.borrowerContact,
