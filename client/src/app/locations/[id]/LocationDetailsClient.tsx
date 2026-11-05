@@ -183,8 +183,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         selectedCondition === 'all'
           ? true
           : selectedCondition === 'operational'
-            ? item.qtyBroken === 0
-            : item.qtyBroken > 0;
+            ? item.qtyBroken === 0 && (item.qtyMaintenance || 0) === 0
+            : selectedCondition === 'maintenance'
+              ? (item.qtyMaintenance || 0) > 0
+              : item.qtyBroken > 0;
 
       return matchesSearch && matchesCategory && matchesCondition;
     });
@@ -376,7 +378,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 max-w-8xl w-full mx-auto">
-        {/* 2. Compact Room Info Strip */}
+        {/* 2. Compact Room Info Bar */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1">
           <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
             {loc.room}
@@ -391,6 +393,12 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             <span className={`w-1.5 h-1.5 rounded-full ${inventorySummary.totalBroken > 0 ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
             {inventorySummary.totalBroken > 0 ? `${inventorySummary.totalBroken} Broken` : 'All Operational'}
           </span>
+          {inventorySummary.totalMaintenance > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              {inventorySummary.totalMaintenance} Under Maintenance
+            </span>
+          )}
           <span className="text-neutral-300 hidden sm:inline">|</span>
           <span className="text-xs text-neutral-500">
             <span className="font-medium text-neutral-700">{loc.building}</span> · Floor {loc.floor ?? 1}
@@ -456,23 +464,24 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
             {/* Clean Responsive Table matching /stock and /assets */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[850px]">
+              <table className="w-full text-left text-xs min-w-[900px]">
                 <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                   <tr>
                     <th className="py-3 px-3 w-14 text-center">Visual</th>
-                    <th className="py-3 px-4 min-w-[240px]">Item & Equipment Name</th>
+                    <th className="py-3 px-4 min-w-[220px]">Item & Equipment Name</th>
                     <th className="py-3 px-4 w-36">Category</th>
                     <th className="py-3 px-4 min-w-[180px]">Specification / Model</th>
-                    <th className="py-3 px-3 w-20 text-center">Total</th>
-                    <th className="py-3 px-3 w-20 text-center">Working</th>
-                    <th className="py-3 px-3 w-20 text-center">Broken</th>
+                    <th className="py-3 px-3 w-16 text-center">Total</th>
+                    <th className="py-3 px-3 w-16 text-center">Working</th>
+                    <th className="py-3 px-3 w-20 text-center">Maintenance</th>
+                    <th className="py-3 px-3 w-16 text-center">Broken</th>
                     <th className="py-3 px-4 w-12 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
                   {filteredRoomInventories.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-neutral-500">
+                      <td colSpan={9} className="py-8 text-center text-neutral-500">
                         No facility or equipment records found matching your filter criteria.
                       </td>
                     </tr>
@@ -565,12 +574,25 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             {item.qtyWorking}
                           </td>
 
+                          {/* Maintenance */}
+                          <td className="py-3 px-3 text-center font-mono font-bold">
+                            {(item.qtyMaintenance || 0) > 0 ? (
+                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                {item.qtyMaintenance}
+                              </span>
+                            ) : (
+                              <span className="text-neutral-300 font-normal">—</span>
+                            )}
+                          </td>
+
                           {/* Broken */}
                           <td className="py-3 px-3 text-center font-mono font-bold">
                             {item.qtyBroken > 0 ? (
-                              <span className="text-rose-600">{item.qtyBroken}</span>
+                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                {item.qtyBroken}
+                              </span>
                             ) : (
-                              <span className="text-neutral-300">—</span>
+                              <span className="text-neutral-300 font-normal">—</span>
                             )}
                           </td>
 

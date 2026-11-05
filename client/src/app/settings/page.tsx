@@ -304,20 +304,20 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => handleTabChange('sessions')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap border ${
               activeTab === 'sessions'
-                ? 'bg-neutral-900 text-white shadow-xs'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200/80 shadow-2xs'
+                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/80 border-transparent'
             }`}
           >
-            <Radio className="w-3.5 h-3.5" />
+            <Radio className={`w-3.5 h-3.5 ${activeTab === 'sessions' ? 'text-emerald-700' : 'text-neutral-400'}`} />
             <span>Session Devices</span>
             <span
               suppressHydrationWarning
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono transition-colors ${
                 activeTab === 'sessions'
-                  ? 'bg-neutral-800 text-neutral-200'
-                  : 'bg-neutral-100 text-neutral-600'
+                  ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-200/70'
+                  : 'bg-neutral-100 text-neutral-600 border border-neutral-200/50'
               }`}
             >
               {sessionDevices.length}
@@ -327,26 +327,26 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => handleTabChange('system')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap border ${
               activeTab === 'system'
-                ? 'bg-neutral-900 text-white shadow-xs'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200/80 shadow-2xs'
+                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/80 border-transparent'
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className={`w-3.5 h-3.5 ${activeTab === 'system' ? 'text-emerald-700' : 'text-neutral-400'}`} />
             <span>System & Alerts</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap border ${
               activeTab === 'profile'
-                ? 'bg-neutral-900 text-white shadow-xs'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200/80 shadow-2xs'
+                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/80 border-transparent'
             }`}
           >
-            <UserCheck className="w-3.5 h-3.5" />
+            <UserCheck className={`w-3.5 h-3.5 ${activeTab === 'profile' ? 'text-emerald-700' : 'text-neutral-400'}`} />
             <span>Active Operator</span>
           </button>
         </div>

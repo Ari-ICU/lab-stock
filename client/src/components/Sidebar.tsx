@@ -195,22 +195,26 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={closeMobileSidebar}
-                className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded transition-colors text-left ${
+                className={`group relative w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-all text-left border ${
                   isActive
-                    ? 'bg-neutral-900 text-white font-semibold'
-                    : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                    ? 'bg-emerald-50 text-emerald-900 font-semibold border-emerald-200/80 shadow-2xs'
+                    : 'text-neutral-600 hover:bg-neutral-100/80 hover:text-neutral-900 border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-400' : 'text-neutral-400'}`} />
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      isActive ? 'text-emerald-700' : 'text-neutral-400 group-hover:text-neutral-600'
+                    }`}
+                  />
                   <span className="truncate whitespace-nowrap">{item.label}</span>
                 </div>
                 {badgeDisplay !== undefined && (
                   <span
-                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded transition-colors ${
                       isActive
-                        ? 'bg-neutral-800 text-neutral-200'
-                        : 'bg-neutral-100 text-neutral-600'
+                        ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-200/70'
+                        : 'bg-neutral-100 text-neutral-500 border border-neutral-200/60 group-hover:bg-neutral-200/60 group-hover:text-neutral-700'
                     }`}
                   >
                     {badgeDisplay}
@@ -224,7 +228,7 @@ export function Sidebar() {
         {/* User Footer */}
         <div className="p-3 border-t border-neutral-200 flex items-center justify-between" suppressHydrationWarning>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded bg-neutral-900 text-emerald-400 font-bold flex items-center justify-center text-xs shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold flex items-center justify-center text-xs shrink-0">
               {mounted ? (user?.avatarText || 'TR') : 'HS'}
             </div>
             <div className="min-w-0">
