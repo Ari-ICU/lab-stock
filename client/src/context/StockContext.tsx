@@ -158,24 +158,16 @@ function setCachedData<T>(key: string, data: T) {
 }
 
 export function StockProvider({ children }: { children: React.ReactNode }) {
-  const [stock, setStock] = useState<MockItem[]>(() => getCachedData('stock', []));
-  const [assets, setAssets] = useState<MockAsset[]>(() => getCachedData('assets', []));
-  const [racks, setRacks] = useState<MockRack[]>(() => getCachedData('racks', []));
-  const [maintenance, setMaintenance] = useState<MockMaintenance[]>(() => getCachedData('maintenance', []));
-  const [locations, setLocations] = useState<MockLocation[]>(() => getCachedData('locations', []));
-  const [loans, setLoans] = useState<MockLoan[]>(() => getCachedData('loans', []));
-  const [transfers, setTransfers] = useState<MockTransfer[]>(() => getCachedData('transfers', []));
-  const [requests, setRequests] = useState<PurchaseRequest[]>(() => getCachedData('requests', []));
+  const [stock, setStock] = useState<MockItem[]>([]);
+  const [assets, setAssets] = useState<MockAsset[]>([]);
+  const [racks, setRacks] = useState<MockRack[]>([]);
+  const [maintenance, setMaintenance] = useState<MockMaintenance[]>([]);
+  const [locations, setLocations] = useState<MockLocation[]>([]);
+  const [loans, setLoans] = useState<MockLoan[]>([]);
+  const [transfers, setTransfers] = useState<MockTransfer[]>([]);
+  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [isBackendConnected, setIsBackendConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      const cached = localStorage.getItem('csd_cache_assets');
-      return !cached || JSON.parse(cached).length === 0;
-    } catch {
-      return true;
-    }
-  });
+  const [isLoading, setIsLoading] = useState(true);
 
   const refreshBackendData = async () => {
     try {

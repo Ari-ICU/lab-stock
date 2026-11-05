@@ -207,8 +207,9 @@ export function Sidebar() {
                   />
                   <span className="truncate whitespace-nowrap">{item.label}</span>
                 </div>
-                {badgeDisplay !== undefined && (
+                {mounted && badgeDisplay !== undefined && (
                   <span
+                    suppressHydrationWarning
                     className={`text-[10px] font-semibold px-1.5 py-0.5 rounded transition-colors ${
                       isActive
                         ? 'bg-emerald-100/90 text-emerald-800 border border-emerald-200/70'
