@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
 import { getRoomItemImage } from './items/shared';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
@@ -41,6 +42,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     deleteAsset,
     deleteStockItem,
     showToast,
+    isLoading,
   } = useStock();
   const { user, canManageLocation } = useAuth();
 
@@ -231,6 +233,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         </div>
       </div>
     );
+  }
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading laboratory facility..." />;
   }
 
   if (!loc) {

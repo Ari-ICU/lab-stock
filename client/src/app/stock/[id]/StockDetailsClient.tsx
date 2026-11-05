@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
   Edit3,
@@ -51,6 +52,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
     updateStockQuantity,
     deleteStockItem,
     showToast,
+    isLoading,
   } = useStock();
   const { user, canManageLocation } = useAuth();
 
@@ -155,6 +157,10 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
   const totalBorrowedUnits = useMemo(() => {
     return activeItemLoans.reduce((sum, l) => sum + (l.quantity || 1), 0);
   }, [activeItemLoans]);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading stock inventory details..." />;
+  }
 
   if (!item) {
     return (

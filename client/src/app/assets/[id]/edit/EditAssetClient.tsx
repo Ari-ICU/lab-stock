@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
   Save,
@@ -38,7 +39,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { assets, updateAsset, deleteAsset, locations, showToast } = useStock();
+  const { assets, updateAsset, deleteAsset, locations, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const asset = assets.find((a) => a.id === id);
@@ -72,6 +73,10 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       setDescription(asset.description || '');
     }
   }, [asset]);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading hardware asset editor..." />;
+  }
 
   if (!asset) {
     return (

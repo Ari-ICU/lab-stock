@@ -55,6 +55,7 @@ interface StockContextType {
   loans: MockLoan[];
   transfers: MockTransfer[];
   requests: PurchaseRequest[];
+  isLoading: boolean;
   isBackendConnected: boolean;
   refreshBackendData: () => Promise<void>;
   addStockItem: (item: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }) => MockItem;
@@ -145,30 +146,31 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const [transfers, setTransfers] = useState<MockTransfer[]>([]);
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [isBackendConnected, setIsBackendConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const refreshBackendData = async () => {
-    let token = getAuthToken();
-    if (!token && typeof window !== 'undefined') {
-      try {
-        const authRes = await authService.login({
-          email: 'heng.sovannarith@rupp.edu.kh',
-          password: 'password123',
-        });
-        if (authRes?.token) {
-          localStorage.setItem('lab_auth_token', authRes.token);
-          token = authRes.token;
-        }
-      } catch {
-        // backend might be starting
-      }
-    }
-
-    if (!token) {
-      setIsBackendConnected(false);
-      return;
-    }
-
     try {
+      let token = getAuthToken();
+      if (!token && typeof window !== 'undefined') {
+        try {
+          const authRes = await authService.login({
+            email: 'heng.sovannarith@rupp.edu.kh',
+            password: 'password123',
+          });
+          if (authRes?.token) {
+            localStorage.setItem('lab_auth_token', authRes.token);
+            token = authRes.token;
+          }
+        } catch {
+          // backend might be starting
+        }
+      }
+
+      if (!token) {
+        setIsBackendConnected(false);
+        return;
+      }
+
       const [assetsRes, stockRes, locsRes, loansRes, maintRes, reqsRes] = await Promise.allSettled([
         assetService.getAssets(),
         stockService.getStockItems(),
@@ -238,6 +240,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       setIsBackendConnected(connected);
     } catch {
       setIsBackendConnected(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1028,6 +1032,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         loans,
         transfers,
         requests,
+        isLoading,
         isBackendConnected,
         refreshBackendData,
         addStockItem,

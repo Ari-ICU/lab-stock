@@ -17,6 +17,7 @@ import EditRoomItemClient from './locations/[id]/items/edit/EditRoomItemClient';
 import RoomItemDetailsClient from './locations/[id]/items/view/RoomItemDetailsClient';
 import MaintenanceDetailsClient from './maintenance/[id]/MaintenanceDetailsClient';
 import MaintenanceEditClient from './maintenance/[id]/edit/MaintenanceEditClient';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function NotFound() {
   const router = useRouter();
@@ -200,11 +201,7 @@ export default function NotFound() {
   }
 
   if (!mounted) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8 text-neutral-400 text-xs">
-        Loading...
-      </div>
-    );
+    return <LoadingScreen message="Loading laboratory workspace..." />;
   }
 
   return (

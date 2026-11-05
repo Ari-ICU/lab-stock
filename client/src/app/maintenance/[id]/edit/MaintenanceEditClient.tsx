@@ -32,13 +32,14 @@ import {
   MAINTENANCE_STATUS_OPTIONS,
   resolveMaintenanceImage,
 } from '../../shared';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { maintenance, assets, stock, locations, updateMaintenance, deleteMaintenance, showToast } = useStock();
+  const { maintenance, assets, stock, locations, updateMaintenance, deleteMaintenance, showToast, isLoading } = useStock();
   const { user } = useAuth();
 
   const item = maintenance.find((m) => m.id === id || String(m.id) === String(id));
@@ -177,6 +178,10 @@ export default function MaintenanceEditClient({ id: propId }: { id?: string }) {
     if (found.imageUrl) setImageUrl(found.imageUrl);
     showToast(`Loaded ${found.name} (${found.serial}) from Inventory`, 'info');
   };
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading repair editor..." />;
+  }
 
   if (!item) {
     return (

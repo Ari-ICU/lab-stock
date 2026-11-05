@@ -16,20 +16,21 @@ import {
   getOperationalPercent,
   getRoomItemImage,
 } from '../shared';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function RoomItemDetailsClient({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get('item') || '';
-  const { locations, stock, assets, deleteRoomInventoryItem } = useStock();
+  const { locations, stock, assets, deleteRoomInventoryItem, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const loc = findLocation(locations, id);
   const item = loc?.inventories?.find((i) => i.id === itemId);
 
-  if (!loc) {
-    return <div className="flex-1 flex items-center justify-center p-8 text-neutral-400 text-xs">Loading classroom...</div>;
+  if (isLoading || !loc) {
+    return <LoadingScreen message="Loading classroom equipment..." />;
   }
 
   const backHref = `/locations/${loc.id}`;

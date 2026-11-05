@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
   Save,
@@ -59,7 +60,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { stock, updateStockItem, deleteStockItem, locations, showToast } = useStock();
+  const { stock, updateStockItem, deleteStockItem, locations, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const item = stock.find((s) => s.id === id);
@@ -94,6 +95,10 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       setDescription(item.description || '');
     }
   }, [item]);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading stock item editor..." />;
+  }
 
   if (!item) {
     return (

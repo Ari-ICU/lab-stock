@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { useStock } from '@/context/StockContext';
 import { exportToCsv } from '@/lib/exportCsv';
 import {
@@ -35,7 +36,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { loans, assets, stock, returnAsset, showToast } = useStock();
+  const { loans, assets, stock, returnAsset, showToast, isLoading } = useStock();
 
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
@@ -63,6 +64,10 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
     showToast(`Copied ${label} to clipboard`);
     setTimeout(() => setCopiedKey(null), 2000);
   };
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading loan record dossier..." />;
+  }
 
   if (!loan) {
     return (

@@ -30,13 +30,14 @@ import {
   Boxes,
 } from 'lucide-react';
 import { resolveMaintenanceImage } from '../shared';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function MaintenanceDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { maintenance, assets, stock, updateMaintenance, deleteMaintenance, showToast } = useStock();
+  const { maintenance, assets, stock, updateMaintenance, deleteMaintenance, showToast, isLoading } = useStock();
   const { user } = useAuth();
 
   const [copied, setCopied] = useState(false);
@@ -77,6 +78,10 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
       )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [item, maintenance]);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading repair & service record..." />;
+  }
 
   if (!item) {
     return (

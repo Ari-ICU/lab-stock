@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
   ArrowRight,
@@ -55,6 +56,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     lendAsset,
     returnAsset,
     showToast,
+    isLoading,
   } = useStock();
   const { user, canManageLocation } = useAuth();
   const [copied, setCopied] = useState(false);
@@ -180,6 +182,10 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       operationalRate,
     };
   }, [allocations]);
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading hardware asset details..." />;
+  }
 
   if (!asset) {
     return (

@@ -10,12 +10,13 @@ import { useAuth } from '@/context/AuthContext';
 import { AssetGroup } from '@/types';
 import { Boxes, Microscope, PenLine, Plus, ArrowLeft, Layers, ClipboardList } from 'lucide-react';
 import { categoryGroupOptions, findLocation } from '../shared';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 type Source = 'stock' | 'asset' | 'custom';
 
 export default function NewRoomItemClient({ id }: { id: string }) {
   const router = useRouter();
-  const { locations, stock, assets, addRoomInventoryItem, addStockItem, updateStockQuantity, showToast } = useStock();
+  const { locations, stock, assets, addRoomInventoryItem, addStockItem, updateStockQuantity, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
@@ -44,12 +45,8 @@ export default function NewRoomItemClient({ id }: { id: string }) {
   const selectedStock = stock.find((s) => s.code === stockCode);
   const selectedAsset = assets.find((a) => a.serialNumber === assetSerial);
 
-  if (!loc) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8 text-neutral-400 text-xs">
-        Loading classroom...
-      </div>
-    );
+  if (isLoading || !loc) {
+    return <LoadingScreen message="Loading allocation workspace..." />;
   }
 
   const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';

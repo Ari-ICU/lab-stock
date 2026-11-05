@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import {
   ArrowLeft,
@@ -34,7 +35,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const { assets, locations, transfers, transferAsset, showToast } = useStock();
+  const { assets, locations, transfers, transferAsset, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const initialId = propId || (params?.id as string) || searchParams.get('assetId') || '';
@@ -203,6 +204,10 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
     showToast('Copied serial tag to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading asset relocation terminal..." />;
+  }
 
   if (!asset) {
     return (

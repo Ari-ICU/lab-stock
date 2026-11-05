@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
 import { LabThumbnail } from '@/components/LabThumbnail';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
   ArrowRight,
@@ -49,7 +50,7 @@ function CheckoutContent({
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const { stock, assets, loans, locations, lendAsset, lendStockItem, showToast } = useStock();
+  const { stock, assets, loans, locations, lendAsset, lendStockItem, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const paramId = (params?.id as string) || propItemId || searchParams.get('id') || searchParams.get('assetId') || searchParams.get('stockId') || '';
@@ -238,6 +239,10 @@ function CheckoutContent({
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading && paramId) {
+    return <LoadingScreen message="Loading loan checkout workspace..." />;
+  }
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/40">

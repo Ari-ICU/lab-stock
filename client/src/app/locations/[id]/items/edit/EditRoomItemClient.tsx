@@ -17,12 +17,13 @@ import {
   findLinkedStock,
   getConditionStatus,
 } from '../shared';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function EditRoomItemClient({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get('item') || '';
-  const { locations, stock, assets, updateRoomInventoryItem, deleteRoomInventoryItem, updateStockQuantity, showToast } = useStock();
+  const { locations, stock, assets, updateRoomInventoryItem, deleteRoomInventoryItem, updateStockQuantity, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
@@ -62,8 +63,8 @@ export default function EditRoomItemClient({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item, loaded]);
 
-  if (!loc) {
-    return <div className="flex-1 flex items-center justify-center p-8 text-neutral-400 text-xs">Loading classroom...</div>;
+  if (isLoading || !loc) {
+    return <LoadingScreen message="Loading classroom editor..." />;
   }
 
   const backHref = `/locations/${loc.id}`;
