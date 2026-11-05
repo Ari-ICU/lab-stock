@@ -581,7 +581,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                   <div className="flex flex-wrap gap-1.5 pb-1">
                     {[
                       'Lab Workshop Setup',
-                      'Routine Maintenance & Service',
+                      'Routine Repair & Service',
                       'Student Project Allocation',
                       'Permanent Room Relocation',
                     ].map((preset) => (

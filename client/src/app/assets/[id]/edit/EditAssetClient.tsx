@@ -30,7 +30,7 @@ import {
 const statusOptions = [
   { label: 'Operational', value: 'operational' },
   { label: 'In Use', value: 'in_use' },
-  { label: 'Maintenance', value: 'maintenance' },
+  { label: 'In Repair', value: 'maintenance' },
 ];
 
 export default function EditAssetClient({ id: propId }: { id?: string }) {
@@ -528,7 +528,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
                       ? 'Operational'
                       : status === 'in_use'
                       ? 'In Use'
-                      : 'Maintenance'}
+                      : 'In Repair'}
                   </span>
                 </div>
 

@@ -116,7 +116,7 @@ export function GlobalSearchModal() {
           title: a.name,
           subtitle: `${a.model} • SN: ${a.serialNumber} • ${a.location}`,
           tag: 'Hardware Asset',
-          badge: a.status === 'operational' ? 'Operational' : a.status === 'maintenance' ? 'Maintenance' : 'In Use',
+          badge: a.status === 'operational' ? 'Operational' : a.status === 'maintenance' ? 'In Repair' : 'In Use',
           badgeColor: a.status === 'operational' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200',
           href: `/assets/${a.id}`,
         });

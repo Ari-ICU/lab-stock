@@ -28,7 +28,7 @@ const stockStatusOptions = [
 const assetStatusOptions = [
   { label: 'Operational', value: 'operational' },
   { label: 'In Use / Production', value: 'in_use' },
-  { label: 'Maintenance', value: 'maintenance' },
+  { label: 'In Repair', value: 'maintenance' },
 ];
 
 const rackTypeOptions = [

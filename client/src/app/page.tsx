@@ -719,7 +719,7 @@ export default function DashboardPage() {
                             ? 'Operational'
                             : asset.status === 'in_use'
                             ? 'In Use'
-                            : 'Maintenance'}
+                            : 'In Repair'}
                         </span>
                       )}
 

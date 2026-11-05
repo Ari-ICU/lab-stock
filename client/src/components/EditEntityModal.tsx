@@ -83,7 +83,7 @@ export function EditEntityModal() {
   const assetStatusOptions = [
     { label: 'Operational', value: 'operational' },
     { label: 'In Production', value: 'in_use' },
-    { label: 'Maintenance', value: 'maintenance' },
+    { label: 'In Repair', value: 'maintenance' },
   ];
 
   const rackTypeOptions = [
@@ -109,7 +109,7 @@ export function EditEntityModal() {
   const roomConditionStatusOptions = [
     { label: '100% Operational', value: 'operational' },
     { label: 'Defective / Needs Repair', value: 'defective' },
-    { label: 'Under Maintenance / Service', value: 'maintenance' },
+    { label: 'Under Repair / Service', value: 'maintenance' },
   ];
 
   const roomCategoryOptions = [
@@ -474,7 +474,7 @@ export function EditEntityModal() {
                   </div>
 
                   <div className="p-2.5 bg-blue-50/40 border border-blue-200/80 rounded-lg">
-                    <label className="block text-[11px] font-bold text-blue-800 mb-1">In Maintenance</label>
+                    <label className="block text-[11px] font-bold text-blue-800 mb-1">In Repair</label>
                     <input
                       type="number"
                       min="0"
