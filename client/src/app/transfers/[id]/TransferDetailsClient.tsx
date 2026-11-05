@@ -114,7 +114,7 @@ export default function TransferDetailsClient({ id: propId }: { id?: string }) {
         onAction={asset ? () => router.push(`/assets/${asset.id}`) : undefined}
       />
 
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto w-full space-y-6">
+      <div className="p-4 sm:p-6 max-w-8xl mx-auto w-full space-y-6">
         {/* 1. Hero Relocation Overview Strip */}
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-neutral-100">
