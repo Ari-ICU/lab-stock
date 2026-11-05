@@ -285,6 +285,72 @@ export default function LoansPage() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+        {/* Device Lending Fleet Banner (Clean without background image) */}
+        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
+          {/* Subtle ambient accent glow */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-4">
+            {/* Top Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
+                <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-900" />
+                <span>LOAN OPERATIONS</span>
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
+                {activeLoans.length} ACTIVE CHECKOUTS
+              </span>
+              {overdueLoans.length > 0 ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-rose-500 text-white shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {overdueLoans.length} Overdue Returns
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-emerald-500/90 text-white shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  All Returns On Schedule
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-blue-500/90 text-white shadow-xs">
+                {transfers.length} Room Transfers
+              </span>
+            </div>
+
+            {/* Banner Main Content */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
+                  Faculty Equipment Lending & Relocations
+                </h2>
+                <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 font-medium leading-relaxed max-w-2xl">
+                  Manage hardware checkout tracking for lecturers, lab assistants, and student project teams with due-date enforcement and room transfer audits.
+                </p>
+              </div>
+
+              {/* Quick Summary Panel */}
+              <div className="flex items-center gap-2.5 shrink-0 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-neutral-400">Active Checkouts:</span>
+                  <span className="font-mono font-bold text-amber-400">
+                    {activeLoans.length}
+                  </span>
+                </div>
+                <span className="text-neutral-600">|</span>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className={`${overdueLoans.length > 0 ? 'text-rose-400' : 'text-neutral-400'} font-bold`}>
+                    {overdueLoans.length} Overdue
+                  </span>
+                  <span className="text-neutral-600">·</span>
+                  <span className="text-emerald-400 font-bold">{returnedLoans.length} Returned</span>
+                  <span className="text-neutral-600">·</span>
+                  <span className="text-blue-400 font-bold">{transfers.length} Moved</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 2. Sleek KPI Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs">

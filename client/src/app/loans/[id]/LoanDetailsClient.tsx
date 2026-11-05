@@ -167,81 +167,127 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           </div>
         )}
 
-        {/* Hero Dossier Card */}
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
+        {/* Loan Dossier Header Banner (Clean without background image) */}
+        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
+          {/* Subtle ambient accent glow */}
+          <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none ${
+            isOverdue ? 'bg-rose-500/10' : 'bg-emerald-500/10'
+          }`} />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-4">
+            {/* Top Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
+                <Laptop className="w-3.5 h-3.5 text-neutral-900" />
+                <span>LOAN DOSSIER</span>
+              </span>
+
+              {/* Status Badge */}
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-xs ${
                 loan.status === 'returned'
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
+                  ? 'bg-emerald-500 text-white'
                   : isOverdue
-                  ? 'bg-rose-50 text-rose-700 border border-rose-200/70'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200/70'
+                  ? 'bg-rose-500 text-white animate-pulse'
+                  : 'bg-amber-500 text-white'
               }`}>
-                <Laptop className="w-7 h-7" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                    loan.status === 'returned'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                      : isOverdue
-                      ? 'bg-rose-50 text-rose-800 border-rose-200/80'
-                      : 'bg-amber-50 text-amber-800 border-amber-200/80'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      loan.status === 'returned'
-                        ? 'bg-emerald-500'
-                        : isOverdue
-                        ? 'bg-rose-500 animate-pulse'
-                        : 'bg-amber-500'
-                    }`} />
-                    {loan.status === 'returned'
-                      ? 'Returned & Verified'
-                      : isOverdue
-                      ? 'Overdue Loan'
-                      : 'Active Custody Check-Out'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(loan.id, 'Loan ID', 'hero-id')}
-                    className="inline-flex items-center gap-1 font-mono text-xs text-neutral-400 hover:text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-0.5 rounded transition-colors cursor-pointer"
-                    title="Click to copy Loan ID"
-                  >
-                    <span>ID: {loan.id}</span>
-                    {copiedKey === 'hero-id' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
-                  </button>
-                </div>
-                <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">
-                  {loan.assetName}
-                </h1>
-                <div className="flex items-center gap-3 text-xs text-neutral-500 flex-wrap pt-0.5">
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(loan.serialNumber, 'Serial Number', 'hero-sn')}
-                    className="inline-flex items-center gap-1 font-mono text-neutral-700 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-0.5 rounded font-semibold transition-colors cursor-pointer"
-                  >
-                    <span>SN: {loan.serialNumber}</span>
-                    {copiedKey === 'hero-sn' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
-                  </button>
-                  <span>•</span>
-                  <span className="flex items-center gap-1 text-neutral-600">
-                    <User className="w-3.5 h-3.5 text-neutral-400" />
-                    Borrower: <strong className="text-neutral-900">{loan.borrowerName}</strong> ({loan.borrowerRole})
-                  </span>
-                </div>
-              </div>
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                {loan.status === 'returned'
+                  ? 'Returned & Verified'
+                  : isOverdue
+                  ? 'Overdue Check-Out'
+                  : 'Active Custody Check-Out'}
+              </span>
+
+              {/* Serial Number Pill */}
+              <button
+                type="button"
+                onClick={() => copyToClipboard(loan.serialNumber, 'Serial Number', 'hero-sn')}
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-300 bg-neutral-800/90 hover:bg-neutral-700/90 px-2.5 py-1 rounded-md border border-neutral-700 transition-colors cursor-pointer"
+                title="Click to copy serial number"
+              >
+                <span>SN: {loan.serialNumber}</span>
+                {copiedKey === 'hero-sn' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+              </button>
+
+              {/* Loan ID Pill */}
+              <button
+                type="button"
+                onClick={() => copyToClipboard(loan.id, 'Loan ID', 'hero-id')}
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-400 hover:text-neutral-200 bg-neutral-800/60 hover:bg-neutral-800 px-2.5 py-1 rounded-md border border-neutral-800 transition-colors cursor-pointer"
+                title="Click to copy loan ID"
+              >
+                <span>ID: {loan.id.slice(0, 18)}...</span>
+                {copiedKey === 'hero-id' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-500" />}
+              </button>
             </div>
 
-            {/* Top Right Quick Actions */}
-            <div className="flex items-center gap-2 self-start sm:self-center">
-              <Link
-                href={`/assets/${loan.assetId}`}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-700 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors shadow-2xs"
-              >
-                <span>View Hardware Device</span>
-                <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-              </Link>
+            {/* Banner Main Content */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
+                  {loan.assetName}
+                </h2>
+                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-300 mt-1.5 flex-wrap font-medium">
+                  <span className="text-white font-semibold flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-neutral-400" />
+                    {loan.borrowerName} ({loan.borrowerRole})
+                  </span>
+                  <span className="text-neutral-500">·</span>
+                  <span className="font-mono text-neutral-400">{loan.borrowerContact}</span>
+                  {loan.courseOrClass && (
+                    <>
+                      <span className="text-neutral-500">·</span>
+                      <span className="text-neutral-300">{loan.courseOrClass}</span>
+                    </>
+                  )}
+                  {asset?.location && (
+                    <>
+                      <span className="text-neutral-500">·</span>
+                      <span className="text-neutral-400 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-neutral-400" />
+                        {asset.location}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons & Quick Dates Panel */}
+              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                <div className="flex items-center gap-2.5 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-neutral-400">Out:</span>
+                    <span className="font-mono font-bold text-neutral-200">{loan.borrowDate}</span>
+                  </div>
+                  <span className="text-neutral-600">|</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-neutral-400">Due:</span>
+                    <span className={`font-mono font-bold ${isOverdue ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {loan.expectedReturnDate}
+                    </span>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/assets/${loan.assetId}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-200 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-xl transition-colors shadow-2xs"
+                >
+                  <span>View Asset</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+                </Link>
+
+                {loan.status === 'active' && (
+                  <button
+                    type="button"
+                    onClick={() => setIsReturnModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-colors shadow-xs cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Check-In Device</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

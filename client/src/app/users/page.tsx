@@ -125,36 +125,65 @@ export default function UsersPage() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* Header info box with Action Button */}
-        <div className="bg-white border border-neutral-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
-                Access Control
-              </span>
-              <span className="text-xs text-neutral-400">Department Laboratories Faculty Personnel</span>
-            </div>
-            <h2 className="text-base font-bold text-neutral-900">
-              Department Faculty Personnel & Roles
-            </h2>
-            <p className="text-xs text-neutral-500 mt-1 max-w-xl">
-              Configure personnel roles and administrative privileges. Changes apply immediately to active sessions.
-            </p>
-          </div>
+        {/* Personnel & Access Control Fleet Banner (Clean without background image) */}
+        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
+          {/* Subtle ambient accent glow */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
 
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => {
-                setNewUserRole('Faculty Lecturer');
-                setIsAddUserModalOpen(true);
-              }}
-              className="flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded transition-colors cursor-pointer shrink-0 shadow-xs bg-neutral-900 hover:bg-neutral-800 text-white"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Personnel</span>
-            </button>
-          )}
+          <div className="relative z-10 space-y-4">
+            {/* Top Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-neutral-900" />
+                <span>ACCESS CONTROL</span>
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
+                {managedUsers.length} REGISTERED PERSONNEL
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-emerald-500/90 text-white shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                Role-Based Access Enforced
+              </span>
+            </div>
+
+            {/* Banner Main Content */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
+                  Department Faculty Personnel & Roles
+                </h2>
+                <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 font-medium leading-relaxed max-w-2xl">
+                  Configure faculty personnel roles, designated laboratory scopes, and administrative privileges. Changes apply immediately to active user sessions.
+                </p>
+              </div>
+
+              {/* Action Button & Quick Count */}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="hidden sm:flex items-center gap-2.5 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-neutral-400">Total Staff:</span>
+                    <span className="font-mono font-bold text-emerald-400">
+                      {managedUsers.length}
+                    </span>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewUserRole('Faculty Lecturer');
+                      setIsAddUserModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 shadow-xs bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Personnel</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Role Summary Grid */}
