@@ -61,9 +61,100 @@ export function findLinkedStock(item: RoomInventoryItem, stock: MockItem[]) {
 
 export function findLinkedAsset(item: RoomInventoryItem, assets: MockAsset[]) {
   if (item.assetId) {
-    return assets.find((a) => a.id === item.assetId || a.serialNumber === item.assetId);
+    const matched = assets.find((a) => a.id === item.assetId || a.serialNumber === item.assetId);
+    if (matched) return matched;
   }
-  return undefined;
+  const nameNorm = (item.name || '').trim().toLowerCase();
+  if (!nameNorm) return undefined;
+  return assets.find((a) => {
+    const aNameNorm = (a.name || '').trim().toLowerCase();
+    return aNameNorm === nameNorm || aNameNorm.includes(nameNorm) || nameNorm.includes(aNameNorm);
+  });
+}
+
+/**
+ * Robust image resolver for classroom & laboratory equipment items.
+ * Prioritizes direct item images, linked stock, linked assets (via ID or name matching),
+ * and intelligent semantic keyword fallbacks so equipment never shows broken/empty placeholders.
+ */
+export function getRoomItemImage(
+  item: RoomInventoryItem,
+  stock: MockItem[] = [],
+  assets: MockAsset[] = []
+): string {
+  if ((item as any).imageUrl) return (item as any).imageUrl;
+
+  const linkedStock = findLinkedStock(item, stock);
+  if (linkedStock?.imageUrl) return linkedStock.imageUrl;
+
+  const linkedAsset = findLinkedAsset(item, assets);
+  if (linkedAsset?.imageUrl) return linkedAsset.imageUrl;
+
+  const text = `${item.name || ''} ${item.brandSpec || ''} ${item.group || ''}`.toLowerCase();
+
+  // Projectors & Screens
+  if (text.includes('projector') || text.includes('screen') || text.includes('epson') || text.includes('benq') || text.includes('dlp')) {
+    return 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Chairs & Seating
+  if (text.includes('chair') || text.includes('seat') || text.includes('swivel') || text.includes('stool')) {
+    return 'https://images.unsplash.com/photo-1580481077195-c228c3070490?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Desks & Tables
+  if (text.includes('desk') || text.includes('table') || text.includes('bench') || text.includes('workstation')) {
+    return 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Air Conditioners & HVAC
+  if (text.includes('air') || text.includes('conditioner') || text.includes('ac') || text.includes('daikin') || text.includes('panasonic') || text.includes('hvac')) {
+    return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Lighting & Electrical Tubes
+  if (text.includes('light') || text.includes('lamp') || text.includes('tube') || text.includes('led') || text.includes('philips')) {
+    return 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Desktop PCs & Computer Units
+  if (text.includes('pc') || text.includes('computer') || text.includes('desktop') || text.includes('optiplex') || text.includes('dell') || text.includes('thinkcentre') || text.includes('lenovo')) {
+    return 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Whiteboards & Teaching Tools
+  if (text.includes('whiteboard') || text.includes('board') || text.includes('marker')) {
+    return 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Wall Sockets & Power Strips
+  if (text.includes('socket') || text.includes('power') || text.includes('strip') || text.includes('plug') || text.includes('schneider')) {
+    return 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Fire Extinguishers & Safety
+  if (text.includes('fire') || text.includes('extinguisher') || text.includes('safety') || text.includes('co2')) {
+    return 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Network Switches, Routers & Cables
+  if (text.includes('switch') || text.includes('router') || text.includes('cisco') || text.includes('cable') || text.includes('ethernet')) {
+    return 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Category fallback
+  switch (item.group) {
+    case 'IT_HARDWARE':
+      return 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80';
+    case 'FURNITURE':
+      return 'https://images.unsplash.com/photo-1580481077195-c228c3070490?auto=format&fit=crop&w=600&q=80';
+    case 'ELECTRICAL':
+      return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
+    case 'SAFETY_MISC':
+      return 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80';
+    default:
+      return 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80';
+  }
 }
 
 export function getConditionStatus(item: Pick<RoomInventoryItem, 'qtyBroken' | 'qtyMaintenance'>) {

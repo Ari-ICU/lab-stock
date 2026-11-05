@@ -23,6 +23,7 @@ import {
   Printer,
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
+import { getRoomItemImage } from './items/shared';
 
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
@@ -553,7 +554,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           item.name.toLowerCase().includes(a.name.toLowerCase()) ||
                           a.name.toLowerCase().includes(item.name.toLowerCase())
                       );
-                      const itemThumbnail = linkedStock?.imageUrl || linkedAsset?.imageUrl;
+                      const itemThumbnail = getRoomItemImage(item, stock, assets);
 
                       return (
                         <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">

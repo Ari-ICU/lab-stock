@@ -14,6 +14,7 @@ import {
   findLinkedStock,
   getCategoryLabel,
   getOperationalPercent,
+  getRoomItemImage,
 } from '../shared';
 
 export default function RoomItemDetailsClient({ id }: { id: string }) {
@@ -48,7 +49,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
   const isAllowed = isAdmin || canManageLocation(loc.room) || canManageLocation(loc.name);
   const linkedStock = findLinkedStock(item, stock);
   const linkedAsset = findLinkedAsset(item, assets);
-  const imageUrl = linkedStock?.imageUrl || linkedAsset?.imageUrl;
+  const imageUrl = getRoomItemImage(item, stock, assets);
   const total = item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0);
   const percent = getOperationalPercent(item);
   const editHref = `/locations/${loc.id}/items/edit?item=${item.id}`;

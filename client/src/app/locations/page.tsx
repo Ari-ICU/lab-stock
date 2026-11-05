@@ -7,7 +7,6 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { exportToCsv } from '@/lib/exportCsv';
-import { LabThumbnail } from '@/components/LabThumbnail';
 import {
   Boxes,
   Microscope,
@@ -351,38 +350,30 @@ export default function LocationsPage() {
             return (
               <div
                 key={loc.id}
-                className="bg-white border border-neutral-200 rounded-2xl overflow-hidden hover:border-neutral-300 transition-all shadow-2xs hover:shadow-md flex flex-col justify-between group"
+                className="bg-white border border-neutral-200 rounded-2xl hover:border-neutral-300 transition-all shadow-2xs hover:shadow-md flex flex-col justify-between p-5 space-y-4 group"
               >
-                {/* 1. Classroom Visual Image Banner */}
-                <div className="relative w-full h-44 bg-neutral-100 overflow-hidden border-b border-neutral-200">
-                  <Link href={`/locations/${loc.id}`} className="block w-full h-full cursor-pointer">
-                    <LabThumbnail
-                      src={loc.imageUrl}
-                      alt={loc.name}
-                      size="card"
-                      fallbackType="building"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      iconClassName="w-10 h-10 text-neutral-400"
-                    />
-                  </Link>
-
-                  {/* Overlaid Badges: Room Code & Type */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap pointer-events-none">
-                    <span className="font-mono text-xs font-bold bg-neutral-900/90 text-white backdrop-blur-xs px-2.5 py-1 rounded-md shadow-xs">
+                {/* 1. Card Header with Room Badge, Type, Capacity, and Actions */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2.5 py-1 rounded-md shadow-2xs">
                       {loc.room}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-800 bg-white/95 backdrop-blur-xs px-2 py-1 rounded-md shadow-xs border border-neutral-200/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-700 bg-neutral-100 border border-neutral-200 px-2 py-1 rounded-md">
                       {loc.type?.replace('_', ' ') || 'LAB'}
+                    </span>
+                    <span className="text-[11px] font-semibold text-neutral-600 bg-neutral-50 border border-neutral-200/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>{loc.capacity || 30} Seats</span>
                     </span>
                   </div>
 
-                  {/* Top Right Actions Menu */}
+                  {/* Actions Menu */}
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
                     }}
-                    className="absolute top-3 right-3 z-20 bg-white/95 backdrop-blur-xs rounded-lg shadow-xs border border-neutral-200/80 hover:bg-white transition-colors"
+                    className="shrink-0"
                   >
                     <RowActionMenu
                       onViewDetails={() => router.push(`/locations/${loc.id}`)}
@@ -390,93 +381,108 @@ export default function LocationsPage() {
                       onDelete={isAdmin ? () => deleteLocation(loc.id) : undefined}
                     />
                   </div>
+                </div>
 
-                  {/* Bottom Overlay Pill: Seats / Capacity */}
-                  <div className="absolute bottom-2.5 right-3 bg-neutral-900/80 text-white backdrop-blur-xs px-2.5 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-xs pointer-events-none">
-                    <Users className="w-3.5 h-3.5 text-neutral-300" />
-                    <span>{loc.capacity || 30} Seats</span>
+                {/* 2. Room Name & Location Details */}
+                <div>
+                  <Link
+                    href={`/locations/${loc.id}`}
+                    className="text-base font-bold text-neutral-900 hover:text-emerald-700 transition-colors block line-clamp-1"
+                  >
+                    {loc.name}
+                  </Link>
+                  <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span className="font-medium text-neutral-700">{loc.building}</span>
+                    <span>•</span>
+                    <span>Floor {loc.floor ?? 1}</span>
+                    {isAllowed ? (
+                      <>
+                        <span>•</span>
+                        <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.2 rounded text-[10px]">
+                          Assigned Lab
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span>•</span>
+                        <span className="text-neutral-500 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded text-[10px] flex items-center gap-0.5">
+                          <Shield className="w-2.5 h-2.5 text-neutral-400" /> Read-only
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* 2. Classroom Details Body */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <Link
-                      href={`/locations/${loc.id}`}
-                      className="text-base font-bold text-neutral-900 hover:text-emerald-700 transition-colors block line-clamp-1"
-                    >
-                      {loc.name}
-                    </Link>
-                    <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>{loc.building}</span>
-                      <span>•</span>
-                      <span>Floor {loc.floor ?? 1}</span>
-                      {isAllowed ? (
-                        <>
-                          <span>•</span>
-                          <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.2 rounded text-[10px]">
-                            Assigned Lab
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span>•</span>
-                          <span className="text-neutral-500 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded text-[10px] flex items-center gap-0.5">
-                            <Shield className="w-2.5 h-2.5 text-neutral-400" /> Read-only
-                          </span>
-                        </>
-                      )}
+                {/* 3. Clean Equipment Count Badges (Stock & Assets) */}
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <Link
+                    href={`/locations/${loc.id}?tab=stock`}
+                    className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
+                      <Boxes className="w-4 h-4" />
                     </div>
-                  </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Inventory</div>
+                      <div className="text-xs font-bold text-neutral-900 truncate">
+                        {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
+                      </div>
+                      <div className="text-[10px] text-neutral-500">{loc.totalStockUnits} units</div>
+                    </div>
+                  </Link>
 
-                  {/* Clean Equipment Count Badges (Stock & Assets) */}
-                  <div className="grid grid-cols-2 gap-2.5 pt-1">
-                    <Link
-                      href={`/locations/${loc.id}?tab=stock`}
-                      className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
-                        <Boxes className="w-4 h-4" />
+                  <Link
+                    href={`/locations/${loc.id}?tab=hardware`}
+                    className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
+                      <Microscope className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Hardware</div>
+                      <div className="text-xs font-bold text-neutral-900 truncate">
+                        {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
                       </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Inventory</div>
-                        <div className="text-xs font-bold text-neutral-900 truncate">
-                          {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
-                        </div>
-                        <div className="text-[10px] text-neutral-500">{loc.totalStockUnits} units</div>
-                      </div>
-                    </Link>
+                      <div className="text-[10px] text-neutral-500">{loc.totalHardwareUnits} units</div>
+                    </div>
+                  </Link>
+                </div>
 
-                    <Link
-                      href={`/locations/${loc.id}?tab=hardware`}
-                      className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
-                        <Microscope className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Hardware</div>
-                        <div className="text-xs font-bold text-neutral-900 truncate">
-                          {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
-                        </div>
-                        <div className="text-[10px] text-neutral-500">{loc.totalHardwareUnits} units</div>
-                      </div>
-                    </Link>
+                {/* 4. Equipment Condition Health Status */}
+                {loc.totalBrokenCount > 0 || loc.totalMaintenanceCount > 0 ? (
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
+                    {loc.totalBrokenCount > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        {loc.totalBrokenCount} Broken
+                      </span>
+                    )}
+                    {loc.totalMaintenanceCount > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        {loc.totalMaintenanceCount} Under Repair
+                      </span>
+                    )}
                   </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[11px] font-medium">All Equipment Operational</span>
+                  </div>
+                )}
 
-                  {/* Card Footer: Action Link */}
-                  <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-neutral-400 font-mono">
-                      Room: {loc.room}
-                    </span>
-                    <Link
-                      href={`/locations/${loc.id}`}
-                      className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
-                    >
-                      <span>View Room Fleet</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
+                {/* 5. Card Footer: Action Link */}
+                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-neutral-400 font-mono">
+                    Room: {loc.room}
+                  </span>
+                  <Link
+                    href={`/locations/${loc.id}`}
+                    className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <span>View Room Fleet</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               </div>
             );

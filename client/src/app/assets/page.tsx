@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
@@ -11,7 +11,7 @@ import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { LabThumbnail } from '@/components/LabThumbnail';
-import { Image as ImageIcon, Plus, Search, Shield } from 'lucide-react';
+import { Image as ImageIcon, Plus, Search, Shield, Router, Activity } from 'lucide-react';
 
 const statusOptions: DropdownOption[] = [
   { label: 'All Operational Statuses', value: 'all' },
@@ -30,6 +30,30 @@ export default function AssetsPage() {
 
   const isSuperAdmin = user?.roleBadge === 'Admin' || user?.assignedLabs?.includes('all');
   const myAssignedRooms = user?.assignedLabs || [];
+
+  const assetsStats = useMemo(() => {
+    const totalUnits = assets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+    const operationalUnits = assets
+      .filter((a) => a.status === 'operational')
+      .reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+    const maintenanceUnits = assets
+      .filter((a) => a.status === 'maintenance')
+      .reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+    const onLoanUnits = assets
+      .filter((a) => a.loanStatus === 'on_loan')
+      .reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+    const uniqueLabsCount = new Set(assets.map((a) => a.location)).size;
+    const healthRate = totalUnits > 0 ? Math.round((operationalUnits / totalUnits) * 100) : 100;
+
+    return {
+      totalUnits,
+      operationalUnits,
+      maintenanceUnits,
+      onLoanUnits,
+      uniqueLabsCount,
+      healthRate,
+    };
+  }, [assets]);
 
   const labOptions: DropdownOption[] = [
     { label: 'All Laboratories', value: 'all' },
@@ -100,6 +124,82 @@ export default function AssetsPage() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+        {/* Hardware Assets Fleet Banner (Clean without background image) */}
+        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
+          {/* Subtle ambient accent glow */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-4">
+            {/* Top Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
+                <Router className="w-3.5 h-3.5 text-neutral-900" />
+                <span>HARDWARE FLEET</span>
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
+                {assetsStats.uniqueLabsCount} LAB LOCATIONS
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-emerald-500/90 text-white shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                {assetsStats.operationalUnits} Operational Units
+              </span>
+              {assetsStats.onLoanUnits > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500/90 text-white shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {assetsStats.onLoanUnits} On Loan
+                </span>
+              )}
+              {assetsStats.maintenanceUnits > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-blue-500/90 text-white shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {assetsStats.maintenanceUnits} In Maintenance
+                </span>
+              )}
+            </div>
+
+            {/* Banner Main Content */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
+                  Serialized Hardware & Infrastructure
+                </h2>
+                <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 font-medium leading-relaxed max-w-2xl">
+                  Enterprise network switches, student workstation fleets, core routers, laser projectors, and lab equipment deployed across university faculty blocks.
+                </p>
+              </div>
+
+              {/* Quick Fleet Health Panel */}
+              <div className="flex items-center gap-2.5 shrink-0 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-neutral-400">Fleet Health:</span>
+                  <span className={`font-mono font-bold ${
+                    assetsStats.healthRate >= 90
+                      ? 'text-emerald-400'
+                      : assetsStats.healthRate >= 75
+                      ? 'text-amber-400'
+                      : 'text-rose-400'
+                  }`}>
+                    {assetsStats.healthRate}%
+                  </span>
+                </div>
+                <span className="text-neutral-600">|</span>
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="text-emerald-400 font-bold">{assetsStats.totalUnits} Total</span>
+                  <span className="text-neutral-600">·</span>
+                  <span className="text-neutral-200 font-bold">{assets.length} SKUs</span>
+                  {assetsStats.maintenanceUnits > 0 && (
+                    <>
+                      <span className="text-neutral-600">·</span>
+                      <span className="text-blue-400 font-bold">{assetsStats.maintenanceUnits} Maint</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white border border-neutral-200 rounded">
           {/* Filters Toolbar with Dropdown */}
           <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
