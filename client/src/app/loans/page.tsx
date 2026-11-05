@@ -691,7 +691,7 @@ export default function LoansPage() {
                     {filteredTransfers.map((transfer) => (
                       <tr
                         key={transfer.id}
-                        onClick={() => setSelectedTransferDetails(transfer)}
+                        onClick={() => router.push(`/transfers/${transfer.id}`)}
                         className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                       >
                         <td className="py-3.5 px-4">
@@ -724,7 +724,7 @@ export default function LoansPage() {
                         <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => setSelectedTransferDetails(transfer)}
+                            onClick={() => router.push(`/transfers/${transfer.id}`)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 shadow-2xs transition-all cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5 text-neutral-400" />

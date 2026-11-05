@@ -17,6 +17,7 @@ import EditRoomItemClient from './locations/[id]/items/edit/EditRoomItemClient';
 import RoomItemDetailsClient from './locations/[id]/items/view/RoomItemDetailsClient';
 import MaintenanceDetailsClient from './maintenance/[id]/MaintenanceDetailsClient';
 import MaintenanceEditClient from './maintenance/[id]/edit/MaintenanceEditClient';
+import TransferDetailsClient from './transfers/[id]/TransferDetailsClient';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function NotFound() {
@@ -39,6 +40,7 @@ export default function NotFound() {
       | 'location-item-view'
       | 'maint'
       | 'maint-edit'
+      | 'transfer'
       | null;
     id: string;
   }>({ type: null, id: '' });
@@ -149,6 +151,12 @@ export default function NotFound() {
       setResolvedRoute({ type: 'loan', id: decodeURIComponent(loanMatch[1]) });
       return;
     }
+
+    const transferMatch = path.match(/\/transfers\/([^/?#]+)(?:\/|$|\?|#)/i);
+    if (transferMatch && transferMatch[1]) {
+      setResolvedRoute({ type: 'transfer', id: decodeURIComponent(transferMatch[1]) });
+      return;
+    }
   }, []);
 
   if (resolvedRoute.type === 'asset-relocate') {
@@ -198,6 +206,9 @@ export default function NotFound() {
   }
   if (resolvedRoute.type === 'maint-edit') {
     return <MaintenanceEditClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'transfer') {
+    return <TransferDetailsClient id={resolvedRoute.id} />;
   }
 
   if (!mounted) {
