@@ -10,11 +10,35 @@ import AssetDetailsClient from './assets/[id]/AssetDetailsClient';
 import LoanDetailsClient from './loans/[id]/LoanDetailsClient';
 import EditAssetClient from './assets/[id]/edit/EditAssetClient';
 import EditStockClient from './stock/[id]/edit/EditStockClient';
+import AssetRelocateClient from './assets/[id]/relocate/AssetRelocateClient';
+import LoanCheckoutWorkspace from '@/components/LoanCheckoutWorkspace';
+import NewRoomItemClient from './locations/[id]/items/new/NewRoomItemClient';
+import EditRoomItemClient from './locations/[id]/items/edit/EditRoomItemClient';
+import RoomItemDetailsClient from './locations/[id]/items/view/RoomItemDetailsClient';
+import MaintenanceDetailsClient from './maintenance/[id]/MaintenanceDetailsClient';
+import MaintenanceEditClient from './maintenance/[id]/edit/MaintenanceEditClient';
 
 export default function NotFound() {
   const router = useRouter();
   const [resolvedRoute, setResolvedRoute] = useState<{
-    type: 'location' | 'stock' | 'asset' | 'loan' | 'asset-edit' | 'stock-edit' | null;
+    type:
+      | 'location'
+      | 'stock'
+      | 'asset'
+      | 'loan'
+      | 'asset-edit'
+      | 'stock-edit'
+      | 'asset-relocate'
+      | 'loans-relocate'
+      | 'asset-lend'
+      | 'stock-lend'
+      | 'loans-checkout'
+      | 'location-item-new'
+      | 'location-item-edit'
+      | 'location-item-view'
+      | 'maint'
+      | 'maint-edit'
+      | null;
     id: string;
   }>({ type: null, id: '' });
   const [mounted, setMounted] = useState(false);
@@ -25,49 +49,122 @@ export default function NotFound() {
 
     const path = window.location.pathname || '';
 
-    // Check for /assets/<id>/edit
-    const assetEditMatch = path.match(/\/assets\/([^/?#]+)\/edit/i);
+    // 1. Assets sub-routes (must match before base /assets/:id)
+    const assetRelocateMatch = path.match(/\/assets\/([^/?#]+)\/relocate(?:\/|$|\?|#)/i);
+    if (assetRelocateMatch && assetRelocateMatch[1]) {
+      setResolvedRoute({ type: 'asset-relocate', id: decodeURIComponent(assetRelocateMatch[1]) });
+      return;
+    }
+
+    const assetLendMatch = path.match(/\/assets\/([^/?#]+)\/lend(?:\/|$|\?|#)/i);
+    if (assetLendMatch && assetLendMatch[1]) {
+      setResolvedRoute({ type: 'asset-lend', id: decodeURIComponent(assetLendMatch[1]) });
+      return;
+    }
+
+    const assetEditMatch = path.match(/\/assets\/([^/?#]+)\/edit(?:\/|$|\?|#)/i);
     if (assetEditMatch && assetEditMatch[1]) {
       setResolvedRoute({ type: 'asset-edit', id: decodeURIComponent(assetEditMatch[1]) });
       return;
     }
 
-    // Check for /stock/<id>/edit
-    const stockEditMatch = path.match(/\/stock\/([^/?#]+)\/edit/i);
+    // 2. Stock sub-routes
+    const stockLendMatch = path.match(/\/stock\/([^/?#]+)\/lend(?:\/|$|\?|#)/i);
+    if (stockLendMatch && stockLendMatch[1]) {
+      setResolvedRoute({ type: 'stock-lend', id: decodeURIComponent(stockLendMatch[1]) });
+      return;
+    }
+
+    const stockEditMatch = path.match(/\/stock\/([^/?#]+)\/edit(?:\/|$|\?|#)/i);
     if (stockEditMatch && stockEditMatch[1]) {
       setResolvedRoute({ type: 'stock-edit', id: decodeURIComponent(stockEditMatch[1]) });
       return;
     }
 
-    // Check for /locations/<id>
-    const locMatch = path.match(/\/locations\/([^/?#]+)/i);
+    // 3. Loans sub-routes
+    if (/\/loans\/relocate(?:\/|$|\?|#)/i.test(path)) {
+      setResolvedRoute({ type: 'loans-relocate', id: '' });
+      return;
+    }
+
+    if (/\/loans\/checkout(?:\/|$|\?|#)/i.test(path)) {
+      setResolvedRoute({ type: 'loans-checkout', id: '' });
+      return;
+    }
+
+    // 4. Locations sub-routes
+    const locItemNewMatch = path.match(/\/locations\/([^/?#]+)\/items\/new(?:\/|$|\?|#)/i);
+    if (locItemNewMatch && locItemNewMatch[1]) {
+      setResolvedRoute({ type: 'location-item-new', id: decodeURIComponent(locItemNewMatch[1]) });
+      return;
+    }
+
+    const locItemEditMatch = path.match(/\/locations\/([^/?#]+)\/items\/edit(?:\/|$|\?|#)/i);
+    if (locItemEditMatch && locItemEditMatch[1]) {
+      setResolvedRoute({ type: 'location-item-edit', id: decodeURIComponent(locItemEditMatch[1]) });
+      return;
+    }
+
+    const locItemViewMatch = path.match(/\/locations\/([^/?#]+)\/items\/view(?:\/|$|\?|#)/i);
+    if (locItemViewMatch && locItemViewMatch[1]) {
+      setResolvedRoute({ type: 'location-item-view', id: decodeURIComponent(locItemViewMatch[1]) });
+      return;
+    }
+
+    // 5. Maintenance sub-routes
+    const maintEditMatch = path.match(/\/maintenance\/([^/?#]+)\/edit(?:\/|$|\?|#)/i);
+    if (maintEditMatch && maintEditMatch[1]) {
+      setResolvedRoute({ type: 'maint-edit', id: decodeURIComponent(maintEditMatch[1]) });
+      return;
+    }
+
+    // 6. Base detail routes (evaluated after specific sub-actions)
+    const locMatch = path.match(/\/locations\/([^/?#]+)(?:\/|$|\?|#)/i);
     if (locMatch && locMatch[1]) {
       setResolvedRoute({ type: 'location', id: decodeURIComponent(locMatch[1]) });
       return;
     }
 
-    // Check for /stock/<id>
-    const stockMatch = path.match(/\/stock\/([^/?#]+)/i);
+    const stockMatch = path.match(/\/stock\/([^/?#]+)(?:\/|$|\?|#)/i);
     if (stockMatch && stockMatch[1]) {
       setResolvedRoute({ type: 'stock', id: decodeURIComponent(stockMatch[1]) });
       return;
     }
 
-    // Check for /assets/<id>
-    const assetMatch = path.match(/\/assets\/([^/?#]+)/i);
+    const assetMatch = path.match(/\/assets\/([^/?#]+)(?:\/|$|\?|#)/i);
     if (assetMatch && assetMatch[1]) {
       setResolvedRoute({ type: 'asset', id: decodeURIComponent(assetMatch[1]) });
       return;
     }
 
-    // Check for /loans/<id>
-    const loanMatch = path.match(/\/loans\/([^/?#]+)/i);
-    if (loanMatch && loanMatch[1]) {
+    const maintMatch = path.match(/\/maintenance\/([^/?#]+)(?:\/|$|\?|#)/i);
+    if (maintMatch && maintMatch[1] && maintMatch[1] !== 'create') {
+      setResolvedRoute({ type: 'maint', id: decodeURIComponent(maintMatch[1]) });
+      return;
+    }
+
+    const loanMatch = path.match(/\/loans\/([^/?#]+)(?:\/|$|\?|#)/i);
+    if (loanMatch && loanMatch[1] && loanMatch[1] !== 'checkout' && loanMatch[1] !== 'relocate') {
       setResolvedRoute({ type: 'loan', id: decodeURIComponent(loanMatch[1]) });
       return;
     }
   }, []);
 
+  if (resolvedRoute.type === 'asset-relocate') {
+    return <AssetRelocateClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'loans-relocate') {
+    return <AssetRelocateClient returnTo="/loans" />;
+  }
+  if (resolvedRoute.type === 'asset-lend') {
+    return <LoanCheckoutWorkspace itemId={resolvedRoute.id} itemType="asset" returnTo={`/assets/${resolvedRoute.id}`} />;
+  }
+  if (resolvedRoute.type === 'stock-lend') {
+    return <LoanCheckoutWorkspace itemId={resolvedRoute.id} itemType="stock" returnTo={`/stock/${resolvedRoute.id}`} />;
+  }
+  if (resolvedRoute.type === 'loans-checkout') {
+    return <LoanCheckoutWorkspace returnTo="/loans" />;
+  }
   if (resolvedRoute.type === 'location') {
     return <LocationDetailsClient id={resolvedRoute.id} />;
   }
@@ -85,6 +182,21 @@ export default function NotFound() {
   }
   if (resolvedRoute.type === 'stock-edit') {
     return <EditStockClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'location-item-new') {
+    return <NewRoomItemClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'location-item-edit') {
+    return <EditRoomItemClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'location-item-view') {
+    return <RoomItemDetailsClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'maint') {
+    return <MaintenanceDetailsClient id={resolvedRoute.id} />;
+  }
+  if (resolvedRoute.type === 'maint-edit') {
+    return <MaintenanceEditClient id={resolvedRoute.id} />;
   }
 
   if (!mounted) {

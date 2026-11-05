@@ -145,13 +145,27 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
     let initialFrom = '';
 
     if (fromQuery) {
-      const match = locations.find(
-        (l) =>
-          l.room.toLowerCase() === fromQuery.toLowerCase() ||
-          l.name.toLowerCase().includes(fromQuery.toLowerCase())
-      );
+      const cleanFrom = decodeURIComponent(fromQuery).trim();
+      const cleanFromLower = cleanFrom.toLowerCase();
+      const match = locations.find((l) => {
+        const fullCombo = `${l.name} (${l.room})`.toLowerCase();
+        const roomLower = l.room.toLowerCase();
+        const roomCode = roomLower.replace(/^(rm|room)\s*/i, '').trim();
+        const nameLower = l.name.toLowerCase();
+        return (
+          fullCombo === cleanFromLower ||
+          cleanFromLower.includes(fullCombo) ||
+          cleanFromLower.includes(roomLower) ||
+          cleanFromLower.includes(nameLower) ||
+          (roomCode.length > 0 && cleanFromLower.includes(roomCode)) ||
+          nameLower.includes(cleanFromLower) ||
+          roomLower === cleanFromLower
+        );
+      });
       if (match) {
         initialFrom = `${match.name} (${match.room})`;
+      } else {
+        initialFrom = cleanFrom;
       }
     }
 
