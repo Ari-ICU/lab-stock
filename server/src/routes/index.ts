@@ -6,6 +6,7 @@ import loanRoutes from '@/routes/loanRoutes.js';
 import locationRoutes from '@/routes/locationRoutes.js';
 import maintenanceRoutes from '@/routes/maintenanceRoutes.js';
 import purchaseRequestRoutes from '@/routes/purchaseRequestRoutes.js';
+import transferRoutes from '@/routes/transferRoutes.js';
 
 const router = Router();
 
@@ -38,5 +39,8 @@ router.use('/maintenance', maintenanceRoutes);
 
 // Purchase Requests & Procurement
 router.use('/requests', purchaseRequestRoutes);
+
+// Equipment Relocations & Transfers
+router.use('/transfers', transferRoutes);
 
 export default router;

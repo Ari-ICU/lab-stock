@@ -1,4 +1,4 @@
-import { MockAsset, MockItem, MockLocation, MockLoan, MockMaintenance, PurchaseRequest } from '@/types';
+import { MockAsset, MockItem, MockLocation, MockLoan, MockMaintenance, MockTransfer, PurchaseRequest } from '@/types';
 
 /**
  * Data mappers to convert between PostgreSQL / Express API payloads (snake_case)
@@ -263,6 +263,21 @@ export function toServerPurchaseRequest(r: Partial<PurchaseRequest>): Record<str
     notes: r.notes,
   };
 }
+
+export function mapServerTransfer(t: any): MockTransfer {
+  return {
+    id: String(t.id),
+    assetId: String(t.asset_id || t.assetId),
+    assetName: t.asset_name || t.assetName || 'Lab Asset',
+    serialNumber: t.serial_number || t.serialNumber || 'N/A',
+    fromLocation: t.from_location || t.fromLocation || 'Central Depository',
+    toLocation: t.to_location || t.toLocation || 'Laboratory Facility',
+    transferDate: t.transfer_date ? (typeof t.transfer_date === 'string' ? t.transfer_date.split('T')[0] : new Date(t.transfer_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
+    transferredBy: t.transferred_by || t.transferredBy || 'Faculty Administrator',
+    reason: t.reason || '',
+  };
+}
+
 
 
 

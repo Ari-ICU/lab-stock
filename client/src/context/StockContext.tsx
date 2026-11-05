@@ -23,6 +23,7 @@ import {
   locationService,
   loanService,
   maintenanceService,
+  transferService,
   purchaseRequestService,
   getAuthToken,
   mapServerAsset,
@@ -30,6 +31,7 @@ import {
   mapServerLocation,
   mapServerLoan,
   mapServerMaintenance,
+  mapServerTransfer,
   mapServerPurchaseRequest,
   toServerAsset,
   toServerStock,
@@ -198,13 +200,14 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const [assetsRes, stockRes, locsRes, loansRes, maintRes, reqsRes] = await Promise.allSettled([
+      const [assetsRes, stockRes, locsRes, loansRes, maintRes, reqsRes, transfersRes] = await Promise.allSettled([
         assetService.getAssets(),
         stockService.getStockItems(),
         locationService.getLocations(),
         loanService.getLoans(),
         maintenanceService.getMaintenance(),
         purchaseRequestService.getPurchaseRequests(),
+        transferService.getTransfers(),
       ]);
 
       let connected = false;
@@ -250,6 +253,13 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         const fetchedReqs = reqsRes.value.data.map(mapServerPurchaseRequest);
         setRequests(fetchedReqs);
         setCachedData('requests', fetchedReqs);
+        connected = true;
+      }
+
+      if (transfersRes.status === 'fulfilled' && Array.isArray(transfersRes.value?.data)) {
+        const fetchedTransfers = transfersRes.value.data.map(mapServerTransfer);
+        setTransfers(fetchedTransfers);
+        setCachedData('transfers', fetchedTransfers);
         connected = true;
       }
 
@@ -710,13 +720,43 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       reason: reason || 'Location relocation between faculty labs',
     };
 
-    setTransfers((prev) => [newTransfer, ...prev]);
+    setTransfers((prev) => {
+      const next = [newTransfer, ...prev];
+      setCachedData('transfers', next);
+      return next;
+    });
 
-    // Update asset location
+    // Update asset location in state and cache
     if (asset) {
-      setAssets((prev) =>
-        prev.map((a) => (a.id === assetId ? { ...a, location: toLocation } : a))
-      );
+      setAssets((prev) => {
+        const next = prev.map((a) => (a.id === assetId ? { ...a, location: toLocation } : a));
+        setCachedData('assets', next);
+        return next;
+      });
+    }
+
+    // Persist relocation directly to PostgreSQL backend
+    if (getAuthToken()) {
+      transferService
+        .createTransfer({
+          asset_id: asset?.serverId || assetId,
+          from_location: fromLoc,
+          to_location: toLocation,
+          transferred_by: transferredBy || 'Thoeurn Ratha',
+          reason: reason || 'Location relocation between faculty labs',
+          transfer_date: newTransfer.transferDate,
+          quantity: moveQty,
+        })
+        .then((res) => {
+          if (res?.data?.id) {
+            setTransfers((prev) => {
+              const updated = prev.map((t) => (t.id === newTransfer.id ? { ...t, id: String(res.data.id) } : t));
+              setCachedData('transfers', updated);
+              return updated;
+            });
+          }
+        })
+        .catch(() => {});
     }
 
     // Also update room inventories in locations if matching rooms exist
@@ -734,7 +774,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         return prevLocations;
       }
 
-      return prevLocations.map((loc) => {
+      const nextLocations = prevLocations.map((loc) => {
         if (loc.id === fromLocRecord.id) {
           const existingInvs = loc.inventories || [];
           const updatedInvs = existingInvs
@@ -789,6 +829,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
         return loc;
       });
+      setCachedData('locations', nextLocations);
+      return nextLocations;
     });
 
     showToast(`Relocated ${asset?.name || 'Device'} from ${fromLoc} to ${toLocation}`);

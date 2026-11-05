@@ -78,5 +78,12 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/requests/${id}`,
     DELETE: (id: string) => `/requests/${id}`,
   },
+
+  // Equipment Relocations & Transfers
+  TRANSFERS: {
+    LIST: '/transfers',
+    DETAILS: (id: string) => `/transfers/${id}`,
+    CREATE: '/transfers',
+  },
 } as const;
 
