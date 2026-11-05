@@ -19,8 +19,6 @@ import {
   Trash2,
   FileSpreadsheet,
   X,
-  QrCode,
-  Printer,
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
 import { getRoomItemImage } from './items/shared';
@@ -50,7 +48,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showDoorQrModal, setShowDoorQrModal] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Dropdown Options
@@ -314,10 +311,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     router.push('/locations');
   };
 
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-    typeof window !== 'undefined' ? window.location.href : `https://labstock.edu/locations/${loc.id}`
-  )}`;
-
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       {/* 1. Unified Navigation Header */}
@@ -330,16 +323,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowDoorQrModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-              title="Generate printable QR placard for room door"
-            >
-              <QrCode className="w-3.5 h-3.5 text-neutral-600" />
-              <span className="hidden sm:inline">Door QR</span>
-            </button>
-
             <button
               type="button"
               onClick={handleExportRoomFleet}
@@ -664,89 +647,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             </div>
         </div>
       </div>
-
-      {/* 8. Printable Room Door QR Placard Modal */}
-      {showDoorQrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-neutral-200 space-y-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-neutral-900 text-white px-2 py-0.5 rounded">
-                  Printable Door Placard
-                </span>
-                <h3 className="text-base font-bold text-neutral-900 mt-1">
-                  Classroom & Lab Door QR Sticker
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDoorQrModal(false)}
-                className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Placard Preview Card for Door */}
-            <div className="border-2 border-neutral-900 rounded-2xl p-6 text-center space-y-4 bg-white shadow-md">
-              <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-500">
-                Department of Computer Science & Engineering
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-3xl font-extrabold text-neutral-900 font-mono tracking-tight">
-                  {loc.room}
-                </div>
-                <div className="text-sm font-bold text-neutral-800">
-                  {loc.name}
-                </div>
-                <div className="text-xs text-neutral-500 font-medium">
-                  {loc.building} • Floor {loc.floor ?? 1} • Capacity: {loc.capacity || 30} Seats
-                </div>
-              </div>
-
-              {/* QR Image */}
-              <div className="w-48 h-48 mx-auto bg-neutral-50 p-3 rounded-xl border border-neutral-300 flex items-center justify-center">
-                <img
-                  src={qrImageUrl}
-                  alt={`QR Code for ${loc.room}`}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-
-              <div className="space-y-1 text-xs text-neutral-600">
-                <p className="font-semibold text-neutral-900">
-                  Scan to View Room Condition & Report Broken Equipment
-                </p>
-                <p className="text-[11px] text-neutral-400">
-                  Students & Faculty can view available chairs, tables, and submit immediate repair tickets.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 pt-2">
-              <span className="text-xs text-neutral-400">Tape this QR placard directly on the room entrance door.</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg shadow-xs cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Print Placard</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDoorQrModal(false)}
-                  className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 9. Delete Confirmation Modal */}
       {showDeleteConfirm && (
