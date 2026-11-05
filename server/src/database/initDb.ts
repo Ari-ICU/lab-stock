@@ -138,6 +138,13 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log('✅ Seeded device loans into PostgreSQL.');
     }
 
+    // Drop unused image_url from locations if exists
+    try {
+      await pool.query('ALTER TABLE locations DROP COLUMN IF EXISTS image_url;');
+    } catch {
+      // Ignore if table does not exist or column already dropped
+    }
+
     // Ensure maintenance table has image_url, location, cost, quantity, unit
     await pool.query(`
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS image_url TEXT;

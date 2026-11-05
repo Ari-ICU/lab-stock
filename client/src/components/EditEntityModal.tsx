@@ -162,7 +162,6 @@ export function EditEntityModal() {
       setName(loc.name);
       setBuilding(loc.building);
       setRoom(loc.room);
-      setImageUrl(loc.imageUrl || '');
     } else if (isRack) {
       const r = editingItem as MockRack;
       setName(r.name);
@@ -236,7 +235,6 @@ export function EditEntityModal() {
         name,
         building,
         room,
-        imageUrl,
       });
     } else if (isRack) {
       const r = editingItem as MockRack;
@@ -548,14 +546,6 @@ export function EditEntityModal() {
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
                   />
                 </div>
-              </div>
-
-              <div className="pt-1">
-                <ImageUpload
-                  value={imageUrl}
-                  onChange={(val) => setImageUrl(val)}
-                  label="Laboratory Preview Photo"
-                />
               </div>
             </>
           )}

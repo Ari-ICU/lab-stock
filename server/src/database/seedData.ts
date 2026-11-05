@@ -11,7 +11,6 @@ export const seedLocations = [
     capacity: 40,
     last_audited_at: '2026-10-28',
     audited_by: 'Dr. Heng Sovannarith',
-    image_url: 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
   },
   {
     code: 'LOC-206',
@@ -23,7 +22,6 @@ export const seedLocations = [
     capacity: 32,
     last_audited_at: '2026-10-29',
     audited_by: 'John Doe',
-    image_url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
   },
   {
     code: 'LOC-201',
@@ -35,7 +33,6 @@ export const seedLocations = [
     capacity: 40,
     last_audited_at: '2026-10-25',
     audited_by: 'Thoeurn Ratha',
-    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
   },
   {
     code: 'LOC-203',
@@ -47,7 +44,6 @@ export const seedLocations = [
     capacity: 30,
     last_audited_at: '2026-10-24',
     audited_by: 'Dr. Heng Sovannarith',
-    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
   },
   {
     code: 'LOC-305',
@@ -59,7 +55,6 @@ export const seedLocations = [
     capacity: 36,
     last_audited_at: '2026-10-27',
     audited_by: 'Thoeurn Ratha',
-    image_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
   },
   {
     code: 'LOC-102',
@@ -71,7 +66,6 @@ export const seedLocations = [
     capacity: 12,
     last_audited_at: '2026-10-30',
     audited_by: 'Dr. Heng Sovannarith',
-    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
@@ -1112,14 +1106,14 @@ export async function seedAllData(): Promise<void> {
   const locationMap = new Map<string, string>();
   for (const loc of seedLocations) {
     const res = await query(
-      `INSERT INTO locations (code, name, room, building, capacity, floor, room_type, last_audited_at, audited_by, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO locations (code, name, room, building, capacity, floor, room_type, last_audited_at, audited_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (code) DO UPDATE 
        SET name = EXCLUDED.name, room = EXCLUDED.room, building = EXCLUDED.building, capacity = EXCLUDED.capacity,
            floor = EXCLUDED.floor, room_type = EXCLUDED.room_type, last_audited_at = EXCLUDED.last_audited_at,
-           audited_by = EXCLUDED.audited_by, image_url = EXCLUDED.image_url
+           audited_by = EXCLUDED.audited_by
        RETURNING id, room, code`,
-      [loc.code, loc.name, loc.room, loc.building, loc.capacity, (loc as any).floor || 1, (loc as any).room_type || 'COMPUTER_LAB', (loc as any).last_audited_at || null, (loc as any).audited_by || null, loc.image_url]
+      [loc.code, loc.name, loc.room, loc.building, loc.capacity, (loc as any).floor || 1, (loc as any).room_type || 'COMPUTER_LAB', (loc as any).last_audited_at || null, (loc as any).audited_by || null]
     );
     if (res.rows[0]) {
       locationMap.set(loc.room, res.rows[0].id);

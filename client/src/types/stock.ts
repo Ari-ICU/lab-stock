@@ -133,7 +133,6 @@ export interface MockLocation {
   capacity?: number;
   totalAssets: number;
   totalItems: number;
-  imageUrl?: string;
   lastAuditedAt?: string;
   auditedBy?: string;
   inventories?: RoomInventoryItem[];

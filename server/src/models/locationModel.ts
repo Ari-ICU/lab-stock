@@ -9,7 +9,6 @@ export interface Location {
   capacity?: number;
   floor?: number;
   room_type?: string;
-  image_url?: string;
   last_audited_at?: Date | string;
   audited_by?: string;
   total_assets?: number;
@@ -87,8 +86,8 @@ export const locationModel = {
 
   async create(loc: Omit<Location, 'id' | 'created_at'>): Promise<Location> {
     const res = await query(
-      `INSERT INTO locations (code, name, room, building, capacity, floor, room_type, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO locations (code, name, room, building, capacity, floor, room_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
         loc.code.trim().toUpperCase(),
@@ -98,7 +97,6 @@ export const locationModel = {
         loc.capacity || 30,
         loc.floor || 1,
         loc.room_type || 'COMPUTER_LAB',
-        loc.image_url || null,
       ]
     );
     return this.findById(res.rows[0].id) as Promise<Location>;
@@ -131,10 +129,6 @@ export const locationModel = {
     if (loc.room_type !== undefined) {
       values.push(loc.room_type);
       fields.push(`room_type = $${values.length}`);
-    }
-    if (loc.image_url !== undefined) {
-      values.push(loc.image_url);
-      fields.push(`image_url = $${values.length}`);
     }
     if (loc.last_audited_at !== undefined) {
       values.push(loc.last_audited_at);

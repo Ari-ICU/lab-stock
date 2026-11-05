@@ -116,7 +116,6 @@ export function mapServerLocation(l: any): MockLocation {
     type: l.room_type || l.type || 'COMPUTER_LAB',
     totalAssets: Number(l.total_assets ?? l.totalAssets ?? 0),
     totalItems: Number(l.total_items ?? l.totalItems ?? 0),
-    imageUrl: l.image_url || l.imageUrl,
     inventories,
     lastAuditedAt: l.last_audited_at || l.lastAuditedAt,
     auditedBy: l.audited_by || l.auditedBy,
@@ -128,7 +127,6 @@ export function toServerLocation(l: Partial<MockLocation>): Record<string, any> 
     name: l.name,
     room: l.room,
     building: l.building,
-    image_url: l.imageUrl,
   };
 }
 
