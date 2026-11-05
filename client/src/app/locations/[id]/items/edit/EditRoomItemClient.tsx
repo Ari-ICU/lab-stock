@@ -302,7 +302,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
                   {numInput(qtyBroken, (n) => { setQtyBroken(n); syncStatus(n, qtyMaintenance); }, 'border-rose-300 text-rose-900 focus:border-rose-600')}
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-blue-800 mb-1">In Maintenance</label>
+                  <label className="block text-[11px] font-bold text-blue-800 mb-1">In Repair</label>
                   {numInput(qtyMaintenance, (n) => { setQtyMaintenance(n); syncStatus(qtyBroken, n); }, 'border-blue-300 text-blue-900 focus:border-blue-600')}
                 </div>
               </div>

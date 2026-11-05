@@ -648,7 +648,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                     </div>
                   </div>
                   <div className="space-y-0.5">
-                    <div className="text-[10px] uppercase font-bold text-neutral-500">In Maintenance</div>
+                    <div className="text-[10px] uppercase font-bold text-neutral-500">In Repair</div>
                     <div className="font-mono font-bold text-blue-700 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-blue-500" />
                       {allocationSummary.totalMaintenance} {item.unit || 'units'}
@@ -689,7 +689,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                         <th className="py-3 px-3">Building & Floor</th>
                         <th className="py-3 px-3 text-center">Allocated</th>
                         <th className="py-3 px-3 text-center">Working</th>
-                        <th className="py-3 px-3 text-center">Maintenance</th>
+                        <th className="py-3 px-3 text-center">Repair</th>
                         <th className="py-3 px-3 text-center">Broken</th>
                         <th className="py-3 px-3">Condition Remarks</th>
                         <th className="py-3 px-3 text-right">Action</th>

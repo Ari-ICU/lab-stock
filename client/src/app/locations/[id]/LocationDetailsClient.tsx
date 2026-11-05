@@ -386,7 +386,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               {inventorySummary.totalMaintenance > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-blue-500/90 text-white shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  {inventorySummary.totalMaintenance} Under Maintenance
+                  {inventorySummary.totalMaintenance} In Repair
                 </span>
               )}
               {inventorySummary.totalBroken === 0 && inventorySummary.totalMaintenance === 0 && (
@@ -438,7 +438,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <div className="flex items-center gap-2 text-[11px] font-mono">
                   <span className="text-emerald-400 font-bold">{inventorySummary.totalWorking} OK</span>
                   <span className="text-neutral-600">·</span>
-                  <span className="text-blue-400 font-bold">{inventorySummary.totalMaintenance} Maint</span>
+                  <span className="text-blue-400 font-bold">{inventorySummary.totalMaintenance} Repair</span>
                   <span className="text-neutral-600">·</span>
                   <span className="text-rose-400 font-bold">{inventorySummary.totalBroken} Defect</span>
                 </div>
@@ -507,7 +507,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     <th className="py-3 px-4 min-w-[180px]">Specification / Model</th>
                     <th className="py-3 px-3 w-16 text-center">Total</th>
                     <th className="py-3 px-3 w-16 text-center">Working</th>
-                    <th className="py-3 px-3 w-20 text-center">Maintenance</th>
+                    <th className="py-3 px-3 w-20 text-center">Repair</th>
                     <th className="py-3 px-3 w-16 text-center">Broken</th>
                     <th className="py-3 px-4 w-12 text-right">Actions</th>
                   </tr>
