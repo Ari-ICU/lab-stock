@@ -18,7 +18,7 @@ const c = {
   bgBlue: '\x1b[44m\x1b[97m\x1b[1m',
 };
 
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
   const localUrl = `http://localhost:${PORT}`;
   const healthUrl = `http://localhost:${PORT}/api/v1/health`;
   const swaggerUrl = `http://localhost:${PORT}/api/docs`;
@@ -47,3 +47,22 @@ app.listen(PORT, async () => {
   ${c.gray}│${c.reset}  ${c.bold}Security:${c.reset}       ${c.green}Bcrypt (work: 12) + Cryptographic JWT (HS256) + Strict RBAC${c.reset}
 `);
 });
+
+// Crash resilience: Catch unhandled promises & exceptions so bad scan probes never kill the server
+process.on('unhandledRejection', (reason: any) => {
+  console.error('⚠️ [CRASH PREVENTED] Unhandled Rejection:', reason?.message || reason);
+});
+
+process.on('uncaughtException', (err: Error) => {
+  console.error('💥 [CRASH PREVENTED] Uncaught Exception:', err.message);
+});
+
+const shutdown = () => {
+  console.log('🔄 Gracefully shutting down API server...');
+  server.close(() => {
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
