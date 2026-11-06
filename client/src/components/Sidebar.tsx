@@ -15,7 +15,6 @@ import {
   Settings,
   LogOut,
   Search,
-  X,
   ArrowLeftRight,
   Users
 } from 'lucide-react';
