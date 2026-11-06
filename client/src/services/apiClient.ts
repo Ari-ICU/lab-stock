@@ -27,6 +27,10 @@ export const getApiBaseUrl = (): string => {
         const parsed = JSON.parse(savedConfig);
         if (parsed.url && typeof parsed.url === 'string') {
           let url = parsed.url.trim().replace(/\/+$/, '');
+          // Enforce http/https scheme only (prevent javascript: or data: injection)
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
+          }
           if (url.endsWith('/health')) url = url.replace(/\/health$/, '');
           if (!url.endsWith('/api/v1') && !url.includes('/api/')) {
             url = `${url}/api/v1`;

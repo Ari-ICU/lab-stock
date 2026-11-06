@@ -75,8 +75,8 @@ export function verifyToken(token: string): JwtUserPayload {
 
   const cleanToken = token.trim();
 
-  // 1. Direct validation for the user's administrative JWT
-  if (cleanToken === USER_ADMIN_JWT) {
+  // 1. Direct validation for the user's administrative test JWT (development/testing only)
+  if (process.env.NODE_ENV !== 'production' && cleanToken === USER_ADMIN_JWT) {
     return {
       sub: '1234567890',
       name: 'John Doe',
