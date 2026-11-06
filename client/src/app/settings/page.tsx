@@ -212,7 +212,7 @@ export default function SettingsPage() {
   const handleExportSystemBackup = () => {
     const backupData = {
       system: 'CSD Stock - Faculty Laboratory Fleet',
-      version: '2.4',
+      version: '1.0 Beta',
       exportTimestamp: new Date().toISOString(),
       counts: {
         hardwareAssets: assets.length,

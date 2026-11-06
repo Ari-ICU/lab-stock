@@ -110,36 +110,19 @@ export function Sidebar() {
               />
             </div>
             <div className="min-w-0">
-              <div className="font-extrabold text-[15px] text-neutral-900 tracking-tight leading-tight truncate">
-                CSD Stock
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-[15px] text-neutral-900 tracking-tight leading-tight truncate">
+                  CSD Stock
+                </span>
+                <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs leading-none shrink-0">
+                  v1.0 Beta
+                </span>
               </div>
               <span className="text-[11px] text-neutral-500 font-medium truncate block mt-0.5">
                 Faculty Laboratories
               </span>
             </div>
           </Link>
-
-          <div className="flex items-center gap-1.5 shrink-0" suppressHydrationWarning>
-            {mounted && user?.assignedLabs && !user.assignedLabs.includes('all') && user.roleBadge !== 'Admin' && user.role !== 'Primary Lab Administrator' ? (
-              <span className="text-[10px] uppercase tracking-wider font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-mono">
-                {user.assignedLabs.length === 1
-                  ? user.assignedLabs[0]
-                  : `${user.assignedLabs.length} LABS`}
-              </span>
-            ) : (
-              <span className="text-[10px] uppercase tracking-wider font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
-                ALL LABS
-              </span>
-            )}
-            {/* Mobile close button */}
-            <button
-              onClick={closeMobileSidebar}
-              className="lg:hidden p-1 text-neutral-400 hover:text-neutral-900 rounded"
-              title="Close menu"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
         </div>
 
         {/* Global Fleet Quick Search (Cmd+K) */}
