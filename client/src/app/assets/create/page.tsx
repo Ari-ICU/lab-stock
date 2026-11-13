@@ -10,24 +10,14 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import {
-  ArrowLeft,
-  Router,
   Save,
-  CheckCircle2,
   Calendar,
-  MapPin,
-  Tag,
-  Hash,
-  Layers,
-  FileText,
-  AlertCircle,
-  HelpCircle,
 } from 'lucide-react';
 
 const statusOptions = [
   { label: 'Operational', value: 'operational' },
   { label: 'In Use', value: 'in_use' },
-  { label: 'Maintenance', value: 'maintenance' },
+  { label: 'In Repair', value: 'maintenance' },
 ];
 
 function CreateAssetForm() {
@@ -122,8 +112,8 @@ function CreateAssetForm() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title="Create Lab Hardware Asset"
-        subtitle="Lab 102B Equipment Registry"
+        title="Add Hardware Asset"
+        subtitle="Register serial-tracked lab equipment and computers"
         backHref="/assets"
         backLabel="Assets"
         showExport={false}
@@ -131,7 +121,7 @@ function CreateAssetForm() {
           <div className="flex items-center gap-2">
             <Link
               href="/assets"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors"
             >
               Cancel
             </Link>
@@ -143,7 +133,7 @@ function CreateAssetForm() {
                 if (form) form.requestSubmit();
               }}
               disabled={isSubmitting}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <Save className="w-3.5 h-3.5 text-neutral-300" />
               <span>{isSubmitting ? 'Creating...' : 'Create Asset'}</span>
@@ -152,8 +142,7 @@ function CreateAssetForm() {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Form Container */}
         <form
           id="new-asset-form"
@@ -161,13 +150,13 @@ function CreateAssetForm() {
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
         >
           {/* Left Column: Form Fields */}
-          <div className="lg:col-span-8 bg-white border border-neutral-200 rounded-lg p-6 space-y-5 shadow-xs">
+          <div className="lg:col-span-8 bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xs">
             <div className="border-b border-neutral-100 pb-3">
               <h2 className="text-sm font-bold text-neutral-900">
                 General Hardware Information
               </h2>
               <p className="text-xs text-neutral-500 mt-0.5">
-                Primary identifiers for auditing and stock tracking in Room 102B.
+                Primary identifiers, serial tracking, and laboratory assignment details.
               </p>
             </div>
 
@@ -182,7 +171,7 @@ function CreateAssetForm() {
                 placeholder="e.g. Dell OptiPlex 7090 Desktop Workstations"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
               />
             </div>
 
@@ -197,7 +186,7 @@ function CreateAssetForm() {
                   placeholder="e.g. C9300-48P-A / PoE+ 715W"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
                 />
               </div>
 
@@ -220,7 +209,7 @@ function CreateAssetForm() {
                   placeholder="e.g. FCW2348L09M or OPT-102B-01"
                   value={serialNumber}
                   onChange={(e) => setSerialNumber(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono uppercase transition-colors"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono uppercase transition-colors"
                 />
               </div>
             </div>
@@ -236,7 +225,7 @@ function CreateAssetForm() {
                   min={1}
                   value={totalUnits}
                   onChange={(e) => setTotalUnits(Number(e.target.value) || 1)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
                 />
               </div>
 
@@ -249,7 +238,7 @@ function CreateAssetForm() {
                   placeholder="e.g. Desktops, Units, AC Units, Switch"
                   value={unitType}
                   onChange={(e) => setUnitType(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                 />
               </div>
             </div>
@@ -265,7 +254,7 @@ function CreateAssetForm() {
                   options={locationOptions}
                   onChange={(val) => setLocation(val)}
                   className="w-full"
-                  buttonClassName="py-2.5 text-xs font-medium"
+                  buttonClassName="rounded-xl py-2 text-xs font-medium"
                 />
               </div>
 
@@ -276,18 +265,18 @@ function CreateAssetForm() {
                 <Dropdown
                   value={status}
                   options={statusOptions}
-                  onChange={(val) => setStatus(val as any)}
+                  onChange={(val) => setStatus(val as 'operational' | 'in_use' | 'maintenance')}
                   className="w-full"
-                  buttonClassName="py-2.5 text-xs font-medium"
+                  buttonClassName="rounded-xl py-2 text-xs font-medium"
                 />
               </div>
             </div>
 
             {/* Next Calibration Audit Date */}
             <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-semibold text-neutral-800 mb-1.5 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Next Calibration / Firmware Audit Due Date</span>
+                <span>Next Calibration / Audit Due Date</span>
               </label>
               <DatePicker
                 value={nextCalibration}
@@ -306,108 +295,19 @@ function CreateAssetForm() {
                 placeholder="Include port mapping, firmware version, dual-boot config, network topology details, etc."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs p-3 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs p-3 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed"
               />
-            </div>
-
-            {/* Buttons */}
-            <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-3">
-              <Link
-                href="/assets"
-                className="px-4 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 rounded transition-colors"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isSubmitting ? 'Creating...' : 'Create Asset'}</span>
-              </button>
             </div>
           </div>
 
-          {/* Right Column: Preview & Image Upload */}
+          {/* Right Column: Image Upload */}
           <div className="lg:col-span-4 space-y-5">
-            {/* Image Upload Box */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-xs">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs">
               <ImageUpload
                 value={imageUrl}
                 onChange={setImageUrl}
                 label="Hardware Photograph / Model Image"
               />
-            </div>
-
-            {/* Live Preview Card */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                  Live Preview
-                </span>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
-                    status === 'operational'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : status === 'in_use'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}
-                >
-                  {status === 'operational'
-                    ? 'Operational'
-                    : status === 'in_use'
-                    ? 'In Use'
-                    : 'Maintenance'}
-                </span>
-              </div>
-
-              {/* Preview image */}
-              <div className="h-36 rounded-md bg-neutral-100 border border-neutral-200 overflow-hidden flex items-center justify-center">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-center p-4 text-neutral-400">
-                    <Router className="w-8 h-8 mx-auto mb-1 stroke-1" />
-                    <span className="text-[11px]">No image selected</span>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-xs font-bold text-neutral-900 leading-tight">
-                  {name || 'Equipment Name'}
-                </h3>
-                <p className="text-[11px] text-neutral-500 font-mono mt-0.5">
-                  {model || 'Model specifications'}
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-neutral-100 space-y-1.5 text-[11px]">
-                <div className="flex items-center justify-between text-neutral-600">
-                  <span>Serial Tag:</span>
-                  <span className="font-mono font-semibold text-neutral-900">
-                    {serialNumber || 'PENDING-TAG'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-neutral-600">
-                  <span>Units:</span>
-                  <span className="font-bold text-neutral-900">
-                    {totalUnits} {unitType}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-neutral-600">
-                  <span>Location:</span>
-                  <span className="truncate max-w-[150px] text-neutral-700">
-                    {location}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </form>

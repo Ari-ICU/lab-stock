@@ -10,22 +10,17 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { buildStockCategoryOptions } from '@/lib/categories';
 import {
-  ArrowLeft,
   Save,
   Cable,
-  CheckCircle2,
   MapPin,
   Hash,
   Layers,
-  FileText,
-  AlertCircle,
-  HelpCircle,
 } from 'lucide-react';
 
 const statusOptions = [
-  { label: 'In Stock (Available in quantity)', value: 'in_stock' },
-  { label: 'Low Stock (Replenishment suggested)', value: 'low_stock' },
-  { label: 'Out of Stock (Zero count)', value: 'out_of_stock' },
+  { label: 'In Stock', value: 'in_stock' },
+  { label: 'Low Stock', value: 'low_stock' },
+  { label: 'Out of Stock', value: 'out_of_stock' },
 ];
 
 const unitOptions = [
@@ -149,7 +144,7 @@ function CreateStockForm() {
           <div className="flex items-center gap-2">
             <Link
               href="/stock"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors"
             >
               Cancel
             </Link>
@@ -161,7 +156,7 @@ function CreateStockForm() {
                 if (form) form.requestSubmit();
               }}
               disabled={isSubmitting}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <Save className="w-3.5 h-3.5 text-neutral-300" />
               <span>{isSubmitting ? 'Registering...' : 'Register Item'}</span>
@@ -173,11 +168,10 @@ function CreateStockForm() {
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Main Creation Form */}
         <form id="new-stock-form" onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column: Item Details */}
-            <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-6">
-              <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
+            <div className="lg:col-span-8 space-y-6">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <Cable className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
@@ -188,9 +182,8 @@ function CreateStockForm() {
                 <div className="space-y-4 pt-1">
                   {/* Item Name */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                      <span>Item / Equipment Name *</span>
-                      <span className="text-[11px] text-neutral-400 font-normal">e.g. A4 Paper, HP Toner, RJ45 Crimper</span>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Item / Equipment Name <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -198,7 +191,7 @@ function CreateStockForm() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Double A A4 80gsm Copy Paper"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
                   </div>
 
@@ -223,14 +216,14 @@ function CreateStockForm() {
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       placeholder="e.g. CAB-102B-CAT6A"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
                   </div>
 
                   {/* Category & Status */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900">Category</label>
+                      <label className="block text-xs font-semibold text-neutral-900">Category</label>
                       <Dropdown
                         value={category}
                         options={categoryOptions}
@@ -243,16 +236,18 @@ function CreateStockForm() {
                         allowCustom
                         searchPlaceholder="Search or type new category..."
                         placeholder="Select Category"
+                        buttonClassName="rounded-xl py-2"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900">Stock Availability</label>
+                      <label className="block text-xs font-semibold text-neutral-900">Stock Availability</label>
                       <Dropdown
                         value={status}
                         options={statusOptions}
-                        onChange={(val) => setStatus(val as any)}
+                        onChange={(val) => setStatus(val as 'in_stock' | 'low_stock' | 'out_of_stock')}
                         placeholder="Select Status"
+                        buttonClassName="rounded-xl py-2"
                       />
                     </div>
                   </div>
@@ -260,9 +255,8 @@ function CreateStockForm() {
                   {/* Quantity & Unit Type */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                        <span>Quantity in Stock *</span>
-                        <span className="text-[11px] text-neutral-400 font-normal">Count</span>
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Quantity in Stock <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -276,39 +270,39 @@ function CreateStockForm() {
                           else if (val <= 5) setStatus('low_stock');
                           else setStatus('in_stock');
                         }}
-                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900">Unit Type</label>
+                      <label className="block text-xs font-semibold text-neutral-900">Unit Type</label>
                       <Dropdown
                         value={unit}
                         options={unitOptions}
                         onChange={setUnit}
                         placeholder="Select Unit"
+                        buttonClassName="rounded-xl py-2"
                       />
                     </div>
                   </div>
 
                   {/* Warranty / Note */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                      <span>Warranty / Inspection Note</span>
-                      <span className="text-[11px] text-neutral-400 font-normal">e.g. Warranty 2027, Active</span>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Warranty / Inspection Note
                     </label>
                     <input
                       type="text"
                       value={expiryDate}
                       onChange={(e) => setExpiryDate(e.target.value)}
                       placeholder="e.g. Warranty 2027 or Active"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
                   </div>
 
                   {/* Description */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">
+                    <label className="block text-xs font-semibold text-neutral-900">
                       Technical Description & Deployment Notes
                     </label>
                     <textarea
@@ -316,14 +310,14 @@ function CreateStockForm() {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Specify cable lengths, pinout standards, compatibility notes, or lab storage procedures..."
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Location & Storage Details */}
-              <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <MapPin className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
@@ -333,33 +327,33 @@ function CreateStockForm() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">Assigned Laboratory Room</label>
+                    <label className="block text-xs font-semibold text-neutral-900">Assigned Laboratory Room</label>
                     <Dropdown
                       value={location}
                       options={locationOptions}
                       onChange={setLocation}
                       placeholder="Select Lab Room"
+                      buttonClassName="rounded-xl py-2"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">Shelf / Cabinet / Bin</label>
+                    <label className="block text-xs font-semibold text-neutral-900">Shelf / Cabinet / Bin</label>
                     <input
                       type="text"
                       value={rack}
                       onChange={(e) => setRack(e.target.value)}
                       placeholder="e.g. Benches & Shelf SHF-01"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Image & Summary Card */}
-            <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 space-y-6">
-              {/* Product Visual */}
-              <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
+            {/* Right Column: Image Upload */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <Layers className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
@@ -373,50 +367,7 @@ function CreateStockForm() {
                   label="Upload or Paste Photo URL"
                 />
               </div>
-
-              {/* Registry Summary Preview */}
-              <div className="bg-white border border-neutral-200 rounded p-5 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Item Preview Summary
-                </h4>
-                <div className="space-y-2 text-xs border-t border-neutral-100 pt-3">
-                  <div className="flex justify-between py-1 border-b border-neutral-50">
-                    <span className="text-neutral-500">Name</span>
-                    <span className="font-semibold text-neutral-900 text-right truncate max-w-[160px]">
-                      {name || '—'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-neutral-50">
-                    <span className="text-neutral-500">SKU / Code</span>
-                    <span className="font-mono text-neutral-800 font-semibold">{code || '—'}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-neutral-50">
-                    <span className="text-neutral-500">Total Count</span>
-                    <span className="font-mono font-bold text-neutral-900">{quantity} {unit}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-neutral-50">
-                    <span className="text-neutral-500">Category</span>
-                    <span className="text-neutral-700">{category}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-neutral-500">Room</span>
-                    <span className="text-neutral-700 truncate max-w-[160px] text-right">{location}</span>
-                  </div>
-                </div>
-
-                <div className="pt-3">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-                  >
-                    <Save className="w-4 h-4 text-neutral-300" />
-                    <span>{isSubmitting ? 'Registering Item...' : 'Register Stock Item'}</span>
-                  </button>
-                </div>
-              </div>
             </div>
-
           </div>
         </form>
       </div>

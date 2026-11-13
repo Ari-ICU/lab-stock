@@ -6,35 +6,25 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
-import { Dropdown } from '@/components/Dropdown';
-import { DatePicker } from '@/components/DatePicker';
-import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LabThumbnail } from '@/components/LabThumbnail';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
-  ArrowRight,
+  ArrowUpRight,
   Edit3,
   Trash2,
   Copy,
   Check,
-  Calendar,
   MapPin,
-  Hash,
   Layers,
   CheckCircle2,
-  Clock,
   AlertTriangle,
-  QrCode,
   ShieldCheck,
   Shield,
   Cpu,
-  Share2,
-  ExternalLink,
-  Plus,
-  X,
+  Package,
   ArrowLeftRight,
   Laptop,
-  Router,
 } from 'lucide-react';
 
 export default function AssetDetailsClient({ id: propId }: { id?: string }) {
@@ -48,8 +38,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     deleteAsset,
     locations,
     loans,
-    transfers,
-    lendAsset,
     returnAsset,
     showToast,
     isLoading,
@@ -140,8 +128,8 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
         building: matchedLocation.building,
         locationName: matchedLocation.name,
         total: asset.totalUnits ?? 1,
-        qtyWorking: asset.status === 'operational' ? (asset.totalUnits ?? 1) : 0,
-        qtyBroken: asset.status === 'maintenance' ? (asset.totalUnits ?? 1) : 0,
+        qtyWorking: asset.status !== 'maintenance' ? (asset.totalUnits ?? 1) : 0,
+        qtyBroken: 0,
         qtyMaintenance: asset.status === 'maintenance' ? (asset.totalUnits ?? 1) : 0,
         unit: asset.unitType ?? 'Unit',
         remarks: `Primary placement (${asset.location})`,
@@ -259,7 +247,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       dotClass: 'bg-emerald-500',
     },
     in_use: {
-      text: 'In Production',
+      text: 'In Use',
       badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
       dotClass: 'bg-blue-500',
     },
@@ -289,7 +277,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
             <div className="flex items-center gap-2">
               <Link
                 href={`/assets/${asset.id}/relocate`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
                 <span className="hidden sm:inline">Relocate</span>
@@ -307,25 +295,26 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
               ) : (
                 <Link
                   href={`/assets/${asset.id}/lend`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                 >
-                  <Laptop className="w-3.5 h-3.5 text-neutral-600" />
-                  <span>Lend Out</span>
+                  <Laptop className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Lend / Check-Out</span>
                 </Link>
               )}
 
               <Link
                 href={`/assets/${asset.id}/edit`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-800 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
-                <Edit3 className="w-3.5 h-3.5 text-neutral-300" />
+                <Edit3 className="w-3.5 h-3.5 text-neutral-600" />
                 <span>Edit</span>
               </Link>
 
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-neutral-200 hover:border-rose-300 hover:bg-rose-50 text-rose-700 rounded text-xs font-medium transition-colors cursor-pointer"
+                title="Delete asset"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Delete</span>
@@ -335,11 +324,11 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
 
         {/* Lab Scope Restriction Banner */}
         {!isAllowed && (
-          <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-lg flex items-start gap-3 shadow-xs">
+          <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-2xl flex items-start gap-3 shadow-2xs">
             <Shield className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <div className="text-xs font-bold text-amber-950">
@@ -352,48 +341,17 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
           </div>
         )}
 
-        {/* Delete Confirmation Alert Banner */}
-        {showDeleteConfirm && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <div className="text-xs font-bold text-rose-900">Confirm Deletion</div>
-                <div className="text-xs text-rose-700">
-                  Are you sure you want to delete <span className="font-semibold">{asset.name}</span>? This action cannot be undone.
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-3 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-300 rounded cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="px-3 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded transition-colors cursor-pointer"
-              >
-                Confirm Delete
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* On-Loan / Checked-Out Status Alert Banner */}
         {asset.loanStatus === 'on_loan' && (
-          <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
                 <Laptop className="w-5 h-5 text-amber-700" />
               </div>
               <div>
-                <div className="text-xs font-bold text-amber-900 flex items-center gap-2">
-                  <span>CURRENTLY ON LOAN / CHECKED OUT</span>
-                  <span className="text-[10px] font-mono bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded font-semibold">
+                <div className="text-xs font-bold text-amber-900 flex items-center gap-2 flex-wrap">
+                  <span>Currently On Loan / Checked Out</span>
+                  <span className="text-[11px] font-mono bg-amber-100 border border-amber-200 text-amber-900 px-2 py-0.5 rounded-md font-semibold">
                     Due: {asset.loanDueDate || 'Scheduled'}
                   </span>
                 </div>
@@ -402,282 +360,241 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={handleReturnFromDetails}
-                className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded cursor-pointer transition-colors shadow-xs"
-              >
-                Return to Lab Stock
-              </button>
-            </div>
+            {isAllowed && (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleReturnFromDetails}
+                  className="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors shadow-xs"
+                >
+                  Return to Lab
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Asset Header Card */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs">
-          <div className="flex flex-col md:flex-row gap-5 items-start">
-            {/* Asset Photo Frame */}
-            <div className="w-full md:w-52 h-40 rounded-lg border border-neutral-200 bg-neutral-50 overflow-hidden shrink-0 relative group">
-              {asset.imageUrl ? (
-                <img
-                  src={getOptimizedImageUrl(asset.imageUrl, 'card')}
-                  alt={asset.name}
-                  decoding="async"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 gap-2">
-                  <Cpu className="w-8 h-8" />
-                  <span className="text-[11px] font-mono">No Image Uploaded</span>
-                </div>
-              )}
-              <div className="absolute top-2 left-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs ${
-                    asset.status === 'operational'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : asset.status === 'in_use'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      asset.status === 'operational'
-                        ? 'bg-emerald-600'
-                        : asset.status === 'in_use'
-                        ? 'bg-blue-600'
-                        : 'bg-amber-600'
-                    }`}
-                  />
-                  {statusBadge.text}
+        {/* Top Summary / Status Card */}
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+          {/* Top Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${statusBadge.badgeClass}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotClass}`} />
+              {statusBadge.text}
+            </span>
+
+            <span className="font-mono text-[11px] font-semibold text-neutral-700 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
+              {asset.model}
+            </span>
+
+            <button
+              type="button"
+              onClick={handleCopySerial}
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
+              title="Click to copy serial tag"
+            >
+              <span>SN: {asset.serialNumber}</span>
+              {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+            </button>
+
+            {asset.nextCalibration && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-neutral-50 text-neutral-600 border border-neutral-200">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Audit: {asset.nextCalibration}</span>
+              </span>
+            )}
+          </div>
+
+          {/* Title, Metadata & Status Control */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pt-1">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
+                {asset.name}
+              </h1>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
+                <span className="text-neutral-900 font-semibold flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                  {asset.location}
                 </span>
+                <span className="text-neutral-300">·</span>
+                <span className="font-mono text-neutral-700 font-semibold">
+                  {asset.totalUnits ?? 1} {asset.unitType ?? 'Units'}
+                </span>
+                {allocations.length > 0 && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-emerald-700 font-semibold">
+                      {totalAllocated} Allocated across {allocations.length} {allocations.length === 1 ? 'room' : 'rooms'}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Asset Info & Quick Controls */}
-            <div className="flex-1 min-w-0 space-y-4">
-              {/* Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
-                  <Router className="w-3.5 h-3.5 text-neutral-600" />
-                  <span>Hardware Asset</span>
-                </span>
-
-                {asset.loanStatus === 'on_loan' && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                    On Loan ({asset.currentBorrower || 'Active'})
-                  </span>
-                )}
-
+            {/* Operational Status Switcher */}
+            <div className="flex items-center gap-2.5 shrink-0 bg-neutral-50 border border-neutral-200/80 px-3 py-2 rounded-xl self-start lg:self-auto">
+              <span className="text-[10px] uppercase font-semibold text-neutral-500 tracking-wider px-1">
+                Status
+              </span>
+              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-neutral-200/80">
                 <button
                   type="button"
-                  onClick={handleCopySerial}
-                  className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
-                  title="Click to copy serial tag"
+                  disabled={!isAllowed}
+                  onClick={() => handleStatusChange('operational')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                    asset.status === 'operational'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+                  }`}
                 >
-                  <span>SN: {asset.serialNumber}</span>
-                  {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+                  Operational
                 </button>
-
-                <span className="font-mono text-[11px] text-neutral-500 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
-                  ID: {asset.id}
-                </span>
-              </div>
-
-              {/* Title & Specs */}
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
-                  {asset.name}
-                </h1>
-                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
-                  <span className="text-neutral-900 font-mono font-semibold">{asset.model}</span>
-                  <span className="text-neutral-300">·</span>
-                  <span className="flex items-center gap-1 text-neutral-600">
-                    <MapPin className="w-3.5 h-3.5 text-neutral-400" />
-                    {asset.location}
-                  </span>
-                  <span className="text-neutral-300">·</span>
-                  <span className="text-emerald-700 font-semibold font-mono">
-                    {asset.totalUnits ?? 1} {asset.unitType ?? 'Units'} Deployed
-                  </span>
-                  {asset.nextCalibration && (
-                    <>
-                      <span className="text-neutral-300 hidden sm:inline">·</span>
-                      <span className="text-neutral-500 font-mono text-xs hidden sm:inline">
-                        Next Audit: {asset.nextCalibration}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Status Switcher & Quick Actions */}
-              <div className="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100">
-                <div className="flex items-center gap-2">
-                  <span className="text-neutral-500 text-xs font-medium">Status:</span>
-                  <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200">
-                    <button
-                      type="button"
-                      disabled={!isAllowed}
-                      onClick={() => handleStatusChange('operational')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                        asset.status === 'operational'
-                          ? 'bg-emerald-600 text-white shadow-2xs'
-                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
-                      }`}
-                    >
-                      Operational
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!isAllowed}
-                      onClick={() => handleStatusChange('in_use')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                        asset.status === 'in_use'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
-                      }`}
-                    >
-                      In Use
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!isAllowed}
-                      onClick={() => handleStatusChange('maintenance')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                        asset.status === 'maintenance'
-                          ? 'bg-amber-600 text-white shadow-2xs'
-                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
-                      }`}
-                    >
-                      Repair
-                    </button>
-                  </div>
-                </div>
-
-                {allocations.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-neutral-500 text-xs font-medium">Allocations:</span>
-                    {allocations.map((a) => (
-                      <Link
-                        key={a.inventoryId}
-                        href={`/locations/${a.locationId}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border border-neutral-200 px-2 py-0.5 rounded transition-colors"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                        <span>{a.room} ({a.total})</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  disabled={!isAllowed}
+                  onClick={() => handleStatusChange('in_use')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                    asset.status === 'in_use'
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+                  }`}
+                >
+                  In Use
+                </button>
+                <button
+                  type="button"
+                  disabled={!isAllowed}
+                  onClick={() => handleStatusChange('maintenance')}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                    asset.status === 'maintenance'
+                      ? 'bg-amber-600 text-white shadow-2xs'
+                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
+                  }`}
+                >
+                  In Repair
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Full-Width Specifications & Description */}
-        <div className="space-y-6">
-          {/* Description & Operating Purpose */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-700 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-neutral-900" />
-                Equipment Description & Lab Architecture
-              </h3>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                {asset.description ||
-                  `${asset.name} is permanently allocated to Computer Lab Room 102B. This equipment supports academic networking simulations, student laboratory exercises, and departmental compute infrastructure.`}
-              </p>
-            </div>
+        {/* Full-Width Responsive Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Asset Photo */}
+          <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 flex flex-col gap-6">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <Cpu className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                  Asset Photo
+                </h3>
+              </div>
 
-            {/* Technical Specifications Matrix */}
-            <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
-              <div className="p-4 border-b border-neutral-200 bg-neutral-50/70 flex items-center justify-between">
-                <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+              <div className="w-full aspect-video rounded-xl border border-neutral-200/80 bg-neutral-50 overflow-hidden flex items-center justify-center">
+                <LabThumbnail
+                  src={asset.imageUrl}
+                  alt={asset.name}
+                  size="card"
+                  fallbackType="item"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Specifications & Lab Notes */}
+          <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 flex flex-col gap-6">
+            {/* Technical Specifications */}
+            <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-2xs">
+              <div className="px-5 py-3.5 border-b border-neutral-100 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
                   Technical Specifications
                 </h3>
-                <span className="text-[11px] font-mono text-neutral-500">Specs Sheet v1.4</span>
               </div>
+
               <div className="divide-y divide-neutral-100 text-xs">
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Official Nomenclature</span>
-                  <span className="col-span-2 font-semibold text-neutral-900">{asset.name}</span>
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Model</span>
+                  <span className="col-span-2 font-mono font-semibold text-neutral-900">{asset.model}</span>
                 </div>
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Model / Hardware Build</span>
-                  <span className="col-span-2 font-mono text-neutral-800">{asset.model}</span>
-                </div>
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Serial Tag / Asset ID</span>
+
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Serial Number</span>
                   <span className="col-span-2 font-mono text-neutral-800">{asset.serialNumber}</span>
                 </div>
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Laboratory Unit Count</span>
-                  <span className="col-span-2 text-neutral-800">
-                    <strong className="text-neutral-900">{asset.totalUnits ?? 1}</strong> {asset.unitType ?? 'Unit(s)'}
-                    {allocations.length > 0 ? ` (${allocations.map((a) => `${a.room}: ${a.total}`).join(', ')})` : ''}
+
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Total Units</span>
+                  <span className="col-span-2 font-mono font-bold text-neutral-900">
+                    {asset.totalUnits ?? 1} {asset.unitType ?? 'Units'}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Assigned Classroom(s)</span>
-                  <span className="col-span-2 flex items-center gap-1.5 flex-wrap">
-                    {allocations.length > 0 ? (
-                      allocations.map((alloc) => (
-                        <Link
-                          key={alloc.inventoryId}
-                          href={`/locations/${alloc.locationId}`}
-                          className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded transition-colors"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>{alloc.room} ({alloc.total} {alloc.unit})</span>
-                        </Link>
-                      ))
-                    ) : (
-                      <span className="text-neutral-500">{asset.location}</span>
-                    )}
+
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Assigned Laboratory</span>
+                  <span className="col-span-2 font-medium text-neutral-900 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span>{asset.location}</span>
                   </span>
                 </div>
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Physical Location</span>
-                  <span className="col-span-2 text-neutral-800">{asset.location}</span>
-                </div>
-                <div className="grid grid-cols-3 p-3">
+
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
                   <span className="font-medium text-neutral-500">Operational Status</span>
-                  <span className="col-span-2">
+                  <div className="col-span-2">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${statusBadge.badgeClass}`}
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${statusBadge.badgeClass}`}
                     >
-                      {statusBadge.text}
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotClass}`} />
+                      <span>{statusBadge.text}</span>
                     </span>
-                  </span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 p-3">
-                  <span className="font-medium text-neutral-500">Next Audit / Recertification</span>
-                  <span className="col-span-2 font-mono text-neutral-800">{asset.nextCalibration}</span>
+
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Next Audit</span>
+                  <span className="col-span-2 font-mono text-neutral-800">
+                    {asset.nextCalibration || 'Not Scheduled'}
+                  </span>
                 </div>
               </div>
             </div>
+
+            {/* Equipment Description & Lab Notes */}
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-3 shadow-2xs">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <ShieldCheck className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                  Equipment Description &amp; Lab Notes
+                </h3>
+              </div>
+
+              <div className="text-xs text-neutral-700 leading-relaxed pt-1">
+                {asset.description ? (
+                  <p className="whitespace-pre-line">{asset.description}</p>
+                ) : (
+                  <p className="text-neutral-400 italic">No technical notes recorded.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Full-Width Classroom & Laboratory Allocations Card */}
         <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-600" />
-                <span>Classroom &amp; Laboratory Allocations</span>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                Classroom &amp; Laboratory Allocations
               </h3>
-              <p className="text-[11px] text-neutral-500 mt-0.5">
-                Active deployments, room readiness, and physical audit distribution across campus
-              </p>
             </div>
             <div className="flex items-center gap-2 text-xs flex-wrap">
               <span className="font-mono font-bold text-neutral-900 bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200/80 whitespace-nowrap">
                 {totalAllocated} {asset.unitType ?? 'Units'} Deployed
               </span>
-              <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-neutral-900 text-white shadow-2xs whitespace-nowrap">
-                {allocations.length} {allocations.length === 1 ? 'Classroom' : 'Classrooms'}
+              <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 font-mono whitespace-nowrap">
+                {allocations.length} {allocations.length === 1 ? 'room' : 'rooms'}
               </span>
             </div>
           </div>
@@ -689,21 +606,21 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 <div className="text-[10px] uppercase font-bold text-neutral-500">Working Fleet</div>
                 <div className="font-mono font-bold text-emerald-700 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  {allocationSummary.totalWorking} Units
+                  {allocationSummary.totalWorking} {asset.unitType ?? 'Units'}
                 </div>
               </div>
               <div className="space-y-0.5">
                 <div className="text-[10px] uppercase font-bold text-neutral-500">In Repair</div>
                 <div className="font-mono font-bold text-blue-700 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  {allocationSummary.totalMaintenance} Units
+                  {allocationSummary.totalMaintenance} {asset.unitType ?? 'Units'}
                 </div>
               </div>
               <div className="space-y-0.5">
                 <div className="text-[10px] uppercase font-bold text-neutral-500">Defect / Broken</div>
                 <div className="font-mono font-bold text-rose-700 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  {allocationSummary.totalBroken} Units
+                  {allocationSummary.totalBroken} {asset.unitType ?? 'Units'}
                 </div>
               </div>
               <div className="space-y-0.5">
@@ -716,13 +633,13 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
           )}
 
           {allocations.length === 0 ? (
-            <div className="p-8 text-center border border-dashed border-neutral-200 rounded-xl bg-neutral-50/50 space-y-2">
-              <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-400">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div className="text-xs font-bold text-neutral-800">No Classroom Allocations</div>
-              <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
-                This hardware asset is not currently allocated to any specific room roster. It is held in central reserve or unassigned depot.
+            <div className="py-8 text-center space-y-1.5 bg-neutral-50/50 rounded-xl border border-dashed border-neutral-200">
+              <Package className="w-6 h-6 text-neutral-400 mx-auto mb-1 stroke-1" />
+              <p className="text-xs text-neutral-600 font-semibold">
+                No classroom or laboratory allocations recorded.
+              </p>
+              <p className="text-[11px] text-neutral-400">
+                Stationed in central inventory at {asset.location}.
               </p>
             </div>
           ) : (
@@ -741,88 +658,149 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
-                  {allocations.map((alloc) => (
-                    <tr key={alloc.inventoryId} className="hover:bg-neutral-50/70 transition-colors group">
-                      <td className="py-3.5 px-4">
-                        <Link
-                          href={`/locations/${alloc.locationId}`}
-                          className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors inline-flex items-center gap-2.5"
-                        >
-                          <span className="font-mono bg-neutral-900 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow-2xs shrink-0 whitespace-nowrap">
-                            {alloc.room}
-                          </span>
-                          <span className="whitespace-nowrap">{alloc.locationName}</span>
-                        </Link>
-                      </td>
-                      <td className="py-3.5 px-3.5 text-neutral-500 font-medium whitespace-nowrap">
-                        {alloc.building}
-                      </td>
-                      <td className="py-3.5 px-3.5 text-center font-mono font-bold text-neutral-900 whitespace-nowrap">
-                        <span className="bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded text-[11px] border border-neutral-200/80 whitespace-nowrap">
-                          {alloc.total} {alloc.unit}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3.5 text-center font-mono whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-[11px] whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          {alloc.qtyWorking}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3.5 text-center font-mono whitespace-nowrap">
-                        {alloc.qtyMaintenance > 0 ? (
-                          <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-[11px] whitespace-nowrap">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                            {alloc.qtyMaintenance}
-                          </span>
-                        ) : (
-                          <span className="text-neutral-300 font-normal">—</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-3.5 text-center font-mono whitespace-nowrap">
-                        {alloc.qtyBroken > 0 ? (
-                          <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md text-[11px] whitespace-nowrap">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                            {alloc.qtyBroken}
-                          </span>
-                        ) : (
-                          <span className="text-neutral-300 font-normal">—</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-3.5 text-neutral-500 text-[11px] min-w-[200px] max-w-sm">
-                        <div className="truncate" title={alloc.remarks || 'Standard condition'}>
-                          {alloc.remarks || (
-                            <span className="text-neutral-400 italic">Standard condition</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href={`/assets/${asset.id}/relocate?from=${encodeURIComponent(`${alloc.locationName} (${alloc.room})`)}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs hover:text-blue-600 cursor-pointer whitespace-nowrap"
-                            title={`Relocate units stationed in ${alloc.room}`}
-                          >
-                            <ArrowLeftRight className="w-3 h-3 text-neutral-400 hover:text-blue-600 shrink-0" />
-                            <span>Relocate</span>
-                          </Link>
+                  {allocations.map((alloc) => {
+                    const formattedAuditDate = alloc.lastAuditedAt
+                      ? (() => {
+                          const parsed = new Date(alloc.lastAuditedAt);
+                          return Number.isNaN(parsed.getTime())
+                            ? alloc.lastAuditedAt
+                            : parsed.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              });
+                        })()
+                      : null;
 
+                    return (
+                      <tr key={alloc.inventoryId} className="hover:bg-neutral-50/70 transition-colors group">
+                        <td className="py-3.5 px-4">
                           <Link
                             href={`/locations/${alloc.locationId}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs group-hover:text-emerald-700 whitespace-nowrap"
+                            className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors inline-flex items-center gap-2.5"
                           >
-                            <span>View Room</span>
-                            <ExternalLink className="w-3 h-3 text-neutral-400 group-hover:text-emerald-600 shrink-0" />
+                            <span className="font-mono bg-neutral-900 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow-2xs shrink-0 whitespace-nowrap">
+                              {alloc.room}
+                            </span>
+                            <span className="whitespace-nowrap">{alloc.locationName}</span>
                           </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-3.5 px-3.5 text-neutral-500 font-medium whitespace-nowrap">
+                          {alloc.building || 'Engineering Block A'}
+                        </td>
+                        <td className="py-3.5 px-3.5 text-center font-mono font-bold text-neutral-900 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs whitespace-nowrap">
+                            {alloc.total} {alloc.unit}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3.5 text-center font-mono whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-[11px] whitespace-nowrap">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            {alloc.qtyWorking}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3.5 text-center font-mono whitespace-nowrap">
+                          {alloc.qtyMaintenance > 0 ? (
+                            <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-[11px] whitespace-nowrap">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                              {alloc.qtyMaintenance}
+                            </span>
+                          ) : (
+                            <span className="text-neutral-300 font-normal">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3.5 text-center font-mono whitespace-nowrap">
+                          {alloc.qtyBroken > 0 ? (
+                            <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md text-[11px] whitespace-nowrap">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                              {alloc.qtyBroken}
+                            </span>
+                          ) : (
+                            <span className="text-neutral-300 font-normal">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-3.5 text-neutral-500 text-[11px] min-w-[200px] max-w-sm">
+                          <div className="truncate" title={alloc.remarks || 'Standard condition'}>
+                            {alloc.remarks || (
+                              <span className="text-neutral-400 italic">Standard condition</span>
+                            )}
+                          </div>
+                          {formattedAuditDate && (
+                            <div className="text-[10px] text-neutral-400 font-mono mt-0.5 whitespace-nowrap">
+                              Audited: {formattedAuditDate}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {isAllowed && (
+                              <Link
+                                href={`/assets/${asset.id}/relocate?from=${encodeURIComponent(`${alloc.locationName} (${alloc.room})`)}`}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors shadow-2xs hover:text-neutral-900 cursor-pointer whitespace-nowrap"
+                                title={`Relocate units stationed in ${alloc.room}`}
+                              >
+                                <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                                <span>Relocate</span>
+                              </Link>
+                            )}
+
+                            <Link
+                              href={`/locations/${alloc.locationId}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50 hover:border-neutral-300 hover:text-neutral-900 transition-all shadow-2xs group-hover:text-emerald-700 whitespace-nowrap"
+                            >
+                              <span>View Room</span>
+                              <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-emerald-600 shrink-0" />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div className="flex items-center gap-3 text-rose-700">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900">Delete Hardware Asset</h3>
+                <p className="text-xs text-neutral-500">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-600">
+              Are you sure you want to permanently delete{' '}
+              <span className="font-semibold text-neutral-900">{asset.name}</span> ({asset.serialNumber}) from the asset directory?
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

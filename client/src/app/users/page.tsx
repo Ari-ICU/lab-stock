@@ -130,7 +130,7 @@ export default function UsersPage() {
         }}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Personnel & Access Control Banner */}
         <PageBanner
           eyebrow="Department of Computer Science · Personnel & Access"
@@ -149,12 +149,12 @@ export default function UsersPage() {
             return (
               <div
                 key={key}
-                className="bg-white border border-neutral-200 rounded-lg p-4 flex flex-col justify-between shadow-2xs"
+                className="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${getRoleBadgeStyle(
+                      className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-lg border ${getRoleBadgeStyle(
                         def.badge
                       )}`}
                     >
@@ -175,7 +175,7 @@ export default function UsersPage() {
         </div>
 
         {/* Personnel Directory Card */}
-        <div className="bg-white border border-neutral-200 rounded-lg shadow-2xs">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-hidden">
           <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-neutral-500" />
@@ -281,7 +281,7 @@ export default function UsersPage() {
       {/* Add User Modal */}
       {isAddUserModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-lg border border-neutral-200 max-w-md w-full p-5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-5 sm:p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-4">
               <div>
                 <h3 className="text-sm font-bold text-neutral-900">
@@ -294,7 +294,7 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={() => setIsAddUserModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer"
+                className="text-neutral-400 hover:text-neutral-700 p-1 rounded-lg hover:bg-neutral-100 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -311,7 +311,7 @@ export default function UsersPage() {
                   placeholder="e.g. Dr. Sok Vanna"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
-                  className="w-full text-xs border border-neutral-300 rounded px-3 py-2 focus:outline-none focus:border-neutral-900"
+                  className="w-full text-xs border border-neutral-300 rounded-xl px-3 py-2 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
                 />
               </div>
 
@@ -325,7 +325,7 @@ export default function UsersPage() {
                   placeholder="sok.vanna@rupp.edu.kh"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="w-full text-xs border border-neutral-300 rounded px-3 py-2 focus:outline-none focus:border-neutral-900 font-mono"
+                  className="w-full text-xs border border-neutral-300 rounded-xl px-3 py-2 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono"
                 />
               </div>
 
@@ -338,6 +338,7 @@ export default function UsersPage() {
                   options={roleOptions}
                   onChange={setNewUserRole}
                   className="w-full"
+                  buttonClassName="rounded-xl py-2"
                 />
               </div>
 
@@ -345,13 +346,13 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddUserModalOpen(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 cursor-pointer"
+                  className="px-3.5 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-xl cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded cursor-pointer shadow-xs"
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl cursor-pointer shadow-xs transition-colors"
                 >
                   Confirm & Provision
                 </button>

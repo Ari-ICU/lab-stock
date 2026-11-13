@@ -10,15 +10,14 @@ import { useAuth } from '@/context/AuthContext';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
-import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { LabThumbnail } from '@/components/LabThumbnail';
-import { Image as ImageIcon, Plus, Search, Shield, Router, Activity } from 'lucide-react';
+import { Search, Router } from 'lucide-react';
 
 const statusOptions: DropdownOption[] = [
   { label: 'All Operational Statuses', value: 'all' },
   { label: 'Operational', value: 'operational' },
-  { label: 'In Production', value: 'in_use' },
-  { label: 'Repair / RMA', value: 'maintenance' },
+  { label: 'In Use', value: 'in_use' },
+  { label: 'In Repair', value: 'maintenance' },
 ];
 
 export default function AssetsPage() {
@@ -124,7 +123,7 @@ export default function AssetsPage() {
         onExport={handleExport}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Hardware Assets Banner */}
         <PageBanner
           eyebrow="Department of Computer Science · Hardware Assets"
@@ -140,7 +139,7 @@ export default function AssetsPage() {
           ]}
         />
 
-        <div className="bg-white border border-neutral-200 rounded">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-hidden">
           {/* Filters Toolbar with Dropdown */}
           <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 flex-wrap flex-1">
@@ -151,7 +150,7 @@ export default function AssetsPage() {
                   placeholder="Search equipment, serial number or model..."
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-medium placeholder:text-neutral-400 shadow-2xs"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-medium placeholder:text-neutral-400 shadow-2xs"
                 />
               </div>
 
@@ -161,6 +160,7 @@ export default function AssetsPage() {
                 onChange={setLabFilter}
                 placeholder="Filter by Lab"
                 className="w-full sm:w-auto"
+                buttonClassName="rounded-xl py-1.5"
               />
 
               <Dropdown
@@ -169,6 +169,7 @@ export default function AssetsPage() {
                 onChange={setStatusFilter}
                 placeholder="Filter by Status"
                 className="w-full sm:w-auto"
+                buttonClassName="rounded-xl py-1.5"
               />
             </div>
 
@@ -208,7 +209,7 @@ export default function AssetsPage() {
                         <td className="py-2.5 px-4">
                           <Link
                             href={`/assets/${asset.id}`}
-                            className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
+                            className="w-10 h-10 rounded-lg border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
                             title="Click to view full specifications"
                           >
                             <LabThumbnail

@@ -191,7 +191,7 @@ export default function SettingsPage() {
           digest: enableDailyDigest,
         })
       );
-      showToast('Stock and maintenance alert rules updated', 'success');
+      showToast('Stock and repair alert rules updated', 'success');
     } catch {
       showToast('Failed to save alert parameters', 'error');
     }
@@ -298,7 +298,7 @@ export default function SettingsPage() {
         showAction={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* System Settings Banner */}
         <PageBanner
           eyebrow="Department of Computer Science · System Settings"
@@ -312,11 +312,11 @@ export default function SettingsPage() {
         />
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-white border border-neutral-200 rounded-lg shadow-xs overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-x-auto">
           <button
             type="button"
             onClick={() => handleTabChange('sessions')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer whitespace-nowrap border ${
               activeTab === 'sessions'
                 ? 'bg-emerald-50 text-emerald-900 border-emerald-200/80 shadow-2xs'
                 : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/80 border-transparent'
@@ -339,7 +339,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => handleTabChange('system')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer whitespace-nowrap border ${
               activeTab === 'system'
                 ? 'bg-emerald-50 text-emerald-900 border-emerald-200/80 shadow-2xs'
                 : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/80 border-transparent'
@@ -352,7 +352,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer whitespace-nowrap border ${
               activeTab === 'profile'
                 ? 'bg-emerald-50 text-emerald-900 border-emerald-200/80 shadow-2xs'
                 : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/80 border-transparent'
@@ -364,9 +364,9 @@ export default function SettingsPage() {
         </div>
 
         {/* Quick Link Card to Dedicated User Roles Page */}
-        <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-200/80 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
               <Users className="w-4 h-4" />
             </div>
             <div>
@@ -380,7 +380,7 @@ export default function SettingsPage() {
           </div>
           <Link
             href="/users"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-white border border-blue-300 hover:bg-blue-50 px-3 py-1.5 rounded transition-colors shadow-2xs shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-white border border-blue-300 hover:bg-blue-50 px-3 py-1.5 rounded-xl transition-colors shadow-2xs shrink-0 cursor-pointer"
           >
             <span>Open User Roles</span>
             <ExternalLink className="w-3 h-3" />
@@ -390,10 +390,10 @@ export default function SettingsPage() {
         {/* ================= TAB 1: SESSION DEVICES ================= */}
         {activeTab === 'sessions' && (
           <div className="space-y-6">
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-lg">
                     Active Sessions
                   </span>
                   <span className="text-xs text-neutral-400">Terminal Authentication</span>
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={handleRefreshDevices}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-50 rounded transition-colors cursor-pointer shadow-2xs"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer shadow-2xs"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-neutral-500" />
                   <span>Refresh Sessions</span>
@@ -419,7 +419,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={handleRevokeAllOthers}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5 text-rose-600" />
                     <span>Revoke Other Devices</span>
@@ -429,8 +429,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Session Devices List */}
-            <div className="bg-white border border-neutral-200 rounded-lg shadow-xs">
-              <div className="px-5 py-3.5 border-b border-neutral-200 bg-neutral-50/70 rounded-t-lg flex items-center justify-between">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-neutral-200 bg-neutral-50/70 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Radio className="w-4 h-4 text-neutral-700" />
                   <span suppressHydrationWarning className="text-xs font-bold text-neutral-900">
@@ -498,7 +498,7 @@ export default function SettingsPage() {
                     {/* Actions */}
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
                       {device.isCurrent ? (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                           <span>Active Terminal</span>
                         </div>
@@ -506,7 +506,7 @@ export default function SettingsPage() {
                         <button
                           type="button"
                           onClick={() => handleRevokeSession(device)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-700 bg-white hover:bg-rose-50 border border-neutral-200 hover:border-rose-200 rounded-xl transition-colors cursor-pointer"
                         >
                           <LogOut className="w-3.5 h-3.5 text-rose-500" />
                           <span>Revoke Access</span>
@@ -525,10 +525,10 @@ export default function SettingsPage() {
         {activeTab === 'system' && (
           <div className="space-y-6">
             {/* System Status Summary Ribbon */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-lg">
                     Operational Engine
                   </span>
                   <span className="text-xs text-neutral-400">CSD Stock System v2.4</span>
@@ -545,7 +545,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={handleExportSystemBackup}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white border border-neutral-200 hover:bg-neutral-50 rounded transition-colors cursor-pointer shadow-2xs"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer shadow-2xs"
                   title="Download complete JSON snapshot of all inventory and assets"
                 >
                   <FileJson className="w-3.5 h-3.5 text-neutral-600" />
@@ -556,7 +556,7 @@ export default function SettingsPage() {
 
             {/* Non-Admin Restriction Alert Banner for System & Alerts */}
             {!isAdmin && (
-              <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-lg flex items-start gap-3 shadow-2xs">
+              <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-3 shadow-2xs">
                 <Shield className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <div className="text-xs text-amber-900 leading-relaxed">
                   <span className="font-bold">Read-Only System & Alert Configuration:</span> You are currently signed in as <span className="font-semibold text-neutral-900">{user?.name} ({user?.role})</span>. Modifying API gateway communication endpoints, deployment environment profiles, and fleet-wide alert thresholds is restricted exclusively to Primary Lab Administrators.
@@ -565,7 +565,7 @@ export default function SettingsPage() {
             )}
 
             {/* Backend API & Gateway Configuration */}
-            <section className="bg-white border border-neutral-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <section className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <div className="flex items-center gap-2.5">
                   <Server className="w-4 h-4 text-neutral-800" />
@@ -575,12 +575,12 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {!isAdmin && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded-lg">
                       <Lock className="w-2.5 h-2.5 opacity-60" />
                       <span>Read-Only</span>
                     </span>
                   )}
-                  <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded border border-neutral-200 font-bold">
+                  <span className="text-[10px] font-mono uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-lg border border-neutral-200 font-bold">
                     REST v1 / WebSocket
                   </span>
                 </div>
@@ -602,7 +602,7 @@ export default function SettingsPage() {
                       value={apiBaseUrl}
                       onChange={(e) => setApiBaseUrl(e.target.value)}
                       placeholder="http://localhost:5001/api/v1"
-                      className={`w-full border text-xs px-3.5 py-2.5 rounded font-mono transition-colors ${
+                      className={`w-full border text-xs px-3.5 py-2.5 rounded-xl font-mono transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
                           : 'bg-white border-neutral-300 text-neutral-900 font-medium focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900'
@@ -623,7 +623,7 @@ export default function SettingsPage() {
                         { label: 'Production Cloud (GitHub Pages / Standalone)', value: 'Production Cloud (GitHub Pages / Standalone)' },
                       ]}
                       onChange={(val) => setApiEnvironment(val)}
-                      buttonClassName={`w-full text-xs px-3.5 py-2.5 rounded transition-colors ${
+                      buttonClassName={`w-full text-xs px-3.5 py-2.5 rounded-xl transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
                           : 'bg-white border-neutral-300 text-neutral-900 font-medium hover:border-neutral-400 focus:outline-none focus:border-neutral-900 cursor-pointer'
@@ -633,26 +633,26 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Gateway Diagnostic Health Readout */}
-                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-neutral-700">Gateway Status:</span>
                     {apiStatus === 'connected' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span>Connected • {apiLatency}ms Latency</span>
                       </span>
                     ) : apiStatus === 'testing' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                         <RefreshCw className="w-3 h-3 animate-spin" />
                         <span>Testing Gateway Response...</span>
                       </span>
                     ) : apiStatus === 'error' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                         <AlertCircle className="w-3 h-3" />
                         <span>{apiErrorMessage || 'Connection Error'}</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium bg-neutral-100 text-neutral-600 border border-neutral-200">
                         <span>Client Standalone Mode</span>
                       </span>
                     )}
@@ -663,7 +663,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={handleTestApi}
                       disabled={apiStatus === 'testing'}
-                      className="px-3 py-1.5 rounded text-xs font-semibold bg-white border border-neutral-300 hover:bg-neutral-100 text-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-neutral-300 hover:bg-neutral-100 text-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       <Activity className="w-3.5 h-3.5 text-blue-600" />
                       <span>Test Connection</span>
@@ -672,14 +672,14 @@ export default function SettingsPage() {
                     {isAdmin ? (
                       <button
                         type="submit"
-                        className="px-3.5 py-1.5 rounded text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                       >
                         <Save className="w-3.5 h-3.5 text-neutral-300" />
                         <span>Save Config</span>
                       </button>
                     ) : (
                       <div
-                        className="px-3 py-1.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 flex items-center gap-1.5 cursor-not-allowed"
+                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 flex items-center gap-1.5 cursor-not-allowed"
                         title="Administrator privileges required to modify API endpoints"
                       >
                         <Lock className="w-3 h-3 opacity-60" />
@@ -692,22 +692,22 @@ export default function SettingsPage() {
             </section>
 
             {/* Inventory Alert Rules & Automated Thresholds */}
-            <section className="bg-white border border-neutral-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <section className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <div className="flex items-center gap-2.5">
                   <Bell className="w-4 h-4 text-neutral-800" />
                   <h2 className="text-sm font-bold text-neutral-900">
-                    Stock & Maintenance Threshold Alerts
+                    Stock & Repair Threshold Alerts
                   </h2>
                 </div>
                 <div className="flex items-center gap-2">
                   {!isAdmin && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded-lg">
                       <Lock className="w-2.5 h-2.5 opacity-60" />
                       <span>Read-Only</span>
                     </span>
                   )}
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-lg">
                     Active Monitoring
                   </span>
                 </div>
@@ -718,12 +718,12 @@ export default function SettingsPage() {
 
               <form onSubmit={handleSaveAlerts} className="space-y-5 pt-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-neutral-50/70 border border-neutral-200 rounded-lg space-y-2">
+                  <div className="p-4 bg-neutral-50/70 border border-neutral-200 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-neutral-900">
                         Default Low Stock Threshold
                       </label>
-                      <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
+                      <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded-lg">
                         {lowStockThreshold} Units
                       </span>
                     </div>
@@ -738,7 +738,7 @@ export default function SettingsPage() {
                       readOnly={!isAdmin}
                       value={lowStockThreshold}
                       onChange={(e) => setLowStockThreshold(Number(e.target.value))}
-                      className={`w-full border text-xs px-3.5 py-2 rounded font-mono transition-colors ${
+                      className={`w-full border text-xs px-3.5 py-2 rounded-xl font-mono transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
                           : 'bg-white border-neutral-300 text-neutral-900 font-semibold focus:outline-none focus:border-neutral-900'
@@ -746,12 +746,12 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <div className="p-4 bg-neutral-50/70 border border-neutral-200 rounded-lg space-y-2">
+                  <div className="p-4 bg-neutral-50/70 border border-neutral-200 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-neutral-900">
                         Calibration Due Notice Window
                       </label>
-                      <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
+                      <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2 py-0.5 rounded-lg">
                         {calibrationDaysAhead} Days
                       </span>
                     </div>
@@ -766,7 +766,7 @@ export default function SettingsPage() {
                       readOnly={!isAdmin}
                       value={calibrationDaysAhead}
                       onChange={(e) => setCalibrationDaysAhead(Number(e.target.value))}
-                      className={`w-full border text-xs px-3.5 py-2 rounded font-mono transition-colors ${
+                      className={`w-full border text-xs px-3.5 py-2 rounded-xl font-mono transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
                           : 'bg-white border-neutral-300 text-neutral-900 font-semibold focus:outline-none focus:border-neutral-900'
@@ -783,7 +783,7 @@ export default function SettingsPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <label
-                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                      className={`p-3 rounded-xl border bg-white flex items-start gap-3 transition-colors ${
                         !isAdmin
                           ? 'border-neutral-200 opacity-75 cursor-not-allowed'
                           : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
@@ -805,7 +805,7 @@ export default function SettingsPage() {
                     </label>
 
                     <label
-                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                      className={`p-3 rounded-xl border bg-white flex items-start gap-3 transition-colors ${
                         !isAdmin
                           ? 'border-neutral-200 opacity-75 cursor-not-allowed'
                           : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
@@ -827,7 +827,7 @@ export default function SettingsPage() {
                     </label>
 
                     <label
-                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                      className={`p-3 rounded-xl border bg-white flex items-start gap-3 transition-colors ${
                         !isAdmin
                           ? 'border-neutral-200 opacity-75 cursor-not-allowed'
                           : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
@@ -849,7 +849,7 @@ export default function SettingsPage() {
                     </label>
 
                     <label
-                      className={`p-3 rounded-lg border bg-white flex items-start gap-3 transition-colors ${
+                      className={`p-3 rounded-xl border bg-white flex items-start gap-3 transition-colors ${
                         !isAdmin
                           ? 'border-neutral-200 opacity-75 cursor-not-allowed'
                           : 'border-neutral-200 hover:border-neutral-300 cursor-pointer'
@@ -877,7 +877,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={handleResetAlerts}
-                      className="px-3 py-1.5 rounded text-xs font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl text-xs font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Reset Defaults</span>
@@ -887,14 +887,14 @@ export default function SettingsPage() {
                   {isAdmin ? (
                     <button
                       type="submit"
-                      className="px-4 py-1.5 rounded text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Save className="w-3.5 h-3.5 text-neutral-300" />
                       <span>Save Alert Rules</span>
                     </button>
                   ) : (
                     <div
-                      className="px-3.5 py-1.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 flex items-center gap-1.5 cursor-not-allowed"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200 flex items-center gap-1.5 cursor-not-allowed"
                       title="Administrator privileges required to modify alert threshold policies"
                     >
                       <Lock className="w-3.5 h-3.5 opacity-60" />
@@ -906,7 +906,7 @@ export default function SettingsPage() {
             </section>
 
             {/* Database Engine & System Diagnostics */}
-            <section className="bg-white border border-neutral-200 rounded-lg p-6 space-y-4 shadow-xs">
+            <section className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <div className="flex items-center gap-2.5">
                   <Database className="w-4 h-4 text-neutral-800" />
@@ -920,19 +920,19 @@ export default function SettingsPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-3.5 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
+                <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1">
                   <span className="text-[10px] font-bold uppercase text-neutral-400">Total Hardware Devices</span>
                   <div className="text-lg font-black font-mono text-neutral-900">{assets.length} Units</div>
-                  <div className="text-[10px] text-neutral-500">6 Connected Classrooms</div>
+                  <div className="text-[10px] text-neutral-500">{locations.length} Connected Classrooms</div>
                 </div>
 
-                <div className="p-3.5 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
+                <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1">
                   <span className="text-[10px] font-bold uppercase text-neutral-400">Consumables & SKUs</span>
                   <div className="text-lg font-black font-mono text-neutral-900">{stock.length} Catalog Items</div>
                   <div className="text-[10px] text-neutral-500">Cables, mice, monitors</div>
                 </div>
 
-                <div className="p-3.5 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
+                <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1">
                   <span className="text-[10px] font-bold uppercase text-neutral-400">Device Loan Logs</span>
                   <div className="text-lg font-black font-mono text-neutral-900">{loans.length} Records</div>
                   <div className="text-[10px] text-neutral-500">{loans.length} active/returned loans</div>
@@ -945,7 +945,7 @@ export default function SettingsPage() {
         {/* ================= TAB 3: ACTIVE OPERATOR PROFILE ================= */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <section className="bg-white border border-neutral-200 rounded-lg p-6 space-y-4">
+            <section className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="flex items-center gap-2.5">
                 <Shield className="w-4 h-4 text-neutral-800" />
                 <h2 className="text-sm font-bold text-neutral-900">
@@ -966,7 +966,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getRoleBadgeStyle(
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border ${getRoleBadgeStyle(
                         user?.roleBadge || 'Lecturer'
                       )}`}
                     >

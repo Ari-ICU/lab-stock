@@ -17,7 +17,6 @@ import {
   Check,
   Cable,
   MapPin,
-  Tag,
   Hash,
   Layers,
   CheckCircle2,
@@ -296,14 +295,9 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
         )}
         
         {/* Top Summary / Status Card */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
           {/* Top Badges */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 text-neutral-600" />
-              <span>Inventory Stock</span>
-            </span>
-
             {/* Status Badge */}
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
               item.status === 'out_of_stock'
@@ -368,7 +362,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
             </div>
 
             {/* Quick Real-Time Quantity Adjuster */}
-            <div className="flex items-center gap-3 shrink-0 bg-neutral-50 border border-neutral-200 px-4 py-2 rounded-lg">
+            <div className="flex items-center gap-3 shrink-0 bg-neutral-50 border border-neutral-200/80 px-4 py-2 rounded-xl">
               <div>
                 <div className="text-[10px] uppercase font-semibold text-neutral-500 tracking-wider">
                   Stock Units
@@ -381,7 +375,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 pl-3 border-l border-neutral-200">
+              <div className="flex items-center gap-1.5 pl-3 border-l border-neutral-200">
                 <button
                   type="button"
                   disabled={!isAllowed || item.quantity <= 0}
@@ -392,7 +386,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                     }
                     updateStockQuantity(item.id, -1);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-md bg-white hover:bg-neutral-100 border border-neutral-200 disabled:opacity-30 text-neutral-700 transition-colors cursor-pointer text-xs"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white hover:bg-neutral-100 border border-neutral-200 disabled:opacity-30 text-neutral-700 transition-colors cursor-pointer text-xs"
                   title={isAllowed ? "Decrease 1" : "Read-only laboratory scope"}
                 >
                   <Minus className="w-4 h-4" />
@@ -407,25 +401,10 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                     }
                     updateStockQuantity(item.id, 1);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 text-white transition-colors cursor-pointer text-xs shadow-2xs"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 text-white transition-colors cursor-pointer text-xs shadow-2xs"
                   title={isAllowed ? "Increase 1" : "Read-only laboratory scope"}
                 >
                   <Plus className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  disabled={!isAllowed}
-                  onClick={() => {
-                    if (!isAllowed) {
-                      showToast('Action restricted: item is stored outside your assigned laboratory room.', 'error');
-                      return;
-                    }
-                    updateStockQuantity(item.id, 5);
-                  }}
-                  className="px-2 h-8 flex items-center justify-center rounded-md bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 disabled:opacity-30 transition-colors cursor-pointer text-[11px] font-bold font-mono"
-                  title={isAllowed ? "Add batch +5" : "Read-only laboratory scope"}
-                >
-                  +5
                 </button>
               </div>
             </div>
@@ -433,20 +412,19 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
         </div>
 
         {/* Full-width Responsive Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* Left Column: Visual & Storage Location */}
+          {/* Left Column: Item Photo */}
           <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 flex flex-col gap-6">
-            {/* Visual Card */}
-            <div className="bg-white border border-neutral-200 rounded p-5 space-y-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-4">
               <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                 <Package className="w-4 h-4 text-neutral-700" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Item Visual & SKU
+                  Item Photo
                 </h3>
               </div>
 
-              <div className="w-full aspect-video rounded border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
+              <div className="w-full aspect-video rounded-xl border border-neutral-200/80 bg-neutral-50 overflow-hidden flex items-center justify-center">
                 <LabThumbnail
                   src={item.imageUrl}
                   alt={item.name}
@@ -455,71 +433,6 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   className="w-full h-full object-cover"
                 />
               </div>
-
-              {/* SKU Tag Box */}
-              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Tag className="w-5 h-5 text-neutral-700" />
-                  <div>
-                    <div className="text-[10px] uppercase font-bold text-neutral-400">Part Code / SKU</div>
-                    <div className="font-mono text-xs font-bold text-neutral-900">{item.code}</div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCopyCode}
-                  className="px-2 py-1 text-[11px] font-medium bg-white border border-neutral-200 rounded hover:bg-neutral-50 text-neutral-700 transition-colors"
-                >
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="bg-white border border-neutral-200 rounded p-5 space-y-3 flex-1 flex flex-col justify-between">
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Inventory Quick Operations
-                </h4>
-                <div className="space-y-2 pt-1">
-                  <Link
-                    href={`/stock/${item.id}/lend`}
-                    className="w-full py-2 px-3 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 rounded flex items-center justify-between gap-2 transition-colors cursor-pointer shadow-xs"
-                  >
-                    <span className="flex items-center gap-2 whitespace-nowrap">
-                      <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>Lend / Check-Out</span>
-                    </span>
-                    <span className="text-[10px] text-neutral-100 bg-white/15 px-2 py-0.5 rounded font-mono shrink-0 whitespace-nowrap">
-                      {item.quantity} in stock
-                    </span>
-                  </Link>
-
-                <button
-                  type="button"
-                  onClick={() => updateStockQuantity(item.id, 10)}
-                  className="w-full py-2 px-3 text-xs font-medium text-neutral-800 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded flex items-center justify-between transition-colors"
-                >
-                  <span>Restock Shipment (+10 units)</span>
-                  <span className="font-mono font-bold text-emerald-700">+10</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateStockQuantity(item.id, -5)}
-                  disabled={item.quantity < 5}
-                  className="w-full py-2 px-3 text-xs font-medium text-neutral-800 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded flex items-center justify-between transition-colors disabled:opacity-40"
-                >
-                  <span>Deploy to Class / Lab Bench (-5 units)</span>
-                  <span className="font-mono font-bold text-rose-700">-5</span>
-                </button>
-                <Link
-                  href={`/stock/${item.id}/edit`}
-                  className="w-full py-2 px-3 text-xs font-medium text-neutral-900 bg-white hover:bg-neutral-50 border border-neutral-300 rounded flex items-center justify-between transition-colors"
-                >
-                  <span>Edit Specifications or Location</span>
-                  <Edit3 className="w-3.5 h-3.5 text-neutral-500" />
-                </Link>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -527,102 +440,62 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
           <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 flex flex-col gap-6">
             
             {/* Specifications Card */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-2xs">
+              <div className="px-5 py-3.5 border-b border-neutral-100 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-neutral-700" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Item Specifications & Storage
+                  Item Specifications &amp; Storage
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 text-xs pt-1">
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Item Name</div>
-                  <div className="font-semibold text-neutral-900">{item.name}</div>
+              <div className="divide-y divide-neutral-100 text-xs">
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Part Code / SKU</span>
+                  <span className="col-span-2 font-mono font-semibold text-neutral-900">{item.code}</span>
                 </div>
 
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Part Code / SKU</div>
-                  <div className="font-mono font-bold text-neutral-900">{item.code}</div>
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Category</span>
+                  <span className="col-span-2 font-medium text-neutral-900">{item.category}</span>
                 </div>
 
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Category</div>
-                  <div className="font-medium text-neutral-900">{item.category}</div>
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Assigned Laboratory</span>
+                  <span className="col-span-2 font-medium text-neutral-900 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span>{item.location}</span>
+                  </span>
                 </div>
 
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Quantity in Inventory</div>
-                  <div className="font-mono font-bold text-neutral-900">
-                    {item.quantity} {item.unit}
-                  </div>
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Shelf / Bin / Cabinet</span>
+                  <span className="col-span-2 font-mono text-neutral-800">{item.rack || 'Standard Storage'}</span>
                 </div>
 
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Assigned Laboratory Room</div>
-                  <div className="font-medium text-neutral-900 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-neutral-500" />
-                    {item.location}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Shelf / Bin / Cabinet</div>
-                  <div className="font-mono text-neutral-800">{item.rack || 'Standard Storage'}</div>
-                </div>
-
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Warranty / Inspection Note</div>
-                  <div className="font-medium text-neutral-900">{item.expiryDate || 'Active'}</div>
-                </div>
-
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1">
-                  <div className="text-neutral-400 text-[11px] font-medium">Availability Status</div>
-                  <div className="font-semibold">
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Stock &amp; Availability</span>
+                  <div className="col-span-2 flex items-center gap-2.5 flex-wrap">
+                    <span className="font-mono font-bold text-neutral-900">
+                      {item.quantity} {item.unit}
+                    </span>
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border ${statusBadge.badgeClass}`}
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${statusBadge.badgeClass}`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotClass}`} />
-                      {statusBadge.text}
+                      <span>{statusBadge.text}</span>
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3 bg-neutral-50/70 border border-neutral-100 rounded space-y-1.5 sm:col-span-2 xl:col-span-4">
-                  <div className="text-neutral-500 text-[11px] font-semibold flex items-center justify-between">
-                    <span>Active Classroom Allocations</span>
-                    {allocations.length > 0 && (
-                      <span className="text-emerald-700 font-bold font-mono text-[11px]">
-                        {totalAllocated} {item.unit || 'units'} deployed
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                    {allocations.length > 0 ? (
-                      allocations.map((alloc) => (
-                        <Link
-                          key={alloc.inventoryId}
-                          href={`/locations/${alloc.locationId}`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded shadow-2xs transition-colors group"
-                          title={`Allocated to ${alloc.room}: ${alloc.total} ${alloc.unit}`}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span className="font-mono font-bold text-neutral-900">{alloc.room}</span>
-                          <span className="text-neutral-500 text-[11px]">({alloc.total} {alloc.unit})</span>
-                        </Link>
-                      ))
-                    ) : (
-                      <span className="text-neutral-400 text-xs italic">
-                        Not currently assigned to any classroom or laboratory inventory.
-                      </span>
-                    )}
-                  </div>
+                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                  <span className="font-medium text-neutral-500">Warranty / Inspection</span>
+                  <span className="col-span-2 font-medium text-neutral-800">{item.expiryDate || 'Active'}</span>
                 </div>
               </div>
             </div>
 
             {/* Description & Deployment Information */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-3 flex-1">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 space-y-3 shadow-2xs">
               <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                 <CheckCircle2 className="w-4 h-4 text-neutral-700" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
@@ -635,7 +508,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   <p className="whitespace-pre-line">{item.description}</p>
                 ) : (
                   <p className="text-neutral-400 italic">
-                    No additional description recorded for this inventory item. Click &quot;Edit Item&quot; to add technical notes or compatibility details.
+                    No technical notes recorded.
                   </p>
                 )}
               </div>
@@ -653,20 +526,11 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                 Active Student &amp; Faculty Loans
               </h3>
             </div>
-            <div className="flex items-center gap-2 text-xs flex-wrap">
-              {totalBorrowedUnits > 0 ? (
-                <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md text-xs font-mono">
-                  {totalBorrowedUnits} {item.unit || 'units'} Borrowed
-                </span>
-              ) : null}
-              <Link
-                href={`/stock/${item.id}/lend`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-              >
-                <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Lend Out Units</span>
-              </Link>
-            </div>
+            {totalBorrowedUnits > 0 && (
+              <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md text-xs font-mono">
+                {totalBorrowedUnits} {item.unit || 'units'} Borrowed
+              </span>
+            )}
           </div>
 
           {activeItemLoans.length === 0 ? (

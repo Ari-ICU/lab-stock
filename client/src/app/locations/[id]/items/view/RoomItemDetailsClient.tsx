@@ -113,7 +113,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: visual + summary */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-hidden">
               <div className="w-full h-56 bg-neutral-100 flex items-center justify-center">
                 <LabThumbnail
                   src={imageUrl}
@@ -125,14 +125,14 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
               </div>
               <div className="p-4 space-y-2.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${statusBadge.cls}`}>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border ${statusBadge.cls}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
                     {statusBadge.text}
                   </span>
-                  <span className="text-[11px] font-mono font-semibold uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-md border border-neutral-200">
+                  <span className="text-[11px] font-mono font-semibold uppercase bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-lg border border-neutral-200">
                     {item.unit}
                   </span>
-                  <span className="text-[11px] font-medium bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-md border border-neutral-200">
+                  <span className="text-[11px] font-medium bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-lg border border-neutral-200">
                     {getCategoryLabel(item.group)}
                   </span>
                 </div>
@@ -141,17 +141,17 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
 
             {/* Count cards */}
             <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-white border border-neutral-200 rounded-xl p-3 text-center shadow-2xs">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-3 text-center shadow-2xs">
                 <div className="text-[10px] uppercase font-bold text-neutral-500">Working</div>
                 <div className="text-lg font-bold font-mono text-emerald-700">{item.qtyWorking}</div>
               </div>
-              <div className="bg-white border border-neutral-200 rounded-xl p-3 text-center shadow-2xs">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-3 text-center shadow-2xs">
                 <div className="text-[10px] uppercase font-bold text-neutral-500">Broken</div>
                 <div className={`text-lg font-bold font-mono ${item.qtyBroken > 0 ? 'text-rose-700' : 'text-neutral-400'}`}>
                   {item.qtyBroken}
                 </div>
               </div>
-              <div className="bg-white border border-neutral-200 rounded-xl p-3 text-center shadow-2xs">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-3 text-center shadow-2xs">
                 <div className="text-[10px] uppercase font-bold text-neutral-500">Repair</div>
                 <div className={`text-lg font-bold font-mono ${(item.qtyMaintenance || 0) > 0 ? 'text-blue-700' : 'text-neutral-400'}`}>
                   {item.qtyMaintenance || 0}
@@ -162,7 +162,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
 
           {/* Right: details */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-hidden">
               <div className="px-4 py-3 border-b border-neutral-100">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Information</h3>
               </div>
@@ -193,7 +193,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
             </div>
 
             {/* Central source */}
-            <div className="bg-white border border-neutral-200 rounded-xl shadow-2xs overflow-hidden">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl shadow-2xs overflow-hidden">
               <div className="px-4 py-3 border-b border-neutral-100">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Central Source</h3>
               </div>
@@ -201,7 +201,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
                 {linkedStock ? (
                   <Link
                     href={`/stock/${linkedStock.id}`}
-                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50 transition-colors"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Boxes className="w-4 h-4 text-emerald-700 shrink-0" />
@@ -220,7 +220,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
                 ) : linkedAsset ? (
                   <Link
                     href={`/assets/${linkedAsset.id}`}
-                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-50 transition-colors"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-50 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Microscope className="w-4 h-4 text-blue-700 shrink-0" />
@@ -239,10 +239,10 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
 
             {/* Remarks */}
             <div
-              className={`rounded-xl border p-4 text-xs shadow-2xs ${
+              className={`rounded-2xl border p-4 sm:p-5 text-xs shadow-2xs ${
                 item.qtyBroken > 0 || (item.qtyMaintenance || 0) > 0
                   ? 'bg-amber-50/70 border-amber-200 text-amber-950'
-                  : 'bg-white border-neutral-200 text-neutral-700'
+                  : 'bg-white border-neutral-200/80 text-neutral-700'
               }`}
             >
               <h3 className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 mb-1.5 flex items-center gap-1.5">
@@ -261,21 +261,21 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-neutral-200 rounded-xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <h3 className="text-sm font-bold text-neutral-900">Remove {item.name}?</h3>
             <p className="text-xs text-neutral-500">This removes the record from {loc.room}.</p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="px-3 py-1.5 text-xs font-semibold border border-neutral-200 rounded text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold border border-neutral-200 rounded-xl text-neutral-700 hover:bg-neutral-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-xl cursor-pointer"
               >
                 Remove
               </button>

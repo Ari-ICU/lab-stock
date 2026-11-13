@@ -18,19 +18,15 @@ import {
   AlertTriangle,
   Cable,
   MapPin,
-  Tag,
   Hash,
   Layers,
-  FileText,
-  HelpCircle,
-  Eye,
   Shield,
 } from 'lucide-react';
 
 const statusOptions = [
-  { label: 'In Stock (Available in quantity)', value: 'in_stock' },
-  { label: 'Low Stock (Replenishment suggested)', value: 'low_stock' },
-  { label: 'Out of Stock (Zero count)', value: 'out_of_stock' },
+  { label: 'In Stock', value: 'in_stock' },
+  { label: 'Low Stock', value: 'low_stock' },
+  { label: 'Out of Stock', value: 'out_of_stock' },
 ];
 
 const unitOptions = [
@@ -263,18 +259,11 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       <Header
         title={`Edit ${item.name}`}
         subtitle={`SKU: ${item.code} • ${item.location}`}
-        backHref="/stock"
-        backLabel="Inventory"
+        backHref={`/stock/${item.id}`}
+        backLabel="Item Details"
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
-            <Link
-              href="/stock"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
-            >
-              Cancel
-            </Link>
-
             <button
               type="button"
               onClick={handleReset}
@@ -301,7 +290,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-neutral-200 hover:border-rose-300 hover:bg-rose-50 text-rose-700 rounded text-xs font-medium transition-colors cursor-pointer"
               title="Delete item"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -313,64 +302,64 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         <form id="edit-stock-form" onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            {/* Left Column: Form fields */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Form Fields */}
             <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-6">
-              
-              {/* Core Details */}
-              <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Cable className="w-4 h-4 text-neutral-700" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                      Inventory Information
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-neutral-400">ID: {item.id}</span>
+              {/* Inventory Information */}
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                  <Cable className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Inventory Information
+                  </h3>
                 </div>
 
-                <div className="space-y-4 pt-1">
+                <div className="space-y-4">
                   {/* Name */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">Item Name *</label>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Item Name <span className="text-rose-500">*</span>
+                    </label>
                     <input
                       type="text"
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Cat6A UTP 2m RJ45 Blue Patch Cords"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
                     />
                   </div>
 
-                  {/* SKU / Part Code */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                      <span>Part Number / SKU Code *</span>
-                      <button
-                        type="button"
-                        onClick={handleGenerateSKU}
-                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-medium hover:underline flex items-center gap-1"
-                      >
-                        <Hash className="w-3 h-3" />
-                        Generate SKU
-                      </button>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      placeholder="e.g. CAB-102B-CAT6A"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
-                    />
-                  </div>
-
-                  {/* Category & Status */}
+                  {/* SKU / Part Code & Category */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900">Category</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-neutral-900">
+                          Part Number / SKU <span className="text-rose-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleGenerateSKU}
+                          className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Hash className="w-3 h-3" />
+                          <span>Generate SKU</span>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="e.g. CAB-102B-CAT6A"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Category
+                      </label>
                       <Dropdown
                         value={category}
                         options={categoryOptions}
@@ -383,26 +372,16 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                         allowCustom
                         searchPlaceholder="Search or type new category..."
                         placeholder="Select Category"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900">Stock Availability</label>
-                      <Dropdown
-                        value={status}
-                        options={statusOptions}
-                        onChange={(val) => setStatus(val as any)}
-                        placeholder="Select Status"
+                        buttonClassName="rounded-xl py-2"
                       />
                     </div>
                   </div>
 
-                  {/* Quantity & Unit Type */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Quantity, Unit Type & Stock Availability */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                        <span>Quantity in Stock *</span>
-                        <span className="text-[11px] text-neutral-400 font-normal">Count</span>
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Quantity in Stock <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -416,94 +395,131 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                           else if (val <= 5) setStatus('low_stock');
                           else setStatus('in_stock');
                         }}
-                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-neutral-900">Unit Type</label>
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Unit Type
+                      </label>
                       <Dropdown
                         value={unit}
                         options={unitOptions}
                         onChange={setUnit}
                         placeholder="Select Unit"
+                        buttonClassName="rounded-xl py-2"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Availability Status
+                      </label>
+                      <Dropdown
+                        value={status}
+                        options={statusOptions}
+                        onChange={(val) => setStatus(val as 'in_stock' | 'low_stock' | 'out_of_stock')}
+                        placeholder="Select Status"
+                        buttonClassName="rounded-xl py-2"
                       />
                     </div>
                   </div>
 
-                  {/* Warranty / Note */}
+                  {/* Warranty / Inspection Note */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900 flex items-center justify-between">
-                      <span>Warranty / Inspection Note</span>
-                      <span className="text-[11px] text-neutral-400 font-normal">e.g. Warranty 2027, Active</span>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Warranty / Inspection Note
                     </label>
                     <input
                       type="text"
                       value={expiryDate}
                       onChange={(e) => setExpiryDate(e.target.value)}
                       placeholder="e.g. Warranty 2027 or Active"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
                     />
                   </div>
 
                   {/* Description */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">
-                      Technical Description & Deployment Notes
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Technical Description &amp; Lab Notes
                     </label>
                     <textarea
                       rows={3}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Specify cable pinouts, compatibility, or lab storage procedures..."
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed placeholder:text-neutral-400"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Location & Storage Details */}
-              <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <MapPin className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Location & Shelf Placement
+                    Location &amp; Shelf Placement
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">Assigned Laboratory Room</label>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Assigned Laboratory Room
+                    </label>
                     <Dropdown
                       value={location}
                       options={locationOptions}
                       onChange={setLocation}
                       placeholder="Select Lab Room"
+                      buttonClassName="rounded-xl py-2"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-900">Shelf / Cabinet / Bin</label>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Shelf / Cabinet / Bin
+                    </label>
                     <input
                       type="text"
                       value={rack}
                       onChange={(e) => setRack(e.target.value)}
                       placeholder="e.g. Benches & Shelf SHF-01"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
                     />
                   </div>
                 </div>
               </div>
 
+              {/* Bottom Form Footer */}
+              <div className="flex items-center justify-end gap-2.5">
+                <Link
+                  href={`/stock/${item.id}`}
+                  className="px-4 py-2 bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-700 text-xs font-medium rounded-lg transition-colors"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-xs"
+                >
+                  <Save className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
             </div>
 
-            {/* Right Column: Visual & Save Card */}
+            {/* Right Column: Product Image */}
             <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 space-y-6">
-              <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                   <Layers className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Product Image
+                    Item Photo
                   </h3>
                 </div>
 
@@ -513,45 +529,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                   label="Upload or Paste Photo URL"
                 />
               </div>
-
-              {/* Actions / Danger Zone */}
-              <div className="bg-white border border-neutral-200 rounded p-5 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Update Actions
-                </h4>
-
-                <div className="pt-1 space-y-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-                  >
-                    <Save className="w-4 h-4 text-neutral-300" />
-                    <span>{isSubmitting ? 'Saving...' : 'Save All Changes'}</span>
-                  </button>
-
-                  <Link
-                    href={`/stock/${item.id}`}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-700 rounded text-xs font-medium transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-neutral-500" />
-                    <span>View Live Details</span>
-                  </Link>
-
-                  <div className="border-t border-neutral-100 pt-3 mt-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete Item Permanently</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
-
           </div>
         </form>
       </div>
@@ -559,7 +537,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg border border-neutral-200 max-w-md w-full p-6 space-y-4 shadow-xl">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center gap-3 text-rose-700">
               <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -579,14 +557,14 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-3 py-1.5 rounded text-xs font-medium border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3.5 py-1.5 rounded text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
               >
                 Confirm Delete
               </button>

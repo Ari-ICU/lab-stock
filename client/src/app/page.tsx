@@ -146,7 +146,7 @@ export default function DashboardPage() {
         onExport={handleExportExecutiveSummary}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* ================= 1. DEPARTMENT SUMMARY BANNER ================= */}
         <PageBanner
           eyebrow="Department of Computer Science · Education & Lab Stock"
@@ -187,7 +187,9 @@ export default function DashboardPage() {
               <span>{totalHardwareUnits} Units Installed</span>
               <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md text-[10px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                100% Deployed
+                {assets.length > 0
+                  ? Math.round((assets.filter((a) => a.status !== 'maintenance').length / assets.length) * 100)
+                  : 100}% Active
               </span>
             </div>
           </Link>
@@ -385,6 +387,18 @@ export default function DashboardPage() {
                 <div className="divide-y divide-neutral-100">
                   {activeLoans.map((loan) => {
                     const isOverdue = loan.expectedReturnDate && loan.expectedReturnDate < todayStr;
+                    const linkedStock =
+                      loan.itemType === 'stock' || loan.stockId
+                        ? stock.find(
+                            (s) =>
+                              s.id === loan.stockId ||
+                              s.code === loan.serialNumber ||
+                              s.name === loan.assetName
+                          )
+                        : null;
+                    const loanTargetHref = linkedStock
+                      ? `/stock/${linkedStock.id}`
+                      : `/assets/${loan.assetId}`;
                     return (
                       <div
                         key={loan.id}
@@ -393,7 +407,7 @@ export default function DashboardPage() {
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <Link
-                              href={`/assets/${loan.assetId}`}
+                              href={loanTargetHref}
                               className="text-xs font-bold text-neutral-900 hover:text-emerald-700 transition-colors truncate"
                             >
                               {loan.assetName}

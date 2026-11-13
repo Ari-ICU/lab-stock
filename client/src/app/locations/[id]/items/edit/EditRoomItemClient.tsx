@@ -153,8 +153,8 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   };
 
   const inputCls =
-    'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900';
-  const dropdownBtn = 'w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded';
+    'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors';
+  const dropdownBtn = 'w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl';
   const numInput = (value: number, onChange: (n: number) => void, color: string) => (
     <input
       type="number"
@@ -177,7 +177,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
           <div className="flex items-center gap-2">
             <Link
               href={viewHref}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors"
             >
               Cancel
             </Link>
@@ -187,7 +187,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
                 loadFromItem();
                 showToast('Form reset to saved values', 'info');
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
               <span className="hidden sm:inline">Reset</span>
@@ -196,7 +196,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
               type="submit"
               form="edit-room-item-form"
               disabled={submitting || !isAllowed}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <Save className="w-3.5 h-3.5 text-neutral-300" />
               <span>{submitting ? 'Saving...' : 'Save Changes'}</span>
@@ -205,7 +205,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-medium transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Delete</span>
@@ -217,21 +217,18 @@ export default function EditRoomItemClient({ id }: { id: string }) {
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 w-full">
         {!isAllowed && (
-          <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900">
+          <div className="mb-6 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900">
             You have read-only access to {loc.room}.
           </div>
         )}
 
-        <form id="edit-room-item-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <form id="edit-room-item-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-8 space-y-6">
             {/* Equipment details */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details</h3>
-                </div>
-                <span className="text-[11px] font-mono text-neutral-400 truncate max-w-[180px]">ID: {item.id}</span>
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <ClipboardList className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details</h3>
               </div>
 
               <div>
@@ -263,7 +260,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
             </div>
 
             {/* Condition & status */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-neutral-700" />
@@ -323,7 +320,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
 
           {/* Right: summary */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white border border-neutral-200 rounded p-5 space-y-3 text-xs">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-3 text-xs">
               <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 border-b border-neutral-100 pb-3">Summary</h3>
               <div className="flex justify-between">
                 <span className="text-neutral-500">Classroom</span>
@@ -336,14 +333,14 @@ export default function EditRoomItemClient({ id }: { id: string }) {
                 </span>
               </div>
               {total !== item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0) && (
-                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2.5">
                   Total changed from {item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0)} to {total}. Central Stock is not adjusted automatically.
                 </p>
               )}
             </div>
 
             {(linkedStock || linkedAsset) && (
-              <div className="bg-white border border-neutral-200 rounded p-5 space-y-2 text-xs">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-2 text-xs">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 border-b border-neutral-100 pb-3">Central Source</h3>
                 {linkedStock && (
                   <Link href={`/stock/${linkedStock.id}`} className="flex items-center gap-2 text-emerald-800 hover:underline">
@@ -366,21 +363,21 @@ export default function EditRoomItemClient({ id }: { id: string }) {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-neutral-200 rounded-xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+          <div className="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
             <h3 className="text-sm font-bold text-neutral-900">Remove {item.name}?</h3>
             <p className="text-xs text-neutral-500">This removes the record from {loc.room}.</p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="px-3 py-1.5 text-xs font-semibold border border-neutral-200 rounded text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold border border-neutral-200 rounded-xl text-neutral-700 hover:bg-neutral-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded cursor-pointer"
+                className="px-3.5 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-xl cursor-pointer"
               >
                 Remove
               </button>

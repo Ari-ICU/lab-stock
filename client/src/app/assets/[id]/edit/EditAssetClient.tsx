@@ -16,15 +16,9 @@ import {
   RotateCcw,
   Trash2,
   AlertTriangle,
-  CheckCircle2,
-  Calendar,
   MapPin,
-  Tag,
-  Hash,
   Layers,
-  FileText,
-  HelpCircle,
-  Eye,
+  Cpu,
   Shield,
 } from 'lucide-react';
 
@@ -234,10 +228,10 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title={`Edit: ${asset.name}`}
-        subtitle={`Asset ID: ${asset.id} • Room 102B`}
+        title={`Edit ${asset.name}`}
+        subtitle={`SN: ${asset.serialNumber} • ${asset.location}`}
         backHref={`/assets/${asset.id}`}
-        backLabel="Details"
+        backLabel="Asset Details"
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
@@ -245,6 +239,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
               type="button"
               onClick={handleReset}
               className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors cursor-pointer"
+              title="Reset to saved values"
             >
               <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
               <span className="hidden sm:inline">Reset</span>
@@ -266,7 +261,8 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-neutral-200 hover:border-rose-300 hover:bg-rose-50 text-rose-700 rounded text-xs font-medium transition-colors cursor-pointer"
+              title="Delete asset"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Delete</span>
@@ -275,301 +271,237 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-
-        {/* Delete Confirmation Alert Banner */}
-        {showDeleteConfirm && (
-          <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <div className="text-xs font-bold text-rose-900">Confirm Deletion</div>
-                <div className="text-xs text-rose-700">
-                  Are you sure you want to delete <span className="font-semibold">{asset.name}</span>? This will permanently remove it from inventory.
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
+        <form id="edit-asset-form" onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Form Fields */}
+            <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-6">
+              {/* Equipment Specifications */}
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
+                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                  <Cpu className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Equipment Specifications
+                  </h3>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-3 py-1 text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-300 rounded cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="px-3 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded transition-colors cursor-pointer"
-              >
-                Confirm Delete
-              </button>
-            </div>
-          </div>
-        )}
 
-        {/* Two-Column Form Layout */}
-        <form
-          id="edit-asset-form"
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-        >
-          {/* Main 2 Cols: Form Fields */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Primary Details Card */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 sm:p-6 shadow-sm space-y-5">
-              <div className="border-b border-neutral-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-bold text-neutral-900">Equipment Specifications</h2>
-                  <p className="text-xs text-neutral-500">Edit hardware tags, model name, and configuration</p>
-                </div>
-                <span className="text-[11px] font-mono text-neutral-400">ID: {asset.id}</span>
-              </div>
-
-              {/* Equipment Name */}
-              <div>
-                <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
-                  <span>Equipment / Device Name <span className="text-rose-500">*</span></span>
-                  <span className="text-[10px] text-neutral-400 font-normal">e.g. Dell OptiPlex 7090 Desktop</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Cisco Catalyst 9300 48-Port Switch"
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-medium placeholder:text-neutral-400"
-                />
-              </div>
-
-              {/* Model & Specs */}
-              <div>
-                <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
-                  <span>Model & Hardware Specifications</span>
-                  <span className="text-[10px] text-neutral-400 font-normal">e.g. Core i7 / 16GB RAM / 512GB SSD</span>
-                </label>
-                <input
-                  type="text"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder="e.g. C9300-48P-A Gigabit L3 Managed"
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-mono placeholder:text-neutral-400"
-                />
-              </div>
-
-              {/* Serial Number & Quantity */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
-                    <span>Serial Tag / Asset ID <span className="text-rose-500">*</span></span>
-                  </label>
-                  <div className="relative">
+                <div className="space-y-4">
+                  {/* Equipment Name */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Equipment Name <span className="text-rose-500">*</span>
+                    </label>
                     <input
                       type="text"
                       required
-                      value={serialNumber}
-                      onChange={(e) => setSerialNumber(e.target.value)}
-                      placeholder="e.g. TAG-102B-001"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors font-mono uppercase placeholder:text-neutral-400"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Cisco Catalyst 9300 48-Port Switch"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1">
-                    Units Quantity
-                  </label>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min={1}
-                      max={999}
-                      value={totalUnits}
-                      onChange={(e) => setTotalUnits(parseInt(e.target.value, 10) || 1)}
-                      className="w-20 bg-white border border-neutral-300 text-neutral-900 text-xs px-2.5 py-2 rounded focus:outline-none focus:border-neutral-900 font-bold"
+                  {/* Model & Serial Number */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Model / Hardware Build
+                      </label>
+                      <input
+                        type="text"
+                        value={model}
+                        onChange={(e) => setModel(e.target.value)}
+                        placeholder="e.g. C9300-48P-A Gigabit L3 Managed"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Serial Tag / Asset ID <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={serialNumber}
+                        onChange={(e) => setSerialNumber(e.target.value)}
+                        placeholder="e.g. TAG-102B-001"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono uppercase px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Units, Unit Type & Operational Status */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Total Units
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={totalUnits}
+                        onChange={(e) => setTotalUnits(parseInt(e.target.value, 10) || 1)}
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Unit Type
+                      </label>
+                      <input
+                        type="text"
+                        value={unitType}
+                        onChange={(e) => setUnitType(e.target.value)}
+                        placeholder="e.g. Units, Benches"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Operational Status
+                      </label>
+                      <Dropdown
+                        value={status}
+                        options={statusOptions}
+                        onChange={(val) => setStatus(val as 'operational' | 'in_use' | 'maintenance')}
+                        buttonClassName="rounded-xl py-2"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Next Audit Date */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Next Audit / Recertification Date
+                    </label>
+                    <DatePicker
+                      value={nextCalibration}
+                      onChange={setNextCalibration}
+                      placeholder="Select audit / calibration date"
                     />
-                    <input
-                      type="text"
-                      value={unitType}
-                      onChange={(e) => setUnitType(e.target.value)}
-                      placeholder="Units"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-2 py-2 rounded focus:outline-none focus:border-neutral-900 text-center font-medium"
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Equipment Description &amp; Lab Notes
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Document hardware specifications, port mapping, or inspection notes..."
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed placeholder:text-neutral-400"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Location & Status using custom Dropdowns */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-neutral-500" />
-                    <span>Assigned Lab Placement</span>
+              {/* Location Assignment */}
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                  <MapPin className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Location Assignment
+                  </h3>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-neutral-900">
+                    Assigned Laboratory Room
                   </label>
                   <Dropdown
                     value={location}
                     options={locationOptions}
                     onChange={setLocation}
                     placeholder="Select room location"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-neutral-500" />
-                    <span>Operational State</span>
-                  </label>
-                  <Dropdown
-                    value={status}
-                    options={statusOptions}
-                    onChange={(val) => setStatus(val as any)}
+                    buttonClassName="rounded-xl py-2"
                   />
                 </div>
               </div>
 
-              {/* Next Audit Date */}
-              <div>
-                <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>Next Audit / Firmware Recertification Date</span>
-                </label>
-                <DatePicker
-                  value={nextCalibration}
-                  onChange={setNextCalibration}
-                  placeholder="Select audit / calibration date"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>Technical Description & Architecture Notes</span>
-                </label>
-                <textarea
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Document hardware roles, port mapping, IP ranges, or maintenance notes..."
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs p-3 rounded focus:outline-none focus:border-neutral-900 font-medium placeholder:text-neutral-400"
-                />
+              {/* Bottom Form Footer */}
+              <div className="flex items-center justify-end gap-2.5">
+                <Link
+                  href={`/assets/${asset.id}`}
+                  className="px-4 py-2 bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-700 text-xs font-medium rounded-lg transition-colors"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-xs"
+                >
+                  <Save className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+                </button>
               </div>
             </div>
 
-            {/* Bottom Actions Bar */}
-            <div className="flex items-center justify-between gap-3 bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
-              <Link
-                href={`/assets/${asset.id}`}
-                className="px-4 py-2 border border-neutral-300 text-neutral-700 text-xs font-semibold rounded hover:bg-neutral-50 transition-colors"
-              >
-                Discard Changes
-              </Link>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-1.5 px-6 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white text-xs font-semibold rounded transition-colors cursor-pointer shadow-sm"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Right Col: Image Upload & Live Preview Card */}
-          <div className="space-y-6">
-            {/* Equipment Photo Upload */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Equipment Photo
-                </h3>
-                <p className="text-[11px] text-neutral-500">
-                  Upload an image or paste a high-resolution direct URL
-                </p>
-              </div>
-
-              <ImageUpload
-                value={imageUrl}
-                onChange={setImageUrl}
-                label="Asset Photo"
-              />
-            </div>
-
-            {/* Live Preview Card */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-neutral-600" />
-                  Live Preview
-                </span>
-                <span className="text-[10px] text-neutral-400 font-mono">Realtime</span>
-              </div>
-
-              <div className="border border-neutral-200 rounded-lg overflow-hidden bg-neutral-50/50">
-                <div className="h-40 bg-neutral-100 relative">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={name || 'Hardware Preview'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 text-xs">
-                      <Layers className="w-8 h-8 mb-1" />
-                      <span>No image selected</span>
-                    </div>
-                  )}
-                  <span
-                    className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-sm ${
-                      status === 'operational'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : status === 'in_use'
-                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}
-                  >
-                    {status === 'operational'
-                      ? 'Operational'
-                      : status === 'in_use'
-                      ? 'In Use'
-                      : 'In Repair'}
-                  </span>
+            {/* Right Column: Asset Photo */}
+            <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 space-y-6">
+              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                  <Layers className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Asset Photo
+                  </h3>
                 </div>
 
-                <div className="p-3.5 space-y-2">
-                  <div className="font-bold text-neutral-900 text-xs truncate">
-                    {name || 'Equipment Name'}
-                  </div>
-                  <div className="text-[11px] text-neutral-600 font-mono truncate">
-                    {model || 'Model specifications...'}
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-200/80 grid grid-cols-2 gap-2 text-[11px]">
-                    <div>
-                      <span className="text-neutral-400 block text-[10px] uppercase font-semibold">Units</span>
-                      <span className="font-bold text-neutral-800">
-                        {totalUnits} {unitType}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-neutral-400 block text-[10px] uppercase font-semibold">Serial</span>
-                      <span className="font-mono font-bold text-neutral-800 truncate block">
-                        {serialNumber || '---'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-neutral-200/80 text-[11px] text-neutral-500 flex items-center gap-1 truncate">
-                    <MapPin className="w-3 h-3 text-neutral-400 shrink-0" />
-                    <span className="truncate">{location}</span>
-                  </div>
-                </div>
+                <ImageUpload
+                  value={imageUrl}
+                  onChange={setImageUrl}
+                  label="Upload or Paste Photo URL"
+                />
               </div>
             </div>
           </div>
         </form>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div className="flex items-center gap-3 text-rose-700">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900">Delete Hardware Asset</h3>
+                <p className="text-xs text-neutral-500">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-600">
+              Are you sure you want to permanently delete{' '}
+              <span className="font-semibold text-neutral-900">{asset.name}</span> ({asset.serialNumber}) from the asset directory?
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

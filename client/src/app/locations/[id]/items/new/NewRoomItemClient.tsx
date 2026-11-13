@@ -8,7 +8,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { AssetGroup } from '@/types';
-import { Boxes, Microscope, PenLine, Plus, ArrowLeft, Layers, ClipboardList, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Boxes, Microscope, PenLine, Plus, Layers, ClipboardList, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { categoryGroupOptions, findLocation } from '../shared';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
@@ -203,9 +203,9 @@ export default function NewRoomItemClient({ id }: { id: string }) {
   };
 
   const inputCls =
-    'w-full bg-white border border-neutral-200 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400';
+    'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400';
   const dropdownBtn =
-    'w-full justify-between bg-white border border-neutral-200 text-neutral-900 text-xs px-3 py-2 rounded-lg hover:border-neutral-300 transition-colors';
+    'w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl hover:border-neutral-400 transition-colors';
 
   const sourceTabs: { key: Source; label: string; hint: string; icon: React.ReactNode }[] = [
     { key: 'stock', label: 'Central Stock', hint: 'Allocate consumables & furniture', icon: <Boxes className="w-4 h-4" /> },
@@ -225,7 +225,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
           <div className="flex items-center gap-2">
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-lg text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors"
             >
               Cancel
             </Link>
@@ -233,7 +233,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
               type="submit"
               form="new-room-item-form"
               disabled={submitting || !isAllowed || exceedsStock}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
               <span>{submitting ? 'Allocating...' : `Allocate to ${loc.room}`}</span>
@@ -242,7 +242,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 w-full">
         {!isAllowed && (
           <div className="mb-6 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -254,13 +254,10 @@ export default function NewRoomItemClient({ id }: { id: string }) {
           {/* Left: form */}
           <div className="lg:col-span-8 space-y-6">
             {/* Source */}
-            <div className="bg-white border border-neutral-200/80 rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Source</h3>
-                </div>
-                <span className="text-[11px] text-neutral-400">Step 1 of 2</span>
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <Layers className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Source</h3>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -388,12 +385,9 @@ export default function NewRoomItemClient({ id }: { id: string }) {
 
             {/* Details */}
             <div className="bg-white border border-neutral-200/80 rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details &amp; Quantities</h3>
-                </div>
-                <span className="text-[11px] text-neutral-400">Step 2 of 2</span>
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <ClipboardList className="w-4 h-4 text-neutral-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details &amp; Quantities</h3>
               </div>
 
               <div>
@@ -497,17 +491,17 @@ export default function NewRoomItemClient({ id }: { id: string }) {
 
           {/* Right: summary */}
           <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-0">
-            <div className="bg-white border border-neutral-200/80 rounded-xl p-5 shadow-2xs space-y-4 text-xs">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 text-xs">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
                   Allocation Summary
                 </h3>
-                <span className="font-mono text-[10px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
+                <span className="font-mono text-[10px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded-lg">
                   {loc.room}
                 </span>
               </div>
 
-              <div className="p-3 bg-neutral-50 border border-neutral-200/70 rounded-lg space-y-1">
+              <div className="p-3 bg-neutral-50 border border-neutral-200/70 rounded-xl space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-neutral-400">
                   <MapPin className="w-3 h-3 text-emerald-600" />
                   <span>Destination Room</span>
@@ -540,7 +534,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
               </div>
 
               {source === 'stock' && selectedStock && (
-                <div className={`p-3 rounded-lg border ${exceedsStock ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50/80 border-emerald-200'}`}>
+                <div className={`p-3 rounded-xl border ${exceedsStock ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50/80 border-emerald-200'}`}>
                   <div className="flex justify-between">
                     <span className="text-neutral-600">Central stock now</span>
                     <span className="font-mono font-bold text-neutral-900">{selectedStock.quantity} {selectedStock.unit}</span>
@@ -558,7 +552,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
               )}
 
               {source === 'custom' && (
-                <div className="p-3 rounded-lg border bg-emerald-50/80 border-emerald-200 text-emerald-950">
+                <div className="p-3 rounded-xl border bg-emerald-50/80 border-emerald-200 text-emerald-950">
                   <div className="font-semibold text-emerald-900 flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Auto-register in Central Stock</span>
@@ -568,24 +562,6 @@ export default function NewRoomItemClient({ id }: { id: string }) {
                   </p>
                 </div>
               )}
-
-              <div className="pt-1 space-y-2">
-                <button
-                  type="submit"
-                  disabled={submitting || !isAllowed || exceedsStock}
-                  className="w-full py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{submitting ? 'Allocating...' : `Allocate to ${loc.room}`}</span>
-                </button>
-
-                <Link
-                  href={backHref}
-                  className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Back to {loc.room}
-                </Link>
-              </div>
             </div>
           </div>
         </form>

@@ -13,18 +13,12 @@ import {
   Calendar,
   User,
   CheckCircle2,
-  AlertCircle,
-  Clock,
   MapPin,
   ExternalLink,
   Copy,
   Check,
   FileText,
-  Sparkles,
   X,
-  Building,
-  Mail,
-  Phone,
   GraduationCap,
   AlertTriangle,
   FileSpreadsheet,
@@ -67,6 +61,8 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           s.name === loan.assetName
       )
     : null;
+  const itemHref = asset ? `/assets/${asset.id}` : stockItem ? `/stock/${stockItem.id}` : loan?.assetId ? `/assets/${loan.assetId}` : null;
+  const inspectLabel = stockItem && !asset ? 'Inspect Item' : 'Inspect Asset';
 
   const todayStr = new Date().toISOString().split('T')[0];
   const isOverdue = loan ? loan.status === 'active' && loan.expectedReturnDate < todayStr : false;
@@ -145,7 +141,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
       {/* 1. Header with direct actions */}
       <Header
         title={loan.assetName}
-        subtitle={`Check-Out Dossier • ${loan.id}`}
+        subtitle={`Borrower: ${loan.borrowerName} (${loan.borrowerRole}) • SN: ${loan.serialNumber}`}
         backHref="/loans"
         backLabel="Device Loans"
         showAction={false}
@@ -154,9 +150,19 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={() => copyToClipboard(window.location.href, 'Link', 'share-link')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-xl hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
+              title="Copy link to this loan record"
+            >
+              <Share2 className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="hidden sm:inline">{copiedKey === 'share-link' ? 'Copied' : 'Share'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleExportLoan}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-              title="Export loan dossier as CSV"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-xl hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
+              title="Export loan record as CSV"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">Export</span>
@@ -166,7 +172,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
               <button
                 type="button"
                 onClick={() => setIsReturnModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs cursor-pointer"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Check-In / Return Device</span>
@@ -177,7 +183,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
       />
 
       {/* 2. Main Page Content */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Overdue Warning Alert */}
         {isOverdue && (
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 flex items-start gap-3 shadow-xs">
@@ -193,17 +199,12 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           </div>
         )}
 
-        {/* Loan Dossier Header Card */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+        {/* Loan Header Card */}
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
           {/* Top Badges */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
-              <Laptop className="w-3.5 h-3.5 text-neutral-600" />
-              <span>Loan Dossier</span>
-            </span>
-
             {/* Status Badge */}
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
               loan.status === 'returned'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : isOverdue
@@ -228,22 +229,11 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
             <button
               type="button"
               onClick={() => copyToClipboard(loan.serialNumber, 'Serial Number', 'hero-sn')}
-              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-lg border border-neutral-200 transition-colors cursor-pointer"
               title="Click to copy serial number"
             >
               <span>SN: {loan.serialNumber}</span>
               {copiedKey === 'hero-sn' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
-            </button>
-
-            {/* Loan ID Pill */}
-            <button
-              type="button"
-              onClick={() => copyToClipboard(loan.id, 'Loan ID', 'hero-id')}
-              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-500 hover:text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
-              title="Click to copy loan ID"
-            >
-              <span>ID: {loan.id.slice(0, 18)}...</span>
-              {copiedKey === 'hero-id' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
             </button>
           </div>
 
@@ -262,18 +252,18 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                 {loan.courseOrClass && (
                   <span className="text-neutral-700">{loan.courseOrClass}</span>
                 )}
-                {asset?.location && (
+                {(asset?.location || stockItem?.location) && (
                   <span className="text-neutral-500 inline-flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                    {asset.location}
+                    {asset?.location || stockItem?.location}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Action Buttons & Quick Dates Panel */}
+            {/* Quick Dates Summary Pill */}
             <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-              <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 px-3 py-2 rounded-lg text-xs whitespace-nowrap">
+              <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 px-3 py-2 rounded-xl text-xs whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-neutral-500">Out:</span>
                   <span className="font-mono font-semibold text-neutral-800">{formatLoanDate(loan.borrowDate)}</span>
@@ -286,61 +276,44 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                   </span>
                 </div>
               </div>
-
-              <Link
-                href={`/assets/${loan.assetId}`}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg transition-colors"
-              >
-                <span>View Asset</span>
-                <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-              </Link>
-
-              {loan.status === 'active' && (
-                <button
-                  type="button"
-                  onClick={() => setIsReturnModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-2xs cursor-pointer"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Check-In Device</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
 
         {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Left Column (2/3 width): Details, Borrower, and Notes */}
           <div className="lg:col-span-2 space-y-6">
             {/* Card 1: Equipment Hardware Details */}
-            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
                   <Laptop className="w-4 h-4 text-blue-600" />
-                  <span>Equipment Hardware Details</span>
+                  <span>{stockItem && !asset ? 'Inventory Item Details' : 'Equipment Hardware Details'}</span>
                 </h3>
-                <Link
-                  href={`/assets/${loan.assetId}`}
-                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
-                >
-                  <span>Inspect Asset</span>
-                  <ExternalLink className="w-3 h-3" />
-                </Link>
+                {itemHref && (
+                  <Link
+                    href={itemHref}
+                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                  >
+                    <span>{inspectLabel}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1">
-                  <span className="text-neutral-400 font-medium block text-[11px]">Hardware Name</span>
+                  <span className="text-neutral-400 font-medium block text-[11px]">Item / Hardware Name</span>
                   <span className="font-bold text-neutral-900 text-sm">{loan.assetName}</span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-neutral-400 font-medium block text-[11px]">Serial Identifier</span>
+                  <span className="text-neutral-400 font-medium block text-[11px]">Serial / SKU Identifier</span>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(loan.serialNumber, 'Serial Number', 'card-sn')}
-                    className="inline-flex items-center gap-1 font-mono font-bold text-neutral-800 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-1 rounded-md transition-colors"
+                    className="inline-flex items-center gap-1 font-mono font-bold text-neutral-800 bg-neutral-100 hover:bg-neutral-200/80 px-2 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     <span>{loan.serialNumber}</span>
                     {copiedKey === 'card-sn' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
@@ -364,9 +337,29 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
 
                     <div className="space-y-1">
                       <span className="text-neutral-400 font-medium block text-[11px]">Operational Status</span>
-                      <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {asset.status === 'operational' ? 'Operational' : asset.status}
+                      <span
+                        className={`inline-flex items-center gap-1.5 font-semibold ${
+                          asset.status === 'operational'
+                            ? 'text-emerald-700'
+                            : asset.status === 'in_use'
+                            ? 'text-blue-700'
+                            : 'text-amber-700'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            asset.status === 'operational'
+                              ? 'bg-emerald-500'
+                              : asset.status === 'in_use'
+                              ? 'bg-blue-500'
+                              : 'bg-amber-500'
+                          }`}
+                        />
+                        {asset.status === 'operational'
+                          ? 'Operational'
+                          : asset.status === 'in_use'
+                          ? 'In Use'
+                          : 'In Repair'}
                       </span>
                     </div>
 
@@ -470,7 +463,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           {/* Right Column (1/3 width): Timeline & Actions */}
           <div className="space-y-6">
             {/* Timeline Card */}
-            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-4">
+            <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
               <div className="border-b border-neutral-100 pb-3">
                 <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-amber-600" />
@@ -499,7 +492,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                     {formatLoanDate(loan.expectedReturnDate)}
                   </div>
                   <span className={`text-[11px] font-medium mt-0.5 block ${isOverdue ? 'text-rose-600' : 'text-neutral-500'}`}>
-                    {isOverdue ? '⚠ Overdue past deadline' : 'Scheduled deadline'}
+                    {isOverdue ? 'Overdue past deadline' : 'Scheduled deadline'}
                   </span>
                 </div>
 
@@ -514,43 +507,6 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                     {loan.status === 'returned' ? 'Verified in lab inventory' : 'Currently in custody'}
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-3">
-              <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                Staff Quick Actions
-              </h3>
-
-              <div className="space-y-2">
-                {loan.status === 'active' && (
-                  <button
-                    type="button"
-                    onClick={() => setIsReturnModalOpen(true)}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-xs cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Check-In & Return Device</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(window.location.href, 'Dossier Link', 'share-link')}
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-xl transition-colors cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>{copiedKey === 'share-link' ? 'Link Copied!' : 'Copy Dossier Link'}</span>
-                </button>
-
-                <Link
-                  href="/loans"
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 transition-colors"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back to Loans Directory</span>
-                </Link>
               </div>
             </div>
           </div>
@@ -589,41 +545,6 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                 </div>
               </div>
 
-              {/* Quick Inspection Presets */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Quick Inspection Presets</span>
-                  </label>
-                  <span className="text-[10px] text-neutral-400">Click to insert note</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    '✓ Tested & Fully Functional',
-                    '✓ Power Adapter & Cables Returned',
-                    '✓ No Physical Damage',
-                    '⚠ Minor Surface Wear',
-                    '⚠ Requires Software Reset',
-                  ].map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => {
-                        setReturnNotes((prev) => {
-                          if (!prev.trim()) return chip;
-                          if (prev.includes(chip)) return prev;
-                          return `${prev}\n${chip}`;
-                        });
-                      }}
-                      className="text-[11px] font-medium px-2 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-colors cursor-pointer"
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Notes Textarea */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
@@ -644,14 +565,14 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
               <button
                 type="button"
                 onClick={() => setIsReturnModalOpen(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg cursor-pointer transition-colors shadow-2xs"
+                className="px-3.5 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl cursor-pointer transition-colors shadow-2xs"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmReturn}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg cursor-pointer transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl cursor-pointer transition-colors shadow-xs"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Confirm Return & Check-in</span>

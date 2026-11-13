@@ -25,7 +25,6 @@ import {
   User,
   Calendar,
   FileText,
-  Sparkles,
   Eye,
   Copy,
   Check,
@@ -192,6 +191,21 @@ export default function LoansPage() {
   };
 
   const detailAsset = selectedLoanDetails ? assets.find((a) => a.id === selectedLoanDetails.assetId) : null;
+  const detailStock = selectedLoanDetails
+    ? stock.find(
+        (s) =>
+          s.id === selectedLoanDetails.stockId ||
+          s.code === selectedLoanDetails.serialNumber ||
+          s.name === selectedLoanDetails.assetName
+      )
+    : null;
+  const detailHref = detailAsset
+    ? `/assets/${detailAsset.id}`
+    : detailStock
+    ? `/stock/${detailStock.id}`
+    : selectedLoanDetails?.assetId
+    ? `/assets/${selectedLoanDetails.assetId}`
+    : null;
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
@@ -220,7 +234,7 @@ export default function LoansPage() {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
         {/* Device Lending Banner */}
         <PageBanner
           eyebrow="Department of Computer Science · Device Loans"
@@ -697,7 +711,7 @@ export default function LoansPage() {
                           {transfer.transferredBy}
                         </td>
                         <td className="py-3.5 px-4 text-neutral-600 max-w-[220px] truncate">
-                          {transfer.reason || 'Laboratory workshop re-allocation'}
+                          {transfer.reason || '—'}
                         </td>
                         <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
@@ -750,15 +764,6 @@ export default function LoansPage() {
                         ? 'Overdue Loan'
                         : 'Active Check-Out'}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(selectedLoanDetails.id, 'Loan ID', 'loan-id')}
-                      className="text-[10px] text-neutral-400 font-mono hover:text-neutral-700 flex items-center gap-1"
-                      title="Copy Loan ID"
-                    >
-                      <span>ID: {selectedLoanDetails.id.slice(0, 8)}...</span>
-                      {copiedKey === 'loan-id' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                    </button>
                   </div>
                   <h3 className="font-bold text-base text-neutral-900 mt-0.5">
                     {selectedLoanDetails.assetName}
@@ -821,15 +826,17 @@ export default function LoansPage() {
                     </>
                   )}
                 </div>
-                <div className="pt-2 border-t border-neutral-200/60">
-                  <Link
-                    href={`/assets/${selectedLoanDetails.assetId}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
-                  >
-                    <span>Inspect Full Equipment Asset Dossier</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
+                {detailHref && (
+                  <div className="pt-2 border-t border-neutral-200/60">
+                    <Link
+                      href={detailHref}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                    >
+                      <span>{detailStock && !detailAsset ? 'Inspect Stock Item Details' : 'Inspect Equipment Asset Details'}</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Borrower Profile Section */}
@@ -999,10 +1006,14 @@ export default function LoansPage() {
 
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-                  Relocation Justification:
+                  Relocation Justification
                 </label>
-                <p className="text-xs text-neutral-700 bg-neutral-50 p-3 rounded-lg border border-neutral-200">
-                  {selectedTransferDetails.reason || 'Routine laboratory workshop reallocation.'}
+                <p className="text-xs text-neutral-700 bg-neutral-50 p-3 rounded-xl border border-neutral-200">
+                  {selectedTransferDetails.reason ? (
+                    selectedTransferDetails.reason
+                  ) : (
+                    <span className="text-neutral-400 italic">No relocation notes recorded.</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -1083,41 +1094,6 @@ export default function LoansPage() {
                       Out: <strong className="text-neutral-800">{returningLoan.borrowDate}</strong>
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Quick Inspection Presets */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Quick Inspection Presets</span>
-                  </label>
-                  <span className="text-[10px] text-neutral-400">Click to insert note</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    '✓ Tested & Fully Functional',
-                    '✓ Power Adapter & Cables Returned',
-                    '✓ No Physical Damage',
-                    '⚠ Minor Surface Wear',
-                    '⚠ Requires Software Reset',
-                  ].map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => {
-                        setReturnNotes((prev) => {
-                          if (!prev.trim()) return chip;
-                          if (prev.includes(chip)) return prev;
-                          return `${prev}\n${chip}`;
-                        });
-                      }}
-                      className="text-[11px] font-medium px-2 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-colors cursor-pointer active:scale-98"
-                    >
-                      {chip}
-                    </button>
-                  ))}
                 </div>
               </div>
 

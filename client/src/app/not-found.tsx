@@ -218,7 +218,7 @@ export default function NotFound() {
         <div className="space-y-2 pt-2">
           <Link
             href="/locations"
-            className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+            className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs"
           >
             <MapPin className="w-3.5 h-3.5 text-emerald-400" />
             <span>View All Classrooms & Laboratories</span>
@@ -226,7 +226,7 @@ export default function NotFound() {
 
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 w-full py-2 px-4 bg-white hover:bg-neutral-50 text-neutral-700 text-xs font-semibold rounded-lg border border-neutral-200 transition-colors"
+            className="inline-flex items-center justify-center gap-2 w-full py-2 px-4 bg-white hover:bg-neutral-50 text-neutral-700 text-xs font-semibold rounded-xl border border-neutral-200 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Return to Department Overview</span>
