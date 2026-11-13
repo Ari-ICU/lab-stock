@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { LabThumbnail } from '@/components/LabThumbnail';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
@@ -446,19 +447,13 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
               </div>
 
               <div className="w-full aspect-video rounded border border-neutral-200 bg-neutral-50 overflow-hidden flex items-center justify-center">
-                {item.imageUrl ? (
-                  <img
-                    src={getOptimizedImageUrl(item.imageUrl, 'card')}
-                    alt={item.name}
-                    decoding="async"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-neutral-400">
-                    <Cable className="w-10 h-10" />
-                    <span className="text-xs">No image provided</span>
-                  </div>
-                )}
+                <LabThumbnail
+                  src={item.imageUrl}
+                  alt={item.name}
+                  size="card"
+                  fallbackType="item"
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               {/* Barcode Tag Box */}
@@ -637,7 +632,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   <span className="font-bold text-neutral-900 font-mono text-xs bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200/80">
                     {totalAllocated} {item.unit || 'units'} Deployed
                   </span>
-                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-neutral-900 text-white shadow-2xs font-mono">
+                  <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 font-mono">
                     {allocations.length} {allocations.length === 1 ? 'room' : 'rooms'}
                   </span>
                 </div>

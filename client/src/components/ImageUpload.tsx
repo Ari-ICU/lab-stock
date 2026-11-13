@@ -114,47 +114,44 @@ export function ImageUpload({ value, onChange, label = 'Product Image' }: ImageU
           />
         </div>
       ) : value ? (
-        <div className="flex items-center gap-3 p-2.5 bg-neutral-50 border border-neutral-200 rounded">
-          <div className="w-14 h-14 rounded border border-neutral-200 bg-white overflow-hidden shrink-0 flex items-center justify-center">
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="w-full aspect-video bg-white border-b border-neutral-200 overflow-hidden flex items-center justify-center">
             <img
               src={value}
               alt="Uploaded preview"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-neutral-900 truncate">
-              Image ready
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <span className="text-xs font-medium text-neutral-700 truncate">
+              Image attached
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={onFileInputChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-2.5 py-1 text-xs font-medium bg-white border border-neutral-300 hover:bg-neutral-100 rounded text-neutral-700 flex items-center gap-1 cursor-pointer transition-colors"
+                title="Change Image"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Change</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                className="p-1 text-rose-600 hover:bg-rose-50 rounded cursor-pointer transition-colors"
+                title="Remove Image"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div className="text-[11px] text-neutral-500 mt-0.5">
-              Click change to pick another image
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              onChange={onFileInputChange}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 py-1.5 text-xs font-medium bg-white border border-neutral-300 hover:bg-neutral-100 rounded text-neutral-700 flex items-center gap-1 cursor-pointer transition-colors"
-              title="Change Image"
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>Change</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange('')}
-              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded cursor-pointer transition-colors"
-              title="Remove Image"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       ) : (
