@@ -16,6 +16,7 @@ interface DatePickerProps {
   onChange: (date: string) => void;
   placeholder?: string;
   className?: string;
+  buttonClassName?: string;
   disabled?: boolean;
   align?: 'left' | 'right' | 'auto';
   openDirection?: 'up' | 'down' | 'auto';
@@ -43,6 +44,7 @@ export function DatePicker({
   onChange,
   placeholder = 'Select date (YYYY-MM-DD)',
   className = '',
+  buttonClassName = '',
   disabled = false,
   align = 'auto',
   openDirection = 'auto',
@@ -444,7 +446,7 @@ export function DatePicker({
           }
           setIsOpen(!isOpen);
         }}
-        className={`w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-xs font-mono text-neutral-900 bg-white border border-neutral-300 rounded hover:border-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors cursor-pointer select-none ${
+        className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 text-xs font-mono text-neutral-900 bg-white border border-neutral-300 rounded-xl hover:border-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors cursor-pointer select-none shadow-2xs ${buttonClassName} ${
           disabled ? 'opacity-50 cursor-not-allowed bg-neutral-100' : ''
         }`}
       >

@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
+import { DatePicker } from '@/components/DatePicker';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import {
@@ -541,11 +542,10 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                     <label className="block text-xs font-bold text-neutral-800 mb-1.5">
                       Effective Date
                     </label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={transferDate}
-                      onChange={(e) => setTransferDate(e.target.value)}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs font-mono shadow-2xs"
+                      onChange={setTransferDate}
+                      placeholder="Select effective date"
                     />
                   </div>
                 </div>

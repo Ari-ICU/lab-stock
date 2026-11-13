@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
+import { DatePicker } from '@/components/DatePicker';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import {
@@ -140,13 +141,6 @@ function CheckoutContent({
   const [loanNotes, setLoanNotes] = useState('');
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Set preset return dates
-  const setPresetDays = (days: number) => {
-    const d = new Date(borrowDate || new Date());
-    d.setDate(d.getDate() + days);
-    setExpectedReturnDate(d.toISOString().split('T')[0]);
-  };
 
   // Active loans for this specific item
   const activeItemLoans = useMemo(() => {
@@ -483,40 +477,19 @@ function CheckoutContent({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={1}
-                      max={Math.max(1, currentStockItem.quantity)}
-                      value={quantity}
-                      disabled={currentStockItem.quantity <= 0}
-                      onChange={(e) =>
-                        setQuantity(
-                          Math.max(1, Math.min(currentStockItem.quantity, parseInt(e.target.value) || 1))
-                        )
-                      }
-                      className="w-32 bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-sm font-mono font-bold shadow-2xs"
-                    />
-
-                    {/* Quick quantity preset pills */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {[1, 2, 5, 10].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          disabled={preset > currentStockItem.quantity}
-                          onClick={() => setQuantity(preset)}
-                          className={`text-xs font-mono font-semibold px-2.5 py-2 rounded-xl border transition-colors cursor-pointer ${
-                            quantity === preset
-                              ? 'bg-neutral-900 text-white border-neutral-900 shadow-2xs'
-                              : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border-neutral-200 disabled:opacity-30'
-                          }`}
-                        >
-                          +{preset}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={Math.max(1, currentStockItem.quantity)}
+                    value={quantity}
+                    disabled={currentStockItem.quantity <= 0}
+                    onChange={(e) =>
+                      setQuantity(
+                        Math.max(1, Math.min(currentStockItem.quantity, parseInt(e.target.value) || 1))
+                      )
+                    }
+                    className="w-full sm:w-48 bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-sm font-mono font-bold shadow-2xs"
+                  />
                   <p className="text-[10px] text-neutral-400 mt-1">
                     Checking out {quantity} {currentStockItem.unit || 'units'} will deduct them from central stock until returned.
                   </p>
@@ -599,44 +572,22 @@ function CheckoutContent({
                   <label className="block text-xs font-bold text-neutral-800 mb-1.5">
                     Check-Out Date
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={borrowDate}
-                    onChange={(e) => setBorrowDate(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs font-mono shadow-2xs"
+                    onChange={setBorrowDate}
+                    placeholder="Select check-out date"
                   />
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-neutral-800">
-                      Expected Return Date
-                    </label>
-                    <span className="text-[10px] text-neutral-400">Quick presets</span>
-                  </div>
-                  <input
-                    type="date"
+                  <label className="block text-xs font-bold text-neutral-800 mb-1.5">
+                    Expected Return Date
+                  </label>
+                  <DatePicker
                     value={expectedReturnDate}
-                    onChange={(e) => setExpectedReturnDate(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs font-mono shadow-2xs mb-1.5"
+                    onChange={setExpectedReturnDate}
+                    placeholder="Select expected return date"
                   />
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {[
-                      { label: '3 Days', days: 3 },
-                      { label: '1 Week', days: 7 },
-                      { label: '2 Weeks', days: 14 },
-                      { label: '1 Month', days: 30 },
-                    ].map((p) => (
-                      <button
-                        key={p.label}
-                        type="button"
-                        onClick={() => setPresetDays(p.days)}
-                        className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-colors cursor-pointer"
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
 
