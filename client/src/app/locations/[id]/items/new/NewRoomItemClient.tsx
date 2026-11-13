@@ -8,9 +8,10 @@ import { Dropdown } from '@/components/Dropdown';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { AssetGroup } from '@/types';
-import { Boxes, Microscope, PenLine, Plus, ArrowLeft, Layers, ClipboardList } from 'lucide-react';
+import { Boxes, Microscope, PenLine, Plus, ArrowLeft, Layers, ClipboardList, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { categoryGroupOptions, findLocation } from '../shared';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { LabThumbnail } from '@/components/LabThumbnail';
 
 type Source = 'stock' | 'asset' | 'custom';
 
@@ -202,19 +203,20 @@ export default function NewRoomItemClient({ id }: { id: string }) {
   };
 
   const inputCls =
-    'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded focus:outline-none focus:border-neutral-900';
-  const dropdownBtn = 'w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded';
+    'w-full bg-white border border-neutral-200 text-neutral-900 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400';
+  const dropdownBtn =
+    'w-full justify-between bg-white border border-neutral-200 text-neutral-900 text-xs px-3 py-2 rounded-lg hover:border-neutral-300 transition-colors';
 
-  const sourceTabs: { key: Source; label: string; icon: React.ReactNode }[] = [
-    { key: 'stock', label: 'Central Stock', icon: <Boxes className="w-3.5 h-3.5" /> },
-    { key: 'asset', label: 'Central Assets', icon: <Microscope className="w-3.5 h-3.5" /> },
-    { key: 'custom', label: 'Custom Item', icon: <PenLine className="w-3.5 h-3.5" /> },
+  const sourceTabs: { key: Source; label: string; hint: string; icon: React.ReactNode }[] = [
+    { key: 'stock', label: 'Central Stock', hint: 'Allocate consumables & furniture', icon: <Boxes className="w-4 h-4" /> },
+    { key: 'asset', label: 'Central Assets', hint: 'Assign serialized hardware', icon: <Microscope className="w-4 h-4" /> },
+    { key: 'custom', label: 'Custom Item', hint: 'Create & register new stock', icon: <PenLine className="w-4 h-4" /> },
   ];
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title={`Add Equipment to ${loc.room}`}
+        title={`Allocate Equipment to ${loc.room}`}
         subtitle={`${loc.name} • ${loc.building}`}
         backHref={backHref}
         backLabel={loc.room}
@@ -223,112 +225,181 @@ export default function NewRoomItemClient({ id }: { id: string }) {
           <div className="flex items-center gap-2">
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-lg text-xs font-medium transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               form="new-room-item-form"
-              disabled={submitting || !isAllowed}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+              disabled={submitting || !isAllowed || exceedsStock}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{submitting ? 'Saving...' : `Add to ${loc.room}`}</span>
+              <span>{submitting ? 'Allocating...' : `Allocate to ${loc.room}`}</span>
             </button>
           </div>
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 w-full">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full max-w-6xl mx-auto">
         {!isAllowed && (
-          <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900">
-            You have read-only access to {loc.room}. Only assigned operators or administrators can add equipment.
+          <div className="mb-6 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>You have read-only access to {loc.room}. Only assigned operators or administrators can add equipment.</span>
           </div>
         )}
 
-        <form id="new-room-item-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <form id="new-room-item-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: form */}
           <div className="lg:col-span-8 space-y-6">
             {/* Source */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                <Layers className="w-4 h-4 text-neutral-700" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Source</h3>
+            <div className="bg-white border border-neutral-200/80 rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Source</h3>
+                </div>
+                <span className="text-[11px] text-neutral-400">Step 1 of 2</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                {sourceTabs.map((t) => (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => {
-                      setSource(t.key);
-                      setStockCode('');
-                      setAssetSerial('');
-                      resetFields();
-                    }}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded border text-xs font-semibold transition-colors cursor-pointer ${
-                      source === t.key
-                        ? 'bg-neutral-900 text-white border-neutral-900'
-                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
-                    }`}
-                  >
-                    {t.icon}
-                    {t.label}
-                  </button>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {sourceTabs.map((t) => {
+                  const active = source === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => {
+                        setSource(t.key);
+                        setStockCode('');
+                        setAssetSerial('');
+                        resetFields();
+                      }}
+                      className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        active
+                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                          : 'bg-neutral-50/50 text-neutral-700 border-neutral-200 hover:bg-white hover:border-neutral-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 text-xs font-bold">
+                        <span className={active ? 'text-emerald-400' : 'text-neutral-500'}>{t.icon}</span>
+                        <span>{t.label}</span>
+                      </div>
+                      <span className={`text-[10px] ${active ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                        {t.hint}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {source === 'stock' && (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">Select item from Central Stock *</label>
-                  <Dropdown
-                    value={stockCode}
-                    options={stockOptions}
-                    onChange={handleSelectStock}
-                    placeholder="-- Choose item from /stock --"
-                    searchable
-                    searchPlaceholder="Search name or SKU..."
-                    className="w-full"
-                    buttonClassName={dropdownBtn}
-                  />
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
+                      Select Item from Central Stock <span className="text-rose-500">*</span>
+                    </label>
+                    <Dropdown
+                      value={stockCode}
+                      options={stockOptions}
+                      onChange={handleSelectStock}
+                      placeholder="-- Choose item from Central Stock --"
+                      searchable
+                      searchPlaceholder="Search name or SKU..."
+                      className="w-full"
+                      buttonClassName={dropdownBtn}
+                    />
+                  </div>
+
+                  {selectedStock && (
+                    <div className="p-3 bg-neutral-50 border border-neutral-200/80 rounded-xl flex items-center gap-3">
+                      <LabThumbnail
+                        src={selectedStock.imageUrl}
+                        alt={selectedStock.name}
+                        size="thumb"
+                        fallbackType="item"
+                        className="w-10 h-10 rounded-lg border border-neutral-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-neutral-900 truncate">{selectedStock.name}</div>
+                        <div className="text-[11px] text-neutral-500 font-mono truncate">
+                          SKU: {selectedStock.code} • {selectedStock.category}
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 whitespace-nowrap">
+                        {selectedStock.quantity} {selectedStock.unit} avail
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
               {source === 'asset' && (
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">Select device from Central Assets *</label>
-                  <Dropdown
-                    value={assetSerial}
-                    options={assetOptions}
-                    onChange={handleSelectAsset}
-                    placeholder="-- Choose device from /assets --"
-                    searchable
-                    searchPlaceholder="Search name or serial..."
-                    className="w-full"
-                    buttonClassName={dropdownBtn}
-                  />
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
+                      Select Device from Hardware Assets <span className="text-rose-500">*</span>
+                    </label>
+                    <Dropdown
+                      value={assetSerial}
+                      options={assetOptions}
+                      onChange={handleSelectAsset}
+                      placeholder="-- Choose device from Hardware Assets --"
+                      searchable
+                      searchPlaceholder="Search name or serial..."
+                      className="w-full"
+                      buttonClassName={dropdownBtn}
+                    />
+                  </div>
+
+                  {selectedAsset && (
+                    <div className="p-3 bg-neutral-50 border border-neutral-200/80 rounded-xl flex items-center gap-3">
+                      <LabThumbnail
+                        src={selectedAsset.imageUrl}
+                        alt={selectedAsset.name}
+                        size="thumb"
+                        fallbackType="item"
+                        className="w-10 h-10 rounded-lg border border-neutral-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-neutral-900 truncate">{selectedAsset.name}</div>
+                        <div className="text-[11px] text-neutral-500 font-mono truncate">
+                          SN: {selectedAsset.serialNumber} • {selectedAsset.model}
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-neutral-900 text-white shrink-0 whitespace-nowrap">
+                        {selectedAsset.totalUnits ?? 1} {selectedAsset.unitType || 'Units'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
               {source === 'custom' && (
-                <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded px-2.5 py-1.5 flex items-center gap-1.5">
+                <p className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-lg px-3 py-2 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Custom items will be added to this room and automatically registered in Central Stock (<code className="font-mono font-semibold">/stock</code>).</span>
+                  <span>
+                    Custom items will be added to this room and automatically registered in Central Stock (<code className="font-mono font-semibold">/stock</code>).
+                  </span>
                 </p>
               )}
             </div>
 
             {/* Details */}
-            <div className="bg-white border border-neutral-200 rounded p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                <ClipboardList className="w-4 h-4 text-neutral-700" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details</h3>
+            <div className="bg-white border border-neutral-200/80 rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details &amp; Quantities</h3>
+                </div>
+                <span className="text-[11px] text-neutral-400">Step 2 of 2</span>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-800 mb-1">Item / Equipment Name *</label>
+                <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
+                  Item / Equipment Name <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={name}
@@ -340,7 +411,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">Category Group</label>
+                  <label className="block text-xs font-semibold text-neutral-800 mb-1.5">Category Group</label>
                   <Dropdown
                     value={group}
                     options={categoryGroupOptions}
@@ -350,13 +421,13 @@ export default function NewRoomItemClient({ id }: { id: string }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">Unit</label>
+                  <label className="block text-xs font-semibold text-neutral-800 mb-1.5">Unit</label>
                   <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="pcs, sets, units" className={inputCls} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-800 mb-1">Specification / Model</label>
+                <label className="block text-xs font-semibold text-neutral-800 mb-1.5">Specification / Model</label>
                 <input
                   type="text"
                   value={brandSpec}
@@ -366,31 +437,53 @@ export default function NewRoomItemClient({ id }: { id: string }) {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">Working Units</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={qtyWorking}
-                    onChange={(e) => setQtyWorking(Math.max(0, parseInt(e.target.value) || 0))}
-                    className={`${inputCls} font-mono font-bold`}
-                  />
+              <div className="p-3.5 bg-neutral-50/80 border border-neutral-200/70 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-600">Quantity &amp; Condition</span>
+                  <span className="text-[11px] font-mono font-bold text-neutral-900 bg-white px-2 py-0.5 rounded border border-neutral-200">
+                    Total: {totalAllocated} {unit || 'pcs'}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-800 mb-1">Broken Units</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={qtyBroken}
-                    onChange={(e) => setQtyBroken(Math.max(0, parseInt(e.target.value) || 0))}
-                    className={`${inputCls} font-mono`}
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800 mb-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>Working Units</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={qtyWorking}
+                      onChange={(e) => setQtyWorking(Math.max(0, parseInt(e.target.value) || 0))}
+                      className={`${inputCls} font-mono font-bold`}
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800 mb-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      <span>Broken Units</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={qtyBroken}
+                      onChange={(e) => setQtyBroken(Math.max(0, parseInt(e.target.value) || 0))}
+                      className={`${inputCls} font-mono`}
+                    />
+                  </div>
                 </div>
+
+                {exceedsStock && (
+                  <p className="text-[11px] text-rose-700 font-medium flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Requested {totalAllocated} {unit} exceeds available Central Stock ({selectedStock?.quantity} {selectedStock?.unit}).</span>
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-800 mb-1">Placement / Remarks</label>
+                <label className="block text-xs font-semibold text-neutral-800 mb-1.5">Placement / Remarks</label>
                 <textarea
                   rows={3}
                   value={remarks}
@@ -403,50 +496,71 @@ export default function NewRoomItemClient({ id }: { id: string }) {
           </div>
 
           {/* Right: summary */}
-          <div className="lg:col-span-4 space-y-4">
-            <div className="bg-white border border-neutral-200 rounded p-5 space-y-3 text-xs lg:sticky lg:top-0">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 border-b border-neutral-100 pb-3">
-                Allocation Summary
-              </h3>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Destination</span>
-                <span className="font-semibold text-neutral-900">{loc.room}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Source</span>
-                <span className="font-semibold text-neutral-900">
-                  {source === 'stock' ? 'Central Stock' : source === 'asset' ? 'Central Assets' : 'Custom'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Total to allocate</span>
-                <span className="font-mono font-bold text-neutral-900">
-                  {totalAllocated} {unit}
+          <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-0">
+            <div className="bg-white border border-neutral-200/80 rounded-xl p-5 shadow-2xs space-y-4 text-xs">
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                  Allocation Summary
+                </h3>
+                <span className="font-mono text-[10px] font-bold bg-neutral-900 text-white px-2 py-0.5 rounded">
+                  {loc.room}
                 </span>
               </div>
 
+              <div className="p-3 bg-neutral-50 border border-neutral-200/70 rounded-lg space-y-1">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-neutral-400">
+                  <MapPin className="w-3 h-3 text-emerald-600" />
+                  <span>Destination Room</span>
+                </div>
+                <div className="font-semibold text-neutral-900">{loc.name}</div>
+                <div className="text-[11px] text-neutral-500">{loc.building} • Floor {loc.floor}</div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center py-1 border-b border-neutral-100">
+                  <span className="text-neutral-500">Source</span>
+                  <span className="font-semibold text-neutral-900">
+                    {source === 'stock' ? 'Central Stock' : source === 'asset' ? 'Central Assets' : 'Custom Item'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-neutral-100">
+                  <span className="text-neutral-500">Working / Broken</span>
+                  <span className="font-mono text-neutral-800">
+                    <span className="text-emerald-700 font-bold">{qtyWorking}</span>
+                    {' / '}
+                    <span className={qtyBroken > 0 ? 'text-rose-600 font-bold' : 'text-neutral-400'}>{qtyBroken}</span>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-neutral-500">Total to allocate</span>
+                  <span className="font-mono font-bold text-neutral-900 text-sm">
+                    {totalAllocated} {unit}
+                  </span>
+                </div>
+              </div>
+
               {source === 'stock' && selectedStock && (
-                <div className={`p-3 rounded border ${exceedsStock ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                <div className={`p-3 rounded-lg border ${exceedsStock ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50/80 border-emerald-200'}`}>
                   <div className="flex justify-between">
                     <span className="text-neutral-600">Central stock now</span>
-                    <span className="font-mono font-bold">{selectedStock.quantity}</span>
+                    <span className="font-mono font-bold text-neutral-900">{selectedStock.quantity} {selectedStock.unit}</span>
                   </div>
                   <div className="flex justify-between mt-1">
                     <span className="text-neutral-600">After allocation</span>
                     <span className={`font-mono font-bold ${exceedsStock ? 'text-rose-700' : 'text-emerald-700'}`}>
-                      {selectedStock.quantity - totalAllocated}
+                      {selectedStock.quantity - totalAllocated} {selectedStock.unit}
                     </span>
                   </div>
                   {exceedsStock && (
-                    <p className="text-[11px] text-rose-700 mt-2">Not enough units in Central Stock.</p>
+                    <p className="text-[11px] text-rose-700 mt-2 font-medium">Not enough units in Central Stock.</p>
                   )}
                 </div>
               )}
 
               {source === 'custom' && (
-                <div className="p-3 rounded border bg-emerald-50/80 border-emerald-200 text-emerald-950">
+                <div className="p-3 rounded-lg border bg-emerald-50/80 border-emerald-200 text-emerald-950">
                   <div className="font-semibold text-emerald-900 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Auto-register in Central Stock</span>
                   </div>
                   <p className="text-[11px] text-emerald-800 mt-1 leading-relaxed">
@@ -455,12 +569,23 @@ export default function NewRoomItemClient({ id }: { id: string }) {
                 </div>
               )}
 
-              <Link
-                href={backHref}
-                className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to {loc.room}
-              </Link>
+              <div className="pt-1 space-y-2">
+                <button
+                  type="submit"
+                  disabled={submitting || !isAllowed || exceedsStock}
+                  className="w-full py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{submitting ? 'Allocating...' : `Allocate to ${loc.room}`}</span>
+                </button>
+
+                <Link
+                  href={backHref}
+                  className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to {loc.room}
+                </Link>
+              </div>
             </div>
           </div>
         </form>

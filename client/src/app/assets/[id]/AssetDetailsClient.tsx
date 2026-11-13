@@ -666,54 +666,49 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
           {/* Right Col: Identity & Tagging Sidebar */}
           <div className="flex flex-col gap-6">
             {/* Asset Tag & Serial Card */}
-            <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
-                  <Tag className="w-4 h-4 text-neutral-700" />
-                  Asset Tag & Serial
+            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <Tag className="w-4 h-4 text-neutral-700" />
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                  Asset Tag &amp; Serial
                 </span>
+              </div>
+
+              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] uppercase font-semibold text-neutral-400">
+                    Registered Serial Number
+                  </div>
+                  <div className="text-sm font-mono font-bold tracking-wide text-neutral-900 truncate mt-0.5">
+                    {asset.serialNumber}
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={handleCopySerial}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded text-neutral-700 cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-neutral-100 border border-neutral-200 rounded text-neutral-700 cursor-pointer transition-colors shrink-0 shadow-2xs"
                 >
                   {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
 
-              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-center">
-                <div className="text-[10px] uppercase font-semibold text-neutral-400 mb-0.5">
-                  Registered Serial Number
-                </div>
-                <div className="text-sm font-mono font-bold tracking-wide text-neutral-900">
-                  {asset.serialNumber}
-                </div>
-              </div>
-
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-neutral-100">
-                  <span className="text-neutral-500">Lab Custodian:</span>
+                <div className="flex justify-between py-1.5 border-b border-neutral-100">
+                  <span className="text-neutral-500">Lab Custodian</span>
                   <span className="font-semibold text-neutral-900">Dr. Heng Sovannarith</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-neutral-100">
-                  <span className="text-neutral-500">Primary Technician:</span>
+                <div className="flex justify-between py-1.5 border-b border-neutral-100">
+                  <span className="text-neutral-500">Primary Technician</span>
                   <span className="font-medium text-neutral-800">Thoeurn Ratha</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-neutral-100">
-                  <span className="text-neutral-500">Security Group:</span>
-                  <span className="font-medium text-neutral-800">Engineering Block A</span>
+                <div className="flex justify-between py-1.5">
+                  <span className="text-neutral-500">Assigned Facility</span>
+                  <span className="font-medium text-neutral-800 text-right truncate max-w-[180px]" title={asset.location}>
+                    {asset.location}
+                  </span>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={handleCopySerial}
-                className="w-full py-2 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-neutral-800 rounded text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-neutral-500" />}
-                <span>{copied ? 'Serial Copied!' : 'Copy Serial Tag'}</span>
-              </button>
             </div>
 
             {/* Quick Actions Panel */}
