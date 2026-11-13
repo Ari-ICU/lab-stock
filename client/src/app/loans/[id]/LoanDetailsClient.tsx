@@ -31,6 +31,19 @@ import {
   Share2,
 } from 'lucide-react';
 
+function formatLoanDate(value?: string | null): string {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value.slice(0, 10);
+  }
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export default function LoanDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
@@ -235,48 +248,41 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           </div>
 
           {/* Main Content */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-            <div className="min-w-0">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pt-1">
+            <div className="min-w-0 space-y-1.5">
               <h2 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
                 {loan.assetName}
               </h2>
-              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
-                <span className="text-neutral-900 font-semibold flex items-center gap-1">
-                  <User className="w-3.5 h-3.5 text-neutral-400" />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-600 font-medium">
+                <span className="text-neutral-900 font-semibold inline-flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                   {loan.borrowerName} ({loan.borrowerRole})
                 </span>
-                <span className="text-neutral-300">·</span>
                 <span className="font-mono text-neutral-500">{loan.borrowerContact}</span>
                 {loan.courseOrClass && (
-                  <>
-                    <span className="text-neutral-300">·</span>
-                    <span className="text-neutral-700">{loan.courseOrClass}</span>
-                  </>
+                  <span className="text-neutral-700">{loan.courseOrClass}</span>
                 )}
                 {asset?.location && (
-                  <>
-                    <span className="text-neutral-300">·</span>
-                    <span className="text-neutral-500 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-neutral-400" />
-                      {asset.location}
-                    </span>
-                  </>
+                  <span className="text-neutral-500 inline-flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    {asset.location}
+                  </span>
                 )}
               </div>
             </div>
 
             {/* Action Buttons & Quick Dates Panel */}
             <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-              <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 px-3 py-2 rounded-lg text-xs">
+              <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 px-3 py-2 rounded-lg text-xs whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
                   <span className="text-neutral-500">Out:</span>
-                  <span className="font-mono font-semibold text-neutral-800">{loan.borrowDate}</span>
+                  <span className="font-mono font-semibold text-neutral-800">{formatLoanDate(loan.borrowDate)}</span>
                 </div>
                 <span className="text-neutral-300">|</span>
                 <div className="flex items-center gap-1.5">
                   <span className="text-neutral-500">Due:</span>
                   <span className={`font-mono font-semibold ${isOverdue ? 'text-rose-600' : 'text-emerald-700'}`}>
-                    {loan.expectedReturnDate}
+                    {formatLoanDate(loan.expectedReturnDate)}
                   </span>
                 </div>
               </div>
@@ -478,7 +484,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                     Check-Out Date
                   </span>
                   <div className="text-sm font-bold text-neutral-900 font-mono mt-0.5">
-                    {loan.borrowDate}
+                    {formatLoanDate(loan.borrowDate)}
                   </div>
                   <span className="text-[11px] text-neutral-500 mt-0.5 block">
                     Issued to borrower
@@ -490,7 +496,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                     Due Return Date
                   </span>
                   <div className={`text-sm font-bold font-mono mt-0.5 ${isOverdue ? 'text-rose-600' : 'text-neutral-900'}`}>
-                    {loan.expectedReturnDate}
+                    {formatLoanDate(loan.expectedReturnDate)}
                   </div>
                   <span className={`text-[11px] font-medium mt-0.5 block ${isOverdue ? 'text-rose-600' : 'text-neutral-500'}`}>
                     {isOverdue ? '⚠ Overdue past deadline' : 'Scheduled deadline'}
@@ -502,7 +508,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
                     Actual Return Date
                   </span>
                   <div className="text-sm font-bold text-emerald-700 font-mono mt-0.5">
-                    {loan.actualReturnDate || 'Pending Return'}
+                    {loan.actualReturnDate ? formatLoanDate(loan.actualReturnDate) : 'Pending Return'}
                   </div>
                   <span className="text-[11px] text-neutral-500 mt-0.5 block">
                     {loan.status === 'returned' ? 'Verified in lab inventory' : 'Currently in custody'}

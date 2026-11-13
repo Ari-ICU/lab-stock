@@ -26,6 +26,19 @@ import {
   Building,
 } from 'lucide-react';
 
+function formatTransferDate(value?: string | null): string {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value.slice(0, 10);
+  }
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export default function TransferDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
@@ -107,7 +120,7 @@ export default function TransferDetailsClient({ id: propId }: { id?: string }) {
       {/* Top Header */}
       <Header
         title="Equipment Relocation Log"
-        subtitle={`${transfer.assetName} • SN: ${transfer.serialNumber} • Movement Date: ${transfer.transferDate}`}
+        subtitle={`${transfer.assetName} • SN: ${transfer.serialNumber} • Movement Date: ${formatTransferDate(transfer.transferDate)}`}
         backHref="/loans?tab=transfers"
         backLabel="Relocation Logs"
         actionLabel={asset ? 'Inspect Asset Dossier' : undefined}
@@ -282,7 +295,7 @@ export default function TransferDetailsClient({ id: propId }: { id?: string }) {
                   <Calendar className="w-3.5 h-3.5 text-neutral-400" />
                   <span>Movement Date:</span>
                 </span>
-                <span className="font-mono font-bold text-neutral-900">{transfer.transferDate}</span>
+                <span className="font-mono font-bold text-neutral-900">{formatTransferDate(transfer.transferDate)}</span>
               </div>
 
               <div className="flex items-center justify-between py-1.5 border-b border-neutral-100">

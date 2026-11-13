@@ -374,7 +374,7 @@ export default function LocationsPage() {
                 {/* 1. Card Header with Room Badge, Type, Capacity, and Actions */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2.5 py-1 rounded-md shadow-2xs">
+                    <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-900 border border-neutral-200 px-2.5 py-1 rounded-md">
                       {loc.room}
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-700 bg-neutral-100 border border-neutral-200 px-2 py-1 rounded-md">
@@ -446,7 +446,9 @@ export default function LocationsPage() {
                       <div className="text-xs font-bold text-neutral-900 truncate">
                         {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
                       </div>
-                      <div className="text-[10px] text-neutral-500">{loc.totalStockUnits} units</div>
+                      <div className="text-[10px] text-neutral-500">
+                        {loc.totalStockUnits} {loc.totalStockUnits === 1 ? 'unit' : 'units'}
+                      </div>
                     </div>
                   </Link>
 
@@ -462,7 +464,9 @@ export default function LocationsPage() {
                       <div className="text-xs font-bold text-neutral-900 truncate">
                         {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
                       </div>
-                      <div className="text-[10px] text-neutral-500">{loc.totalHardwareUnits} units</div>
+                      <div className="text-[10px] text-neutral-500">
+                        {loc.totalHardwareUnits} {loc.totalHardwareUnits === 1 ? 'unit' : 'units'}
+                      </div>
                     </div>
                   </Link>
                 </div>
@@ -492,12 +496,13 @@ export default function LocationsPage() {
 
                 {/* 5. Card Footer: Action Link */}
                 <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-neutral-400 font-mono">
-                    Room: {loc.room}
+                  <span className="text-[11px] text-neutral-500 font-medium">
+                    {loc.totalStockUnits + loc.totalHardwareUnits}{' '}
+                    {loc.totalStockUnits + loc.totalHardwareUnits === 1 ? 'total unit' : 'total units'}
                   </span>
                   <Link
                     href={`/locations/${loc.id}`}
-                    className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200 hover:border-neutral-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   >
                     <span>View Room Fleet</span>
                     <ArrowRight className="w-3.5 h-3.5" />

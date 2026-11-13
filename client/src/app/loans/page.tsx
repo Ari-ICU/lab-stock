@@ -38,6 +38,19 @@ import {
 } from 'lucide-react';
 import { MockLoan, MockTransfer } from '@/types';
 
+function formatLoanDate(value?: string | null): string {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value.slice(0, 10);
+  }
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export default function LoansPage() {
   const router = useRouter();
   const { user, canManageLocation } = useAuth();
@@ -377,16 +390,16 @@ export default function LoansPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[840px]">
+                <table className="w-full text-left text-xs min-w-[960px]">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
-                      <th className="py-3 px-4">Equipment & Serial</th>
-                      <th className="py-3 px-4">Borrower Details</th>
+                      <th className="py-3 px-4 min-w-[240px]">Equipment & Serial</th>
+                      <th className="py-3 px-4 min-w-[200px]">Borrower Details</th>
                       <th className="py-3 px-4">Course / Project</th>
-                      <th className="py-3 px-4">Check-Out Date</th>
-                      <th className="py-3 px-4">Due Return Date</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Check-Out Date</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Due Return Date</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
@@ -398,55 +411,59 @@ export default function LoansPage() {
                           onClick={() => router.push(`/loans/${loan.id}`)}
                           className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                         >
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5 flex-wrap">
-                              <span>{loan.assetName}</span>
+                          <td className="py-3.5 px-4 max-w-[280px]">
+                            <div className="font-semibold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5">
+                              <span className="truncate">{loan.assetName}</span>
+                              <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                            </div>
+                            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                               {loan.itemType === 'stock' || loan.stockId ? (
-                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                   Stock ({loan.quantity || 1} units)
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
                                   Device
                                 </span>
                               )}
-                              <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(loan.serialNumber, 'Serial Number', loan.id);
+                                }}
+                                className="inline-flex items-center gap-1 font-mono text-[10px] text-neutral-600 bg-neutral-100 hover:bg-neutral-200/80 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap"
+                                title="Click to copy identifier"
+                              >
+                                <span>{loan.itemType === 'stock' || loan.stockId ? 'SKU' : 'SN'}: {loan.serialNumber}</span>
+                                {copiedKey === loan.id ? (
+                                  <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                ) : (
+                                  <Copy className="w-2.5 h-2.5 text-neutral-400" />
+                                )}
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyToClipboard(loan.serialNumber, 'Serial Number', loan.id);
-                              }}
-                              className="mt-0.5 inline-flex items-center gap-1 font-mono text-[10px] text-neutral-600 bg-neutral-100 hover:bg-neutral-200/80 px-1.5 py-0.5 rounded transition-colors"
-                              title="Click to copy identifier"
-                            >
-                              <span>{loan.itemType === 'stock' || loan.stockId ? 'SKU' : 'SN'}: {loan.serialNumber}</span>
-                              {copiedKey === loan.id ? (
-                                <Check className="w-2.5 h-2.5 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-2.5 h-2.5 text-neutral-400" />
-                              )}
-                            </button>
                           </td>
                           <td className="py-3.5 px-4">
-                            <div className="font-semibold text-neutral-900">{loan.borrowerName}</div>
-                            <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 mt-0.5">
-                              <span className="inline-block bg-neutral-100 text-neutral-700 border border-neutral-200 px-1.5 py-0.2 rounded text-[10px] font-medium">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-neutral-900 whitespace-nowrap">{loan.borrowerName}</span>
+                              <span className="inline-block bg-neutral-100 text-neutral-600 border border-neutral-200 px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap">
                                 {loan.borrowerRole}
                               </span>
-                              <span className="truncate max-w-[150px]">{loan.borrowerContact}</span>
+                            </div>
+                            <div className="text-[11px] text-neutral-500 mt-0.5 truncate max-w-[220px]">
+                              {loan.borrowerContact}
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-neutral-600 max-w-xs truncate font-medium">
+                          <td className="py-3.5 px-4 text-neutral-600 max-w-[180px] truncate font-medium">
                             {loan.courseOrClass || 'General Lab Practical'}
                           </td>
-                          <td className="py-3.5 px-4 text-neutral-600 font-mono text-[11px]">
-                            {loan.borrowDate}
+                          <td className="py-3.5 px-4 text-neutral-600 font-mono text-[11px] whitespace-nowrap">
+                            {formatLoanDate(loan.borrowDate)}
                           </td>
-                          <td className="py-3.5 px-4 font-mono text-[11px]">
+                          <td className="py-3.5 px-4 font-mono text-[11px] whitespace-nowrap">
                             <span className={isOverdue ? 'text-rose-600 font-bold' : 'text-neutral-800 font-semibold'}>
-                              {loan.expectedReturnDate}
+                              {formatLoanDate(loan.expectedReturnDate)}
                             </span>
                             {isOverdue && (
                               <span className="block text-[10px] text-rose-500 font-sans font-semibold">
@@ -454,7 +471,7 @@ export default function LoansPage() {
                               </span>
                             )}
                           </td>
-                          <td className="py-3.5 px-4">
+                          <td className="py-3.5 px-4 whitespace-nowrap">
                             {isOverdue ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
@@ -524,16 +541,16 @@ export default function LoansPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[840px]">
+                <table className="w-full text-left text-xs min-w-[960px]">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
-                      <th className="py-3 px-4">Equipment & Serial</th>
-                      <th className="py-3 px-4">Borrower</th>
-                      <th className="py-3 px-4">Check-Out Date</th>
-                      <th className="py-3 px-4">Actual Return Date</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 min-w-[240px]">Equipment & Serial</th>
+                      <th className="py-3 px-4 min-w-[200px]">Borrower</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Check-Out Date</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Actual Return Date</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Status</th>
                       <th className="py-3 px-4">Staff Inspection Notes</th>
-                      <th className="py-3 px-4 text-right">Action</th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
@@ -543,46 +560,53 @@ export default function LoansPage() {
                         onClick={() => router.push(`/loans/${loan.id}`)}
                         className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                       >
-                        <td className="py-3.5 px-4">
-                          <div className="font-bold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5 flex-wrap">
-                            <span>{loan.assetName}</span>
+                        <td className="py-3.5 px-4 max-w-[280px]">
+                          <div className="font-semibold text-neutral-900 group-hover:text-emerald-700 transition-colors flex items-center gap-1.5">
+                            <span className="truncate">{loan.assetName}</span>
+                            <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </div>
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                             {loan.itemType === 'stock' || loan.stockId ? (
-                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                 Stock ({loan.quantity || 1} units)
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
                                 Device
                               </span>
                             )}
-                            <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
-                            {loan.itemType === 'stock' || loan.stockId ? 'SKU' : 'SN'}: {loan.serialNumber}
+                            <span className="text-[10px] text-neutral-500 font-mono bg-neutral-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                              {loan.itemType === 'stock' || loan.stockId ? 'SKU' : 'SN'}: {loan.serialNumber}
+                            </span>
                           </div>
                         </td>
                         <td className="py-3.5 px-4">
-                          <div className="font-semibold text-neutral-900">{loan.borrowerName}</div>
-                          <div className="text-[11px] text-neutral-500">
-                            {loan.borrowerRole} • {loan.borrowerContact}
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-neutral-900 whitespace-nowrap">{loan.borrowerName}</span>
+                            <span className="inline-block bg-neutral-100 text-neutral-600 border border-neutral-200 px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap">
+                              {loan.borrowerRole}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-neutral-500 mt-0.5 truncate max-w-[220px]">
+                            {loan.borrowerContact}
                           </div>
                         </td>
-                        <td className="py-3.5 px-4 text-neutral-600 font-mono text-[11px]">
-                          {loan.borrowDate}
+                        <td className="py-3.5 px-4 text-neutral-600 font-mono text-[11px] whitespace-nowrap">
+                          {formatLoanDate(loan.borrowDate)}
                         </td>
-                        <td className="py-3.5 px-4 text-emerald-700 font-mono font-bold text-[11px]">
-                          {loan.actualReturnDate || 'Returned'}
+                        <td className="py-3.5 px-4 text-emerald-700 font-mono font-semibold text-[11px] whitespace-nowrap">
+                          {loan.actualReturnDate ? formatLoanDate(loan.actualReturnDate) : 'Returned'}
                         </td>
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                             Returned
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-neutral-600 max-w-xs truncate font-medium">
+                        <td className="py-3.5 px-4 text-neutral-600 max-w-[220px] truncate font-medium">
                           {loan.notes || 'Returned in good working condition.'}
                         </td>
-                        <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => router.push(`/loans/${loan.id}`)}
@@ -624,16 +648,16 @@ export default function LoansPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs min-w-[840px]">
+                <table className="w-full text-left text-xs min-w-[1040px]">
                   <thead>
                     <tr className="border-b border-neutral-200 bg-neutral-50/70 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
-                      <th className="py-3 px-4">Equipment & Serial</th>
-                      <th className="py-3 px-4">From Location</th>
-                      <th className="py-3 px-4">Destination Room</th>
-                      <th className="py-3 px-4">Transfer Date</th>
-                      <th className="py-3 px-4">Authorized By</th>
+                      <th className="py-3 px-4 min-w-[230px]">Equipment & Serial</th>
+                      <th className="py-3 px-4 min-w-[200px]">From Location</th>
+                      <th className="py-3 px-4 min-w-[220px]">Destination Room</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Transfer Date</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Authorized By</th>
                       <th className="py-3 px-4">Relocation Purpose / Notes</th>
-                      <th className="py-3 px-4 text-right">Action</th>
+                      <th className="py-3 px-4 text-right whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
@@ -643,34 +667,39 @@ export default function LoansPage() {
                         onClick={() => router.push(`/transfers/${transfer.id}`)}
                         className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                       >
-                        <td className="py-3.5 px-4">
-                          <div className="font-bold text-neutral-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
-                            <span>{transfer.assetName}</span>
-                            <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <td className="py-3.5 px-4 max-w-[260px]">
+                          <div className="font-semibold text-neutral-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                            <span className="truncate">{transfer.assetName}</span>
+                            <ExternalLink className="w-3 h-3 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                           </div>
-                          <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
+                          <div className="text-[10px] text-neutral-500 font-mono mt-0.5 whitespace-nowrap">
                             SN: {transfer.serialNumber}
                           </div>
                         </td>
-                        <td className="py-3.5 px-4 text-neutral-600 font-medium">
-                          {transfer.fromLocation}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 text-emerald-800 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[11px]">
-                            <MapPin className="w-3 h-3 text-emerald-600" />
-                            {transfer.toLocation}
+                        <td className="py-3.5 px-4 text-neutral-600 font-medium max-w-[220px]">
+                          <span className="block truncate" title={transfer.fromLocation}>
+                            {transfer.fromLocation}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-neutral-600 font-mono text-[11px]">
-                          {transfer.transferDate}
+                        <td className="py-3.5 px-4">
+                          <span
+                            className="inline-flex items-center gap-1.5 text-emerald-800 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] whitespace-nowrap"
+                            title={transfer.toLocation}
+                          >
+                            <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{transfer.toLocation}</span>
+                          </span>
                         </td>
-                        <td className="py-3.5 px-4 text-neutral-900 font-semibold">
+                        <td className="py-3.5 px-4 text-neutral-600 font-mono text-[11px] whitespace-nowrap">
+                          {formatLoanDate(transfer.transferDate)}
+                        </td>
+                        <td className="py-3.5 px-4 text-neutral-900 font-semibold whitespace-nowrap">
                           {transfer.transferredBy}
                         </td>
-                        <td className="py-3.5 px-4 text-neutral-600 max-w-xs truncate">
+                        <td className="py-3.5 px-4 text-neutral-600 max-w-[220px] truncate">
                           {transfer.reason || 'Laboratory workshop re-allocation'}
                         </td>
-                        <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => router.push(`/transfers/${transfer.id}`)}
