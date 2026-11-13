@@ -14,29 +14,17 @@ export const openApiSpec = {
 - Full PostgreSQL Relational Persistence for Stock, Assets, Loans & Locations.
 
 ### How to Authenticate:
-* **Option 1 (Direct Admin Token):** Copy the administrative JWT token below, click **Authorize 🔓** at the top right, and paste it:
-\`\`\`text
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
-\`\`\`
-
-* **Option 2 (Login with Credentials):** Execute \`POST /api/v1/auth/login\` with:
-  * **Email:** \`heng.sovannarith@rupp.edu.kh\`
-  * **Password:** \`password123\`
+* **Login with Credentials:** Execute \`POST /api/v1/auth/login\` with your institutional email and password.
   Then copy the returned \`token\` into the **Authorize 🔓** dialog.
 `,
     contact: {
       name: 'RUPP Lab IT Systems Support',
-      email: 'heng.sovannarith@rupp.edu.kh',
     },
   },
   servers: [
     {
       url: '/api/v1',
       description: 'API Version 1 Gateway',
-    },
-    {
-      url: 'http://localhost:5001/api/v1',
-      description: 'Local Fleet Development',
     },
   ],
   components: {
@@ -54,8 +42,8 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4
         type: 'object',
         required: ['email', 'password'],
         properties: {
-          email: { type: 'string', format: 'email', example: 'thoeurn.ratha@rupp.edu.kh' },
-          password: { type: 'string', format: 'password', example: 'password123' },
+          email: { type: 'string', format: 'email', example: 'user@rupp.edu.kh' },
+          password: { type: 'string', format: 'password', example: 'your-password' },
         },
       },
       RegisterRequest: {

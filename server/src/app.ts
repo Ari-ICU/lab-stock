@@ -1,7 +1,8 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import routes from './routes/index.js';
 import { requestLogger } from './utils/requestLogger.js';
 import { setupSwagger } from './config/swagger.js';
+import { config } from './config/index.js';
 import {
   helmetSecurity,
   corsSecurity,
@@ -20,6 +21,12 @@ app.disable('x-powered-by');
 
 // 1. Security Headers & CORS
 app.use(helmetSecurity);
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (!req.path.startsWith('/api/docs')) {
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+  }
+  next();
+});
 app.use(corsSecurity);
 
 // 2. Rate Limiting Protection
@@ -28,9 +35,9 @@ app.use(globalRateLimiter);
 // 3. UI Terminal Request Logger (from utils)
 app.use(requestLogger);
 
-// 4. Request Body Parsing with Generous Size Limits (supports high-res base64 equipment photos)
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+// 4. Request Body Parsing with Bounded Size Limits
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // 5. Input Sanitization (prototype pollution protection)
 app.use(sanitizeRequest);
@@ -40,8 +47,11 @@ app.get('/favicon.ico', (_req: Request, res: Response) => {
   res.status(204).end();
 });
 
-// 7. Interactive Swagger API Documentation
-setupSwagger(app);
+// 7. Interactive Swagger API Documentation (disabled in production unless explicitly enabled)
+const enableSwagger = config.nodeEnv !== 'production' || process.env.ENABLE_SWAGGER === 'true';
+if (enableSwagger) {
+  setupSwagger(app);
+}
 
 // 8. Root Information Route
 app.get('/', (_req: Request, res: Response) => {
@@ -49,23 +59,10 @@ app.get('/', (_req: Request, res: Response) => {
     name: 'Lab Stock Management API',
     status: 'online',
     version: '1.0.0',
-    documentation: '/api/docs',
     endpoints: {
       health: '/api/v1/health',
       auth: '/api/v1/auth',
-      swagger: '/api/docs',
-      swaggerJson: '/api/docs.json',
-    },
-    database: {
-      engine: 'PostgreSQL',
-      configured: true,
-    },
-    security: {
-      helmet: 'enabled',
-      rateLimit: 'enabled',
-      cors: 'enabled',
-      sanitization: 'enabled',
-      jwt: 'enabled',
+      ...(enableSwagger && { swagger: '/api/docs', swaggerJson: '/api/docs.json' }),
     },
   });
 });

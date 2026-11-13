@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 
-const BCRYPT_SALT_ROUNDS = 10;
+const BCRYPT_SALT_ROUNDS = 12;
 
 /**
  * Hash plain-text password using bcrypt with high work factor (salt rounds: 12)

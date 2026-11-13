@@ -15,7 +15,6 @@ import {
   requireAdmin,
   requireRole,
   requirePermission,
-  requireAnyPermission,
 } from '@/middleware/auth.js';
 import { authRateLimiter } from '@/middleware/security.js';
 import {
@@ -36,13 +35,13 @@ router.post('/login', authRateLimiter, validateLogin, login);
 
 /**
  * @route   POST /api/v1/auth/register
- * @desc    Provision a new faculty or lab assistant account (Admin or Supervising Faculty Lecturer)
- * @access  Protected (Administrator or Faculty Lecturer)
+ * @desc    Provision a new faculty or administrator account (Admin only)
+ * @access  Protected (Administrator only)
  */
 router.post(
   '/register',
   authenticate,
-  requireRole(Role.ADMIN, Role.LECTURER, 'Faculty Lecturer', 'Primary Lab Administrator'),
+  requireAdmin,
   validateRegister,
   register
 );
@@ -50,9 +49,9 @@ router.post(
 /**
  * @route   POST /api/v1/auth/verify
  * @desc    Cryptographically verify token signature and inspect claims
- * @access  Public
+ * @access  Public (Rate limited)
  */
-router.post('/verify', verifyTokenEndpoint);
+router.post('/verify', authRateLimiter, verifyTokenEndpoint);
 
 /**
  * @route   GET /api/v1/auth/me
@@ -70,13 +69,13 @@ router.post('/change-password', authenticate, validatePasswordChange, changePass
 
 /**
  * @route   PATCH /api/v1/auth/users/:id/labs
- * @desc    Assign or update laboratory rooms scope for an operator (Admin or Supervising Faculty Lecturer)
- * @access  Protected (Administrator or Faculty Lecturer)
+ * @desc    Assign or update laboratory rooms scope for an operator (Admin only)
+ * @access  Protected (Administrator only)
  */
 router.patch(
   '/users/:id/labs',
   authenticate,
-  requireRole(Role.ADMIN, Role.LECTURER, 'Faculty Lecturer', 'Primary Lab Administrator'),
+  requireAdmin,
   updateAssignedLabs
 );
 

@@ -162,14 +162,8 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
 
       return next(
         new ForbiddenException(
-          `Access denied: Missing required permission(s): [${missing.join(', ')}]`,
-          'PERMISSION_DENIED',
-          {
-            requiredPermissions,
-            missingPermissions: missing,
-            userRole: user.role,
-            userPermissions,
-          }
+          'Access denied: You do not have permission to perform this action',
+          'PERMISSION_DENIED'
         )
       );
     }
@@ -230,13 +224,8 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
 
       return next(
         new ForbiddenException(
-          `Access denied: Requires at least one of [${permissions.join(', ')}]`,
-          'PERMISSION_DENIED',
-          {
-            candidatePermissions: permissions,
-            userRole: user.role,
-            userPermissions: user.permissions || [],
-          }
+          'Access denied: You do not have permission to perform this action',
+          'PERMISSION_DENIED'
         )
       );
     }
@@ -293,12 +282,8 @@ export function requireRole(...allowedRoles: string[]) {
 
       return next(
         new ForbiddenException(
-          `Access denied: Action requires one of role(s): [${allowedRoles.join(', ')}]`,
-          'ROLE_UNAUTHORIZED',
-          {
-            allowedRoles,
-            currentUserRole: user.role,
-          }
+          'Access denied: Your account role cannot perform this action',
+          'ROLE_UNAUTHORIZED'
         )
       );
     }
@@ -335,10 +320,7 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
     });
 
     return next(
-      new ForbiddenException('Access denied: Administrator privileges required', 'ADMIN_REQUIRED', {
-        currentUserRole: req.user.role,
-        adminClaim: req.user.admin,
-      })
+      new ForbiddenException('Access denied: Administrator privileges required', 'ADMIN_REQUIRED')
     );
   }
 
@@ -363,36 +345,33 @@ export function canUserManageLocation(
 ): boolean {
   if (!user) return false;
   if (isUserAdmin(user)) return true;
-  if (!locationStrOrRoom) return true;
 
-  let assignedLabs = user.assignedLabs || [];
-  const em = (user.email || '').toLowerCase();
-  if (
-    (em.includes('ratha') ||
-      em.includes('vicheka') ||
-      em === 'admin@lab.edu' ||
-      em === 'assistant@lab.edu') &&
-    assignedLabs.length <= 1
-  ) {
-    assignedLabs = ['Room 102B', 'Room 206'];
-  }
-
+  const assignedLabs = Array.isArray(user.assignedLabs) ? user.assignedLabs : [];
   if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
     return true;
   }
 
+  if (!locationStrOrRoom || !locationStrOrRoom.trim()) {
+    return false;
+  }
+
   const t = locationStrOrRoom.toLowerCase();
+  const escapeRegExp = (str: string) => str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+
   return assignedLabs.some((assignedRoom) => {
-    const a = assignedRoom.toLowerCase().trim();
+    const a = String(assignedRoom || '').toLowerCase().trim();
+    if (!a) return false;
     if (a === 'all' || a === '*') return true;
     if (a.includes('102') && !a.includes('102b') && t.includes('102b')) return false;
     if (a.includes('102b') && !t.includes('102b')) return false;
-    const escaped = a.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp('\\b' + escaped + '\\b', 'i');
-    if (regex.test(t) || t.includes(a)) return true;
+
+    const escaped = escapeRegExp(a);
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    if (regex.test(t)) return true;
+
     const normA = a.replace(/^(rm|room)\s*/i, '').trim();
     if (normA.length > 0) {
-      const numRegex = new RegExp('\\b' + normA + '\\b', 'i');
+      const numRegex = new RegExp(`\\b${escapeRegExp(normA)}\\b`, 'i');
       return numRegex.test(t);
     }
     return false;
@@ -410,7 +389,8 @@ export function requireLocationScope(
     | string
     | string[]
     | undefined
-    | null
+    | null,
+  options?: { allowEmpty?: boolean }
 ) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
@@ -421,24 +401,36 @@ export function requireLocationScope(
       return next();
     }
 
+    const assignedLabs = Array.isArray(req.user.assignedLabs) ? req.user.assignedLabs : [];
+    if (assignedLabs.includes('all') || assignedLabs.includes('*')) {
+      return next();
+    }
+
     try {
       const resolved = await getLocationResolver(req);
-      if (!resolved) {
-        return next();
+      const rawLocations = Array.isArray(resolved) ? resolved : [resolved];
+      const locationsToCheck = rawLocations
+        .map((loc) => (typeof loc === 'string' ? loc.trim() : ''))
+        .filter(Boolean);
+
+      if (locationsToCheck.length === 0) {
+        if (options?.allowEmpty) {
+          return next();
+        }
+        return next(
+          new ForbiddenException(
+            'Access restricted: Laboratory room scope could not be verified for this operation.',
+            'LAB_SCOPE_DENIED'
+          )
+        );
       }
 
-      const locationsToCheck = Array.isArray(resolved) ? resolved : [resolved];
-
       for (const location of locationsToCheck) {
-        if (location && !canUserManageLocation(req.user, location)) {
+        if (!canUserManageLocation(req.user, location)) {
           return next(
             new ForbiddenException(
-              `Access restricted: You do not have management authority over laboratory room '${location}'. Assigned rooms: [${(req.user.assignedLabs || []).join(', ')}]`,
-              'LAB_SCOPE_DENIED',
-              {
-                targetLocation: location,
-                assignedLabs: req.user.assignedLabs,
-              }
+              `Access restricted: You do not have management authority over laboratory room '${location}'.`,
+              'LAB_SCOPE_DENIED'
             )
           );
         }

@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import { Request, Response, NextFunction } from 'express';
 import { config } from '@/config/index.js';
+import { AppException } from '@/exceptions/errorHandler.js';
 
 // ========================================================
 // 1. CORS CONFIGURATION (Strict in Production)
@@ -34,7 +35,7 @@ export const corsSecurity = cors({
     }
 
     if (isProduction) {
-      return callback(new Error(`CORS blocked: Origin '${origin}' is not authorized`));
+      return callback(new AppException(`CORS blocked: Origin is not authorized`, 403, 'CORS_BLOCKED'));
     }
 
     // Permissive during local development only
@@ -96,23 +97,29 @@ export const authRateLimiter = rateLimit({
 // ========================================================
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const PASSWORD_KEYS = new Set(['password', 'currentPassword', 'newPassword']);
-const SCRIPT_TAG_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
-const EVENT_HANDLER_REGEX = /on\w+\s*=/gi;
-const JAVASCRIPT_URL_REGEX = /javascript:/gi;
+const SAFE_RASTER_DATA_URI_REGEX = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=\s]+$/i;
+const SCRIPT_TAG_REGEX = /<script\b[\s\S]*?>[\s\S]*?<\/script\b[^>]*>|<\/?script\b[^>]*>/gi;
+const EVENT_HANDLER_REGEX = /(^|[\s"'`<;/])on[a-z]+\s*=/gi;
+const DANGEROUS_URI_REGEX = /(javascript|vbscript)\s*:|data\s*:\s*(text\/html|image\/svg\+xml)/gi;
 
 function sanitizeValue(val: any, keyName?: string): any {
   if (typeof val === 'string') {
-    // Do not mutate passwords or scan huge base64 image payloads
-    if ((keyName && PASSWORD_KEYS.has(keyName)) || val.startsWith('data:image/')) {
+    // Do not mutate passwords or valid raster base64 image payloads
+    if ((keyName && PASSWORD_KEYS.has(keyName)) || SAFE_RASTER_DATA_URI_REGEX.test(val.trim())) {
       return val;
     }
 
-    // Strip malicious script tags, event handlers, and javascript: protocols
-    return val
-      .replace(SCRIPT_TAG_REGEX, '')
-      .replace(EVENT_HANDLER_REGEX, '')
-      .replace(JAVASCRIPT_URL_REGEX, '')
-      .trim();
+    // Iteratively strip malicious tags, inline event handlers, and executable URI schemes
+    let cleaned = val;
+    let prev = '';
+    while (cleaned !== prev) {
+      prev = cleaned;
+      cleaned = cleaned
+        .replace(SCRIPT_TAG_REGEX, '')
+        .replace(EVENT_HANDLER_REGEX, '$1')
+        .replace(DANGEROUS_URI_REGEX, '');
+    }
+    return cleaned.trim();
   }
 
   if (Array.isArray(val)) {
@@ -136,9 +143,9 @@ function sanitizeValue(val: any, keyName?: string): any {
  * Middleware: Cleans incoming request payloads against Prototype Pollution and Stored XSS
  */
 export function sanitizeRequest(req: Request, _res: Response, next: NextFunction) {
-  if (req.body) sanitizeValue(req.body);
-  if (req.params) sanitizeValue(req.params);
-  if (req.query) sanitizeValue(req.query);
+  if (req.body) req.body = sanitizeValue(req.body);
+  if (req.params) req.params = sanitizeValue(req.params);
+  if (req.query) req.query = sanitizeValue(req.query);
 
   next();
 }

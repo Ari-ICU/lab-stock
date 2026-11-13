@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { authService } from '@/services/authService.js';
-import { asyncHandler, UnauthorizedException } from '@/exceptions/errorHandler.js';
+import { asyncHandler, UnauthorizedException, ValidationException } from '@/exceptions/errorHandler.js';
+import { isValidUuid } from '@/validations/commonValidation.js';
 
 /**
  * POST /api/v1/auth/login
@@ -55,6 +56,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
       is_admin: req.user.admin,
       permissions: req.user.permissions,
       department: req.user.department,
+      assigned_labs: req.user.assignedLabs || (req.user.admin ? ['all'] : []),
     },
   });
 });
@@ -110,23 +112,32 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
  */
 export const updateAssignedLabs = asyncHandler(async (req: Request, res: Response) => {
   const userId = String(req.params.id);
+  if (!isValidUuid(userId)) {
+    throw new ValidationException('Invalid user ID format');
+  }
+
   const { assignedLabs } = req.body;
 
-  if (!Array.isArray(assignedLabs)) {
+  if (
+    !Array.isArray(assignedLabs) ||
+    assignedLabs.length === 0 ||
+    !assignedLabs.every((lab) => typeof lab === 'string' && lab.trim().length > 0 && lab.trim().length <= 100)
+  ) {
     return res.status(400).json({
       status: 'error',
-      message: 'assignedLabs must be an array of room codes e.g. ["Room 102B", "Room 206"] or ["all"]',
+      message: 'assignedLabs must be a non-empty array of valid room strings',
     });
   }
 
-  await authService.updateAssignedLabs(userId, assignedLabs, req.user);
+  const normalizedLabs = assignedLabs.map((lab) => lab.trim());
+  await authService.updateAssignedLabs(userId, normalizedLabs, req.user);
 
   return res.status(200).json({
     status: 'ok',
     message: 'User laboratory scopes updated successfully',
     data: {
       userId,
-      assignedLabs,
+      assignedLabs: normalizedLabs,
     },
   });
 });
@@ -135,7 +146,7 @@ export const updateAssignedLabs = asyncHandler(async (req: Request, res: Respons
  * GET /api/v1/auth/users
  * Lists all registered users (Excludes password hashes)
  */
-export const listUsers = asyncHandler(async (req: Request, res: Response) => {
+export const listUsers = asyncHandler(async (_req: Request, res: Response) => {
   const users = await authService.getAllUsers();
 
   return res.status(200).json({
@@ -151,23 +162,28 @@ export const listUsers = asyncHandler(async (req: Request, res: Response) => {
  */
 export const updateUserRole = asyncHandler(async (req: Request, res: Response) => {
   const userId = String(req.params.id);
+  if (!isValidUuid(userId)) {
+    throw new ValidationException('Invalid user ID format');
+  }
+
   const { role } = req.body;
 
-  if (!role || typeof role !== 'string') {
+  if (!role || typeof role !== 'string' || !role.trim()) {
     return res.status(400).json({
       status: 'error',
       message: 'role string is required in request body',
     });
   }
 
-  await authService.updateUserRole(userId, role, req.user?.sub);
+  const cleanRole = role.trim();
+  await authService.updateUserRole(userId, cleanRole, req.user?.sub);
 
   return res.status(200).json({
     status: 'ok',
-    message: `User role successfully updated to ${role}`,
+    message: `User role successfully updated to ${cleanRole}`,
     data: {
       userId,
-      role,
+      role: cleanRole,
     },
   });
 });
@@ -178,6 +194,9 @@ export const updateUserRole = asyncHandler(async (req: Request, res: Response) =
  */
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   const userId = String(req.params.id);
+  if (!isValidUuid(userId)) {
+    throw new ValidationException('Invalid user ID format');
+  }
 
   await authService.deleteUser(userId, req.user?.sub);
 

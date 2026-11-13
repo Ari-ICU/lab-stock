@@ -40,7 +40,6 @@ export type PermissionType = (typeof Permission)[keyof typeof Permission] | stri
 export const Role = {
   ADMIN: 'Primary Lab Administrator',
   LECTURER: 'Faculty Lecturer',
-  ASSISTANT: 'Lab Assistant',
 } as const;
 
 export type RoleType = (typeof Role)[keyof typeof Role] | string;
@@ -82,36 +81,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionType[]> = {
     Permission.LOAN_MANAGE,
     Permission.LOCATION_READ,
     Permission.LOCATION_MANAGE,
-  ],
-  [Role.ASSISTANT]: [
-    Permission.STOCK_READ,
-    Permission.STOCK_CREATE,
-    Permission.STOCK_UPDATE,
-    Permission.STOCK_DELETE,
-    Permission.ASSET_READ,
-    Permission.ASSET_CREATE,
-    Permission.ASSET_UPDATE,
-    Permission.ASSET_DELETE,
-    Permission.LOAN_READ,
-    Permission.LOAN_CHECKOUT,
-    Permission.LOAN_RETURN,
-    Permission.LOAN_MANAGE,
-    Permission.LOCATION_READ,
-  ],
-  'Assistant': [
-    Permission.STOCK_READ,
-    Permission.STOCK_CREATE,
-    Permission.STOCK_UPDATE,
-    Permission.STOCK_DELETE,
-    Permission.ASSET_READ,
-    Permission.ASSET_CREATE,
-    Permission.ASSET_UPDATE,
-    Permission.ASSET_DELETE,
-    Permission.LOAN_READ,
-    Permission.LOAN_CHECKOUT,
-    Permission.LOAN_RETURN,
-    Permission.LOAN_MANAGE,
-    Permission.LOCATION_READ,
   ],
 };
 
