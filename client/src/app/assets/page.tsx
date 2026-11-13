@@ -109,7 +109,12 @@ export default function AssetsPage() {
         'Due Date': a.loanDueDate || '',
         'Next Calibration / Audit': a.nextCalibration || '',
         'Description / Notes': a.description || '',
-      }))
+      })),
+      {
+        sheetTitle: 'Hardware Assets',
+        reportTitle: 'Serialized Hardware Assets Register',
+        reportSubtitle: 'Workstations, Networking Equipment & Institutional Calibration Schedule',
+      }
     );
   };
 

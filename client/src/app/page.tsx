@@ -126,8 +126,15 @@ export default function DashboardPage() {
       },
     ];
 
-    exportToCsv('faculty_executive_operations_summary', summaryRows);
-    showToast('Executive operations report exported successfully');
+    if (
+      exportToCsv('faculty_executive_operations_summary', summaryRows, {
+        sheetTitle: 'Executive Summary',
+        reportTitle: 'Executive Laboratory Fleet & Operations Summary',
+        reportSubtitle: 'Department KPIs, Facility Readiness & Loan Oversight',
+      })
+    ) {
+      showToast('Executive operations workbook exported to Excel (.xlsx)');
+    }
   };
 
   const handleQuickReturn = (loanId: string, assetName: string) => {

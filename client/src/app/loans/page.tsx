@@ -135,7 +135,12 @@ export default function LoansPage() {
           'Transfer Date': t.transferDate,
           'Authorized By': t.transferredBy,
           'Relocation Reason': t.reason || 'Laboratory Reconfiguration',
-        }))
+        })),
+        {
+          sheetTitle: 'Relocation Logs',
+          reportTitle: 'Equipment Relocation & Custody Transfer Log',
+          reportSubtitle: 'Inter-Laboratory Movement & Authorization Register',
+        }
       );
     } else {
       const targetLoans = activeTab === 'history' ? filteredHistoryLoans : filteredActiveLoans;
@@ -154,7 +159,15 @@ export default function LoansPage() {
           'Actual Return Date': l.actualReturnDate || 'Pending Return',
           'Loan Status': l.status,
           'Supervisor / Staff Notes': l.notes || '',
-        }))
+        })),
+        {
+          sheetTitle: activeTab === 'history' ? 'Loan History' : 'Active Loans',
+          reportTitle:
+            activeTab === 'history'
+              ? 'Historical Device Loan & Return Register'
+              : 'Active Device Loan & Custody Register',
+          reportSubtitle: 'Faculty & Student Hardware Accountability Record',
+        }
       );
     }
   };

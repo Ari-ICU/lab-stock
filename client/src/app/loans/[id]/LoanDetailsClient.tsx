@@ -118,22 +118,30 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
   };
 
   const handleExportLoan = () => {
-    exportToCsv(`loan_${loan.id}_dossier`, [
+    exportToCsv(
+      `loan_${loan.id}_dossier`,
+      [
+        {
+          'Loan ID': loan.id,
+          'Equipment Name': loan.assetName,
+          'Serial Number': loan.serialNumber,
+          'Borrower Full Name': loan.borrowerName,
+          'Borrower Role': loan.borrowerRole,
+          'Contact / Student ID': loan.borrowerContact,
+          'Class / Course': loan.courseOrClass || '',
+          'Check-Out Date': loan.borrowDate,
+          'Due Return Date': loan.expectedReturnDate,
+          'Actual Return Date': loan.actualReturnDate || 'Pending Return',
+          'Status': loan.status,
+          'Staff Inspection Notes': loan.notes || '',
+        },
+      ],
       {
-        'Loan ID': loan.id,
-        'Equipment Name': loan.assetName,
-        'Serial Number': loan.serialNumber,
-        'Borrower Full Name': loan.borrowerName,
-        'Borrower Role': loan.borrowerRole,
-        'Contact / Student ID': loan.borrowerContact,
-        'Class / Course': loan.courseOrClass || '',
-        'Check-Out Date': loan.borrowDate,
-        'Due Return Date': loan.expectedReturnDate,
-        'Actual Return Date': loan.actualReturnDate || 'Pending Return',
-        'Status': loan.status,
-        'Staff Inspection Notes': loan.notes || '',
-      },
-    ]);
+        sheetTitle: 'Loan Dossier',
+        reportTitle: 'Equipment Checkout & Custody Dossier',
+        reportSubtitle: `${loan.assetName} (SN: ${loan.serialNumber}) — Borrower: ${loan.borrowerName}`,
+      }
+    );
   };
 
   return (
@@ -162,7 +170,7 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
               type="button"
               onClick={handleExportLoan}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-xl hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-              title="Export loan record as CSV"
+              title="Export loan dossier as Excel (.xlsx)"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">Export</span>

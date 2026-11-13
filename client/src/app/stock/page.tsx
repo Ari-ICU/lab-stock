@@ -193,7 +193,12 @@ export default function StockPage() {
           'Warranty / Condition': i.expiryDate || 'Active',
           'Technical Description': i.description || '',
         };
-      })
+      }),
+      {
+        sheetTitle: 'Inventory Audit',
+        reportTitle: 'Central Depot & Classroom Inventory Audit Register',
+        reportSubtitle: 'Physical Count Reconciliation & Deployed Laboratory Allocations',
+      }
     );
   };
 

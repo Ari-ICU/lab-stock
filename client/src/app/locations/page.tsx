@@ -184,7 +184,7 @@ export default function LocationsPage() {
     });
 
   const handleExport = () => {
-    exportToCsv(
+    const ok = exportToCsv(
       'csd_location_centric_matrix_report',
       filtered.map((l) => ({
         'Facility Name': l.name,
@@ -198,13 +198,20 @@ export default function LocationsPage() {
         'Working Equipment (Units)': l.totalWorkingCount,
         'Last Audited': l.lastAuditedAt || 'Pending Audit',
         'Audited By': l.auditedBy || 'N/A',
-      }))
+      })),
+      {
+        sheetTitle: 'Facility Matrix',
+        reportTitle: 'Laboratory & Classroom Facility Condition Matrix',
+        reportSubtitle: 'Campus Teaching Laboratories, Seating Capacity & Readiness Status',
+      }
     );
-    showToast('Exported Location-Centric Matrix Report as CSV');
+    if (ok) {
+      showToast('Exported Location-Centric Matrix Report to Excel (.xlsx)');
+    }
   };
 
   const handleExportBrokenItems = () => {
-    exportToCsv(
+    const ok = exportToCsv(
       'csd_department_maintenance_procurement_report',
       departmentBrokenItems.map((d) => ({
         'Room Number': d.roomCode,
@@ -218,9 +225,16 @@ export default function LocationsPage() {
         'Under Repair Units': d.item.qtyMaintenance,
         'Defect Remarks & Notes': d.item.remarks || '',
         'Last Checked Date': d.item.lastAuditedAt || '',
-      }))
+      })),
+      {
+        sheetTitle: 'Repair Requisition',
+        reportTitle: 'Department Maintenance & Procurement Requisition Report',
+        reportSubtitle: 'Defective Hardware & Servicing Schedule for Dean Office / Ministry Review',
+      }
     );
-    showToast(`Exported ${departmentBrokenItems.length} repair records for administration/procurement.`);
+    if (ok) {
+      showToast(`Exported ${departmentBrokenItems.length} repair records to Excel (.xlsx).`);
+    }
   };
 
   const totalHardwareDevicesCount = assets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
@@ -609,7 +623,7 @@ export default function LocationsPage() {
                   className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer shadow-xs"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Export Repair Requisition (CSV)</span>
+                  <span>Export Repair Requisition (XLSX)</span>
                 </button>
                 <button
                   type="button"

@@ -296,8 +296,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     }));
 
     const filename = `${loc.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_condition_audit`;
-    exportToCsv(filename, [...facilityRows, ...hardwareRows]);
-    showToast(`Exported complete room condition inventory for ${loc.name}`);
+    const ok = exportToCsv(filename, [...facilityRows, ...hardwareRows], {
+      sheetTitle: loc.room || 'Room Audit',
+      reportTitle: 'Laboratory Room Condition & Equipment Audit',
+      reportSubtitle: `${loc.name} (${loc.building} • ${loc.room} • Capacity: ${loc.capacity || 0} seats)`,
+    });
+    if (ok) {
+      showToast(`Exported room condition inventory for ${loc.name} to Excel (.xlsx)`);
+    }
   };
 
   const handleDelete = () => {
@@ -326,7 +332,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               type="button"
               onClick={handleExportRoomFleet}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-2xs cursor-pointer"
-              title="Download room condition report as CSV"
+              title="Download room condition report as Excel (.xlsx)"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
               <span className="hidden sm:inline">Export</span>
