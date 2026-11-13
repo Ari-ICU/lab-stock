@@ -1,5 +1,6 @@
 import { query } from '../config/database.js';
 import { DatabaseException } from '../exceptions/errorHandler.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 export interface User {
   id: string;
@@ -92,10 +93,11 @@ export const userModel = {
    * Update user role and admin status
    */
   async updateRole(id: string, role: string, isAdmin: boolean): Promise<boolean> {
+    if (!isValidUuid(id)) return false;
     try {
       const res = await query(
         'UPDATE users SET role = $1, is_admin = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
-        [role, isAdmin, id]
+        [role, isAdmin, id.trim()]
       );
       return (res.rowCount ?? 0) > 0;
     } catch (err: any) {
@@ -107,8 +109,9 @@ export const userModel = {
    * Delete a user by their primary UUID
    */
   async delete(id: string): Promise<boolean> {
+    if (!isValidUuid(id)) return false;
     try {
-      const res = await query('DELETE FROM users WHERE id = $1', [id]);
+      const res = await query('DELETE FROM users WHERE id = $1', [id.trim()]);
       return (res.rowCount ?? 0) > 0;
     } catch (err: any) {
       throw new DatabaseException(`Failed to delete user: ${err.message}`, err);
@@ -119,10 +122,11 @@ export const userModel = {
    * Update user assigned laboratory room scopes
    */
   async updateAssignedLabs(id: string, assignedLabs: string[]): Promise<boolean> {
+    if (!isValidUuid(id)) return false;
     try {
       const res = await query(
         'UPDATE users SET assigned_labs = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [assignedLabs, id]
+        [assignedLabs, id.trim()]
       );
       return (res.rowCount ?? 0) > 0;
     } catch (err: any) {
@@ -134,10 +138,11 @@ export const userModel = {
    * Update user password hash
    */
   async updatePassword(id: string, newPasswordHash: string): Promise<boolean> {
+    if (!isValidUuid(id)) return false;
     try {
       const res = await query(
         'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [newPasswordHash, id]
+        [newPasswordHash, id.trim()]
       );
       return (res.rowCount ?? 0) > 0;
     } catch (err: any) {

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { categoryModel } from '../models/categoryModel.js';
 import { asyncHandler, ValidationException } from '../exceptions/errorHandler.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 /**
  * List all categories stored in PostgreSQL
@@ -50,6 +51,10 @@ export const createCategory = asyncHandler(async (req: Request, res: Response) =
  */
 export const deleteCategory = asyncHandler(async (req: Request, res: Response) => {
   const id = String(req.params.id);
+  if (!isValidUuid(id)) {
+    throw new ValidationException('Invalid category UUID');
+  }
+
   const deleted = await categoryModel.delete(id);
 
   res.json({

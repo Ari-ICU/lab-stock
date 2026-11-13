@@ -1,4 +1,6 @@
 import { query } from '../config/database.js';
+import { DatabaseException } from '../exceptions/errorHandler.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 export interface Location {
   id: string;
@@ -54,33 +56,40 @@ export const locationModel = {
     try {
       const res = await query(`${LOCATION_SELECT_QUERY} ORDER BY l.name ASC`);
       return res.rows;
-    } catch {
-      return [];
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to query locations: ${err.message}`, err);
     }
   },
 
   async findById(id: string): Promise<Location | null> {
+    if (!id || typeof id !== 'string') return null;
+    const trimmed = id.trim();
+    if (!trimmed) return null;
+
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id.trim());
-      if (isUuid) {
-        const res = await query(`${LOCATION_SELECT_QUERY} WHERE l.id = $1 LIMIT 1`, [id.trim()]);
+      if (isValidUuid(trimmed)) {
+        const res = await query(`${LOCATION_SELECT_QUERY} WHERE l.id = $1 LIMIT 1`, [trimmed]);
         if (res.rows[0]) return res.rows[0];
       }
 
       // Fallback by room code or room name
-      const resByCode = await query(`${LOCATION_SELECT_QUERY} WHERE UPPER(l.code) = UPPER($1) OR UPPER(l.room) = UPPER($1) LIMIT 1`, [id.trim()]);
+      const resByCode = await query(
+        `${LOCATION_SELECT_QUERY} WHERE UPPER(l.code) = UPPER($1) OR UPPER(l.room) = UPPER($1) LIMIT 1`,
+        [trimmed]
+      );
       return resByCode.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup location: ${err.message}`, err);
     }
   },
 
   async findByCode(code: string): Promise<Location | null> {
+    if (!code || typeof code !== 'string') return null;
     try {
       const res = await query(`${LOCATION_SELECT_QUERY} WHERE UPPER(l.code) = UPPER($1) LIMIT 1`, [code.trim()]);
       return res.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup location by code: ${err.message}`, err);
     }
   },
 
@@ -150,8 +159,22 @@ export const locationModel = {
   },
 
   async delete(id: string): Promise<boolean> {
-    const res = await query('DELETE FROM locations WHERE id = $1', [id]);
+    if (!isValidUuid(id)) return false;
+    const res = await query('DELETE FROM locations WHERE id = $1', [id.trim()]);
     return (res.rowCount ?? 0) > 0;
+  },
+
+  async findRoomByInventoryItemId(itemId: string): Promise<{ room_id: string; room: string; name: string } | null> {
+    if (!isValidUuid(itemId)) return null;
+    const res = await query(
+      `SELECT ri.room_id, l.room, l.name
+       FROM room_inventory ri
+       JOIN locations l ON ri.room_id = l.id
+       WHERE ri.id = $1
+       LIMIT 1`,
+      [itemId.trim()]
+    );
+    return res.rows[0] || null;
   },
 
   // Room Inventory (Facility Matrix)
@@ -178,15 +201,17 @@ export const locationModel = {
   },
 
   async updateRoomInventoryCount(itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number): Promise<any> {
+    if (!isValidUuid(itemId)) return null;
     const col = field === 'qtyWorking' ? 'qty_working' : field === 'qtyBroken' ? 'qty_broken' : 'qty_maintenance';
     const res = await query(
       `UPDATE room_inventory SET ${col} = GREATEST(0, ${col} + $1), updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
-      [delta, itemId]
+      [delta, itemId.trim()]
     );
-    return res.rows[0];
+    return res.rows[0] || null;
   },
 
   async updateRoomInventoryItem(itemId: string, data: any): Promise<any> {
+    if (!isValidUuid(itemId)) return null;
     const fields: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -246,11 +271,13 @@ export const locationModel = {
   },
 
   async deleteRoomInventoryItem(itemId: string): Promise<boolean> {
-    const res = await query('DELETE FROM room_inventory WHERE id = $1', [itemId]);
+    if (!isValidUuid(itemId)) return false;
+    const res = await query('DELETE FROM room_inventory WHERE id = $1', [itemId.trim()]);
     return (res.rowCount ?? 0) > 0;
   },
 
   async markAudited(roomId: string, auditorName: string): Promise<any> {
+    if (!isValidUuid(roomId)) return null;
     const now = new Date();
     await query(
       `UPDATE locations SET last_audited_at = $1, audited_by = $2 WHERE id = $3`,

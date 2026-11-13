@@ -31,8 +31,8 @@ export const locationService = {
   },
 
   async update(id: string, data: Partial<Location>): Promise<Location> {
-    await this.getById(id);
-    const updated = await locationModel.update(id, data);
+    const existing = await this.getById(id);
+    const updated = await locationModel.update(existing.id, data);
     if (!updated) {
       throw new NotFoundException(`Location with ID ${id}`);
     }
@@ -41,8 +41,8 @@ export const locationService = {
   },
 
   async delete(id: string): Promise<boolean> {
-    await this.getById(id);
-    const deleted = await locationModel.delete(id);
+    const existing = await this.getById(id);
+    const deleted = await locationModel.delete(existing.id);
     if (deleted) {
       cache.invalidatePattern('location:');
     }
@@ -51,32 +51,42 @@ export const locationService = {
 
   // Room Inventory (Facility Matrix)
   async addRoomInventoryItem(roomId: string, item: any): Promise<any> {
-    await this.getById(roomId);
-    const created = await locationModel.addRoomInventoryItem(roomId, item);
+    const existing = await this.getById(roomId);
+    const created = await locationModel.addRoomInventoryItem(existing.id, item);
     cache.invalidatePattern('location:');
     return created;
   },
 
   async updateRoomInventoryCount(itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number): Promise<any> {
     const updated = await locationModel.updateRoomInventoryCount(itemId, field, delta);
+    if (!updated) {
+      throw new NotFoundException(`Room inventory item ${itemId}`);
+    }
     cache.invalidatePattern('location:');
     return updated;
   },
 
   async updateRoomInventoryItem(itemId: string, data: any): Promise<any> {
     const updated = await locationModel.updateRoomInventoryItem(itemId, data);
+    if (!updated) {
+      throw new NotFoundException(`Room inventory item ${itemId}`);
+    }
     cache.invalidatePattern('location:');
     return updated;
   },
 
   async deleteRoomInventoryItem(itemId: string): Promise<boolean> {
     const deleted = await locationModel.deleteRoomInventoryItem(itemId);
+    if (!deleted) {
+      throw new NotFoundException(`Room inventory item ${itemId}`);
+    }
     cache.invalidatePattern('location:');
     return deleted;
   },
 
   async markAudited(roomId: string, auditorName: string): Promise<any> {
-    const updated = await locationModel.markAudited(roomId, auditorName);
+    const existing = await this.getById(roomId);
+    const updated = await locationModel.markAudited(existing.id, auditorName);
     cache.invalidatePattern('location:');
     return updated;
   },

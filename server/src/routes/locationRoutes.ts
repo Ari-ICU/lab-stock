@@ -12,9 +12,17 @@ import {
   markRoomAudited,
 } from '@/controllers/locationController.js';
 import { authenticate, requirePermission, requireAdmin, requireLocationScope } from '@/middleware/auth.js';
-import { validateCreateLocation } from '@/middleware/validate.js';
+import {
+  validateCreateLocation,
+  validateUpdateLocation,
+  validateAddRoomInventory,
+  validateUpdateRoomInventory,
+  validateAdjustRoomInventoryCount,
+} from '@/middleware/validate.js';
 import { Permission } from '@/constants/permissions.js';
 import { locationService } from '@/services/locationService.js';
+import { locationModel } from '@/models/locationModel.js';
+import { NotFoundException } from '@/exceptions/errorHandler.js';
 
 const router = Router();
 
@@ -55,9 +63,10 @@ router.post(
 router.put(
   '/:id',
   requirePermission(Permission.LOCATION_MANAGE),
+  validateUpdateLocation,
   requireLocationScope(async (req) => {
     const loc = await locationService.getById(String(req.params.id));
-    return loc?.room || loc?.name;
+    return [loc?.room, loc?.name].filter(Boolean).join(' ');
   }),
   updateLocation
 );
@@ -73,6 +82,14 @@ router.delete(
   deleteLocation
 );
 
+async function resolveInventoryItemRoom(itemId: string): Promise<string> {
+  const room = await locationModel.findRoomByInventoryItemId(itemId);
+  if (!room) {
+    throw new NotFoundException(`Room inventory item ${itemId}`);
+  }
+  return [room.room, room.name].filter(Boolean).join(' ');
+}
+
 /**
  * @route   POST /api/v1/locations/:id/inventory
  * @desc    Add facility inventory item to room
@@ -80,6 +97,11 @@ router.delete(
 router.post(
   '/:id/inventory',
   requirePermission(Permission.LOCATION_MANAGE),
+  validateAddRoomInventory,
+  requireLocationScope(async (req) => {
+    const loc = await locationService.getById(String(req.params.id));
+    return [loc?.room, loc?.name].filter(Boolean).join(' ');
+  }),
   addRoomInventory
 );
 
@@ -90,6 +112,8 @@ router.post(
 router.patch(
   '/inventory/:itemId',
   requirePermission(Permission.LOCATION_MANAGE),
+  validateAdjustRoomInventoryCount,
+  requireLocationScope(async (req) => resolveInventoryItemRoom(String(req.params.itemId))),
   updateRoomInventoryCount
 );
 
@@ -100,6 +124,8 @@ router.patch(
 router.put(
   '/inventory/:itemId',
   requirePermission(Permission.LOCATION_MANAGE),
+  validateUpdateRoomInventory,
+  requireLocationScope(async (req) => resolveInventoryItemRoom(String(req.params.itemId))),
   updateRoomInventoryItem
 );
 
@@ -110,6 +136,7 @@ router.put(
 router.delete(
   '/inventory/:itemId',
   requirePermission(Permission.LOCATION_MANAGE),
+  requireLocationScope(async (req) => resolveInventoryItemRoom(String(req.params.itemId))),
   deleteRoomInventory
 );
 
@@ -120,6 +147,10 @@ router.delete(
 router.post(
   '/:id/audit',
   requirePermission(Permission.LOCATION_MANAGE),
+  requireLocationScope(async (req) => {
+    const loc = await locationService.getById(String(req.params.id));
+    return [loc?.room, loc?.name].filter(Boolean).join(' ');
+  }),
   markRoomAudited
 );
 

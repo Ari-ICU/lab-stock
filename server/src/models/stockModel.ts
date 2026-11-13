@@ -1,4 +1,6 @@
 import { query } from '../config/database.js';
+import { DatabaseException } from '../exceptions/errorHandler.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 export interface StockItem {
   id: string;
@@ -50,35 +52,38 @@ export const stockModel = {
 
       const res = await query(sql, params);
       return res.rows;
-    } catch {
-      return [];
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to query stock items: ${err.message}`, err);
     }
   },
 
   async findById(id: string): Promise<StockItem | null> {
+    if (!id || typeof id !== 'string' || !id.trim()) return null;
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      const trimmed = id.trim();
+      const isUuid = isValidUuid(trimmed);
       const res = await query(
         `SELECT s.*, l.name as location_name, l.room as location_room 
          FROM stock_items s
          LEFT JOIN locations l ON s.location_id = l.id
          WHERE ${isUuid ? 's.id = $1' : 'UPPER(s.code) = UPPER($1)'} LIMIT 1`,
-        [id]
+        [trimmed]
       );
       return res.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup stock item: ${err.message}`, err);
     }
   },
 
   async findByCode(code: string): Promise<StockItem | null> {
+    if (!code || typeof code !== 'string') return null;
     try {
       const res = await query('SELECT * FROM stock_items WHERE UPPER(code) = UPPER($1) LIMIT 1', [
-        code,
+        code.trim(),
       ]);
       return res.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup stock item by code: ${err.message}`, err);
     }
   },
 
@@ -152,6 +157,9 @@ export const stockModel = {
    * Guarantees quantity never drops below 0 when multiple users act simultaneously.
    */
   async adjustQuantity(id: string, delta: number): Promise<StockItem | null> {
+    const trimmed = id.trim();
+    const isUuid = isValidUuid(trimmed);
+    const idClause = isUuid ? 'id = $2' : 'UPPER(code) = UPPER($2)';
     const sql = `
       UPDATE stock_items
       SET quantity = quantity + $1,
@@ -161,10 +169,10 @@ export const stockModel = {
             ELSE 'in_stock'
           END,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2 AND (quantity + $1) >= 0
+      WHERE ${idClause} AND (quantity + $1) >= 0
       RETURNING *
     `;
-    const res = await query(sql, [delta, id]);
+    const res = await query(sql, [delta, trimmed]);
     return res.rows[0] || null;
   },
 };

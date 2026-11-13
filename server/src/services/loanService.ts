@@ -2,6 +2,7 @@ import { loanModel, Loan } from '../models/loanModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
 import { withTransaction } from '../config/database.js';
 import { cache } from '../utils/cache.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 export const loanService = {
   async getAll(status?: string): Promise<Loan[]> {
@@ -28,6 +29,10 @@ export const loanService = {
 
     if (!assetId || !borrowerName || !expectedReturnDate) {
       throw new ValidationException('Asset ID, borrower name, and expected return date are required');
+    }
+
+    if (!isValidUuid(assetId)) {
+      throw new ValidationException('Invalid equipment asset UUID');
     }
 
     const borrowerRole = data.borrower_role || data.borrowerRole || 'Student';
@@ -97,6 +102,10 @@ export const loanService = {
    * Check in returned equipment & record condition inspection notes atomically
    */
   async checkin(loanId: string, notes?: string): Promise<Loan> {
+    if (!isValidUuid(loanId)) {
+      throw new ValidationException('Invalid loan record UUID');
+    }
+
     const today = new Date().toISOString().split('T')[0];
 
     const updatedLoan = await withTransaction(async (client) => {

@@ -1,4 +1,6 @@
 import { query } from '../config/database.js';
+import { DatabaseException } from '../exceptions/errorHandler.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 export interface Asset {
   id: string;
@@ -47,35 +49,38 @@ export const assetModel = {
 
       const res = await query(sql, params);
       return res.rows;
-    } catch {
-      return [];
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to query assets: ${err.message}`, err);
     }
   },
 
   async findById(id: string): Promise<Asset | null> {
+    if (!id || typeof id !== 'string' || !id.trim()) return null;
     try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      const trimmed = id.trim();
+      const isUuid = isValidUuid(trimmed);
       const res = await query(
         `SELECT a.*, l.name as location_name, l.room as location_room 
          FROM assets a
          LEFT JOIN locations l ON a.location_id = l.id
          WHERE ${isUuid ? 'a.id = $1' : 'UPPER(a.serial_number) = UPPER($1)'} LIMIT 1`,
-        [id]
+        [trimmed]
       );
       return res.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup asset: ${err.message}`, err);
     }
   },
 
   async findBySerial(serial: string): Promise<Asset | null> {
+    if (!serial || typeof serial !== 'string') return null;
     try {
       const res = await query('SELECT * FROM assets WHERE UPPER(serial_number) = UPPER($1) LIMIT 1', [
-        serial,
+        serial.trim(),
       ]);
       return res.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup asset by serial: ${err.message}`, err);
     }
   },
 

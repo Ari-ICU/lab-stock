@@ -101,6 +101,10 @@ export const stockService = {
    * Concurrency-safe atomic adjustment (e.g. usage, restock, checkout)
    */
   async adjustQuantity(id: string, delta: number): Promise<StockItem> {
+    if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 1_000_000) {
+      throw new ValidationException('Quantity adjustment delta must be a non-zero integer');
+    }
+
     const updated = await stockModel.adjustQuantity(id, delta);
     if (!updated) {
       // Check if item exists or if stock was insufficient

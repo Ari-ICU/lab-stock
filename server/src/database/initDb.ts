@@ -31,42 +31,51 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     const userCount = userCountRes.rows[0]?.count || 0;
 
     if (userCount === 0) {
-      console.log('🌱 Database is empty. Seeding initial secure faculty and administrator accounts...');
+      const seedPassword =
+        process.env.SEED_DEFAULT_PASSWORD?.trim() ||
+        (process.env.NODE_ENV !== 'production' ? 'password123' : '');
 
-      // Bcrypt hash for initial default accounts
-      const hashedPassword = await hashPassword('password123');
-
-      const initialUsers = [
-        {
-          name: 'Dr. Heng Sovannarith',
-          email: 'heng.sovannarith@rupp.edu.kh',
-          password_hash: hashedPassword,
-          role: 'Primary Lab Administrator',
-          is_admin: true,
-          department: 'Engineering Block A - Room 102B',
-          assigned_labs: ['all'],
-        },
-        {
-          name: 'Thoeurn Ratha',
-          email: 'thoeurn.ratha@rupp.edu.kh',
-          password_hash: hashedPassword,
-          role: 'Faculty Lecturer',
-          is_admin: false,
-          department: 'Software Engineering Department',
-          assigned_labs: ['Room 102B', 'Room 206'],
-        },
-      ];
-
-      for (const u of initialUsers) {
-        await query(
-          `INSERT INTO users (name, email, password_hash, role, is_admin, department, assigned_labs)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (email) DO UPDATE SET assigned_labs = EXCLUDED.assigned_labs`,
-          [u.name, u.email, u.password_hash, u.role, u.is_admin, u.department, u.assigned_labs]
+      if (!seedPassword) {
+        console.warn(
+          '⚠️ [SECURITY] Database has 0 users and SEED_DEFAULT_PASSWORD is not set in production. Skipping default account creation.'
         );
-      }
+      } else {
+        console.log('🌱 Database is empty. Seeding initial faculty and administrator accounts...');
 
-      console.log(`✅ Seeded ${initialUsers.length} initial faculty users with official @rupp.edu.kh university credentials.`);
+        const hashedPassword = await hashPassword(seedPassword);
+
+        const initialUsers = [
+          {
+            name: 'Dr. Heng Sovannarith',
+            email: 'heng.sovannarith@rupp.edu.kh',
+            password_hash: hashedPassword,
+            role: 'Primary Lab Administrator',
+            is_admin: true,
+            department: 'Engineering Block A - Room 102B',
+            assigned_labs: ['all'],
+          },
+          {
+            name: 'Thoeurn Ratha',
+            email: 'thoeurn.ratha@rupp.edu.kh',
+            password_hash: hashedPassword,
+            role: 'Faculty Lecturer',
+            is_admin: false,
+            department: 'Software Engineering Department',
+            assigned_labs: ['Room 102B', 'Room 206'],
+          },
+        ];
+
+        for (const u of initialUsers) {
+          await query(
+            `INSERT INTO users (name, email, password_hash, role, is_admin, department, assigned_labs)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (email) DO UPDATE SET assigned_labs = EXCLUDED.assigned_labs`,
+            [u.name, u.email, u.password_hash, u.role, u.is_admin, u.department, u.assigned_labs]
+          );
+        }
+
+        console.log(`✅ Seeded ${initialUsers.length} initial faculty users with official @rupp.edu.kh university credentials.`);
+      }
     }
 
     // Check if locations/assets/stock are empty; seed if needed

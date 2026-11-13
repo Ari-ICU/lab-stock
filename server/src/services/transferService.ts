@@ -1,6 +1,7 @@
 import { query, withTransaction } from '../config/database.js';
 import { NotFoundException, ValidationException } from '../exceptions/errorHandler.js';
 import { cache } from '../utils/cache.js';
+import { isValidDateFormat } from '../validations/commonValidation.js';
 
 export interface TransferRecord {
   id: string;
@@ -87,10 +88,18 @@ export const transferService = {
     const transferredBy = data.transferred_by || data.transferredBy || 'Faculty Administrator';
     const reason = data.reason || 'Laboratory workshop equipment relocation';
     const transferDate = data.transfer_date || data.transferDate || new Date().toISOString().split('T')[0];
-    const quantity = Number(data.quantity || 1);
+    const quantity = data.quantity !== undefined ? Number(data.quantity) : 1;
 
     if (!assetId || !toLocationInput) {
       throw new ValidationException('Asset ID and target location are required for relocation');
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100_000) {
+      throw new ValidationException('Transfer quantity must be a positive integer between 1 and 100000');
+    }
+
+    if (!isValidDateFormat(transferDate)) {
+      throw new ValidationException('Transfer date must be in YYYY-MM-DD format');
     }
 
     return withTransaction(async (client) => {
@@ -147,29 +156,29 @@ export const transferService = {
         await client.query(`UPDATE assets SET location_id = $1 WHERE id = $2`, [toLocId, asset.id]);
       }
 
-      // 6. Update room_inventories if locations exist
+      // 6. Update room_inventory if locations exist
       if (fromLocId && toLocId && fromLocId !== toLocId) {
         // Reduce from origin
         await client.query(
-          `UPDATE room_inventories 
-           SET qty_working = GREATEST(0, qty_working - $1) 
-           WHERE location_id = $2 AND (asset_id = $3 OR LOWER(name) = LOWER($4))`,
+          `UPDATE room_inventory
+           SET qty_working = GREATEST(0, qty_working - $1), updated_at = CURRENT_TIMESTAMP
+           WHERE room_id = $2 AND (asset_id = $3 OR LOWER(name) = LOWER($4))`,
           [quantity, fromLocId, asset.id, asset.name]
         );
 
         // Add or update target
         const existingTargetInv = await client.query(
-          `SELECT id, qty_working FROM room_inventories WHERE location_id = $1 AND (asset_id = $2 OR LOWER(name) = LOWER($3)) LIMIT 1`,
+          `SELECT id, qty_working FROM room_inventory WHERE room_id = $1 AND (asset_id = $2 OR LOWER(name) = LOWER($3)) LIMIT 1`,
           [toLocId, asset.id, asset.name]
         );
         if (existingTargetInv.rows.length > 0) {
           await client.query(
-            `UPDATE room_inventories SET qty_working = qty_working + $1 WHERE id = $2`,
+            `UPDATE room_inventory SET qty_working = qty_working + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
             [quantity, existingTargetInv.rows[0].id]
           );
         } else {
           await client.query(
-            `INSERT INTO room_inventories (location_id, asset_id, name, item_group, brand_spec, unit, qty_working, qty_broken, qty_maintenance)
+            `INSERT INTO room_inventory (room_id, asset_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance)
              VALUES ($1, $2, $3, 'IT_HARDWARE', $4, $5, $6, 0, 0)`,
             [toLocId, asset.id, asset.name, asset.model || 'Standard Specification', asset.unit_type || 'Units', quantity]
           );

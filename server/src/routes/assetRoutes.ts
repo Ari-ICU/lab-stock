@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import {
   getAssets,
   getAssetById,
@@ -10,8 +10,23 @@ import { authenticate, requirePermission, requireLocationScope } from '@/middlew
 import { validateCreateAsset, validateUpdateAsset } from '@/middleware/validate.js';
 import { Permission } from '@/constants/permissions.js';
 import { assetService } from '@/services/assetService.js';
+import { locationModel } from '@/models/locationModel.js';
 
 const router = Router();
+
+async function resolveAssetBodyLocation(req: Request): Promise<string[]> {
+  const parts = [req.body.location, req.body.placement_rack, req.body.placementRack]
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  const locId = req.body.location_id || req.body.locationId;
+  if (typeof locId === 'string' && locId.trim()) {
+    const loc = await locationModel.findById(locId.trim());
+    if (loc) {
+      if (loc.room) parts.push(loc.room);
+      if (loc.name) parts.push(loc.name);
+    }
+  }
+  return parts;
+}
 
 // Apply authentication to all asset routes
 router.use(authenticate);
@@ -38,8 +53,8 @@ router.get('/:id', requirePermission(Permission.ASSET_READ), getAssetById);
 router.post(
   '/',
   requirePermission(Permission.ASSET_CREATE),
-  requireLocationScope((req) => [req.body.location, req.body.placement_rack, req.body.placementRack].filter(Boolean).join(' ')),
   validateCreateAsset,
+  requireLocationScope(async (req) => resolveAssetBodyLocation(req)),
   createAsset
 );
 
@@ -51,15 +66,13 @@ router.post(
 router.put(
   '/:id',
   requirePermission(Permission.ASSET_UPDATE),
+  validateUpdateAsset,
   requireLocationScope(async (req) => {
     const a = await assetService.getById(String(req.params.id));
     const currentLoc = [a?.location_room, a?.location_name, a?.placement_rack].filter(Boolean).join(' ');
-    const newLoc = req.body.location
-      ? [req.body.location, req.body.placement_rack, req.body.placementRack].filter(Boolean).join(' ')
-      : null;
-    return [currentLoc, newLoc].filter(Boolean) as string[];
+    const nextLocs = await resolveAssetBodyLocation(req);
+    return [currentLoc, ...nextLocs].filter(Boolean);
   }),
-  validateUpdateAsset,
   updateAsset
 );
 

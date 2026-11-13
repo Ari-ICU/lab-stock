@@ -6,7 +6,7 @@ import {
   checkinEquipment,
 } from '@/controllers/loanController.js';
 import { authenticate, requirePermission, requireLocationScope } from '@/middleware/auth.js';
-import { validateCheckoutLoan } from '@/middleware/validate.js';
+import { validateCheckoutLoan, validateReturnLoan } from '@/middleware/validate.js';
 import { Permission } from '@/constants/permissions.js';
 import { assetService } from '@/services/assetService.js';
 import { loanService } from '@/services/loanService.js';
@@ -38,13 +38,12 @@ router.get('/:id', requirePermission(Permission.LOAN_READ), getLoanById);
 router.post(
   '/checkout',
   requirePermission(Permission.LOAN_CHECKOUT),
+  validateCheckoutLoan,
   requireLocationScope(async (req) => {
     const assetId = String(req.body.asset_id || req.body.assetId || '');
-    if (!assetId) return null;
     const a = await assetService.getById(assetId);
-    return a?.placement_rack || a?.location_name;
+    return [a?.location_room, a?.placement_rack, a?.location_name].filter(Boolean).join(' ');
   }),
-  validateCheckoutLoan,
   checkoutEquipment
 );
 
@@ -56,13 +55,11 @@ router.post(
 router.post(
   '/:id/return',
   requirePermission(Permission.LOAN_RETURN),
+  validateReturnLoan,
   requireLocationScope(async (req) => {
     const loan = await loanService.getById(String(req.params.id));
-    if (loan?.asset_id) {
-      const a = await assetService.getById(loan.asset_id);
-      return a?.placement_rack || a?.location_name;
-    }
-    return null;
+    const a = await assetService.getById(loan.asset_id);
+    return [a?.location_room, a?.placement_rack, a?.location_name].filter(Boolean).join(' ');
   }),
   checkinEquipment
 );

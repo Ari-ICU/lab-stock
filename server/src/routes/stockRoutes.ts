@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import {
   getStockItems,
   getStockItemById,
@@ -8,11 +8,30 @@ import {
   deleteStockItem,
 } from '@/controllers/stockController.js';
 import { authenticate, requirePermission, requireLocationScope } from '@/middleware/auth.js';
-import { validateCreateStock, validateUpdateStock } from '@/middleware/validate.js';
+import {
+  validateCreateStock,
+  validateUpdateStock,
+  validateAdjustStock,
+} from '@/middleware/validate.js';
 import { Permission } from '@/constants/permissions.js';
 import { stockService } from '@/services/stockService.js';
+import { locationModel } from '@/models/locationModel.js';
 
 const router = Router();
+
+async function resolveStockBodyLocation(req: Request): Promise<string[]> {
+  const parts = [req.body.location, req.body.rack]
+    .filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  const locId = req.body.location_id || req.body.locationId;
+  if (typeof locId === 'string' && locId.trim()) {
+    const loc = await locationModel.findById(locId.trim());
+    if (loc) {
+      if (loc.room) parts.push(loc.room);
+      if (loc.name) parts.push(loc.name);
+    }
+  }
+  return parts;
+}
 
 // Apply authentication to all stock routes
 router.use(authenticate);
@@ -39,8 +58,8 @@ router.get('/:id', requirePermission(Permission.STOCK_READ), getStockItemById);
 router.post(
   '/',
   requirePermission(Permission.STOCK_CREATE),
-  requireLocationScope((req) => [req.body.location, req.body.rack].filter(Boolean).join(' ')),
   validateCreateStock,
+  requireLocationScope(async (req) => resolveStockBodyLocation(req)),
   createStockItem
 );
 
@@ -52,15 +71,13 @@ router.post(
 router.put(
   '/:id',
   requirePermission(Permission.STOCK_UPDATE),
+  validateUpdateStock,
   requireLocationScope(async (req) => {
     const s = await stockService.getById(String(req.params.id));
     const currentLoc = [s?.location_room, s?.location_name, s?.rack].filter(Boolean).join(' ');
-    const newLoc = req.body.location
-      ? [req.body.location, req.body.rack].filter(Boolean).join(' ')
-      : null;
-    return [currentLoc, newLoc].filter(Boolean) as string[];
+    const nextLocs = await resolveStockBodyLocation(req);
+    return [currentLoc, ...nextLocs].filter(Boolean);
   }),
-  validateUpdateStock,
   updateStockItem
 );
 
@@ -72,6 +89,7 @@ router.put(
 router.patch(
   ['/:id/quantity', '/:id/adjust'],
   requirePermission(Permission.STOCK_UPDATE),
+  validateAdjustStock,
   requireLocationScope(async (req) => {
     const s = await stockService.getById(String(req.params.id));
     return [s?.location_room, s?.rack, s?.location_name].filter(Boolean).join(' ');

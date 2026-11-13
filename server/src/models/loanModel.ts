@@ -1,4 +1,6 @@
 import { query } from '../config/database.js';
+import { DatabaseException } from '../exceptions/errorHandler.js';
+import { isValidUuid } from '../validations/commonValidation.js';
 
 export interface Loan {
   id: string;
@@ -37,23 +39,24 @@ export const loanModel = {
 
       const res = await query(sql, params);
       return res.rows;
-    } catch {
-      return [];
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to query loans: ${err.message}`, err);
     }
   },
 
   async findById(id: string): Promise<Loan | null> {
+    if (!isValidUuid(id)) return null;
     try {
       const res = await query(
         `SELECT l.*, a.name as asset_name, a.serial_number 
          FROM loans l
          JOIN assets a ON l.asset_id = a.id
          WHERE l.id = $1 LIMIT 1`,
-        [id]
+        [id.trim()]
       );
       return res.rows[0] || null;
-    } catch {
-      return null;
+    } catch (err: any) {
+      throw new DatabaseException(`Failed to lookup loan: ${err.message}`, err);
     }
   },
 
