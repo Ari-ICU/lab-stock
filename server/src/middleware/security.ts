@@ -10,12 +10,19 @@ import { config } from '@/config/index.js';
 export const corsSecurity = cors({
   origin: (origin, callback) => {
     const isProduction = config.nodeEnv === 'production';
+    const extraOrigins = (config.clientUrl || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
     const allowedOrigins = [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
       'http://localhost:5001',
-      config.clientUrl,
-    ].filter(Boolean);
+      ...extraOrigins,
+    ];
 
     // Allow requests with no origin (mobile apps, server-to-server curl, Postman)
     if (!origin) {
