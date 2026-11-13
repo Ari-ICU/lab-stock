@@ -372,34 +372,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
           {/* Top Badges */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md">
+            <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2.5 py-0.5 rounded-md">
               {loc.room}
             </span>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-600 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-200">
               {loc.type?.replace('_', ' ') || 'LAB'}
             </span>
-            {inventorySummary.totalBroken > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                {inventorySummary.totalBroken} Broken
-              </span>
-            )}
-            {inventorySummary.totalMaintenance > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                {inventorySummary.totalMaintenance} In Repair
-              </span>
-            )}
-            {inventorySummary.totalBroken === 0 && inventorySummary.totalMaintenance === 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                All Operational
-              </span>
-            )}
           </div>
 
           {/* Content: Lab Name & Details + Quick Stats */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-0.5">
             <div className="min-w-0">
               <h2 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
                 {loc.name}
@@ -408,8 +390,12 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <span className="text-neutral-900 font-semibold">{loc.building}</span>
                 <span className="text-neutral-300">·</span>
                 <span>Floor {loc.floor ?? 1}</span>
-                <span className="text-neutral-300">·</span>
-                <span>{loc.capacity || 30} Student Workstations</span>
+                {loc.type !== 'STORAGE' && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span>{loc.capacity || 30} Student Workstations</span>
+                  </>
+                )}
                 {loc.lastAuditedAt && (
                   <>
                     <span className="text-neutral-300 hidden sm:inline">·</span>
@@ -445,10 +431,18 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               <span className="text-neutral-300">|</span>
               <div className="flex items-center gap-2 text-[11px] font-mono">
                 <span className="text-emerald-700 font-semibold">{inventorySummary.totalWorking} OK</span>
-                <span className="text-neutral-300">·</span>
-                <span className="text-blue-700 font-semibold">{inventorySummary.totalMaintenance} Repair</span>
-                <span className="text-neutral-300">·</span>
-                <span className="text-rose-700 font-semibold">{inventorySummary.totalBroken} Defect</span>
+                {inventorySummary.totalMaintenance > 0 && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-blue-700 font-semibold">{inventorySummary.totalMaintenance} Repair</span>
+                  </>
+                )}
+                {inventorySummary.totalBroken > 0 && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-rose-700 font-semibold">{inventorySummary.totalBroken} Defect</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -459,11 +453,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
             {/* Filters Toolbar with Category & Condition Dropdowns */}
             <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap flex-1">
-                <div className="relative w-full sm:w-64">
+                <div className="relative w-full sm:w-72">
                   <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search chairs, tables, AC, projectors, PCs..."
+                    placeholder="Search equipment, specs, or remarks..."
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
                     className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
@@ -497,7 +491,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Allocate from Center Stock</span>
+                    <span>Allocate from Central Stock</span>
                   </Link>
                 )}
               </div>

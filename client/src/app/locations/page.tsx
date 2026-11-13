@@ -47,39 +47,33 @@ export default function LocationsPage() {
   // Compute room statistics and condition health
   const enhancedLocations = useMemo(() => {
     return locations.map((loc) => {
-      const roomKey = loc.room.replace(/^Rm\s*/i, '').trim().toLowerCase();
-
-      // Legacy matching for stock & assets
-      const matchingStock = stock.filter((s) => {
-        const l = s.location.toLowerCase();
+      const roomKey = loc.room.replace(/^(Rm|Room)\s*/i, '').trim().toLowerCase();
+      const roomRegex = roomKey ? new RegExp(`\\b${roomKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') : null;
+      const matchesRoom = (text: string) => {
+        const lower = text.toLowerCase();
         return (
-          l.includes(roomKey) ||
-          l.includes(loc.room.toLowerCase()) ||
-          l.includes(loc.name.toLowerCase())
+          (roomRegex ? roomRegex.test(lower) : false) ||
+          lower.includes(loc.name.toLowerCase())
         );
-      });
-      const stockItemsCount = matchingStock.length > 0 ? matchingStock.length : loc.totalItems;
-      const totalStockUnits = matchingStock.reduce((acc, s) => acc + (s.quantity || 1), 0);
-
-      const matchingAssets = assets.filter((a) => {
-        const l = a.location.toLowerCase();
-        return (
-          l.includes(roomKey) ||
-          l.includes(loc.room.toLowerCase()) ||
-          l.includes(loc.name.toLowerCase())
-        );
-      });
-      const hardwareAssetsCount = matchingAssets.length > 0 ? matchingAssets.length : loc.totalAssets;
-      const totalHardwareUnits = matchingAssets.reduce(
-        (acc, a) => acc + (a.totalUnits ?? 1),
-        0
-      );
+      };
 
       // Facility Inventory Condition Aggregates
       const invs = loc.inventories || [];
       const totalBrokenCount = invs.reduce((sum, item) => sum + (item.qtyBroken || 0), 0);
       const totalMaintenanceCount = invs.reduce((sum, item) => sum + (item.qtyMaintenance || 0), 0);
       const totalWorkingCount = invs.reduce((sum, item) => sum + (item.qtyWorking || 0), 0);
+      const invTotalUnits = totalWorkingCount + totalBrokenCount + totalMaintenanceCount;
+
+      const matchingStock = stock.filter((s) => matchesRoom(s.location));
+      const stockItemsCount = invs.length > 0 ? invs.length : matchingStock.length > 0 ? matchingStock.length : loc.totalItems;
+      const totalStockUnits = invTotalUnits > 0 ? invTotalUnits : matchingStock.reduce((acc, s) => acc + (s.quantity || 1), 0);
+
+      const matchingAssets = assets.filter((a) => matchesRoom(a.location));
+      const hardwareAssetsCount = matchingAssets.length > 0 ? matchingAssets.length : loc.totalAssets;
+      const totalHardwareUnits = matchingAssets.reduce(
+        (acc, a) => acc + (a.totalUnits ?? 1),
+        0
+      );
 
       const hasCriticalBroken = invs.some(
         (item) =>
@@ -288,28 +282,28 @@ export default function LocationsPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-emerald-700 mb-2">
+          <div className="bg-white border border-neutral-200/80 rounded-xl p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider">Central Inventory</span>
-              <Boxes className="w-4 h-4 text-emerald-600" />
+              <Boxes className="w-4 h-4 text-neutral-400" />
             </div>
-            <div className="text-2xl font-bold text-emerald-700 font-mono">
+            <div className="text-2xl font-bold text-neutral-900 font-mono">
               {stock.length} <span className="text-sm font-sans font-normal text-neutral-500">SKUs</span>
             </div>
-            <div className="text-xs text-emerald-600 mt-1">
-              Network cables, peripherals & lab supplies
+            <div className="text-xs text-neutral-500 mt-1">
+              Network cables, peripherals &amp; lab supplies
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
-            <div className="flex items-center justify-between text-blue-700 mb-2">
+          <div className="bg-white border border-neutral-200/80 rounded-xl p-4 shadow-2xs">
+            <div className="flex items-center justify-between text-neutral-500 mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider">Hardware Devices</span>
-              <Microscope className="w-4 h-4 text-blue-600" />
+              <Microscope className="w-4 h-4 text-neutral-400" />
             </div>
-            <div className="text-2xl font-bold text-blue-700 font-mono">
+            <div className="text-2xl font-bold text-neutral-900 font-mono">
               {totalHardwareDevicesCount} <span className="text-sm font-sans font-normal text-neutral-500">Units</span>
             </div>
-            <div className="text-xs text-blue-600 mt-1">
+            <div className="text-xs text-neutral-500 mt-1">
               {assets.length} equipment models deployed campus-wide
             </div>
           </div>
@@ -329,31 +323,33 @@ export default function LocationsPage() {
               />
             </div>
 
-            {/* Scope Filter: All vs Assigned */}
-            <div className="flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs">
-              <button
-                type="button"
-                onClick={() => setScopeFilter('all')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-all ${
-                  scopeFilter === 'all'
-                    ? 'bg-white text-neutral-900 font-semibold shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                All Classrooms ({locations.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setScopeFilter('assigned')}
-                className={`px-3 py-1.5 rounded-md font-medium transition-all flex items-center gap-1 ${
-                  scopeFilter === 'assigned'
-                    ? 'bg-white text-emerald-800 font-semibold shadow-2xs'
-                    : 'text-neutral-600 hover:text-neutral-900'
-                }`}
-              >
-                <span>My Assigned ({myAssignedCount})</span>
-              </button>
-            </div>
+            {/* Scope Filter: All vs Assigned (only shown when user has partial assignment) */}
+            {!isAdmin && myAssignedCount < locations.length && (
+              <div className="flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setScopeFilter('all')}
+                  className={`px-3 py-1.5 rounded-md font-medium transition-all ${
+                    scopeFilter === 'all'
+                      ? 'bg-white text-neutral-900 font-semibold shadow-2xs'
+                      : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+                >
+                  All Classrooms ({locations.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScopeFilter('assigned')}
+                  className={`px-3 py-1.5 rounded-md font-medium transition-all flex items-center gap-1 ${
+                    scopeFilter === 'assigned'
+                      ? 'bg-white text-emerald-800 font-semibold shadow-2xs'
+                      : 'text-neutral-600 hover:text-neutral-900'
+                  }`}
+                >
+                  <span>My Assigned ({myAssignedCount})</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="text-xs text-neutral-500 font-medium">
@@ -374,16 +370,18 @@ export default function LocationsPage() {
                 {/* 1. Card Header with Room Badge, Type, Capacity, and Actions */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-900 border border-neutral-200 px-2.5 py-1 rounded-md">
+                    <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2.5 py-0.5 rounded-md">
                       {loc.room}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-700 bg-neutral-100 border border-neutral-200 px-2 py-1 rounded-md">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-md">
                       {loc.type?.replace('_', ' ') || 'LAB'}
                     </span>
-                    <span className="text-[11px] font-semibold text-neutral-600 bg-neutral-50 border border-neutral-200/80 px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>{loc.capacity || 30} Seats</span>
-                    </span>
+                    {loc.type !== 'STORAGE' && (
+                      <span className="text-[11px] font-medium text-neutral-500 px-1.5 py-0.5 flex items-center gap-1">
+                        <Users className="w-3 h-3 text-neutral-400" />
+                        <span>{loc.capacity || 30} Seats</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Actions Menu */}
@@ -411,19 +409,12 @@ export default function LocationsPage() {
                     {loc.name}
                   </Link>
                   <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span className="font-medium text-neutral-700">{loc.building}</span>
-                    <span>•</span>
+                    <span className="font-medium text-neutral-600">{loc.building}</span>
+                    <span>·</span>
                     <span>Floor {loc.floor ?? 1}</span>
-                    {isAllowed ? (
+                    {!isAllowed && (
                       <>
-                        <span>•</span>
-                        <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.2 rounded text-[10px]">
-                          Assigned Lab
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span>•</span>
+                        <span>·</span>
                         <span className="text-neutral-500 bg-neutral-100 border border-neutral-200 px-1.5 py-0.2 rounded text-[10px] flex items-center gap-0.5">
                           <Shield className="w-2.5 h-2.5 text-neutral-400" /> Read-only
                         </span>
@@ -436,17 +427,17 @@ export default function LocationsPage() {
                 <div className="grid grid-cols-2 gap-2.5 pt-1">
                   <Link
                     href={`/locations/${loc.id}?tab=stock`}
-                    className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
+                    className="p-2.5 rounded-xl bg-neutral-50/80 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
-                      <Boxes className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-white text-neutral-700 border border-neutral-200 flex items-center justify-center shrink-0">
+                      <Boxes className="w-4 h-4 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Inventory</div>
+                      <div className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Inventory</div>
                       <div className="text-xs font-bold text-neutral-900 truncate">
                         {loc.stockItemsCount} {loc.stockItemsCount === 1 ? 'item' : 'items'}
                       </div>
-                      <div className="text-[10px] text-neutral-500">
+                      <div className="text-[10px] text-neutral-500 font-mono">
                         {loc.totalStockUnits} {loc.totalStockUnits === 1 ? 'unit' : 'units'}
                       </div>
                     </div>
@@ -454,17 +445,17 @@ export default function LocationsPage() {
 
                   <Link
                     href={`/locations/${loc.id}?tab=hardware`}
-                    className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
+                    className="p-2.5 rounded-xl bg-neutral-50/80 hover:bg-neutral-100/80 border border-neutral-200/80 transition-colors flex items-center gap-2.5 group/btn"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0 group-hover/btn:scale-105 transition-transform">
-                      <Microscope className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-white text-neutral-700 border border-neutral-200 flex items-center justify-center shrink-0">
+                      <Microscope className="w-4 h-4 text-neutral-700" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Hardware</div>
+                      <div className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Hardware</div>
                       <div className="text-xs font-bold text-neutral-900 truncate">
                         {loc.hardwareAssetsCount} {loc.hardwareAssetsCount === 1 ? 'device' : 'devices'}
                       </div>
-                      <div className="text-[10px] text-neutral-500">
+                      <div className="text-[10px] text-neutral-500 font-mono">
                         {loc.totalHardwareUnits} {loc.totalHardwareUnits === 1 ? 'unit' : 'units'}
                       </div>
                     </div>
@@ -472,20 +463,12 @@ export default function LocationsPage() {
                 </div>
 
                 {/* 4. Equipment Condition Health Status */}
-                {loc.totalBrokenCount > 0 || loc.totalMaintenanceCount > 0 ? (
-                  <div className="flex items-center gap-2 text-xs flex-wrap">
-                    {loc.totalBrokenCount > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                        {loc.totalBrokenCount} Broken
-                      </span>
-                    )}
-                    {loc.totalMaintenanceCount > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                        {loc.totalMaintenanceCount} Under Repair
-                      </span>
-                    )}
+                {loc.totalBrokenCount > 0 ? (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      {loc.totalBrokenCount} Broken
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-xs text-emerald-700">
