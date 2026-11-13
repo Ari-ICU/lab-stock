@@ -846,8 +846,8 @@ export default function SettingsPage() {
                         }`}
                       />
                       <div>
-                        <div className="font-semibold text-neutral-900">Scanner Audio Feedback Tone</div>
-                        <div className="text-[11px] text-neutral-500">Provide audio confirmation chime upon successful barcode/QR code scan.</div>
+                        <div className="font-semibold text-neutral-900">Action Confirmation Tone</div>
+                        <div className="text-[11px] text-neutral-500">Provide audio confirmation chime upon successful inventory or check-out actions.</div>
                       </div>
                     </label>
 

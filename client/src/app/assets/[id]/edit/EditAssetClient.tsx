@@ -361,7 +361,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
-                    <span>Serial Tag / Asset Barcode <span className="text-rose-500">*</span></span>
+                    <span>Serial Tag / Asset ID <span className="text-rose-500">*</span></span>
                   </label>
                   <div className="relative">
                     <input

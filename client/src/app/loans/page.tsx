@@ -879,7 +879,7 @@ export default function LoansPage() {
                   <div className="bg-white p-2.5 rounded-lg border border-neutral-200/80">
                     <span className="text-neutral-400 block text-[10px] font-semibold uppercase">Check-Out Date</span>
                     <strong className="text-neutral-900 font-mono text-xs mt-0.5 block">
-                      {selectedLoanDetails.borrowDate}
+                      {formatLoanDate(selectedLoanDetails.borrowDate)}
                     </strong>
                   </div>
                   <div className="bg-white p-2.5 rounded-lg border border-neutral-200/80">
@@ -889,13 +889,13 @@ export default function LoansPage() {
                         ? 'text-rose-600'
                         : 'text-neutral-900'
                     }`}>
-                      {selectedLoanDetails.expectedReturnDate}
+                      {formatLoanDate(selectedLoanDetails.expectedReturnDate)}
                     </strong>
                   </div>
                   <div className="bg-white p-2.5 rounded-lg border border-neutral-200/80 col-span-2 sm:col-span-1">
                     <span className="text-neutral-400 block text-[10px] font-semibold uppercase">Actual Return Date</span>
                     <strong className="text-emerald-700 font-mono text-xs mt-0.5 block">
-                      {selectedLoanDetails.actualReturnDate || 'Pending Return'}
+                      {selectedLoanDetails.actualReturnDate ? formatLoanDate(selectedLoanDetails.actualReturnDate) : 'Pending Return'}
                     </strong>
                   </div>
                 </div>
