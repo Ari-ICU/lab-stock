@@ -217,116 +217,110 @@ export default function MaintenanceDetailsClient({ id: propId }: { id?: string }
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
-        {/* Top Summary Banner (Clean without background image) */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          {/* Subtle ambient accent glow */}
-          <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none ${
-            item.status === 'Completed'
-              ? 'bg-emerald-500/10'
-              : item.status === 'In Progress'
-              ? 'bg-blue-500/10'
-              : 'bg-amber-500/10'
-          }`} />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+        {/* Top Summary Card */}
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+          {/* Top Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
+              <Wrench className="w-3.5 h-3.5 text-neutral-600" />
+              <span>Maintenance Record</span>
+            </span>
 
-          <div className="relative z-10 space-y-4">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-neutral-900" />
-                <span>MAINTENANCE RECORD</span>
-              </span>
-
-              {/* Status Badge */}
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-xs ${
+            {/* Status Badge */}
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+              item.status === 'Completed'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : item.status === 'In Progress'
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${
                 item.status === 'Completed'
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-emerald-600'
                   : item.status === 'In Progress'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-amber-500 text-white'
-              }`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                {item.status}
-              </span>
+                  ? 'bg-blue-600'
+                  : 'bg-amber-600'
+              }`} />
+              {item.status}
+            </span>
 
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                {item.type}
-              </span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-600 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
+              {item.type}
+            </span>
 
-              {/* Serial Tag Pill */}
-              <button
-                type="button"
-                onClick={handleCopySerial}
-                className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-300 bg-neutral-800/90 hover:bg-neutral-700/90 px-2.5 py-1 rounded-md border border-neutral-700 transition-colors cursor-pointer"
-                title="Click to copy serial tag"
-              >
-                <span>TAG: {item.serialNumber}</span>
-                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-400" />}
-              </button>
+            {/* Serial Tag Pill */}
+            <button
+              type="button"
+              onClick={handleCopySerial}
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
+              title="Click to copy serial tag"
+            >
+              <span>TAG: {item.serialNumber}</span>
+              {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+            </button>
 
-              <span className="font-mono text-[10px] sm:text-xs text-neutral-400 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                {item.quantity || 1} {item.unit || 'Units'}
-              </span>
+            <span className="font-mono text-[11px] text-neutral-600 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
+              {item.quantity || 1} {item.unit || 'Units'}
+            </span>
+          </div>
+
+          {/* Content: Title & Technician + Status Switcher */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
+                {item.assetName}
+              </h1>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
+                <span className="text-neutral-900 font-semibold">Tech: {item.technician}</span>
+                <span className="text-neutral-300">·</span>
+                <span className="flex items-center gap-1 text-neutral-500">
+                  <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                  {item.date}
+                </span>
+                {item.cost && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-emerald-700 font-mono font-semibold">${item.cost}</span>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Content: Title & Technician + Status Switcher */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
-                  {item.assetName}
-                </h1>
-                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-300 mt-1.5 flex-wrap font-medium">
-                  <span className="text-white font-semibold">Tech: {item.technician}</span>
-                  <span className="text-neutral-500">·</span>
-                  <span className="flex items-center gap-1 text-neutral-400">
-                    <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-                    {item.date}
-                  </span>
-                  {item.cost && (
-                    <>
-                      <span className="text-neutral-500">·</span>
-                      <span className="text-emerald-400 font-mono font-semibold">${item.cost}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Status Switcher Buttons */}
-              <div className="flex items-center gap-2 shrink-0 bg-neutral-800/90 border border-neutral-700/80 p-1.5 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange('Completed')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    item.status === 'Completed'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
-                  }`}
-                >
-                  Completed
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange('In Progress')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    item.status === 'In Progress'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
-                  }`}
-                >
-                  In Progress
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleStatusChange('Pending')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    item.status === 'Pending'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
-                  }`}
-                >
-                  Pending
-                </button>
-              </div>
+            {/* Status Switcher Buttons */}
+            <div className="flex items-center gap-1.5 shrink-0 bg-neutral-100 border border-neutral-200 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => handleStatusChange('Completed')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  item.status === 'Completed'
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
+                }`}
+              >
+                Completed
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStatusChange('In Progress')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  item.status === 'In Progress'
+                    ? 'bg-blue-600 text-white shadow-2xs'
+                    : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
+                }`}
+              >
+                In Progress
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStatusChange('Pending')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  item.status === 'Pending'
+                    ? 'bg-amber-600 text-white shadow-2xs'
+                    : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
+                }`}
+              >
+                Pending
+              </button>
             </div>
           </div>
         </div>

@@ -180,127 +180,125 @@ export default function LoanDetailsClient({ id: propId }: { id?: string }) {
           </div>
         )}
 
-        {/* Loan Dossier Header Banner (Clean without background image) */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          {/* Subtle ambient accent glow */}
-          <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none ${
-            isOverdue ? 'bg-rose-500/10' : 'bg-emerald-500/10'
-          }`} />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+        {/* Loan Dossier Header Card */}
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+          {/* Top Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
+              <Laptop className="w-3.5 h-3.5 text-neutral-600" />
+              <span>Loan Dossier</span>
+            </span>
 
-          <div className="relative z-10 space-y-4">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
-                <Laptop className="w-3.5 h-3.5 text-neutral-900" />
-                <span>LOAN DOSSIER</span>
-              </span>
-
-              {/* Status Badge */}
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-xs ${
+            {/* Status Badge */}
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${
+              loan.status === 'returned'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : isOverdue
+                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${
                 loan.status === 'returned'
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-emerald-600'
                   : isOverdue
-                  ? 'bg-rose-500 text-white animate-pulse'
-                  : 'bg-amber-500 text-white'
-              }`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                {loan.status === 'returned'
-                  ? 'Returned & Verified'
-                  : isOverdue
-                  ? 'Overdue Check-Out'
-                  : 'Active Custody Check-Out'}
-              </span>
+                  ? 'bg-rose-600'
+                  : 'bg-amber-600'
+              }`} />
+              {loan.status === 'returned'
+                ? 'Returned & Verified'
+                : isOverdue
+                ? 'Overdue Check-Out'
+                : 'Active Custody Check-Out'}
+            </span>
 
-              {/* Serial Number Pill */}
-              <button
-                type="button"
-                onClick={() => copyToClipboard(loan.serialNumber, 'Serial Number', 'hero-sn')}
-                className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-300 bg-neutral-800/90 hover:bg-neutral-700/90 px-2.5 py-1 rounded-md border border-neutral-700 transition-colors cursor-pointer"
-                title="Click to copy serial number"
-              >
-                <span>SN: {loan.serialNumber}</span>
-                {copiedKey === 'hero-sn' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-400" />}
-              </button>
+            {/* Serial Number Pill */}
+            <button
+              type="button"
+              onClick={() => copyToClipboard(loan.serialNumber, 'Serial Number', 'hero-sn')}
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
+              title="Click to copy serial number"
+            >
+              <span>SN: {loan.serialNumber}</span>
+              {copiedKey === 'hero-sn' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+            </button>
 
-              {/* Loan ID Pill */}
-              <button
-                type="button"
-                onClick={() => copyToClipboard(loan.id, 'Loan ID', 'hero-id')}
-                className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-400 hover:text-neutral-200 bg-neutral-800/60 hover:bg-neutral-800 px-2.5 py-1 rounded-md border border-neutral-800 transition-colors cursor-pointer"
-                title="Click to copy loan ID"
-              >
-                <span>ID: {loan.id.slice(0, 18)}...</span>
-                {copiedKey === 'hero-id' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-500" />}
-              </button>
-            </div>
+            {/* Loan ID Pill */}
+            <button
+              type="button"
+              onClick={() => copyToClipboard(loan.id, 'Loan ID', 'hero-id')}
+              className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-500 hover:text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
+              title="Click to copy loan ID"
+            >
+              <span>ID: {loan.id.slice(0, 18)}...</span>
+              {copiedKey === 'hero-id' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+            </button>
+          </div>
 
-            {/* Banner Main Content */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-              <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
-                  {loan.assetName}
-                </h2>
-                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-300 mt-1.5 flex-wrap font-medium">
-                  <span className="text-white font-semibold flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-neutral-400" />
-                    {loan.borrowerName} ({loan.borrowerRole})
-                  </span>
-                  <span className="text-neutral-500">·</span>
-                  <span className="font-mono text-neutral-400">{loan.borrowerContact}</span>
-                  {loan.courseOrClass && (
-                    <>
-                      <span className="text-neutral-500">·</span>
-                      <span className="text-neutral-300">{loan.courseOrClass}</span>
-                    </>
-                  )}
-                  {asset?.location && (
-                    <>
-                      <span className="text-neutral-500">·</span>
-                      <span className="text-neutral-400 flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-neutral-400" />
-                        {asset.location}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons & Quick Dates Panel */}
-              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-                <div className="flex items-center gap-2.5 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-neutral-400">Out:</span>
-                    <span className="font-mono font-bold text-neutral-200">{loan.borrowDate}</span>
-                  </div>
-                  <span className="text-neutral-600">|</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-neutral-400">Due:</span>
-                    <span className={`font-mono font-bold ${isOverdue ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      {loan.expectedReturnDate}
+          {/* Main Content */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
+                {loan.assetName}
+              </h2>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
+                <span className="text-neutral-900 font-semibold flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-neutral-400" />
+                  {loan.borrowerName} ({loan.borrowerRole})
+                </span>
+                <span className="text-neutral-300">·</span>
+                <span className="font-mono text-neutral-500">{loan.borrowerContact}</span>
+                {loan.courseOrClass && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-neutral-700">{loan.courseOrClass}</span>
+                  </>
+                )}
+                {asset?.location && (
+                  <>
+                    <span className="text-neutral-300">·</span>
+                    <span className="text-neutral-500 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400" />
+                      {asset.location}
                     </span>
-                  </div>
-                </div>
-
-                <Link
-                  href={`/assets/${loan.assetId}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-200 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-xl transition-colors shadow-2xs"
-                >
-                  <span>View Asset</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-                </Link>
-
-                {loan.status === 'active' && (
-                  <button
-                    type="button"
-                    onClick={() => setIsReturnModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-colors shadow-xs cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Check-In Device</span>
-                  </button>
+                  </>
                 )}
               </div>
+            </div>
+
+            {/* Action Buttons & Quick Dates Panel */}
+            <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+              <div className="flex items-center gap-2.5 bg-neutral-50 border border-neutral-200 px-3 py-2 rounded-lg text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-neutral-500">Out:</span>
+                  <span className="font-mono font-semibold text-neutral-800">{loan.borrowDate}</span>
+                </div>
+                <span className="text-neutral-300">|</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-neutral-500">Due:</span>
+                  <span className={`font-mono font-semibold ${isOverdue ? 'text-rose-600' : 'text-emerald-700'}`}>
+                    {loan.expectedReturnDate}
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href={`/assets/${loan.assetId}`}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-neutral-700 bg-white hover:bg-neutral-50 border border-neutral-200 rounded-lg transition-colors"
+              >
+                <span>View Asset</span>
+                <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+              </Link>
+
+              {loan.status === 'active' && (
+                <button
+                  type="button"
+                  onClick={() => setIsReturnModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-2xs cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Check-In Device</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -448,15 +448,11 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
           </div>
         )}
 
-        {/* Asset Header Banner (Clean without background image) */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          {/* Subtle ambient accent glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col md:flex-row gap-5 items-start">
+        {/* Asset Header Card */}
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs">
+          <div className="flex flex-col md:flex-row gap-5 items-start">
             {/* Asset Photo Frame */}
-            <div className="w-full md:w-56 h-44 rounded-xl border border-neutral-700 bg-neutral-800 overflow-hidden shrink-0 relative group shadow-sm">
+            <div className="w-full md:w-52 h-40 rounded-lg border border-neutral-200 bg-neutral-50 overflow-hidden shrink-0 relative group">
               {asset.imageUrl ? (
                 <img
                   src={getOptimizedImageUrl(asset.imageUrl, 'card')}
@@ -465,22 +461,30 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-neutral-500 gap-2">
+                <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 gap-2">
                   <Cpu className="w-8 h-8" />
-                  <span className="text-[10px] font-mono">No Image Uploaded</span>
+                  <span className="text-[11px] font-mono">No Image Uploaded</span>
                 </div>
               )}
               <div className="absolute top-2 left-2">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-xs ${
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs ${
                     asset.status === 'operational'
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : asset.status === 'in_use'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-amber-500 text-white'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      asset.status === 'operational'
+                        ? 'bg-emerald-600'
+                        : asset.status === 'in_use'
+                        ? 'bg-blue-600'
+                        : 'bg-amber-600'
+                    }`}
+                  />
                   {statusBadge.text}
                 </span>
               </div>
@@ -490,14 +494,14 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
             <div className="flex-1 min-w-0 space-y-4">
               {/* Badges */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
-                  <Router className="w-3.5 h-3.5 text-neutral-900" />
-                  <span>HARDWARE ASSET</span>
+                <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                  <Router className="w-3.5 h-3.5 text-neutral-600" />
+                  <span>Hardware Asset</span>
                 </span>
 
                 {asset.loanStatus === 'on_loan' && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500 text-white shadow-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
                     On Loan ({asset.currentBorrower || 'Active'})
                   </span>
                 )}
@@ -505,38 +509,38 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 <button
                   type="button"
                   onClick={handleCopySerial}
-                  className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-300 bg-neutral-800/90 hover:bg-neutral-700/90 px-2.5 py-1 rounded-md border border-neutral-700 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 font-mono text-[11px] text-neutral-700 bg-neutral-50 hover:bg-neutral-100 px-2.5 py-1 rounded-md border border-neutral-200 transition-colors cursor-pointer"
                   title="Click to copy serial tag"
                 >
                   <span>SN: {asset.serialNumber}</span>
-                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+                  {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
                 </button>
 
-                <span className="font-mono text-[10px] sm:text-xs text-neutral-400 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
+                <span className="font-mono text-[11px] text-neutral-500 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
                   ID: {asset.id}
                 </span>
               </div>
 
               {/* Title & Specs */}
               <div>
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
                   {asset.name}
                 </h1>
-                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-300 mt-1.5 flex-wrap font-medium">
-                  <span className="text-white font-mono font-semibold">{asset.model}</span>
-                  <span className="text-neutral-500">·</span>
-                  <span className="flex items-center gap-1 text-neutral-300">
+                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
+                  <span className="text-neutral-900 font-mono font-semibold">{asset.model}</span>
+                  <span className="text-neutral-300">·</span>
+                  <span className="flex items-center gap-1 text-neutral-600">
                     <MapPin className="w-3.5 h-3.5 text-neutral-400" />
                     {asset.location}
                   </span>
-                  <span className="text-neutral-500">·</span>
-                  <span className="text-emerald-400 font-bold font-mono">
+                  <span className="text-neutral-300">·</span>
+                  <span className="text-emerald-700 font-semibold font-mono">
                     {asset.totalUnits ?? 1} {asset.unitType ?? 'Units'} Deployed
                   </span>
                   {asset.nextCalibration && (
                     <>
-                      <span className="text-neutral-500 hidden sm:inline">·</span>
-                      <span className="text-neutral-400 font-mono text-xs hidden sm:inline">
+                      <span className="text-neutral-300 hidden sm:inline">·</span>
+                      <span className="text-neutral-500 font-mono text-xs hidden sm:inline">
                         Next Audit: {asset.nextCalibration}
                       </span>
                     </>
@@ -545,18 +549,18 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
               </div>
 
               {/* Status Switcher & Quick Actions */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-800/80">
+              <div className="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-neutral-400 text-xs">Status:</span>
-                  <div className="flex items-center gap-1 bg-neutral-800/90 p-1 rounded-lg border border-neutral-700/80">
+                  <span className="text-neutral-500 text-xs font-medium">Status:</span>
+                  <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-lg border border-neutral-200">
                     <button
                       type="button"
                       disabled={!isAllowed}
                       onClick={() => handleStatusChange('operational')}
                       className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                         asset.status === 'operational'
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
+                          ? 'bg-emerald-600 text-white shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
                       }`}
                     >
                       Operational
@@ -567,8 +571,8 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                       onClick={() => handleStatusChange('in_use')}
                       className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                         asset.status === 'in_use'
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
                       }`}
                     >
                       In Use
@@ -579,8 +583,8 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                       onClick={() => handleStatusChange('maintenance')}
                       className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                         asset.status === 'maintenance'
-                          ? 'bg-amber-600 text-white shadow-xs'
-                          : 'text-neutral-300 hover:text-white hover:bg-neutral-700/60'
+                          ? 'bg-amber-600 text-white shadow-2xs'
+                          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white'
                       }`}
                     >
                       Repair
@@ -590,14 +594,14 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
                 {allocations.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-neutral-400 text-xs">Allocations:</span>
+                    <span className="text-neutral-500 text-xs font-medium">Allocations:</span>
                     {allocations.map((a) => (
                       <Link
                         key={a.inventoryId}
                         href={`/locations/${a.locationId}`}
-                        className="inline-flex items-center gap-1 text-[11px] font-mono font-bold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 px-2 py-0.5 rounded transition-colors"
+                        className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border border-neutral-200 px-2 py-0.5 rounded transition-colors"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                         <span>{a.room} ({a.total})</span>
                       </Link>
                     ))}

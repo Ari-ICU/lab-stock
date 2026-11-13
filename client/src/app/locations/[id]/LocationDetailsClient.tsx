@@ -368,86 +368,80 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 max-w-8xl w-full mx-auto">
-        {/* 2. Laboratory Overview Banner (Clean without background image) */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          {/* Subtle ambient accent glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+        {/* 2. Laboratory Overview Card */}
+        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+          {/* Top Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200 px-2.5 py-1 rounded-md">
+              {loc.room}
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-600 bg-neutral-50 px-2.5 py-1 rounded-md border border-neutral-200">
+              {loc.type?.replace('_', ' ') || 'LAB'}
+            </span>
+            {inventorySummary.totalBroken > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                {inventorySummary.totalBroken} Broken
+              </span>
+            )}
+            {inventorySummary.totalMaintenance > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                {inventorySummary.totalMaintenance} In Repair
+              </span>
+            )}
+            {inventorySummary.totalBroken === 0 && inventorySummary.totalMaintenance === 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                All Operational
+              </span>
+            )}
+          </div>
 
-          <div className="relative z-10 space-y-4">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs">
-                {loc.room}
-              </span>
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                {loc.type?.replace('_', ' ') || 'LAB'}
-              </span>
-              {inventorySummary.totalBroken > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-amber-500/90 text-white shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  {inventorySummary.totalBroken} Broken
-                </span>
-              )}
-              {inventorySummary.totalMaintenance > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-blue-500/90 text-white shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  {inventorySummary.totalMaintenance} In Repair
-                </span>
-              )}
-              {inventorySummary.totalBroken === 0 && inventorySummary.totalMaintenance === 0 && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-emerald-500/90 text-white shadow-xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  All Operational
-                </span>
-              )}
+          {/* Content: Lab Name & Details + Quick Stats */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 truncate">
+                {loc.name}
+              </h2>
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
+                <span className="text-neutral-900 font-semibold">{loc.building}</span>
+                <span className="text-neutral-300">·</span>
+                <span>Floor {loc.floor ?? 1}</span>
+                <span className="text-neutral-300">·</span>
+                <span>{loc.capacity || 30} Student Workstations</span>
+                {loc.lastAuditedAt && (
+                  <>
+                    <span className="text-neutral-300 hidden sm:inline">·</span>
+                    <span className="text-neutral-500 text-xs hidden sm:inline">
+                      Audited: {loc.lastAuditedAt}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Content: Lab Name & Details + Quick Stats */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-              <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
-                  {loc.name}
-                </h2>
-                <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-300 mt-1.5 flex-wrap font-medium">
-                  <span className="text-white font-semibold">{loc.building}</span>
-                  <span className="text-neutral-500">·</span>
-                  <span>Floor {loc.floor ?? 1}</span>
-                  <span className="text-neutral-500">·</span>
-                  <span>{loc.capacity || 30} Student Workstations</span>
-                  {loc.lastAuditedAt && (
-                    <>
-                      <span className="text-neutral-500 hidden sm:inline">·</span>
-                      <span className="text-neutral-400 text-xs hidden sm:inline">
-                        Audited: {loc.lastAuditedAt}
-                      </span>
-                    </>
-                  )}
-                </div>
+            {/* Quick Fleet Health Badge */}
+            <div className="flex items-center gap-2.5 shrink-0 bg-neutral-50 border border-neutral-200 px-3.5 py-2 rounded-lg text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-neutral-500">Condition:</span>
+                <span className={`font-mono font-bold ${
+                  inventorySummary.healthRate >= 90
+                    ? 'text-emerald-700'
+                    : inventorySummary.healthRate >= 75
+                    ? 'text-amber-700'
+                    : 'text-rose-700'
+                }`}>
+                  {inventorySummary.healthRate}% Healthy
+                </span>
               </div>
-
-              {/* Quick Fleet Health Badge */}
-              <div className="flex items-center gap-2.5 shrink-0 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-neutral-400">Condition:</span>
-                  <span className={`font-mono font-bold ${
-                    inventorySummary.healthRate >= 90
-                      ? 'text-emerald-400'
-                      : inventorySummary.healthRate >= 75
-                      ? 'text-amber-400'
-                      : 'text-rose-400'
-                  }`}>
-                    {inventorySummary.healthRate}% Healthy
-                  </span>
-                </div>
-                <span className="text-neutral-600">|</span>
-                <div className="flex items-center gap-2 text-[11px] font-mono">
-                  <span className="text-emerald-400 font-bold">{inventorySummary.totalWorking} OK</span>
-                  <span className="text-neutral-600">·</span>
-                  <span className="text-blue-400 font-bold">{inventorySummary.totalMaintenance} Repair</span>
-                  <span className="text-neutral-600">·</span>
-                  <span className="text-rose-400 font-bold">{inventorySummary.totalBroken} Defect</span>
-                </div>
+              <span className="text-neutral-300">|</span>
+              <div className="flex items-center gap-2 text-[11px] font-mono">
+                <span className="text-emerald-700 font-semibold">{inventorySummary.totalWorking} OK</span>
+                <span className="text-neutral-300">·</span>
+                <span className="text-blue-700 font-semibold">{inventorySummary.totalMaintenance} Repair</span>
+                <span className="text-neutral-300">·</span>
+                <span className="text-rose-700 font-semibold">{inventorySummary.totalBroken} Defect</span>
               </div>
             </div>
           </div>
