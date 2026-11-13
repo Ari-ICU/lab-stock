@@ -11,21 +11,29 @@ import {
   Boxes,
   Building,
   Laptop,
-  Wrench,
-  ShoppingCart,
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
 
+type SearchResultType = 'asset' | 'stock' | 'location' | 'loan';
+type FilterTab = 'all' | SearchResultType;
+
 interface SearchResultItem {
   id: string;
-  type: 'asset' | 'stock' | 'location' | 'loan' | 'maintenance' | 'request';
+  type: SearchResultType;
   title: string;
   subtitle: string;
   tag: string;
   badge: string;
   badgeColor: string;
   href: string;
+}
+
+function formatSearchDate(val?: string) {
+  if (!val) return 'N/A';
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return val;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function GlobalSearchModal() {
@@ -37,11 +45,11 @@ export function GlobalSearchModal() {
     stock,
     locations,
     loans,
-    maintenance,
   } = useStock();
-  const { user, canManageLocation } = useAuth();
+  const { canManageLocation } = useAuth();
 
   const [query, setQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +57,7 @@ export function GlobalSearchModal() {
   useEffect(() => {
     if (isSearchOpen) {
       setQuery('');
+      setActiveFilter('all');
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -182,23 +191,45 @@ export function GlobalSearchModal() {
           id: `loan-${loan.id}`,
           type: 'loan',
           title: `${loan.assetName} (Lent to ${loan.borrowerName})`,
-          subtitle: `Student ID / Contact: ${loan.borrowerContact || 'N/A'} • Due: ${loan.expectedReturnDate}`,
+          subtitle: `Contact: ${loan.borrowerContact || 'N/A'} • Due: ${formatSearchDate(loan.expectedReturnDate)}`,
           tag: 'Device Loan',
           badge: loan.status === 'active' ? 'Active Checkout' : 'Returned',
           badgeColor: loan.status === 'active' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-neutral-100 text-neutral-700 border-neutral-200',
-          href: '/loans',
+          href: `/loans/${loan.id}`,
         });
       }
     }
 
-    // 5. Maintenance Logs
     return items;
   }, [query, assets, stock, locations, loans]);
+
+  const filterCounts = useMemo(
+    () => ({
+      all: results.length,
+      asset: results.filter((r) => r.type === 'asset').length,
+      stock: results.filter((r) => r.type === 'stock').length,
+      location: results.filter((r) => r.type === 'location').length,
+      loan: results.filter((r) => r.type === 'loan').length,
+    }),
+    [results]
+  );
+
+  const filteredResults = useMemo(
+    () => (activeFilter === 'all' ? results : results.filter((r) => r.type === activeFilter)),
+    [results, activeFilter]
+  );
 
   // Keep selected index in bounds
   useEffect(() => {
     setSelectedIndex(0);
-  }, [results]);
+  }, [query, activeFilter]);
+
+  useEffect(() => {
+    const activeEl = listRef.current?.querySelector(`[data-search-idx="${selectedIndex}"]`);
+    if (activeEl instanceof HTMLElement) {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedIndex]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -213,27 +244,27 @@ export function GlobalSearchModal() {
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+        setSelectedIndex((prev) => (prev < filteredResults.length - 1 ? prev + 1 : 0));
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, results.length - 1)));
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, filteredResults.length - 1)));
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (results[selectedIndex]) {
-          handleSelect(results[selectedIndex]);
+        if (filteredResults[selectedIndex]) {
+          handleSelect(filteredResults[selectedIndex]);
         }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen, results, selectedIndex]);
+  }, [isSearchOpen, filteredResults, selectedIndex]);
 
   const handleSelect = (item: SearchResultItem) => {
     closeSearch();
@@ -251,7 +282,7 @@ export function GlobalSearchModal() {
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-neutral-200 overflow-hidden flex flex-col max-h-[80vh] z-10 animate-in fade-in-0 zoom-in-95 duration-150">
+      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-neutral-200/90 overflow-hidden flex flex-col max-h-[80vh] z-10 animate-in fade-in-0 zoom-in-95 duration-150">
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3.5 border-b border-neutral-200 bg-white shrink-0">
           <Search className="w-5 h-5 text-neutral-400 mr-3 shrink-0" />
@@ -260,13 +291,13 @@ export function GlobalSearchModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search equipment, IP, MAC, serial number, room, SKU, or borrower..."
+            placeholder="Search assets, stock, SKU, serial number, room, or borrower..."
             className="w-full text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-neutral-400 hover:text-neutral-600 rounded mr-1 cursor-pointer"
+              className="p-1 text-neutral-400 hover:text-neutral-600 rounded mr-1.5 cursor-pointer"
               title="Clear search"
             >
               <X className="w-4 h-4" />
@@ -277,36 +308,76 @@ export function GlobalSearchModal() {
           </kbd>
         </div>
 
+        {/* Category Filter Tabs */}
+        {query.trim() !== '' && results.length > 0 && (
+          <div className="px-4 py-2 border-b border-neutral-100 bg-neutral-50/70 flex items-center gap-1.5 overflow-x-auto shrink-0">
+            {(
+              [
+                { key: 'all', label: 'All', count: filterCounts.all },
+                { key: 'asset', label: 'Hardware', count: filterCounts.asset },
+                { key: 'stock', label: 'Inventory', count: filterCounts.stock },
+                { key: 'location', label: 'Rooms', count: filterCounts.location },
+                { key: 'loan', label: 'Loans', count: filterCounts.loan },
+              ] as { key: FilterTab; label: string; count: number }[]
+            )
+              .filter((tab) => tab.key === 'all' || tab.count > 0)
+              .map((tab) => {
+                const active = activeFilter === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveFilter(tab.key)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer shrink-0 ${
+                      active
+                        ? 'bg-neutral-900 text-white'
+                        : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-100'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`font-mono text-[10px] px-1 rounded ${
+                        active ? 'bg-white/15 text-neutral-200' : 'text-neutral-400'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
+        )}
+
         {/* Results Container */}
         <div
           ref={listRef}
           className="flex-1 overflow-y-auto divide-y divide-neutral-100 bg-neutral-50/40 text-xs"
         >
           {query.trim() === '' ? (
-            /* Empty Query / Dynamic Quick Suggestions */
-            <div className="p-6 text-neutral-500 space-y-4">
-              <div className="flex items-center gap-2 text-neutral-400 text-[11px] font-semibold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Live Quick Searches (Dynamic from Database)</span>
+            /* Empty Query / Quick Suggestions */
+            <div className="p-5 sm:p-6 text-neutral-500 space-y-3.5">
+              <div className="flex items-center gap-2 text-neutral-500 text-[11px] font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Quick Suggestions</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {dynamicSuggestions.map((s) => (
                   <button
                     key={s.label}
                     onClick={() => setQuery(s.q)}
-                    className="p-2.5 bg-white border border-neutral-200/80 hover:border-neutral-400 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer group shadow-2xs"
+                    className="p-3 bg-white border border-neutral-200/80 hover:border-neutral-400 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer group shadow-2xs"
                   >
                     <span className="font-semibold text-neutral-800 group-hover:text-emerald-700 transition-colors truncate mr-2">
                       {s.label}
                     </span>
-                    <span className="text-[10px] text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded shrink-0">
+                    <span className="text-[10px] font-medium text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md shrink-0">
                       {s.type}
                     </span>
                   </button>
                 ))}
               </div>
             </div>
-          ) : results.length === 0 ? (
+          ) : filteredResults.length === 0 ? (
             /* No Results */
             <div className="p-12 text-center text-neutral-400 space-y-2">
               <Search className="w-8 h-8 mx-auto text-neutral-300" />
@@ -314,26 +385,27 @@ export function GlobalSearchModal() {
                 No matching equipment or records found
               </div>
               <p className="text-xs text-neutral-400 max-w-sm mx-auto">
-                No asset, consumable, room, requisition, or borrower matched &ldquo;<span className="font-mono text-neutral-700 font-semibold">{query}</span>&rdquo;.
+                No asset, consumable, room, or borrower matched &ldquo;<span className="font-mono text-neutral-700 font-semibold">{query}</span>&rdquo;.
               </p>
             </div>
           ) : (
             /* Results List */
-            <div className="p-2 space-y-1">
-              <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
-                Found {results.length} matching {results.length === 1 ? 'record' : 'records'}
+            <div className="p-2.5 space-y-1.5">
+              <div className="px-2.5 py-1 text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
+                Showing {filteredResults.length} matching {filteredResults.length === 1 ? 'record' : 'records'}
               </div>
-              {results.map((item, idx) => {
+              {filteredResults.map((item, idx) => {
                 const isSelected = idx === selectedIndex;
                 return (
                   <div
                     key={item.id}
+                    data-search-idx={idx}
                     onClick={() => handleSelect(item)}
                     onMouseEnter={() => setSelectedIndex(idx)}
-                    className={`p-3 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                    className={`p-3 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition-all ${
                       isSelected
                         ? 'bg-neutral-900 text-white shadow-xs'
-                        : 'bg-white hover:bg-neutral-100/70 border border-neutral-200/60'
+                        : 'bg-white hover:bg-neutral-100/70 border border-neutral-200/70'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -348,8 +420,6 @@ export function GlobalSearchModal() {
                         {item.type === 'stock' && <Boxes className="w-4 h-4" />}
                         {item.type === 'location' && <Building className="w-4 h-4" />}
                         {item.type === 'loan' && <Laptop className="w-4 h-4" />}
-                        {item.type === 'maintenance' && <Wrench className="w-4 h-4" />}
-                        {item.type === 'request' && <ShoppingCart className="w-4 h-4" />}
                       </div>
 
                       <div className="min-w-0">
@@ -382,11 +452,7 @@ export function GlobalSearchModal() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className={`text-[10px] uppercase font-semibold hidden sm:inline ${
-                          isSelected ? 'text-neutral-400' : 'text-neutral-400'
-                        }`}
-                      >
+                      <span className="text-[10px] uppercase font-semibold hidden sm:inline text-neutral-400">
                         {item.tag}
                       </span>
                       <ArrowRight
@@ -421,7 +487,7 @@ export function GlobalSearchModal() {
               to open
             </span>
           </div>
-          <span className="text-[10px] text-neutral-400">LabStock Fleet Search</span>
+          <span className="text-[10px] font-medium text-neutral-400">CSD Stock Search</span>
         </div>
       </div>
     </div>
