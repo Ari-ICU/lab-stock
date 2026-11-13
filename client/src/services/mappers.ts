@@ -1,4 +1,4 @@
-import { MockAsset, MockItem, MockLocation, MockLoan, MockMaintenance, MockTransfer, PurchaseRequest } from '@/types';
+import { MockAsset, MockItem, MockLocation, MockLoan, MockTransfer, PurchaseRequest } from '@/types';
 
 /**
  * Data mappers to convert between PostgreSQL / Express API payloads (snake_case)
@@ -167,41 +167,6 @@ export function toServerLoan(l: Partial<MockLoan>): Record<string, any> {
     actual_return_date: l.actualReturnDate,
     status: l.status,
     notes: l.notes,
-  };
-}
-
-export function mapServerMaintenance(m: any): MockMaintenance {
-  return {
-    id: String(m.id),
-    assetName: m.asset_name || m.assetName || 'Hardware Instrument',
-    serialNumber: m.serial_number || m.serialNumber || 'SN-N/A',
-    type: (m.type as MockMaintenance['type']) || 'Firmware Upgrade',
-    date: m.date ? (typeof m.date === 'string' ? m.date.split('T')[0] : new Date(m.date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
-    technician: m.technician || 'Technician',
-    status: (m.status as MockMaintenance['status']) || 'Pending',
-    notes: m.notes || '',
-    imageUrl: m.image_url || m.imageUrl || undefined,
-    location: m.location || undefined,
-    cost: m.cost || undefined,
-    quantity: m.quantity !== undefined && m.quantity !== null ? Number(m.quantity) : 1,
-    unit: m.unit || 'units',
-  };
-}
-
-export function toServerMaintenance(m: Partial<MockMaintenance>): Record<string, any> {
-  return {
-    asset_name: m.assetName,
-    serial_number: m.serialNumber,
-    type: m.type,
-    date: m.date,
-    technician: m.technician,
-    status: m.status,
-    notes: m.notes,
-    image_url: m.imageUrl,
-    location: m.location,
-    cost: m.cost,
-    quantity: m.quantity,
-    unit: m.unit,
   };
 }
 
