@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   Search,
+  X,
   ArrowLeftRight,
   Users
 } from 'lucide-react';
@@ -122,6 +123,14 @@ export function Sidebar() {
               </span>
             </div>
           </Link>
+
+          <button
+            onClick={closeMobileSidebar}
+            className="lg:hidden p-1 text-neutral-400 hover:text-neutral-900 rounded"
+            title="Close menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Global Fleet Quick Search (Cmd+K) */}

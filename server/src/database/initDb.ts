@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import { seedAllData, seedLoans, seedTransfers, seedMaintenance, seedPurchaseRequests, seedRoomInventory } from './seedData.js';
+import { seedAllData, seedLoans, seedMaintenance, seedPurchaseRequests, seedRoomInventory } from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,35 +66,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         );
       }
 
-      console.log('✅ Seeded 3 initial faculty users with official @rupp.edu.kh university credentials.');
-    }
-
-    // Purge any legacy lab assistant accounts from PostgreSQL
-    try {
-      await pool.query(`
-        DELETE FROM users WHERE role = 'Lab Assistant' OR email LIKE '%vicheka%' OR email LIKE '%assistant%';
-      `);
-    } catch {
-      // Ignore
-    }
-
-    // Migrate any legacy @lab.edu emails in PostgreSQL to official @rupp.edu.kh university domains
-    try {
-      await pool.query(`
-        UPDATE users SET email = 'thoeurn.ratha@rupp.edu.kh', assigned_labs = '{"Room 102B", "Room 206"}' 
-        WHERE email = 'admin@lab.edu' OR email = 'ratha@lab.edu' OR email = 'thoeurn.ratha@lab.edu';
-
-        UPDATE users SET email = 'heng.sovannarith@rupp.edu.kh' 
-        WHERE email = 'sovannarith@lab.edu' OR email = 'heng.sovannarith@lab.edu';
-
-        UPDATE users SET email = 'chan.vicheka@rupp.edu.kh', assigned_labs = '{"Room 102B", "Room 206"}' 
-        WHERE email = 'assistant@lab.edu' OR email = 'vakhim@lab.edu' OR email = 'chan.vicheka@lab.edu';
-
-        UPDATE users SET email = 'john.doe@rupp.edu.kh' 
-        WHERE email = 'john.doe@lab.edu';
-      `);
-    } catch {
-      // Ignore migration errors if records are already up to date
+      console.log(`✅ Seeded ${initialUsers.length} initial faculty users with official @rupp.edu.kh university credentials.`);
     }
 
     // Check if locations/assets/stock are empty; seed if needed
@@ -138,71 +110,22 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log('✅ Seeded device loans into PostgreSQL.');
     }
 
-    // Drop unused image_url from locations if exists
-    try {
-      await pool.query('ALTER TABLE locations DROP COLUMN IF EXISTS image_url;');
-    } catch {
-      // Ignore if table does not exist or column already dropped
-    }
-
-    // Ensure maintenance table has image_url, location, cost, quantity, unit
+    // Ensure backward-compatible columns exist on older database instances
     await pool.query(`
+      ALTER TABLE locations DROP COLUMN IF EXISTS image_url;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS location TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS cost NUMERIC(12, 2);
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'units';
-
-      -- Remove duplicate rows keeping one canonical record per equipment service on the exact same date
-      DELETE FROM maintenance_records a USING maintenance_records b
-      WHERE a.id > b.id
-        AND a.serial_number = b.serial_number
-        AND a.asset_name = b.asset_name
-        AND a.type = b.type
-        AND a.date::text = b.date::text;
-
-      -- Set counts per equipment item
-      UPDATE maintenance_records SET quantity = 5, unit = 'Switches'
-      WHERE asset_name ILIKE '%cisco%' OR asset_name ILIKE '%switch%' OR serial_number ILIKE '%FCW%';
-
-      UPDATE maintenance_records SET quantity = 2, unit = 'AC Units'
-      WHERE asset_name ILIKE '%air%' OR asset_name ILIKE '%daikin%' OR serial_number ILIKE '%DKN%';
-
-      UPDATE maintenance_records SET quantity = 24, unit = 'Desktops'
-      WHERE asset_name ILIKE '%optiplex%' OR asset_name ILIKE '%dell%' OR serial_number ILIKE '%OPT-%';
-
-      UPDATE maintenance_records SET quantity = 1, unit = 'Projector'
-      WHERE asset_name ILIKE '%projector%' OR asset_name ILIKE '%epson%' OR serial_number ILIKE '%EPS-%';
-
-      -- Backfill realistic photos for maintenance logs based on equipment classification
-      UPDATE maintenance_records
-      SET image_url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80'
-      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%switch%' OR asset_name ILIKE '%cisco%' OR asset_name ILIKE '%catalyst%');
-
-      UPDATE maintenance_records
-      SET image_url = 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80'
-      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%air%' OR asset_name ILIKE '%daikin%' OR asset_name ILIKE '%conditioner%' OR asset_name ILIKE '%hvac%');
-
-      UPDATE maintenance_records
-      SET image_url = 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80'
-      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%projector%' OR asset_name ILIKE '%epson%' OR asset_name ILIKE '%laser%');
-
-      UPDATE maintenance_records
-      SET image_url = 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80'
-      WHERE (image_url IS NULL OR image_url = '') AND (asset_name ILIKE '%dell%' OR asset_name ILIKE '%optiplex%' OR asset_name ILIKE '%desktop%' OR asset_name ILIKE '%workstation%');
-
-      UPDATE maintenance_records
-      SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
-      WHERE (image_url IS NULL OR image_url = '');
+      ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS supervised_by VARCHAR(150);
     `);
 
-    // Ensure all historical maintenance records are populated in PostgreSQL
-    for (const m of seedMaintenance) {
-      const exists = await query(
-        `SELECT id FROM maintenance_records WHERE serial_number = $1 AND date = $2 AND type = $3`,
-        [m.serial_number, m.date, m.type]
-      );
-      if (exists.rows.length === 0) {
+    // Seed historical maintenance records only when the table is empty
+    const maintCountRes = await pool.query('SELECT COUNT(*)::int as count FROM maintenance_records');
+    const maintCount = maintCountRes.rows[0]?.count || 0;
+    if (maintCount === 0) {
+      for (const m of seedMaintenance) {
         const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [m.serial_number]);
         const assetId = assetRes.rows[0]?.id || null;
         await query(
@@ -225,8 +148,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           ]
         );
       }
+      console.log(`✅ Seeded ${seedMaintenance.length} historical maintenance records into PostgreSQL.`);
     }
-    console.log(`✅ Verified and synced ${seedMaintenance.length} historical maintenance records in PostgreSQL.`);
 
     // Ensure purchase requests are populated in PostgreSQL
     const reqCountRes = await pool.query('SELECT COUNT(*)::int as count FROM purchase_requests');
@@ -239,7 +162,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
              estimated_cost, priority, status, reason, requested_by, requester_role, request_date, image_url, notes
            )
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-           ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes, image_url = EXCLUDED.image_url`,
+           ON CONFLICT (id) DO NOTHING`,
           [
             r.id,
             r.title,
@@ -261,15 +184,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       }
       console.log('✅ Seeded purchase requisitions into PostgreSQL.');
     }
-
-    // Ensure all existing purchase requests have valid image_url and supervised_by populated
-    await pool.query(`
-      ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS supervised_by VARCHAR(150);
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-001' AND (image_url IS NULL OR image_url = '');
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80' WHERE id = 'REQ-2026-002' AND (image_url IS NULL OR image_url = '');
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80', requested_by = 'Thoeurn Ratha', requester_role = 'Faculty Lecturer' WHERE id = 'REQ-2026-003';
-      UPDATE purchase_requests SET image_url = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80', requested_by = 'Thoeurn Ratha', requester_role = 'Faculty Lecturer' WHERE id = 'REQ-2026-004';
-    `);
 
     // Ensure room facility inventory (furniture & equipment) is populated in PostgreSQL
     const roomInvCountRes = await pool.query('SELECT COUNT(*)::int as count FROM room_inventory');

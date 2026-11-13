@@ -19,9 +19,10 @@ Table users {
   name varchar(150) [not null]
   email varchar(150) [unique, not null]
   password_hash varchar(255) [not null]
-  role varchar(80) [not null, default: 'Faculty Lecturer', note: 'Admin, Lecturer, Lab Assistant, Technician']
+  role varchar(80) [not null, default: 'Faculty Lecturer', note: 'Admin, Lecturer, Technician']
   is_admin boolean [not null, default: false]
   department varchar(150)
+  assigned_labs text[] [default: `ARRAY['all']::TEXT[]`]
   created_at timestamptz [default: `now()`]
   updated_at timestamptz [default: `now()`]
 
@@ -33,14 +34,18 @@ Table users {
 // --------------------------------------------------------
 Table locations {
   id uuid [pk, default: `uuid_generate_v4()`]
-  code varchar(50) [unique, not null, note: 'e.g. L1, L2']
+  code varchar(50) [unique, not null, note: 'e.g. LOC-102B, LOC-206']
   name varchar(150) [not null, note: 'e.g. Computer & Network Lab 102B']
-  room varchar(50) [not null, note: 'e.g. Rm 102B']
+  room varchar(50) [not null, note: 'e.g. Room 102B']
   building varchar(100) [not null, note: 'e.g. Engineering Block A']
+  floor int [default: 1]
+  room_type varchar(50) [default: 'COMPUTER_LAB']
   capacity int [default: 30]
+  last_audited_at timestamptz
+  audited_by varchar(150)
   created_at timestamptz [default: `now()`]
 
-  Note: 'Connected classrooms, research zones, and storage hubs'
+  Note: 'Connected classrooms, research testbeds, and storage hubs'
 }
 
 // --------------------------------------------------------
@@ -64,6 +69,11 @@ Table assets {
   description text
   created_at timestamptz [default: `now()`]
   updated_at timestamptz [default: `now()`]
+
+  indexes {
+    serial_number [name: 'idx_assets_serial']
+    location_id [name: 'idx_assets_location']
+  }
 
   Note: 'High-value persistent equipment (PCs, routers, switches, projectors)'
 }
@@ -91,13 +101,14 @@ Table stock_items {
   indexes {
     category [name: 'idx_stock_items_category']
     status [name: 'idx_stock_items_status']
+    location_id [name: 'idx_stock_items_location']
   }
 
   Note: 'Fast-moving consumables, peripherals, and spare components'
 }
 
 // --------------------------------------------------------
-// 5. EQUIPMENT LOANS & STUDENT CHECK-OUTS
+// 5. EQUIPMENT LOANS & CHECK-OUTS
 // --------------------------------------------------------
 Table loans {
   id uuid [pk, default: `uuid_generate_v4()`]
@@ -115,6 +126,7 @@ Table loans {
 
   indexes {
     status [name: 'idx_loans_status']
+    asset_id [name: 'idx_loans_asset']
   }
 
   Note: 'Concurrency-safe student lending records with return inspection trails'
@@ -133,7 +145,96 @@ Table transfers {
   reason text [note: 'e.g. Workshop setup, permanent reallocation']
   created_at timestamptz [default: `now()`]
 
+  indexes {
+    asset_id [name: 'idx_transfers_asset']
+  }
+
   Note: 'Physical equipment movement history between lab rooms'
+}
+
+// --------------------------------------------------------
+// 7. MAINTENANCE & AUDIT LOGS
+// --------------------------------------------------------
+Table maintenance_records {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  asset_id uuid [ref: > assets.id, note: 'Serviced equipment']
+  asset_name varchar(200) [not null]
+  serial_number varchar(100) [not null]
+  type varchar(100) [not null]
+  date date [not null, default: `CURRENT_DATE`]
+  technician varchar(150) [not null]
+  status varchar(50) [not null, default: 'Pending']
+  notes text
+  image_url text
+  location text
+  cost numeric(12, 2)
+  quantity int [default: 1]
+  unit varchar(50) [default: 'units']
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  indexes {
+    status [name: 'idx_maintenance_status']
+    asset_id [name: 'idx_maintenance_asset']
+  }
+
+  Note: 'Equipment maintenance, repairs, inspections, and firmware upgrade history'
+}
+
+// --------------------------------------------------------
+// 8. PURCHASE REQUESTS & REQUISITIONS
+// --------------------------------------------------------
+Table purchase_requests {
+  id varchar(50) [pk]
+  title varchar(255) [not null]
+  category varchar(100) [not null]
+  target_room varchar(50) [not null]
+  quantity int [not null, default: 1]
+  unit varchar(50) [not null, default: 'Units']
+  estimated_cost varchar(50)
+  priority varchar(20) [not null, default: 'medium']
+  status varchar(30) [not null, default: 'pending']
+  reason text [not null]
+  requested_by varchar(150) [not null]
+  requester_role varchar(100) [not null]
+  request_date date [not null, default: `CURRENT_DATE`]
+  image_url text
+  notes text
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  indexes {
+    status [name: 'idx_purchase_requests_status']
+  }
+
+  Note: 'Department equipment requisition and procurement requests'
+}
+
+// --------------------------------------------------------
+// 9. ROOM FACILITY & CONDITION INVENTORY
+// --------------------------------------------------------
+Table room_inventory {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  room_id uuid [ref: > locations.id]
+  stock_item_id uuid [ref: > stock_items.id]
+  asset_id uuid [ref: > assets.id]
+  name varchar(150) [not null]
+  group_type varchar(50) [not null, note: 'FURNITURE, ELECTRICAL, IT_HARDWARE, SAFETY_MISC']
+  brand_spec varchar(150)
+  unit varchar(50) [default: 'pcs']
+  qty_working int [default: 0]
+  qty_broken int [default: 0]
+  qty_maintenance int [default: 0]
+  remarks text
+  last_audited_at timestamptz [default: `now()`]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
+
+  indexes {
+    room_id [name: 'idx_room_inventory_room']
+  }
+
+  Note: 'Location-centric bulk furniture, light fixtures, and bench inventory'
 }
 
 // --------------------------------------------------------
@@ -141,19 +242,21 @@ Table transfers {
 // --------------------------------------------------------
 TableGroup Facility_Infrastructure {
   locations
+  room_inventory
 }
 
 TableGroup Hardware_Fleet {
   assets
   transfers
+  maintenance_records
 }
 
 TableGroup Consumable_Inventory {
   stock_items
+  purchase_requests
 }
 
 TableGroup Custody_Operations {
   loans
   users
 }
-

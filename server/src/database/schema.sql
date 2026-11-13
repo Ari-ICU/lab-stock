@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
     reason TEXT NOT NULL,
     requested_by VARCHAR(150) NOT NULL,
     requester_role VARCHAR(100) NOT NULL,
+    supervised_by VARCHAR(150),
     request_date DATE NOT NULL DEFAULT CURRENT_DATE,
     image_url TEXT,
     notes TEXT,
@@ -164,6 +165,7 @@ CREATE TABLE IF NOT EXISTS room_inventory (
 );
 
 -- INDEXES for Query Performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_stock_items_category ON stock_items(category);
 CREATE INDEX IF NOT EXISTS idx_stock_items_status ON stock_items(status);
 CREATE INDEX IF NOT EXISTS idx_stock_items_location ON stock_items(location_id);
@@ -172,7 +174,9 @@ CREATE INDEX IF NOT EXISTS idx_assets_location ON assets(location_id);
 CREATE INDEX IF NOT EXISTS idx_loans_status ON loans(status);
 CREATE INDEX IF NOT EXISTS idx_loans_asset ON loans(asset_id);
 CREATE INDEX IF NOT EXISTS idx_transfers_asset ON transfers(asset_id);
+CREATE INDEX IF NOT EXISTS idx_transfers_date ON transfers(transfer_date);
 CREATE INDEX IF NOT EXISTS idx_maintenance_status ON maintenance_records(status);
 CREATE INDEX IF NOT EXISTS idx_maintenance_asset ON maintenance_records(asset_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_serial ON maintenance_records(serial_number);
 CREATE INDEX IF NOT EXISTS idx_purchase_requests_status ON purchase_requests(status);
 CREATE INDEX IF NOT EXISTS idx_room_inventory_room ON room_inventory(room_id);

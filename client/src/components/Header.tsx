@@ -75,10 +75,10 @@ export function Header({
             )}
           </div>
         ) : (
-          <div className="min-w-0">
-            <h1 className="text-xs sm:text-base font-bold text-neutral-900 truncate">{title}</h1>
+          <div className="flex items-baseline gap-2 min-w-0">
+            <h1 className="text-sm sm:text-base font-bold text-neutral-900 truncate">{title}</h1>
             {subtitle && (
-              <span className="text-xs text-neutral-500 font-medium hidden md:inline truncate ml-2">
+              <span className="text-xs text-neutral-500 font-medium hidden md:inline truncate">
                 / {subtitle}
               </span>
             )}
