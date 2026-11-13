@@ -230,14 +230,30 @@ export function getInitialSessions(): SessionDevice[] {
   ];
 }
 
+export type AuthErrorCode =
+  | 'VALIDATION'
+  | 'INVALID_CREDENTIALS'
+  | 'FORBIDDEN'
+  | 'RATE_LIMITED'
+  | 'NETWORK_ERROR'
+  | 'TIMEOUT'
+  | 'SERVER_ERROR'
+  | 'UNKNOWN';
+
+export interface AuthActionResult {
+  success: boolean;
+  error?: string;
+  errorCode?: AuthErrorCode;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAuthInitialized: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<AuthActionResult>;
   logout: () => void;
-  switchAccount: (account: DemoAccount) => Promise<{ success: boolean; error?: string }>;
+  switchAccount: (account: DemoAccount) => Promise<AuthActionResult>;
   // User & Role Management
   managedUsers: ManagedUser[];
   updateUserRole: (userId: string, newRole: string) => void;
@@ -324,7 +340,18 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
   return sanitized;
 }
 
-const mapBackendUserToClient = (rawUser: any): User => {
+interface BackendUserRecord {
+  id?: string | number;
+  name?: string;
+  email?: string;
+  role?: string;
+  is_admin?: boolean;
+  department?: string | null;
+  assigned_labs?: string[] | null;
+  permissions?: string[] | null;
+}
+
+const mapBackendUserToClient = (rawUser: BackendUserRecord): User => {
   const isAdminFlag =
     Boolean(rawUser.is_admin) ||
     (typeof rawUser.role === 'string' && rawUser.role.toLowerCase().includes('admin'));
@@ -378,9 +405,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const res = await authService.getUsers();
       if (res?.users && Array.isArray(res.users) && res.users.length > 0) {
-        const dbUsers: ManagedUser[] = res.users
-          .filter((dbUser: any) => dbUser.role !== 'Lab Assistant' && !dbUser.email?.includes('vicheka') && !dbUser.email?.includes('assistant'))
-          .map((dbUser: any) => {
+        const dbUsers: ManagedUser[] = (res.users as BackendUserRecord[])
+          .filter(
+            (dbUser) =>
+              dbUser.role !== 'Lab Assistant' &&
+              !dbUser.email?.includes('vicheka') &&
+              !dbUser.email?.includes('assistant')
+          )
+          .map((dbUser) => {
             const roleStr = String(dbUser.role || '');
             const roleBadge: RoleBadge =
               dbUser.is_admin || roleStr.toLowerCase().includes('admin')
@@ -396,10 +428,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .toUpperCase();
 
             return {
-              id: String(dbUser.id),
-              name: dbUser.name,
-              email: dbUser.email,
-              role: dbUser.role,
+              id: String(dbUser.id ?? ''),
+              name: dbUser.name || 'Operator',
+              email: dbUser.email || '',
+              role:
+                dbUser.role ||
+                (roleBadge === 'Admin' ? 'Primary Lab Administrator' : 'Faculty Lecturer'),
               roleBadge,
               avatarText,
               permissions:
@@ -517,7 +551,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearStoredSession();
       setUser(null);
       setManagedUsers([]);
-      router.replace('/login');
+      router.replace('/login?reason=expired');
     };
 
     window.addEventListener('csd-auth-token-ready', handleAuthTokenReady);
@@ -570,7 +604,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ];
     }
 
-    setSessionDevices(initialList);
+    const sessionFrameId = window.requestAnimationFrame(() => {
+      if (!isCancelled) {
+        setSessionDevices(initialList);
+      }
+    });
     try {
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(initialList));
     } catch {
@@ -579,6 +617,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isCancelled = true;
+      window.cancelAnimationFrame(sessionFrameId);
       window.removeEventListener('csd-auth-token-ready', handleAuthTokenReady);
       window.removeEventListener('csd-auth-expired', handleAuthExpired);
     };
@@ -802,7 +841,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     rememberMe = true
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<AuthActionResult> => {
     setIsLoading(true);
 
     const cleanEmail = email.trim().toLowerCase();
@@ -815,6 +854,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       return {
         success: false,
+        errorCode: 'FORBIDDEN',
         error:
           'Access restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators.',
       };
@@ -840,6 +880,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsLoading(false);
           return {
             success: false,
+            errorCode: 'FORBIDDEN',
             error: 'Access restricted: Lab Assistants cannot sign in as operators.',
           };
         }
@@ -868,23 +909,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setIsLoading(false);
-      return { success: false, error: 'Authentication response did not include a valid token.' };
+      return {
+        success: false,
+        errorCode: 'SERVER_ERROR',
+        error: 'Authentication response did not include a valid session token.',
+      };
     } catch (err) {
-      // Never silently bypass explicit server rejections (401/403/400/429)
       if (err instanceof ApiError) {
-        setIsLoading(false);
-        return {
-          success: false,
-          error: err.message || 'Invalid credentials.',
-        };
-      }
+        if (err.status === 401) {
+          setIsLoading(false);
+          return {
+            success: false,
+            errorCode: 'INVALID_CREDENTIALS',
+            error: err.message || 'Invalid email or password credentials.',
+          };
+        }
+        if (err.status === 403) {
+          setIsLoading(false);
+          return {
+            success: false,
+            errorCode: 'FORBIDDEN',
+            error: err.message || 'Access restricted for this laboratory account.',
+          };
+        }
+        if (err.status === 429) {
+          setIsLoading(false);
+          return {
+            success: false,
+            errorCode: 'RATE_LIMITED',
+            error:
+              err.message ||
+              'Too many sign-in attempts. Please wait a minute before trying again.',
+          };
+        }
+        if (err.status >= 400 && err.status < 500 && err.status !== 408) {
+          setIsLoading(false);
+          return {
+            success: false,
+            errorCode: 'VALIDATION',
+            error: err.message || 'Please check your email and password format.',
+          };
+        }
+        if (err.status >= 500) {
+          setIsLoading(false);
+          return {
+            success: false,
+            errorCode: 'SERVER_ERROR',
+            error: 'The authentication service is temporarily unavailable. Please try again shortly.',
+          };
+        }
 
-      // In production, always fail closed when authentication backend is unreachable
-      if (process.env.NODE_ENV === 'production') {
+        // Network/CORS failure (status 0) or timeout (408): fail closed in production
+        if (process.env.NODE_ENV === 'production') {
+          setIsLoading(false);
+          return {
+            success: false,
+            errorCode: err.status === 408 ? 'TIMEOUT' : 'NETWORK_ERROR',
+            error:
+              err.status === 408
+                ? 'The authentication server took too long to respond.'
+                : 'Unable to reach the authentication server. Verify the backend gateway is online.',
+          };
+        }
+      } else if (process.env.NODE_ENV === 'production') {
         setIsLoading(false);
         return {
           success: false,
-          error: 'Authentication server is unreachable. Please try again later.',
+          errorCode: 'NETWORK_ERROR',
+          error: 'Unable to reach the authentication server. Please try again later.',
         };
       }
     }
@@ -918,7 +1010,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
     return {
       success: false,
-      error: 'Unable to sign in. Verify your credentials and ensure the backend API is running.',
+      errorCode: matchedAccount ? 'INVALID_CREDENTIALS' : 'NETWORK_ERROR',
+      error: matchedAccount
+        ? 'Invalid email or password credentials.'
+        : 'Unable to connect to the backend API and no matching offline development account was found.',
     };
   };
 
@@ -938,9 +1033,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const switchAccount = async (
     account: DemoAccount
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<AuthActionResult> => {
     if (process.env.NODE_ENV === 'production') {
-      return { success: false, error: 'Demo account switching is disabled in production.' };
+      return {
+        success: false,
+        errorCode: 'FORBIDDEN',
+        error: 'Demo account switching is disabled in production.',
+      };
     }
     return login(account.email, account.password || '', true);
   };
