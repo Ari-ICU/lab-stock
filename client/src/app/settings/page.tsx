@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import { PageBanner } from '@/components/PageBanner';
 import { Dropdown } from '@/components/Dropdown';
 import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { systemService } from '@/services';
@@ -64,6 +65,7 @@ export default function SettingsPage() {
     'sessions'
   );
 
+  const [mounted, setMounted] = useState(false);
   const [telemetry, setTelemetry] = useState<{
     host: string;
     protocol: string;
@@ -79,6 +81,7 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== 'undefined') {
       const port = window.location.port ? `:${window.location.port}` : '';
       setTelemetry({
@@ -292,64 +295,24 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
       <Header
-        title="Settings & System Configuration"
-        subtitle="Manage Active Session Devices, Network Proxy Gateways, and System Preferences"
+        title="Settings"
+        subtitle="Department of Computer Science"
         showExport={false}
         showAction={false}
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* System Settings Banner (Clean without background image) */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          {/* Subtle ambient accent glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-4">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-neutral-900" />
-                <span>SYSTEM SETTINGS</span>
-              </span>
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                ENGINEERING BLOCK A
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold bg-emerald-500/90 text-white shadow-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                Faculty Enterprise Node Active
-              </span>
-            </div>
-
-            {/* Banner Main Content */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-              <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
-                  System Preferences & Diagnostic Suite
-                </h2>
-                <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 font-medium leading-relaxed max-w-2xl">
-                  Configure laboratory alert thresholds, automated stock notifications, connected technician diagnostic tools, and administrative profiles.
-                </p>
-              </div>
-
-              {/* Quick Summary Panel */}
-              <div className="flex items-center gap-2.5 shrink-0 bg-neutral-800/90 border border-neutral-700/80 px-3.5 py-2 rounded-xl text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-neutral-400">Connected:</span>
-                  <span className="font-mono font-bold text-emerald-400">
-                    {sessionDevices.length} Sessions
-                  </span>
-                </div>
-                <span className="text-neutral-600">|</span>
-                <div className="flex items-center gap-2 text-[11px] font-mono">
-                  <span className="text-neutral-200 font-bold">Encrypted</span>
-                  <span className="text-neutral-600">·</span>
-                  <span className="text-emerald-400 font-bold">Online</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* System Settings Banner */}
+        <PageBanner
+          eyebrow="Department of Computer Science · System Settings"
+          icon={<Sliders className="w-3.5 h-3.5 text-emerald-600" />}
+          title="System Preferences & Session Devices"
+          description="Manage active login sessions, lab alert thresholds, backend API connections, and department data backups."
+          stats={[
+            { label: 'Sessions', value: mounted ? sessionDevices.length : 0, tone: 'emerald' },
+            { label: 'Status', value: 'Online', tone: 'emerald' },
+          ]}
+        />
 
         {/* Navigation Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-white border border-neutral-200 rounded-lg shadow-xs overflow-x-auto">
@@ -474,16 +437,19 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Radio className="w-4 h-4 text-neutral-700" />
                   <span suppressHydrationWarning className="text-xs font-bold text-neutral-900">
-                    Live Connections ({sessionDevices.length})
+                    Live Connections ({mounted ? sessionDevices.length : 0})
                   </span>
                 </div>
-                <span className="text-[11px] text-neutral-500 font-mono">
+                <span suppressHydrationWarning className="text-[11px] text-neutral-500 font-mono">
                   Current Session: {telemetry.host} ({telemetry.protocol})
                 </span>
               </div>
 
               <div className="divide-y divide-neutral-200">
-                {sessionDevices.map((device) => (
+                {!mounted ? (
+                  <div className="p-6 text-xs text-neutral-400">Loading active session devices...</div>
+                ) : (
+                  sessionDevices.map((device) => (
                   <div
                     key={device.id}
                     className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-neutral-50/60 transition-colors"
@@ -551,7 +517,8 @@ export default function SettingsPage() {
                       )}
                     </div>
                   </div>
-                ))}
+                ))
+                )}
               </div>
             </div>
           </div>
