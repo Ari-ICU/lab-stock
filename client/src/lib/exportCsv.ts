@@ -1,10 +1,10 @@
 /**
  * CSD Stock — Institutional Excel (.xlsx) & Data Exporter
  * Generates print-ready native Microsoft Excel (.xlsx) workbooks compliant with
- * international academic & ministerial audit standards (RUPP / MoEYS / ISO A4 Landscape),
- * featuring institutional masthead, metadata bar, semantic status styling, wrapped text,
- * dynamic row heights, live Excel SUM totals, frozen header panes, repeated print headers,
- * and formal verification sign-off blocks.
+ * ECMA-376 / ISO 29500 (Excel for Mac, Windows, LibreOffice Calc, Apple Numbers),
+ * featuring institutional masthead, metadata bar, shared string table, semantic status
+ * styling, wrapped text, dynamic row heights, live Excel SUM totals, frozen header panes,
+ * A4 landscape print setup with repeated headers, and formal verification sign-off blocks.
  */
 
 export interface ExportOptions {
@@ -27,7 +27,7 @@ const DEFAULT_INSTITUTION_LINE =
 const DEFAULT_DEPARTMENT_LINE =
   'Faculty of Science — Department of Computer Science (CSD)  |  Laboratory Fleet & Asset Management';
 
-// Style indices matching <cellXfs> in styles.xml
+// Style indices matching <cellXfs> in styles.xml (pure white paper, zero cell fill backgrounds)
 const S = {
   DEFAULT: 0,
   MASTHEAD: 1,
@@ -37,28 +37,22 @@ const S = {
   META_RIGHT: 5,
   COL_HEADER: 6,
   DATA_TEXT: 7,
-  DATA_TEXT_ALT: 8,
+  DATA_BOLD: 8,
   DATA_CENTER: 9,
-  DATA_CENTER_ALT: 10,
-  DATA_NUM: 11,
-  DATA_NUM_ALT: 12,
-  DATA_DEC: 13,
-  DATA_DEC_ALT: 14,
-  DATA_PLAIN_NUM: 15,
-  DATA_PLAIN_NUM_ALT: 16,
-  STATUS_GOOD: 17,
-  STATUS_WARN: 18,
-  STATUS_CRIT: 19,
-  STATUS_INFO: 20,
-  TOTAL_LABEL: 21,
-  TOTAL_CENTER: 22,
-  TOTAL_NUM: 23,
-  TOTAL_DEC: 24,
-  SIG_HEADER: 25,
-  SIG_SPACE: 26,
-  SIG_META: 27,
-  DATA_BOLD: 28,
-  DATA_BOLD_ALT: 29,
+  DATA_NUM: 10,
+  DATA_DEC: 11,
+  DATA_PLAIN_NUM: 12,
+  STATUS_GOOD: 13,
+  STATUS_WARN: 14,
+  STATUS_CRIT: 15,
+  STATUS_INFO: 16,
+  TOTAL_LABEL: 17,
+  TOTAL_CENTER: 18,
+  TOTAL_NUM: 19,
+  TOTAL_DEC: 20,
+  SIG_HEADER: 21,
+  SIG_SPACE: 22,
+  SIG_META: 23,
 } as const;
 
 /** Humanize system enums into clean international labels. */
@@ -144,12 +138,14 @@ function sanitizeSheetName(name: string): string {
 }
 
 function deriveReportTitle(filename: string): string {
-  return filename
-    .replace(/^csd_stock_|^csd_|_report$/gi, '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (ch) => ch.toUpperCase()) || 'Inventory & Asset Register';
+  return (
+    filename
+      .replace(/^csd_stock_|^csd_|_report$/gi, '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (ch) => ch.toUpperCase()) || 'Inventory & Asset Register'
+  );
 }
 
 function getPreparedByLabel(explicit?: string): string {
@@ -348,8 +344,8 @@ function createZipArchive(files: ZipFileEntry[]): Uint8Array {
     const view = new DataView(header.buffer);
     view.setUint32(0, 0x04034b50, true);
     view.setUint16(4, 20, true);
-    view.setUint16(6, 0x0800, true); // UTF-8 flag
-    view.setUint16(8, 0, true); // stored
+    view.setUint16(6, 0, true);
+    view.setUint16(8, 0, true);
     view.setUint16(10, dosTime, true);
     view.setUint16(12, dosDate, true);
     view.setUint32(14, crc, true);
@@ -372,7 +368,7 @@ function createZipArchive(files: ZipFileEntry[]): Uint8Array {
     view.setUint32(0, 0x02014b50, true);
     view.setUint16(4, 20, true);
     view.setUint16(6, 20, true);
-    view.setUint16(8, 0x0800, true); // UTF-8 flag
+    view.setUint16(8, 0, true);
     view.setUint16(10, 0, true);
     view.setUint16(12, dosTime, true);
     view.setUint16(14, dosDate, true);
@@ -406,6 +402,34 @@ function createZipArchive(files: ZipFileEntry[]): Uint8Array {
   return concatUint8Arrays(parts);
 }
 
+class SharedStringPool {
+  private readonly list: string[] = [];
+  private readonly indexByText = new Map<string, number>();
+  private totalCount = 0;
+
+  intern(text: string): number {
+    this.totalCount++;
+    const existing = this.indexByText.get(text);
+    if (existing !== undefined) return existing;
+    const idx = this.list.length;
+    this.list.push(text);
+    this.indexByText.set(text, idx);
+    return idx;
+  }
+
+  toXml(): string {
+    const items = this.list
+      .map((s) => {
+        const escaped = escapeXml(s);
+        const preserve = /^\s|\s$/.test(s) ? ' xml:space="preserve"' : '';
+        return `<si><t${preserve}>${escaped}</t></si>`;
+      })
+      .join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${this.totalCount}" uniqueCount="${this.list.length}">${items}</sst>`;
+  }
+}
+
 /**
  * Emit a complete merged row so every underlying cell carries consistent border/fill styles.
  */
@@ -413,6 +437,7 @@ function buildMergedBandRow(
   rowNum: number,
   heightPt: number,
   totalCols: number,
+  sst: SharedStringPool,
   segments: Array<{ startCol: number; endCol: number; style: number; value?: string }>
 ): { rowXml: string; mergeRefs: string[] } {
   let rowXml = `<row r="${rowNum}" ht="${heightPt}" customHeight="1">`;
@@ -423,7 +448,8 @@ function buildMergedBandRow(
     const style = seg ? seg.style : S.DEFAULT;
     const ref = `${getColLetter(c)}${rowNum}`;
     if (seg && c === seg.startCol && seg.value !== undefined) {
-      rowXml += `<c r="${ref}" s="${style}" t="inlineStr"><is><t>${escapeXml(seg.value)}</t></is></c>`;
+      const sstIdx = sst.intern(seg.value);
+      rowXml += `<c r="${ref}" s="${style}" t="s"><v>${sstIdx}</v></c>`;
     } else {
       rowXml += `<c r="${ref}" s="${style}"/>`;
     }
@@ -497,25 +523,26 @@ function buildXlsxWorkbook(
   });
   colsXml += '</cols>';
 
+  const sst = new SharedStringPool();
   const mergeRefs: string[] = [];
   let sheetDataXml = '<sheetData>';
 
   // Row 1: Institutional Masthead Banner
-  const r1 = buildMergedBandRow(1, 24, totalCols, [
+  const r1 = buildMergedBandRow(1, 24, totalCols, sst, [
     { startCol: 0, endCol: lastColIdx, style: S.MASTHEAD, value: institutionLine },
   ]);
   sheetDataXml += r1.rowXml;
   mergeRefs.push(...r1.mergeRefs);
 
   // Row 2: Faculty & Department Banner
-  const r2 = buildMergedBandRow(2, 21, totalCols, [
+  const r2 = buildMergedBandRow(2, 21, totalCols, sst, [
     { startCol: 0, endCol: lastColIdx, style: S.SUBMASTHEAD, value: departmentLine },
   ]);
   sheetDataXml += r2.rowXml;
   mergeRefs.push(...r2.mergeRefs);
 
   // Row 3: Official Report Title
-  const r3 = buildMergedBandRow(3, 28, totalCols, [
+  const r3 = buildMergedBandRow(3, 28, totalCols, sst, [
     { startCol: 0, endCol: lastColIdx, style: S.TITLE, value: reportTitle },
   ]);
   sheetDataXml += r3.rowXml;
@@ -523,7 +550,7 @@ function buildXlsxWorkbook(
 
   // Row 4: Document Reference & Metadata Strip
   if (totalCols === 1) {
-    const r4 = buildMergedBandRow(4, 20, totalCols, [
+    const r4 = buildMergedBandRow(4, 20, totalCols, sst, [
       {
         startCol: 0,
         endCol: 0,
@@ -535,7 +562,7 @@ function buildXlsxWorkbook(
     mergeRefs.push(...r4.mergeRefs);
   } else {
     const metaSplitIdx = Math.floor((totalCols - 1) / 2);
-    const r4 = buildMergedBandRow(4, 20, totalCols, [
+    const r4 = buildMergedBandRow(4, 20, totalCols, sst, [
       {
         startCol: 0,
         endCol: metaSplitIdx,
@@ -566,7 +593,8 @@ function buildXlsxWorkbook(
   sheetDataXml += `<row r="${HEADER_ROW}" ht="${headerHeight}" customHeight="1">`;
   headers.forEach((h, colIdx) => {
     const ref = `${getColLetter(colIdx)}${HEADER_ROW}`;
-    sheetDataXml += `<c r="${ref}" s="${S.COL_HEADER}" t="inlineStr"><is><t>${escapeXml(h)}</t></is></c>`;
+    const sstIdx = sst.intern(h);
+    sheetDataXml += `<c r="${ref}" s="${S.COL_HEADER}" t="s"><v>${sstIdx}</v></c>`;
   });
   sheetDataXml += '</row>';
 
@@ -574,9 +602,7 @@ function buildXlsxWorkbook(
   const FIRST_DATA_ROW = 7;
   rows.forEach((row, rowIdx) => {
     const rowNum = FIRST_DATA_ROW + rowIdx;
-    const isAlt = rowIdx % 2 === 1;
 
-    // Estimate dynamic row height based on wrapped content length across columns
     let maxRowLines = 1;
     headers.forEach((h, colIdx) => {
       if (includeNo && colIdx === 0) return;
@@ -594,7 +620,7 @@ function buildXlsxWorkbook(
     headers.forEach((h, colIdx) => {
       const ref = `${getColLetter(colIdx)}${rowNum}`;
       if (includeNo && colIdx === 0) {
-        sheetDataXml += `<c r="${ref}" s="${isAlt ? S.DATA_PLAIN_NUM_ALT : S.DATA_PLAIN_NUM}"><v>${rowIdx + 1}</v></c>`;
+        sheetDataXml += `<c r="${ref}" s="${S.DATA_PLAIN_NUM}"><v>${rowIdx + 1}</v></c>`;
         return;
       }
 
@@ -602,15 +628,9 @@ function buildXlsxWorkbook(
       const rawVal = row[h];
       if (typeof rawVal === 'number' && Number.isFinite(rawVal)) {
         const styleId = isPlainNumberHeader(h)
-          ? isAlt
-            ? S.DATA_PLAIN_NUM_ALT
-            : S.DATA_PLAIN_NUM
+          ? S.DATA_PLAIN_NUM
           : Number.isInteger(rawVal)
-          ? isAlt
-            ? S.DATA_NUM_ALT
-            : S.DATA_NUM
-          : isAlt
-          ? S.DATA_DEC_ALT
+          ? S.DATA_NUM
           : S.DATA_DEC;
         sheetDataXml += `<c r="${ref}" s="${styleId}"><v>${rawVal}</v></c>`;
         return;
@@ -622,18 +642,18 @@ function buildXlsxWorkbook(
         statusStyle !== null
           ? statusStyle
           : isPrimaryBoldHeader(h, dataIdx)
-          ? isAlt
-            ? S.DATA_BOLD_ALT
-            : S.DATA_BOLD
+          ? S.DATA_BOLD
           : isCenteredHeader(h)
-          ? isAlt
-            ? S.DATA_CENTER_ALT
-            : S.DATA_CENTER
-          : isAlt
-          ? S.DATA_TEXT_ALT
+          ? S.DATA_CENTER
           : S.DATA_TEXT;
 
-      sheetDataXml += `<c r="${ref}" s="${styleId}" t="inlineStr"><is><t>${escapeXml(formatted)}</t></is></c>`;
+      if (!formatted) {
+        sheetDataXml += `<c r="${ref}" s="${styleId}"/>`;
+        return;
+      }
+
+      const sstIdx = sst.intern(formatted);
+      sheetDataXml += `<c r="${ref}" s="${styleId}" t="s"><v>${sstIdx}</v></c>`;
     });
     sheetDataXml += '</row>';
   });
@@ -654,14 +674,16 @@ function buildXlsxWorkbook(
       const ref = `${getColLetter(colIdx)}${currentRow}`;
       if (includeNo && colIdx === 0) {
         if (!firstNonAdditiveIsPrimary) {
-          sheetDataXml += `<c r="${ref}" s="${S.TOTAL_CENTER}" t="inlineStr"><is><t>TOTAL</t></is></c>`;
+          const sstIdx = sst.intern('TOTAL');
+          sheetDataXml += `<c r="${ref}" s="${S.TOTAL_CENTER}" t="s"><v>${sstIdx}</v></c>`;
         } else {
           sheetDataXml += `<c r="${ref}" s="${S.TOTAL_CENTER}"/>`;
         }
         return;
       }
       if (colIdx === labelIdx && firstNonAdditiveIsPrimary) {
-        sheetDataXml += `<c r="${ref}" s="${S.TOTAL_LABEL}" t="inlineStr"><is><t>TOTAL (${rows.length} Records)</t></is></c>`;
+        const sstIdx = sst.intern(`TOTAL (${rows.length} Records)`);
+        sheetDataXml += `<c r="${ref}" s="${S.TOTAL_LABEL}" t="s"><v>${sstIdx}</v></c>`;
         return;
       }
       if (additiveCols.includes(h)) {
@@ -684,11 +706,12 @@ function buildXlsxWorkbook(
   }
 
   // Official Verification & Sign-Off Block (for RUPP / Ministry submission)
+  let lastUsedRow = currentRow - 1;
   if (options?.includeSignOff !== false && totalCols >= 3) {
     sheetDataXml += `<row r="${currentRow}" ht="14" customHeight="1"/>`;
     currentRow++;
 
-    const sigBanner = buildMergedBandRow(currentRow, 20, totalCols, [
+    const sigBanner = buildMergedBandRow(currentRow, 20, totalCols, sst, [
       {
         startCol: 0,
         endCol: lastColIdx,
@@ -700,7 +723,6 @@ function buildXlsxWorkbook(
     mergeRefs.push(...sigBanner.mergeRefs);
     currentRow++;
 
-    // Divide table width cleanly into 3 sign-off authorities (or 2 for very narrow sheets)
     const sigSegments: Array<{ startCol: number; endCol: number; title: string }> =
       totalCols >= 6
         ? (() => {
@@ -724,6 +746,7 @@ function buildXlsxWorkbook(
       currentRow,
       20,
       totalCols,
+      sst,
       sigSegments.map((s) => ({
         startCol: s.startCol,
         endCol: s.endCol,
@@ -739,6 +762,7 @@ function buildXlsxWorkbook(
       currentRow,
       40,
       totalCols,
+      sst,
       sigSegments.map((s) => ({
         startCol: s.startCol,
         endCol: s.endCol,
@@ -754,6 +778,7 @@ function buildXlsxWorkbook(
       currentRow,
       24,
       totalCols,
+      sst,
       sigSegments.map((s) => ({
         startCol: s.startCol,
         endCol: s.endCol,
@@ -763,6 +788,7 @@ function buildXlsxWorkbook(
     );
     sheetDataXml += sigMeta.rowXml;
     mergeRefs.push(...sigMeta.mergeRefs);
+    lastUsedRow = currentRow;
   }
 
   sheetDataXml += '</sheetData>';
@@ -778,11 +804,14 @@ function buildXlsxWorkbook(
   <sheetPr>
     <pageSetUpPr fitToPage="1"/>
   </sheetPr>
+  <dimension ref="A1:${lastColLetter}${lastUsedRow}"/>
   <sheetViews>
     <sheetView showGridLines="1" tabSelected="1" workbookViewId="0">
       <pane ySplit="${HEADER_ROW}" topLeftCell="A${FIRST_DATA_ROW}" activePane="bottomLeft" state="frozen"/>
+      <selection pane="bottomLeft" activeCell="A${FIRST_DATA_ROW}" sqref="A${FIRST_DATA_ROW}"/>
     </sheetView>
   </sheetViews>
+  <sheetFormatPr defaultRowHeight="20"/>
   ${colsXml}
   ${sheetDataXml}
   ${autoFilterXml}
@@ -796,110 +825,107 @@ function buildXlsxWorkbook(
 
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="12">
+  <fonts count="10">
     <font><sz val="10"/><color rgb="FF0F172A"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="10"/><color rgb="FFE2E8F0"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="13"/><color rgb="FF0B2545"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="10"/><color rgb="FF0F172A"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="11"/><color rgb="FF0B2545"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="13"/><color rgb="FF0F172A"/><name val="Arial"/><family val="2"/></font>
     <font><sz val="9"/><color rgb="FF475569"/><name val="Arial"/><family val="2"/></font>
     <font><b/><sz val="9"/><color rgb="FF1E293B"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="9.5"/><color rgb="FF065F46"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="9.5"/><color rgb="FF92400E"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="9.5"/><color rgb="FF9F1239"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="9.5"/><color rgb="FF1E40AF"/><name val="Arial"/><family val="2"/></font>
-    <font><b/><sz val="10"/><color rgb="FF0F172A"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="9"/><color rgb="FF065F46"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="9"/><color rgb="FF92400E"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="9"/><color rgb="FF9F1239"/><name val="Arial"/><family val="2"/></font>
+    <font><b/><sz val="9"/><color rgb="FF1E40AF"/><name val="Arial"/><family val="2"/></font>
   </fonts>
-  <fills count="11">
+  <fills count="2">
     <fill><patternFill patternType="none"/></fill>
     <fill><patternFill patternType="gray125"/></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF0B2545"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF13315C"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF0F172A"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFE2E8F0"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFECFDF5"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFFFFBEB"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFFFF1F2"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFEFF6FF"/></patternFill></fill>
   </fills>
   <borders count="7">
-    <border><left/><right/><top/><bottom/></border>
+    <border><left/><right/><top/><bottom/><diagonal/></border>
     <border>
       <left style="thin"><color rgb="FFCBD5E1"/></left>
       <right style="thin"><color rgb="FFCBD5E1"/></right>
       <top style="thin"><color rgb="FFCBD5E1"/></top>
       <bottom style="thin"><color rgb="FFCBD5E1"/></bottom>
-    </border>
-    <border>
-      <left style="thin"><color rgb="FF334155"/></left>
-      <right style="thin"><color rgb="FF334155"/></right>
-      <top style="thin"><color rgb="FF334155"/></top>
-      <bottom style="medium"><color rgb="FF0B2545"/></bottom>
-    </border>
-    <border>
-      <left/><right/><top/>
-      <bottom style="medium"><color rgb="FF0B2545"/></bottom>
-    </border>
-    <border>
-      <left style="thin"><color rgb="FFCBD5E1"/></left>
-      <right style="thin"><color rgb="FFCBD5E1"/></right>
-      <top style="thin"><color rgb="FFCBD5E1"/></top>
-      <bottom style="thin"><color rgb="FFCBD5E1"/></bottom>
+      <diagonal/>
     </border>
     <border>
       <left style="thin"><color rgb="FF94A3B8"/></left>
       <right style="thin"><color rgb="FF94A3B8"/></right>
-      <top style="thin"><color rgb="FF94A3B8"/></top>
+      <top style="medium"><color rgb="FF0F172A"/></top>
+      <bottom style="medium"><color rgb="FF0F172A"/></bottom>
+      <diagonal/>
+    </border>
+    <border>
+      <left/><right/><top/>
+      <bottom style="medium"><color rgb="FF0F172A"/></bottom>
+      <diagonal/>
+    </border>
+    <border>
+      <left/><right/><top/>
+      <bottom style="thin"><color rgb="FFCBD5E1"/></bottom>
+      <diagonal/>
+    </border>
+    <border>
+      <left style="thin"><color rgb="FFCBD5E1"/></left>
+      <right style="thin"><color rgb="FFCBD5E1"/></right>
+      <top style="thin"><color rgb="FF0F172A"/></top>
       <bottom style="double"><color rgb="FF0F172A"/></bottom>
+      <diagonal/>
     </border>
     <border>
       <left style="thin"><color rgb="FF94A3B8"/></left>
       <right style="thin"><color rgb="FF94A3B8"/></right>
       <top style="thin"><color rgb="FF94A3B8"/></top>
       <bottom style="thin"><color rgb="FF94A3B8"/></bottom>
+      <diagonal/>
     </border>
   </borders>
   <cellStyleXfs count="1">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
   </cellStyleXfs>
-  <cellXfs count="30">
+  <cellXfs count="24">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-    <xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="3" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="4" fillId="5" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="5" fillId="6" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>
-    <xf numFmtId="0" fontId="5" fillId="6" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" indent="1"/></xf>
-    <xf numFmtId="0" fontId="1" fillId="4" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="3" fillId="0" borderId="3" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="3" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-    <xf numFmtId="3" fontId="0" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
     <xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-    <xf numFmtId="4" fontId="0" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
     <xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="1" fontId="0" fillId="5" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="7" fillId="7" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="8" fillId="8" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="9" fillId="9" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="10" fillId="10" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="11" fillId="6" borderId="5" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="11" fillId="6" borderId="5" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="3" fontId="11" fillId="6" borderId="5" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-    <xf numFmtId="4" fontId="11" fillId="6" borderId="5" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="6" fillId="6" borderId="6" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="5" fillId="0" borderId="6" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="bottom" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="5" fillId="5" borderId="6" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="11" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="11" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="6" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="7" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="8" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="9" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="5" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="5" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="3" fontId="1" fillId="0" borderId="5" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="4" fontId="1" fillId="0" borderId="5" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="5" fillId="0" borderId="6" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="6" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="bottom" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="6" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
   </cellXfs>
+  <cellStyles count="1">
+    <cellStyle name="Normal" xfId="0" builtinId="0"/>
+  </cellStyles>
+  <dxfs count="0"/>
+  <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
 </styleSheet>`;
 
   const escapedPrintTitleSheet = safeSheetTitle.replace(/'/g, "''");
   const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <fileVersion appName="xl" lastEdited="7" lowestEdited="7" rupBuild="24520"/>
+  <workbookPr defaultThemeVersion="166925"/>
+  <bookViews>
+    <workbookView xWindow="0" yWindow="0" windowWidth="24000" windowHeight="14000"/>
+  </bookViews>
   <sheets>
     <sheet name="${escapeXml(safeSheetTitle)}" sheetId="1" r:id="rId1"/>
   </sheets>
@@ -909,9 +935,9 @@ function buildXlsxWorkbook(
   <calcPr calcId="191029" fullCalcOnLoad="1"/>
 </workbook>`;
 
-  const isoTimestamp = now.toISOString();
+  const isoTimestamp = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
   const coreXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <dc:title>${escapeXml(reportTitle)}</dc:title>
   <dc:subject>${escapeXml(departmentLine)}</dc:subject>
   <dc:creator>${escapeXml(preparedBy)}</dc:creator>
@@ -919,29 +945,33 @@ function buildXlsxWorkbook(
   <dcterms:modified xsi:type="dcterms:W3CDTF">${isoTimestamp}</dcterms:modified>
 </cp:coreProperties>`;
 
+  // CT_Properties XSD sequence requires Company before Application
   const appXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
-  <Application>CSD Stock Institutional Reporting Engine</Application>
   <Company>Royal University of Phnom Penh — Faculty of Science</Company>
+  <Application>Microsoft Excel</Application>
 </Properties>`;
+
+  const sharedStringsXml = sst.toXml();
 
   const files: ZipFileEntry[] = [
     {
       name: '[Content_Types].xml',
-      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`,
+      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`,
     },
     {
       name: '_rels/.rels',
-      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`,
+      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`,
     },
     {
       name: 'xl/_rels/workbook.xml.rels',
-      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+      data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>`,
     },
     { name: 'docProps/core.xml', data: coreXml },
     { name: 'docProps/app.xml', data: appXml },
     { name: 'xl/workbook.xml', data: workbookXml },
     { name: 'xl/styles.xml', data: stylesXml },
+    { name: 'xl/sharedStrings.xml', data: sharedStringsXml },
     { name: 'xl/worksheets/sheet1.xml', data: sheet1Xml },
   ];
 
