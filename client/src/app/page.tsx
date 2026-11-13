@@ -698,13 +698,6 @@ export default function DashboardPage() {
                   </h2>
                   <p className="text-[11px] text-neutral-500 mt-0.5">Audit reports, hardware fixes & calibrations</p>
                 </div>
-                <Link
-                  href="/maintenance"
-                  className="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition-colors"
-                >
-                  <span>All records</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
               </div>
 
               <div className="divide-y divide-neutral-100">

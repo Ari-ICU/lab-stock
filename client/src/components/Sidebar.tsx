@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   Package,
   Router,
-  Wrench,
   MapPin,
   Settings,
   LogOut,
@@ -33,7 +32,6 @@ const navItems: NavItem[] = [
   { href: '/assets', label: 'Hardware Assets', icon: Router },
   { href: '/stock', label: 'Inventory', icon: Package },
   { href: '/loans', label: 'Device Loans', icon: ArrowLeftRight },
-  { href: '/maintenance', label: 'Repairs', icon: Wrench },
   { href: '/users', label: 'Personnel & Roles', icon: Users },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -171,8 +169,6 @@ export function Sidebar() {
                 ? stock.length
                 : item.href === '/loans'
                 ? (activeLoansCount > 0 ? activeLoansCount : undefined)
-                : item.href === '/maintenance'
-                ? uniqueMaintenanceCount
                 : item.href === '/locations'
                 ? locations.length
                 : item.href === '/users'

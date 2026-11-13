@@ -192,30 +192,8 @@ export function GlobalSearchModal() {
     }
 
     // 5. Maintenance Logs
-    for (const m of maintenance) {
-      const match =
-        m.assetName.toLowerCase().includes(q) ||
-        m.serialNumber.toLowerCase().includes(q) ||
-        m.technician.toLowerCase().includes(q) ||
-        m.type.toLowerCase().includes(q) ||
-        (m.notes && m.notes.toLowerCase().includes(q));
-
-      if (match) {
-        items.push({
-          id: `maint-${m.id}`,
-          type: 'maintenance',
-          title: `${m.assetName} — ${m.type}`,
-          subtitle: `Tech: ${m.technician} • Date: ${m.date} • ${m.notes || 'Routine service'}`,
-          tag: 'Service Log',
-          badge: m.status,
-          badgeColor: m.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200',
-          href: '/maintenance',
-        });
-      }
-    }
-
     return items;
-  }, [query, assets, stock, locations, loans, maintenance]);
+  }, [query, assets, stock, locations, loans]);
 
   // Keep selected index in bounds
   useEffect(() => {

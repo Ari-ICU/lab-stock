@@ -15,8 +15,6 @@ import LoanCheckoutWorkspace from '@/components/LoanCheckoutWorkspace';
 import NewRoomItemClient from './locations/[id]/items/new/NewRoomItemClient';
 import EditRoomItemClient from './locations/[id]/items/edit/EditRoomItemClient';
 import RoomItemDetailsClient from './locations/[id]/items/view/RoomItemDetailsClient';
-import MaintenanceDetailsClient from './maintenance/[id]/MaintenanceDetailsClient';
-import MaintenanceEditClient from './maintenance/[id]/edit/MaintenanceEditClient';
 import TransferDetailsClient from './transfers/[id]/TransferDetailsClient';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
@@ -114,14 +112,7 @@ export default function NotFound() {
       return;
     }
 
-    // 5. Maintenance sub-routes
-    const maintEditMatch = path.match(/\/maintenance\/([^/?#]+)\/edit(?:\/|$|\?|#)/i);
-    if (maintEditMatch && maintEditMatch[1]) {
-      setResolvedRoute({ type: 'maint-edit', id: decodeURIComponent(maintEditMatch[1]) });
-      return;
-    }
-
-    // 6. Base detail routes (evaluated after specific sub-actions)
+    // 5. Base detail routes (evaluated after specific sub-actions)
     const locMatch = path.match(/\/locations\/([^/?#]+)(?:\/|$|\?|#)/i);
     if (locMatch && locMatch[1]) {
       setResolvedRoute({ type: 'location', id: decodeURIComponent(locMatch[1]) });
@@ -137,12 +128,6 @@ export default function NotFound() {
     const assetMatch = path.match(/\/assets\/([^/?#]+)(?:\/|$|\?|#)/i);
     if (assetMatch && assetMatch[1]) {
       setResolvedRoute({ type: 'asset', id: decodeURIComponent(assetMatch[1]) });
-      return;
-    }
-
-    const maintMatch = path.match(/\/maintenance\/([^/?#]+)(?:\/|$|\?|#)/i);
-    if (maintMatch && maintMatch[1] && maintMatch[1] !== 'create') {
-      setResolvedRoute({ type: 'maint', id: decodeURIComponent(maintMatch[1]) });
       return;
     }
 
@@ -200,12 +185,6 @@ export default function NotFound() {
   }
   if (resolvedRoute.type === 'location-item-view') {
     return <RoomItemDetailsClient id={resolvedRoute.id} />;
-  }
-  if (resolvedRoute.type === 'maint') {
-    return <MaintenanceDetailsClient id={resolvedRoute.id} />;
-  }
-  if (resolvedRoute.type === 'maint-edit') {
-    return <MaintenanceEditClient id={resolvedRoute.id} />;
   }
   if (resolvedRoute.type === 'transfer') {
     return <TransferDetailsClient id={resolvedRoute.id} />;
