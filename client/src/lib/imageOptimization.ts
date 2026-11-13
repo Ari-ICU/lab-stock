@@ -15,15 +15,52 @@ export type ImageSizeVariant = 'thumb' | 'card' | 'full';
  * - 'card' (150px - 300px grid cards): ~480px width @ 75% quality (~25KB - 40KB)
  * - 'full' (Hero detail views): ~960px width @ 80% quality (~80KB - 120KB)
  */
+const ALLOWED_RASTER_DATA_URI = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/i;
+
+/**
+ * Validates that an image URL uses a safe scheme (https/http, local path,
+ * safe blob URL, or raster image data URI) and blocks SVG/script payloads.
+ */
+export function isSafeImageUrl(url?: string | null): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  if (trimmed.startsWith('/')) {
+    return !trimmed.startsWith('//') && !trimmed.startsWith('/\\');
+  }
+
+  if (/^data:/i.test(trimmed)) {
+    return ALLOWED_RASTER_DATA_URI.test(trimmed);
+  }
+
+  if (/^blob:/i.test(trimmed)) {
+    try {
+      const inner = new URL(trimmed.slice(5));
+      return inner.protocol === 'https:' || inner.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export function getOptimizedImageUrl(
   url?: string | null,
   size: ImageSizeVariant = 'thumb'
 ): string {
-  if (!url) return '';
+  if (!url || !isSafeImageUrl(url)) return '';
+  const trimmed = url.trim();
 
   // Skip data URLs, blob URLs, or local static files
-  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/')) {
-    return url;
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('/')) {
+    return trimmed;
   }
 
   // Optimize Unsplash CDN images

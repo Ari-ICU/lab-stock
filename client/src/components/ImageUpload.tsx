@@ -9,15 +9,47 @@ interface ImageUploadProps {
   label?: string;
 }
 
+const ALLOWED_RASTER_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/gif',
+]);
+const MAX_IMAGE_FILE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_RASTER_DATA_URI = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/i;
+
+function isSafeImageInputUrl(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith('/')) {
+    return !trimmed.startsWith('//') && !trimmed.startsWith('/\\');
+  }
+  if (/^data:/i.test(trimmed)) {
+    return ALLOWED_RASTER_DATA_URI.test(trimmed);
+  }
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export function ImageUpload({ value, onChange, label = 'Product Image' }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file (PNG, JPG, WebP)');
+    if (!ALLOWED_RASTER_MIME_TYPES.has(file.type.toLowerCase())) {
+      alert('Please upload a PNG, JPG, WebP, or GIF image (SVG is not permitted)');
+      return;
+    }
+    if (file.size > MAX_IMAGE_FILE_BYTES) {
+      alert('Image must be 10 MB or smaller');
       return;
     }
     const reader = new FileReader();
@@ -101,17 +133,35 @@ export function ImageUpload({ value, onChange, label = 'Product Image' }: ImageU
       </div>
 
       {showUrlInput ? (
-        <div className="flex gap-2">
-          <input
-            type="url"
-            placeholder="https://images.unsplash.com/..."
-            value={value || manualUrl}
-            onChange={(e) => {
-              setManualUrl(e.target.value);
-              onChange(e.target.value);
-            }}
-            className="flex-1 bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono text-[11px]"
-          />
+        <div className="space-y-1.5">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="https://images.unsplash.com/..."
+              value={manualUrl || value || ''}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setManualUrl(raw);
+                const trimmed = raw.trim();
+                if (!trimmed) {
+                  setUrlError('');
+                  onChange('');
+                  return;
+                }
+                if (isSafeImageInputUrl(trimmed)) {
+                  setUrlError('');
+                  onChange(trimmed);
+                } else {
+                  setUrlError('Enter a valid https://, http://, or relative / image URL');
+                  if (value) onChange('');
+                }
+              }}
+              className="flex-1 bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono text-[11px]"
+            />
+          </div>
+          {urlError && (
+            <p className="text-[11px] text-red-600">{urlError}</p>
+          )}
         </div>
       ) : value ? (
         <div className="bg-neutral-50 border border-neutral-200 rounded-lg overflow-hidden">
@@ -130,7 +180,7 @@ export function ImageUpload({ value, onChange, label = 'Product Image' }: ImageU
               <input
                 type="file"
                 ref={fileInputRef}
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp,image/gif"
                 onChange={onFileInputChange}
                 className="hidden"
               />
@@ -169,7 +219,7 @@ export function ImageUpload({ value, onChange, label = 'Product Image' }: ImageU
           <input
             type="file"
             ref={fileInputRef}
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             onChange={onFileInputChange}
             className="hidden"
           />
@@ -182,7 +232,7 @@ export function ImageUpload({ value, onChange, label = 'Product Image' }: ImageU
               <span className="text-neutral-500"> or drag and drop</span>
             </div>
             <div className="text-[11px] text-neutral-400">
-              PNG, JPG, WEBP, or SVG
+              PNG, JPG, WEBP, or GIF
             </div>
           </div>
         </div>

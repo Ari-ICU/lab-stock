@@ -364,13 +364,17 @@ export function exportToCsv(
 
   if (format === 'csv') {
     const headers = Object.keys(rows[0]);
+    const escapeCsvCell = (raw: string): string => {
+      const safe = /^(?:[=+\-@\t\r]|\s+[=+\-@])/.test(raw) ? `'${raw}` : raw;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     const csvLines: string[] = [
-      headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
+      headers.map((h) => escapeCsvCell(h)).join(','),
       ...rows.map((row) =>
         headers
           .map((header) => {
             const formatted = formatCellValue(row[header]);
-            return `"${formatted.replace(/"/g, '""')}"`;
+            return escapeCsvCell(formatted);
           })
           .join(',')
       ),

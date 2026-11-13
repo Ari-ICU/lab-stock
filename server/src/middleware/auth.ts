@@ -5,7 +5,6 @@ import {
   hasPermission,
   getMissingPermissions,
   PermissionType,
-  Role,
   DEFAULT_ROLE_PERMISSIONS,
 } from '../constants/permissions.js';
 

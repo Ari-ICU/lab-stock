@@ -165,8 +165,20 @@ export default function SettingsPage() {
       showToast('Permission denied: Only Primary Administrators can modify backend API endpoints.', 'error');
       return;
     }
+    const trimmedUrl = apiBaseUrl.trim();
     try {
-      localStorage.setItem('csd_api_config', JSON.stringify({ url: apiBaseUrl, env: apiEnvironment }));
+      const parsed = new URL(trimmedUrl);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        showToast('API endpoint must start with http:// or https://', 'error');
+        return;
+      }
+    } catch {
+      showToast('Please enter a valid API endpoint URL', 'error');
+      return;
+    }
+    try {
+      const normalizedUrl = trimmedUrl.replace(/\/+$/, '');
+      localStorage.setItem('csd_api_config', JSON.stringify({ url: normalizedUrl, env: apiEnvironment }));
       showToast('Backend API configuration saved successfully', 'success');
     } catch {
       showToast('Failed to save API configuration', 'error');

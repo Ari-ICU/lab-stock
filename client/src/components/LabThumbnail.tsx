@@ -28,13 +28,14 @@ export function LabThumbnail({
   iconClassName,
 }: LabThumbnailProps) {
   const [hasError, setHasError] = useState(false);
+  const safeSrc = getOptimizedImageUrl(src, size);
 
   // Reset error state if image source changes
   useEffect(() => {
     setHasError(false);
   }, [src]);
 
-  if (!src || hasError) {
+  if (!safeSrc || hasError) {
     return (
       <div className={containerClassName}>
         {fallbackType === 'building' ? (
@@ -48,7 +49,7 @@ export function LabThumbnail({
 
   return (
     <img
-      src={getOptimizedImageUrl(src, size)}
+      src={safeSrc}
       alt={alt}
       loading="lazy"
       decoding="async"
