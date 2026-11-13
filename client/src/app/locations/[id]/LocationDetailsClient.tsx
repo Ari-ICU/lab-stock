@@ -34,7 +34,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     assets,
     stock,
     loans,
-    maintenance,
     openEdit,
     deleteLocation,
     updateRoomInventoryCount,
@@ -111,7 +110,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const isAllowed = isAdmin || (loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false);
 
   // Match legacy items belonging to this lab location
-  const { matchingAssets, matchingStock, totalHardwareUnits, totalStockUnits, activeLoansCount, maintenanceCount } = useMemo(() => {
+  const { matchingAssets, matchingStock, totalHardwareUnits, totalStockUnits, activeLoansCount } = useMemo(() => {
     if (!loc) {
       return {
         matchingAssets: [],
@@ -119,7 +118,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         totalHardwareUnits: 0,
         totalStockUnits: 0,
         activeLoansCount: 0,
-        maintenanceCount: 0,
       };
     }
 
@@ -150,19 +148,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       mAssets.some((a) => a.id === loan.assetId && loan.status === 'active')
     ).length;
 
-    const maintInLab = maintenance.filter((m) =>
-      mAssets.some((a) => a.serialNumber === m.serialNumber)
-    ).length;
-
     return {
       matchingAssets: mAssets,
       matchingStock: mStock,
       totalHardwareUnits: hUnits > 0 ? hUnits : loc.totalAssets,
       totalStockUnits: sUnits > 0 ? sUnits : loc.totalItems,
       activeLoansCount: loansInLab,
-      maintenanceCount: maintInLab,
     };
-  }, [loc, assets, stock, loans, maintenance]);
+  }, [loc, assets, stock, loans]);
 
   // Filtered room inventories based on search, category and condition
   const filteredRoomInventories = useMemo(() => {

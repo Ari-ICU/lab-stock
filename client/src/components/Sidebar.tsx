@@ -48,7 +48,6 @@ export function Sidebar() {
     openSearch,
     stock,
     assets,
-    maintenance,
     locations,
     loans,
     isMobileSidebarOpen,
@@ -58,14 +57,6 @@ export function Sidebar() {
   const { user, managedUsers, logout } = useAuth();
 
   const activeLoansCount = loans ? loans.filter((l) => l.status === 'active').length : 0;
-  const uniqueMaintenanceCount = React.useMemo(() => {
-    const keys = new Set(
-      maintenance.map(
-        (m) => `${(m.assetName || '').trim().toLowerCase()}__${(m.serialNumber || '').trim().toLowerCase()}`
-      )
-    );
-    return keys.size;
-  }, [maintenance]);
 
   return (
     <>

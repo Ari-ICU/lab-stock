@@ -4,7 +4,6 @@ import stockRoutes from '@/routes/stockRoutes.js';
 import assetRoutes from '@/routes/assetRoutes.js';
 import loanRoutes from '@/routes/loanRoutes.js';
 import locationRoutes from '@/routes/locationRoutes.js';
-import purchaseRequestRoutes from '@/routes/purchaseRequestRoutes.js';
 import transferRoutes from '@/routes/transferRoutes.js';
 import categoryRoutes from '@/routes/categoryRoutes.js';
 
@@ -36,9 +35,6 @@ router.use('/loans', loanRoutes);
 
 // Laboratory Locations & Rooms
 router.use('/locations', locationRoutes);
-
-// Purchase Requests & Procurement
-router.use('/requests', purchaseRequestRoutes);
 
 // Equipment Relocations & Transfers
 router.use('/transfers', transferRoutes);

@@ -75,23 +75,6 @@ export interface MockRack {
   usedSlots: number;
 }
 
-export interface MockMaintenance {
-  id: string;
-  serverId?: string;
-  assetName: string;
-  serialNumber: string;
-  type: 'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement' | 'Routine Inspection' | 'Preventive Maintenance' | string;
-  date: string;
-  technician: string;
-  status: 'Completed' | 'Pending' | 'In Progress';
-  notes: string;
-  imageUrl?: string;
-  location?: string;
-  cost?: string | number;
-  quantity?: number;
-  unit?: string;
-}
-
 export type RoomType =
   | 'COMPUTER_LAB'
   | 'LECTURE_ROOM'
@@ -138,34 +121,13 @@ export interface MockLocation {
   inventories?: RoomInventoryItem[];
 }
 
-export interface PurchaseRequest {
-  id: string;
-  title: string;
-  category: string;
-  targetRoom: string;
-  quantity: number;
-  unit: string;
-  estimatedCost?: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'pending' | 'approved' | 'ordered' | 'fulfilled' | 'rejected';
-  reason: string;
-  requestedBy: string;
-  requesterRole: string;
-  supervisedBy?: string;
-  requestDate: string;
-  imageUrl?: string;
-  notes?: string;
-}
-
 export type AnyEntity =
   | MockItem
   | MockAsset
   | MockRack
-  | MockMaintenance
   | MockLocation
   | MockLoan
   | MockTransfer
-  | PurchaseRequest
   | RoomInventoryItem;
 
 export type ModalType =

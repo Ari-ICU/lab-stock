@@ -17,7 +17,7 @@ import {
   ArrowRight,
   AlertTriangle,
 } from 'lucide-react';
-import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation } from '@/types';
+import { MockItem, MockAsset, MockRack, MockLocation } from '@/types';
 
 export function ItemDetailsModal() {
   const router = useRouter();
@@ -28,7 +28,6 @@ export function ItemDetailsModal() {
     deleteStockItem,
     deleteAsset,
     deleteRack,
-    deleteMaintenance,
     deleteLocation,
     deleteRoomInventoryItem,
     assets,
@@ -40,14 +39,12 @@ export function ItemDetailsModal() {
   const isStock = 'quantity' in detailsItem;
   const isAsset = 'serialNumber' in detailsItem && 'model' in detailsItem;
   const isRack = 'totalSlots' in detailsItem && 'usedSlots' in detailsItem;
-  const isMaintenance = 'technician' in detailsItem && 'notes' in detailsItem;
   const isLocation = 'building' in detailsItem && 'room' in detailsItem;
   const isRoomInventory = 'qtyWorking' in detailsItem && 'qtyBroken' in detailsItem;
 
   const stockItem = isStock ? (detailsItem as MockItem) : null;
   const assetItem = isAsset ? (detailsItem as MockAsset) : null;
   const rackItem = isRack ? (detailsItem as MockRack) : null;
-  const maintItem = isMaintenance ? (detailsItem as MockMaintenance) : null;
   const locItem = isLocation ? (detailsItem as MockLocation) : null;
   const roomInvItem = isRoomInventory ? (detailsItem as any) : null;
 
@@ -68,7 +65,6 @@ export function ItemDetailsModal() {
       if (isStock && stockItem) deleteStockItem(stockItem.id);
       else if (isAsset && assetItem) deleteAsset(assetItem.id);
       else if (isRack && rackItem) deleteRack(rackItem.id);
-      else if (isMaintenance && maintItem) deleteMaintenance(maintItem.id);
       else if (isLocation && locItem) deleteLocation(locItem.id);
       else if (isRoomInventory && roomInvItem) deleteRoomInventoryItem(roomInvItem.roomId, roomInvItem.id);
       closeDetails();
@@ -81,12 +77,11 @@ export function ItemDetailsModal() {
     if (isAsset) return 'Hardware Asset Specification';
     if (isLocation) return 'Laboratory Zone Details';
     if (isRack) return 'Server Rack Enclosure Details';
-    if (isMaintenance) return 'Maintenance & Audit Log';
     return 'Details';
   };
 
   const imageUrl = stockItem?.imageUrl || assetItem?.imageUrl || roomLinkedStock?.imageUrl || roomLinkedAsset?.imageUrl;
-  const title = roomInvItem?.name || stockItem?.name || assetItem?.name || rackItem?.name || locItem?.name || maintItem?.assetName;
+  const title = roomInvItem?.name || stockItem?.name || assetItem?.name || rackItem?.name || locItem?.name;
 
   return (
     <div
@@ -487,35 +482,10 @@ export function ItemDetailsModal() {
                 )}
               </>
             )}
-
-            {maintItem && (
-              <>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Serial Number:</span>
-                  <span className="font-mono text-neutral-800">{maintItem.serialNumber}</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Service Type:</span>
-                  <span className="font-medium text-neutral-800">{maintItem.type}</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Scheduled Date:</span>
-                  <span className="font-mono text-neutral-800">{maintItem.date}</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Technician:</span>
-                  <span className="font-medium text-neutral-800">{maintItem.technician}</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <span className="text-neutral-500">Status:</span>
-                  <span className="font-semibold text-neutral-900">{maintItem.status}</span>
-                </div>
-              </>
-            )}
           </div>
 
           {/* Technical Specifications / Notes Box */}
-          {(stockItem?.description || assetItem?.description || maintItem?.notes || roomInvItem?.remarks) && (
+          {(stockItem?.description || assetItem?.description || roomInvItem?.remarks) && (
             <div className={`p-3 text-xs space-y-1.5 rounded border ${
               roomInvItem && (roomInvItem.qtyBroken > 0 || roomInvItem.qtyMaintenance > 0)
                 ? 'bg-amber-50/70 border-amber-200 text-amber-950'
@@ -526,7 +496,7 @@ export function ItemDetailsModal() {
                 {roomInvItem ? 'Facility Condition & Defect Notes' : 'Technical Specifications & Setup Details'}
               </span>
               <p className="leading-relaxed font-normal">
-                {stockItem?.description || assetItem?.description || maintItem?.notes || roomInvItem?.remarks}
+                {stockItem?.description || assetItem?.description || roomInvItem?.remarks}
               </p>
             </div>
           )}

@@ -43,7 +43,6 @@ export default function SettingsPage() {
     showToast,
     assets,
     stock,
-    maintenance,
     locations,
     loans,
     transfers,
@@ -220,7 +219,6 @@ export default function SettingsPage() {
       counts: {
         hardwareAssets: assets.length,
         inventoryStock: stock.length,
-        maintenanceLogs: maintenance.length,
         connectedLabs: locations.length,
         deviceLoans: loans.length,
         relocations: transfers.length,
@@ -228,7 +226,6 @@ export default function SettingsPage() {
       data: {
         assets,
         stock,
-        maintenance,
         locations,
         loans,
         transfers,
@@ -936,8 +933,8 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="p-3.5 rounded-lg bg-neutral-50 border border-neutral-200 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-neutral-400">Service & Loan Logs</span>
-                  <div className="text-lg font-black font-mono text-neutral-900">{maintenance.length + loans.length} Records</div>
+                  <span className="text-[10px] font-bold uppercase text-neutral-400">Device Loan Logs</span>
+                  <div className="text-lg font-black font-mono text-neutral-900">{loans.length} Records</div>
                   <div className="text-[10px] text-neutral-500">{loans.length} active/returned loans</div>
                 </div>
               </div>

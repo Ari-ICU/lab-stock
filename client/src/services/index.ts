@@ -11,7 +11,6 @@ export * from './categoryService';
 export * from './loanService';
 export * from './locationService';
 export * from './transferService';
-export * from './purchaseRequestService';
 export * from './systemService';
 export * from './mappers';
 

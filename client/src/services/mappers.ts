@@ -1,4 +1,4 @@
-import { MockAsset, MockItem, MockLocation, MockLoan, MockTransfer, PurchaseRequest } from '@/types';
+import { MockAsset, MockItem, MockLocation, MockLoan, MockTransfer } from '@/types';
 
 /**
  * Data mappers to convert between PostgreSQL / Express API payloads (snake_case)
@@ -167,65 +167,6 @@ export function toServerLoan(l: Partial<MockLoan>): Record<string, any> {
     actual_return_date: l.actualReturnDate,
     status: l.status,
     notes: l.notes,
-  };
-}
-
-const DEFAULT_REQUEST_IMAGES: Record<string, string> = {
-  'REQ-2026-001': 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-  'REQ-2026-002': 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
-  'REQ-2026-003': 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
-  'REQ-2026-004': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-};
-
-const CATEGORY_DEFAULT_IMAGES: Record<string, string> = {
-  'Cables & Accessories': 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-  'Networking Equipment': 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
-  'Printer Supplies': 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
-  'Electronics & Tools': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-  'Computer Hardware': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
-  'Monitors & Displays': 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
-  'Mice & Keyboards': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
-};
-
-export function mapServerPurchaseRequest(r: any): PurchaseRequest {
-  return {
-    id: String(r.id),
-    title: r.title || 'Purchase Item',
-    category: r.category || 'General Equipment',
-    targetRoom: r.target_room || r.targetRoom || 'Room 102B',
-    quantity: Number(r.quantity || 1),
-    unit: r.unit || 'Units',
-    estimatedCost: r.estimated_cost || r.estimatedCost,
-    priority: (r.priority as PurchaseRequest['priority']) || 'medium',
-    status: (r.status as PurchaseRequest['status']) || 'pending',
-    reason: r.reason || '',
-    requestedBy: r.requested_by || r.requestedBy || 'Faculty Lecturer',
-    requesterRole: r.requester_role || r.requesterRole || 'Faculty Lecturer',
-    supervisedBy: r.supervised_by || r.supervisedBy,
-    requestDate: r.request_date ? (typeof r.request_date === 'string' ? r.request_date.split('T')[0] : new Date(r.request_date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
-    imageUrl: r.image_url || r.imageUrl || DEFAULT_REQUEST_IMAGES[String(r.id)] || CATEGORY_DEFAULT_IMAGES[r.category] || '',
-    notes: r.notes || '',
-  };
-}
-
-export function toServerPurchaseRequest(r: Partial<PurchaseRequest>): Record<string, any> {
-  return {
-    id: r.id,
-    title: r.title,
-    category: r.category,
-    target_room: r.targetRoom,
-    quantity: r.quantity,
-    unit: r.unit,
-    estimated_cost: r.estimatedCost,
-    priority: r.priority,
-    status: r.status,
-    reason: r.reason,
-    requested_by: r.requestedBy,
-    requester_role: r.requesterRole,
-    supervised_by: r.supervisedBy,
-    request_date: r.requestDate,
-    image_url: r.imageUrl,
-    notes: r.notes,
   };
 }
 

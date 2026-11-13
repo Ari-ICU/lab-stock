@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStock } from '@/context/StockContext';
 import { X } from 'lucide-react';
-import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation, RoomInventoryItem } from '@/types';
+import { MockItem, MockAsset, MockRack, MockLocation, RoomInventoryItem } from '@/types';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
@@ -17,7 +17,6 @@ export function EditEntityModal() {
     updateStockItem,
     updateAsset,
     updateRack,
-    updateMaintenance,
     updateLocation,
     updateRoomInventoryItem,
     locations,
@@ -40,7 +39,6 @@ export function EditEntityModal() {
   const isStock = editingItem ? 'quantity' in editingItem : false;
   const isAsset = editingItem ? 'serialNumber' in editingItem && 'model' in editingItem : false;
   const isRack = editingItem ? 'totalSlots' in editingItem && 'usedSlots' in editingItem : false;
-  const isMaintenance = editingItem ? 'technician' in editingItem && 'notes' in editingItem : false;
   const isLocation = editingItem ? 'building' in editingItem && 'room' in editingItem : false;
   const isRoomInventory = editingItem ? 'qtyWorking' in editingItem && 'qtyBroken' in editingItem : false;
 
@@ -74,12 +72,6 @@ export function EditEntityModal() {
   const [totalSlots, setTotalSlots] = useState(42);
   const [usedSlots, setUsedSlots] = useState(0);
   const [temperature, setTemperature] = useState('21.4°C');
-
-  // Maintenance fields
-  const [maintType, setMaintType] = useState<any>('Firmware Upgrade');
-  const [maintDate, setMaintDate] = useState('2026-11-01');
-  const [maintTech, setMaintTech] = useState('');
-  const [maintNotes, setMaintNotes] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
 
   const stockStatusOptions = [
@@ -99,19 +91,6 @@ export function EditEntityModal() {
     { label: '24U Wall Mount', value: '24U Wall Mount' },
     { label: 'IDF Distribution', value: 'IDF Distribution' },
     { label: 'Storage Shelf', value: 'Storage Shelf' },
-  ];
-
-  const maintTypeOptions = [
-    { label: 'Firmware Upgrade', value: 'Firmware Upgrade' },
-    { label: 'Port Audit', value: 'Port Audit' },
-    { label: 'Hardware RMA', value: 'Hardware RMA' },
-    { label: 'Power Supply Replacement', value: 'Power Supply Replacement' },
-  ];
-
-  const maintStatusOptions = [
-    { label: 'Pending', value: 'Pending' },
-    { label: 'In Progress', value: 'In Progress' },
-    { label: 'Completed', value: 'Completed' },
   ];
 
   const roomConditionStatusOptions = [
@@ -179,15 +158,6 @@ export function EditEntityModal() {
       setUsedSlots(r.usedSlots);
       setLocation(r.location);
       setTemperature(r.temperature || '21.4°C');
-    } else if (isMaintenance) {
-      const m = editingItem as MockMaintenance;
-      setName(m.assetName);
-      setSerialNumber(m.serialNumber);
-      setMaintType(m.type);
-      setMaintDate(m.date);
-      setMaintTech(m.technician);
-      setStatus(m.status);
-      setMaintNotes(m.notes);
     }
   }, [editingItem]);
 
@@ -256,18 +226,6 @@ export function EditEntityModal() {
         location,
         temperature,
       });
-    } else if (isMaintenance) {
-      const m = editingItem as MockMaintenance;
-      updateMaintenance({
-        ...m,
-        assetName: name,
-        serialNumber,
-        type: maintType,
-        date: maintDate,
-        technician: maintTech,
-        status,
-        notes: maintNotes,
-      });
     }
 
     closeEdit();
@@ -279,7 +237,6 @@ export function EditEntityModal() {
     if (isAsset) return 'Edit Network Device';
     if (isLocation) return 'Edit Laboratory Location';
     if (isRack) return 'Edit Server Rack';
-    if (isMaintenance) return 'Edit Maintenance Record';
     return 'Edit Record';
   };
 
@@ -640,85 +597,6 @@ export function EditEntityModal() {
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
                   />
                 </div>
-              </div>
-            </>
-          )}
-
-          {/* MAINTENANCE FORM */}
-          {isMaintenance && (
-            <>
-              <div>
-                <label className="block font-semibold text-neutral-800 mb-1">Instrument / Device</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-800 mb-1">Serial Number</label>
-                  <input
-                    type="text"
-                    value={serialNumber}
-                    onChange={(e) => setSerialNumber(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-800 mb-1">Service Type</label>
-                  <Dropdown
-                    value={maintType}
-                    options={maintTypeOptions}
-                    onChange={(val) => setMaintType(val as any)}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-neutral-800 mb-1">Date</label>
-                  <DatePicker
-                    value={maintDate}
-                    onChange={setMaintDate}
-                    placeholder="Select date"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-neutral-800 mb-1">Status</label>
-                  <Dropdown
-                    value={status}
-                    options={maintStatusOptions}
-                    onChange={(val) => setStatus(val as any)}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-800 mb-1">Assigned Technician</label>
-                <input
-                  type="text"
-                  value={maintTech}
-                  onChange={(e) => setMaintTech(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-800 mb-1">Notes & Scope</label>
-                <textarea
-                  rows={2}
-                  value={maintNotes}
-                  onChange={(e) => setMaintNotes(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 text-xs"
-                />
               </div>
             </>
           )}

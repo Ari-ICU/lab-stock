@@ -68,15 +68,6 @@ export const API_ENDPOINTS = {
     DELETE: (locationId: string) => `/locations/${locationId}`,
   },
 
-  // Purchase Requests & Procurement
-  REQUESTS: {
-    LIST: '/requests',
-    DETAILS: (id: string) => `/requests/${id}`,
-    CREATE: '/requests',
-    UPDATE: (id: string) => `/requests/${id}`,
-    DELETE: (id: string) => `/requests/${id}`,
-  },
-
   // Equipment Relocations & Transfers
   TRANSFERS: {
     LIST: '/transfers',
