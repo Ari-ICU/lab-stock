@@ -68,9 +68,10 @@ export const helmetSecurity = helmet({
 // ========================================================
 export const globalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 300,                  // 300 requests per IP per 15 min
+  max: config.nodeEnv === 'production' ? 600 : 1200, // Smooth multi-user allowance while preventing DoS
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/api/v1/health',
   message: {
     status: 'error',
     code: 'RATE_LIMIT_EXCEEDED',
@@ -94,12 +95,18 @@ export const authRateLimiter = rateLimit({
 // 4. SANITIZATION: PROTOTYPE POLLUTION & XSS NEUTRALIZATION
 // ========================================================
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const PASSWORD_KEYS = new Set(['password', 'currentPassword', 'newPassword']);
 const SCRIPT_TAG_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
 const EVENT_HANDLER_REGEX = /on\w+\s*=/gi;
 const JAVASCRIPT_URL_REGEX = /javascript:/gi;
 
-function sanitizeValue(val: any): any {
+function sanitizeValue(val: any, keyName?: string): any {
   if (typeof val === 'string') {
+    // Do not mutate passwords or scan huge base64 image payloads
+    if ((keyName && PASSWORD_KEYS.has(keyName)) || val.startsWith('data:image/')) {
+      return val;
+    }
+
     // Strip malicious script tags, event handlers, and javascript: protocols
     return val
       .replace(SCRIPT_TAG_REGEX, '')
@@ -109,7 +116,7 @@ function sanitizeValue(val: any): any {
   }
 
   if (Array.isArray(val)) {
-    return val.map(sanitizeValue);
+    return val.map((item) => sanitizeValue(item));
   }
 
   if (val && typeof val === 'object') {
@@ -117,7 +124,7 @@ function sanitizeValue(val: any): any {
       if (DANGEROUS_KEYS.has(key)) {
         delete val[key];
       } else {
-        val[key] = sanitizeValue(val[key]);
+        val[key] = sanitizeValue(val[key], key);
       }
     }
   }

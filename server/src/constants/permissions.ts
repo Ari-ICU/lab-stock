@@ -22,10 +22,6 @@ export const Permission = {
   LOAN_RETURN: 'loans:return',
   LOAN_MANAGE: 'loans:manage',
 
-  // --- Equipment Maintenance ---
-  MAINTENANCE_READ: 'maintenance:read',
-  MAINTENANCE_UPDATE: 'maintenance:update',
-
   // --- Laboratory Locations ---
   LOCATION_READ: 'locations:read',
   LOCATION_MANAGE: 'locations:manage',
@@ -68,8 +64,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionType[]> = {
     Permission.LOAN_CHECKOUT,
     Permission.LOAN_RETURN,
     Permission.LOAN_MANAGE,
-    Permission.MAINTENANCE_READ,
-    Permission.MAINTENANCE_UPDATE,
     Permission.LOCATION_READ,
     Permission.LOCATION_MANAGE,
   ],
@@ -86,8 +80,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionType[]> = {
     Permission.LOAN_CHECKOUT,
     Permission.LOAN_RETURN,
     Permission.LOAN_MANAGE,
-    Permission.MAINTENANCE_READ,
-    Permission.MAINTENANCE_UPDATE,
     Permission.LOCATION_READ,
     Permission.LOCATION_MANAGE,
   ],
@@ -104,8 +96,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionType[]> = {
     Permission.LOAN_CHECKOUT,
     Permission.LOAN_RETURN,
     Permission.LOAN_MANAGE,
-    Permission.MAINTENANCE_READ,
-    Permission.MAINTENANCE_UPDATE,
     Permission.LOCATION_READ,
   ],
   'Assistant': [
@@ -121,8 +111,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionType[]> = {
     Permission.LOAN_CHECKOUT,
     Permission.LOAN_RETURN,
     Permission.LOAN_MANAGE,
-    Permission.MAINTENANCE_READ,
-    Permission.MAINTENANCE_UPDATE,
     Permission.LOCATION_READ,
   ],
 };

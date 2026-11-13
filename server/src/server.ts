@@ -1,6 +1,6 @@
 import app from './app.js';
 import { config } from './config/index.js';
-import { testDatabaseConnection } from './config/database.js';
+import { pool, testDatabaseConnection } from './config/database.js';
 import { initializeDatabase } from './database/initDb.js';
 
 const PORT = config.port;
@@ -48,6 +48,10 @@ const server = app.listen(PORT, async () => {
 `);
 });
 
+// Keep-alive timeouts aligned with reverse proxies (Nginx/ALB)
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
+
 // Crash resilience: Catch unhandled promises & exceptions so bad scan probes never kill the server
 process.on('unhandledRejection', (reason: any) => {
   console.error('⚠️ [CRASH PREVENTED] Unhandled Rejection:', reason?.message || reason);
@@ -57,9 +61,22 @@ process.on('uncaughtException', (err: Error) => {
   console.error('💥 [CRASH PREVENTED] Uncaught Exception:', err.message);
 });
 
+let isShuttingDown = false;
 const shutdown = () => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
   console.log('🔄 Gracefully shutting down API server...');
-  server.close(() => {
+
+  const forceExitTimer = setTimeout(() => {
+    console.error('⏱️ Shutdown timed out, forcing exit.');
+    process.exit(1);
+  }, 10000);
+  forceExitTimer.unref();
+
+  server.close(async () => {
+    try {
+      await pool.end();
+    } catch {}
     process.exit(0);
   });
 };

@@ -12,6 +12,9 @@ import { errorHandler } from './exceptions/errorHandler.js';
 
 const app: Application = express();
 
+// Trust first reverse proxy hop for accurate client IP & rate-limiting
+app.set('trust proxy', 1);
+
 // Disable technology disclosure header
 app.disable('x-powered-by');
 

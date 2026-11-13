@@ -61,6 +61,9 @@ export async function withTransaction<T>(
  * by connecting to the default administrative 'postgres' database.
  */
 export async function autoCreateDatabaseIfMissing(targetDbName = 'lab_stock'): Promise<boolean> {
+  if (!/^[a-zA-Z0-9_]+$/.test(targetDbName)) {
+    throw new Error(`Invalid database identifier: ${targetDbName}`);
+  }
   const adminClient = new Client(
     config.db.url
       ? { connectionString: config.db.url.replace(/\/[^/?]+(\?.*)?$/, '/postgres$1') }
