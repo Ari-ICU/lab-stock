@@ -360,9 +360,9 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 w-full">
         {/* 2. Laboratory Overview Card */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
           {/* Top Badges */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-xs font-bold bg-neutral-900 text-white px-2.5 py-0.5 rounded-md">
@@ -442,7 +442,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         </div>
 
         {/* 4. Facility & Condition Table */}
-        <div className="bg-white border border-neutral-200 rounded-lg w-full shadow-2xs">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl w-full shadow-2xs overflow-hidden">
             {/* Filters Toolbar with Category & Condition Dropdowns */}
             <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap flex-1">
@@ -453,7 +453,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     placeholder="Search equipment, specs, or remarks..."
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
                   />
                 </div>
 
@@ -463,6 +463,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   onChange={setSelectedCategory}
                   placeholder="Category"
                   className="w-full sm:w-auto"
+                  buttonClassName="rounded-xl py-1.5"
                 />
 
                 <Dropdown
@@ -471,6 +472,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   onChange={setSelectedCondition}
                   placeholder="Condition"
                   className="w-full sm:w-auto"
+                  buttonClassName="rounded-xl py-1.5"
                 />
               </div>
 
@@ -481,7 +483,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 {isAllowed && (
                   <Link
                     href={`/locations/${loc.id}/items/new`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors shadow-2xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Allocate from Central Stock</span>
@@ -539,7 +541,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           <td className="py-2.5 px-3 text-center">
                             <Link
                               href={`/locations/${loc.id}/items/view?item=${item.id}`}
-                              className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs mx-auto hover:opacity-85 transition-opacity block"
+                              className="w-10 h-10 rounded-lg border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs mx-auto hover:opacity-85 transition-opacity block"
                               title="View equipment details"
                             >
                               {itemThumbnail ? (
@@ -668,14 +670,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-3.5 py-2 text-xs font-semibold border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
+                className="px-3.5 py-2 text-xs font-semibold border border-neutral-200 rounded-xl text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-2xs cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors shadow-2xs cursor-pointer"
               >
                 Delete Laboratory
               </button>

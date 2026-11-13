@@ -295,9 +295,9 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
         showExport={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
         {/* ================= 1. CLEAN RELOCATION HEADER ================= */}
-        <div className="w-full rounded-xl bg-white border border-neutral-200 p-4 sm:p-5 shadow-2xs">
+        <div className="w-full rounded-2xl bg-white border border-neutral-200/80 p-4 sm:p-5 shadow-2xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -404,6 +404,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                     placeholder="Select hardware equipment"
                     searchable={true}
                     searchPlaceholder="Search by equipment name, model, serial..."
+                    buttonClassName="rounded-xl py-2"
                   />
                 </div>
 
@@ -427,6 +428,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                         }
                       }}
                       placeholder="Select source lab room"
+                      buttonClassName="rounded-xl py-2"
                     />
                   </div>
 
@@ -445,6 +447,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                         }))}
                       onChange={(val) => setTargetLocation(val)}
                       placeholder="Select destination lab room"
+                      buttonClassName="rounded-xl py-2"
                     />
                   </div>
                 </div>
@@ -546,8 +549,14 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                   <Cpu className="w-4 h-4 text-neutral-700" />
                   <span>Selected Equipment Dossier</span>
                 </h3>
-                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {asset.status.toUpperCase()}
+                <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
+                  asset.status === 'maintenance'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : asset.status === 'in_use'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}>
+                  {asset.status === 'maintenance' ? 'IN REPAIR' : asset.status === 'in_use' ? 'IN USE' : 'OPERATIONAL'}
                 </span>
               </div>
 
@@ -580,7 +589,9 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
               <div className="border-t border-neutral-100 pt-3 space-y-2 text-xs">
                 <div className="flex items-center justify-between py-1 border-b border-neutral-50">
                   <span className="text-neutral-500">Deployment Status</span>
-                  <span className="font-medium text-neutral-900 capitalize">{asset.status.replace('_', ' ')}</span>
+                  <span className="font-medium text-neutral-900">
+                    {asset.status === 'maintenance' ? 'In Repair' : asset.status === 'in_use' ? 'In Use' : 'Operational'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between py-1 border-b border-neutral-50">
                   <span className="text-neutral-500">Current Station</span>

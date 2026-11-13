@@ -139,8 +139,8 @@ export default function LoginPage() {
 
             {/* 3 Feature Highlights Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
-                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
+              <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
                   <Server className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="text-xs font-bold text-neutral-900">
@@ -151,8 +151,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
-                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
+              <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
                   <ArrowLeftRight className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="text-xs font-bold text-neutral-900">
@@ -163,8 +163,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-neutral-200 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
-                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
+              <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-2xs hover:border-neutral-300 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-800 mb-2.5">
                   <ShieldCheck className="w-4 h-4 text-amber-600" />
                 </div>
                 <div className="text-xs font-bold text-neutral-900">
@@ -181,7 +181,7 @@ export default function LoginPage() {
           <div className="lg:col-span-5 w-full max-w-md mx-auto lg:ml-auto space-y-4">
             
             {/* Main Sign In Form Card */}
-            <div className="bg-white rounded-xl border border-neutral-200 p-6 sm:p-7 shadow-xs">
+            <div className="bg-white rounded-2xl border border-neutral-200/80 p-6 sm:p-7 shadow-2xs">
               <div className="flex items-center justify-between mb-4">
                 <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 uppercase tracking-wider bg-neutral-100 border border-neutral-200 font-mono">
                   STAFF & TECHNICIAN ACCESS

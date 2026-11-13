@@ -90,7 +90,7 @@ export function ItemDetailsModal() {
         if (e.target === e.currentTarget) closeDetails();
       }}
     >
-      <div className="bg-white border border-neutral-200 rounded-md max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white border border-neutral-200/80 rounded-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
         {/* Header */}
         <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white">
           <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
@@ -108,7 +108,7 @@ export function ItemDetailsModal() {
         <div className="p-5 overflow-y-auto space-y-4 text-xs">
           {/* For Stock & Asset & Room Inventory: Image banner */}
           {(isStock || isAsset || (isRoomInventory && imageUrl)) && (
-            <div className="relative w-full h-44 bg-neutral-100 rounded border border-neutral-200 overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-44 bg-neutral-100 rounded-xl border border-neutral-200 overflow-hidden flex items-center justify-center">
               {imageUrl ? (
                 <img
                   src={imageUrl}
@@ -203,7 +203,7 @@ export function ItemDetailsModal() {
           </div>
 
           {/* Details Table */}
-          <div className="bg-neutral-50/50 border border-neutral-200 rounded divide-y divide-neutral-200 text-xs">
+          <div className="bg-neutral-50/50 border border-neutral-200 rounded-xl divide-y divide-neutral-200 text-xs overflow-hidden">
             {roomInvItem && (() => {
               const total = Number(roomInvItem.qtyWorking || 0) + Number(roomInvItem.qtyBroken || 0) + Number(roomInvItem.qtyMaintenance || 0);
               const percent = total > 0 ? Math.round((Number(roomInvItem.qtyWorking || 0) / total) * 100) : 100;
@@ -395,7 +395,7 @@ export function ItemDetailsModal() {
                               closeDetails();
                               router.push(`/assets/${a.id}`);
                             }}
-                            className="flex items-center justify-between p-1.5 bg-white border border-neutral-200 rounded text-[11px] hover:border-neutral-400 cursor-pointer transition-colors"
+                            className="flex items-center justify-between p-1.5 bg-white border border-neutral-200 rounded-xl text-[11px] hover:border-neutral-400 cursor-pointer transition-colors"
                           >
                             <span className="font-semibold text-neutral-900 truncate max-w-[220px]">
                               {a.name}
@@ -425,7 +425,7 @@ export function ItemDetailsModal() {
                               closeDetails();
                               router.push(`/stock/${s.id}`);
                             }}
-                            className="flex items-center justify-between p-1.5 bg-white border border-neutral-200 rounded text-[11px] hover:border-neutral-400 cursor-pointer transition-colors"
+                            className="flex items-center justify-between p-1.5 bg-white border border-neutral-200 rounded-xl text-[11px] hover:border-neutral-400 cursor-pointer transition-colors"
                           >
                             <span className="font-semibold text-neutral-900 truncate max-w-[220px]">
                               {s.name}
@@ -445,7 +445,7 @@ export function ItemDetailsModal() {
                         closeDetails();
                         router.push(`/locations/${targetId}`);
                       }}
-                      className="w-full py-2 px-3 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
+                      className="w-full py-2 px-3 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs mt-2"
                     >
                       <span>Open Full Room Fleet Specification Page</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -486,7 +486,7 @@ export function ItemDetailsModal() {
 
           {/* Technical Specifications / Notes Box */}
           {(stockItem?.description || assetItem?.description || roomInvItem?.remarks) && (
-            <div className={`p-3 text-xs space-y-1.5 rounded border ${
+            <div className={`p-3 text-xs space-y-1.5 rounded-xl border ${
               roomInvItem && (roomInvItem.qtyBroken > 0 || roomInvItem.qtyMaintenance > 0)
                 ? 'bg-amber-50/70 border-amber-200 text-amber-950'
                 : 'bg-neutral-50/70 border-neutral-200 text-neutral-700'
@@ -509,21 +509,21 @@ export function ItemDetailsModal() {
                 closeDetails();
                 openEdit(item);
               }}
-              className="flex-1 py-2 px-3 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 py-2 px-3 text-xs font-semibold bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Edit Record</span>
             </button>
             <button
               onClick={handleDelete}
-              className="py-2 px-3 text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50/50 hover:bg-rose-100 rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="py-2 px-3 text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50/50 hover:bg-rose-100 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5 text-rose-500" />
               <span>Delete</span>
             </button>
             <button
               onClick={closeDetails}
-              className="py-2 px-4 text-xs font-medium border border-neutral-300 bg-white text-neutral-700 rounded hover:bg-neutral-50 transition-colors cursor-pointer"
+              className="py-2 px-4 text-xs font-medium border border-neutral-300 bg-white text-neutral-700 rounded-xl hover:bg-neutral-50 transition-colors cursor-pointer"
             >
               Close
             </button>

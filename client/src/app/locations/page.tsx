@@ -235,7 +235,7 @@ export default function LocationsPage() {
         onExport={handleExport}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
         {/* Classrooms & Labs Banner */}
         <PageBanner
           eyebrow="Department of Computer Science · Classrooms & Labs"
@@ -256,7 +256,7 @@ export default function LocationsPage() {
 
         {/* 1. Classroom & Campus Telemetry Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider">Campus Facilities</span>
               <Building className="w-4 h-4 text-neutral-500" />
@@ -269,7 +269,7 @@ export default function LocationsPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider">Student Seating</span>
               <Users className="w-4 h-4 text-neutral-500" />
@@ -282,7 +282,7 @@ export default function LocationsPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-200/80 rounded-xl p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider">Central Inventory</span>
               <Boxes className="w-4 h-4 text-neutral-400" />
@@ -295,7 +295,7 @@ export default function LocationsPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-200/80 rounded-xl p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider">Hardware Devices</span>
               <Microscope className="w-4 h-4 text-neutral-400" />
@@ -319,7 +319,7 @@ export default function LocationsPage() {
                 placeholder="Search classroom name, room code, building..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs transition-all"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-9 pr-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-medium placeholder:text-neutral-400 shadow-2xs transition-all"
               />
             </div>
 
@@ -485,7 +485,7 @@ export default function LocationsPage() {
                   </span>
                   <Link
                     href={`/locations/${loc.id}`}
-                    className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200 hover:border-neutral-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-white hover:bg-neutral-50 text-neutral-800 border border-neutral-200 hover:border-neutral-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                   >
                     <span>View Room Fleet</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -514,7 +514,7 @@ export default function LocationsPage() {
                   Defective Facilities & Equipment Report ({departmentBrokenItems.length} Issues)
                 </h2>
                 <p className="text-xs text-neutral-500">
-                  Aggregated across all classrooms, computer labs, and facilities requiring physical maintenance or replacement.
+                  Aggregated across all classrooms, computer labs, and facilities requiring repair or replacement.
                 </p>
               </div>
               <button
@@ -606,7 +606,7 @@ export default function LocationsPage() {
                 <button
                   type="button"
                   onClick={handleExportBrokenItems}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors cursor-pointer shadow-xs"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer shadow-xs"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Export Repair Requisition (CSV)</span>
@@ -614,7 +614,7 @@ export default function LocationsPage() {
                 <button
                   type="button"
                   onClick={() => setShowBrokenReportModal(false)}
-                  className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-100 rounded-xl transition-colors cursor-pointer"
                 >
                   Close
                 </button>

@@ -263,9 +263,9 @@ function CheckoutContent({
         showExport={false}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 w-full">
         {/* ================= 1. CLEAN CHECKOUT SUMMARY HEADER ================= */}
-        <div className="w-full rounded-xl bg-white border border-neutral-200 p-4 sm:p-5 shadow-2xs">
+        <div className="w-full rounded-2xl bg-white border border-neutral-200/80 p-4 sm:p-5 shadow-2xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="min-w-0 space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
@@ -320,7 +320,7 @@ function CheckoutContent({
             </div>
 
             {/* Live Borrower Summary Strip */}
-            <div className="px-3.5 py-2.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center gap-3 shrink-0 self-start md:self-auto">
+            <div className="px-3.5 py-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 flex items-center gap-3 shrink-0 self-start md:self-auto">
               <div className="text-right">
                 <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
                   Borrower
@@ -362,19 +362,14 @@ function CheckoutContent({
           {/* Left Column (7 Cols): Check-Out Form */}
           <div className="lg:col-span-7 space-y-6">
             <form onSubmit={handleSubmit} className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
-              <div className="border-b border-neutral-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                    <Laptop className="w-4 h-4 text-emerald-600" />
-                    <span>Lending & Student Authorization Details</span>
-                  </h2>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">
-                    Record borrower identification, role, and equipment inspection agreement
-                  </p>
-                </div>
-                <span className="text-[10px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold">
-                  Step 1 of 1
-                </span>
+              <div className="border-b border-neutral-100 pb-3">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                  <Laptop className="w-4 h-4 text-emerald-600" />
+                  <span>Lending & Student Authorization Details</span>
+                </h2>
+                <p className="text-[11px] text-neutral-500 mt-0.5">
+                  Record borrower identification, role, and equipment inspection agreement
+                </p>
               </div>
 
               {/* 1. Category Switcher */}
@@ -444,6 +439,7 @@ function CheckoutContent({
                     placeholder="Select inventory stock item..."
                     searchable={true}
                     searchPlaceholder="Search by name, category or SKU..."
+                    buttonClassName="rounded-xl py-2"
                   />
                 ) : (
                   <Dropdown
@@ -461,6 +457,7 @@ function CheckoutContent({
                     placeholder="Select hardware device..."
                     searchable={true}
                     searchPlaceholder="Search by device name, model, serial..."
+                    buttonClassName="rounded-xl py-2"
                   />
                 )}
               </div>
@@ -528,6 +525,7 @@ function CheckoutContent({
                       { value: 'Lab Assistant', label: 'Lab Assistant' },
                       { value: 'Technician', label: 'Department Technician' },
                     ]}
+                    buttonClassName="rounded-xl py-2"
                   />
                 </div>
               </div>

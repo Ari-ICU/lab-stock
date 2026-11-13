@@ -82,7 +82,7 @@ export function EditEntityModal() {
 
   const assetStatusOptions = [
     { label: 'Operational', value: 'operational' },
-    { label: 'In Production', value: 'in_use' },
+    { label: 'In Use', value: 'in_use' },
     { label: 'In Repair', value: 'maintenance' },
   ];
 
@@ -247,9 +247,9 @@ export function EditEntityModal() {
         if (e.target === e.currentTarget) closeEdit();
       }}
     >
-      <div className="bg-white border border-neutral-200 rounded-xl max-w-lg w-full flex flex-col max-h-[90vh] shadow-2xl relative">
+      <div className="bg-white border border-neutral-200/80 rounded-2xl max-w-lg w-full flex flex-col max-h-[90vh] shadow-2xl relative overflow-hidden">
         {/* Header */}
-        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white rounded-t-xl">
+        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white rounded-t-2xl">
           <h2 className="text-xs font-bold text-neutral-900">
             {getModalTitle()}
           </h2>
@@ -281,7 +281,7 @@ export function EditEntityModal() {
               <>
                 {/* Linked Central Stock/Asset Banner */}
                 {linkedStock && (
-                  <div className="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-lg flex items-center justify-between text-xs">
+                  <div className="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <Boxes className="w-4 h-4 text-emerald-700 shrink-0" />
                       <div>
@@ -295,7 +295,7 @@ export function EditEntityModal() {
                   </div>
                 )}
                 {linkedAsset && (
-                  <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg flex items-center justify-between text-xs">
+                  <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       <Boxes className="w-4 h-4 text-blue-700 shrink-0" />
                       <div>
@@ -317,7 +317,7 @@ export function EditEntityModal() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-semibold"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-semibold"
                   />
                 </div>
 
@@ -330,6 +330,7 @@ export function EditEntityModal() {
                       options={roomCategoryOptions}
                       onChange={(val) => setCategory(val)}
                       className="w-full"
+                      buttonClassName="rounded-xl py-2"
                     />
                   </div>
                   <div>
@@ -339,7 +340,7 @@ export function EditEntityModal() {
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
                       placeholder="e.g. PCS, SETS, UNITS"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono uppercase"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono uppercase"
                     />
                   </div>
                 </div>
@@ -352,12 +353,12 @@ export function EditEntityModal() {
                     value={brandSpec}
                     onChange={(e) => setBrandSpec(e.target.value)}
                     placeholder="e.g. Heavy-duty Ergonomic Mesh Swivel, 5000 Lumens..."
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
 
                 {/* STATUS DROPDOWN (Clean dropdown following maintenance style!) */}
-                <div className="p-3 bg-neutral-50/70 border border-neutral-200 rounded-lg space-y-2">
+                <div className="p-3 bg-neutral-50/70 border border-neutral-200 rounded-xl space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="block font-semibold text-neutral-800">
                       Operational / Service Status
@@ -397,12 +398,13 @@ export function EditEntityModal() {
                       }
                     }}
                     className="w-full"
+                    buttonClassName="rounded-xl py-2"
                   />
                 </div>
 
                 {/* Quantities Grid */}
                 <div className="grid grid-cols-3 gap-2.5">
-                  <div className="p-2.5 bg-emerald-50/40 border border-emerald-200/80 rounded-lg">
+                  <div className="p-2.5 bg-emerald-50/40 border border-emerald-200/80 rounded-xl">
                     <label className="block text-[11px] font-bold text-emerald-800 mb-1">Working Units</label>
                     <input
                       type="number"
@@ -419,7 +421,7 @@ export function EditEntityModal() {
                     />
                   </div>
 
-                  <div className="p-2.5 bg-rose-50/40 border border-rose-200/80 rounded-lg">
+                  <div className="p-2.5 bg-rose-50/40 border border-rose-200/80 rounded-xl">
                     <label className="block text-[11px] font-bold text-rose-800 mb-1">Broken / Defective</label>
                     <input
                       type="number"
@@ -438,7 +440,7 @@ export function EditEntityModal() {
                     />
                   </div>
 
-                  <div className="p-2.5 bg-blue-50/40 border border-blue-200/80 rounded-lg">
+                  <div className="p-2.5 bg-blue-50/40 border border-blue-200/80 rounded-xl">
                     <label className="block text-[11px] font-bold text-blue-800 mb-1">In Repair</label>
                     <input
                       type="number"
@@ -468,7 +470,7 @@ export function EditEntityModal() {
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
                     placeholder="e.g. 2 chairs have broken castor wheels in back row..."
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 text-xs"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs"
                   />
                 </div>
               </>
@@ -485,7 +487,7 @@ export function EditEntityModal() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
 
@@ -497,7 +499,7 @@ export function EditEntityModal() {
                     required
                     value={building}
                     onChange={(e) => setBuilding(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
 
@@ -508,7 +510,7 @@ export function EditEntityModal() {
                     required
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
               </div>
@@ -525,7 +527,7 @@ export function EditEntityModal() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
 
@@ -537,7 +539,7 @@ export function EditEntityModal() {
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                   />
                 </div>
 
@@ -548,6 +550,7 @@ export function EditEntityModal() {
                     options={rackTypeOptions}
                     onChange={(val) => setRackType(val as any)}
                     className="w-full"
+                    buttonClassName="rounded-xl py-2"
                   />
                 </div>
               </div>
@@ -560,7 +563,7 @@ export function EditEntityModal() {
                     min="1"
                     value={totalSlots}
                     onChange={(e) => setTotalSlots(Number(e.target.value))}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
 
@@ -572,7 +575,7 @@ export function EditEntityModal() {
                     max={totalSlots}
                     value={usedSlots}
                     onChange={(e) => setUsedSlots(Number(e.target.value))}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
               </div>
@@ -584,7 +587,7 @@ export function EditEntityModal() {
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
 
@@ -594,7 +597,7 @@ export function EditEntityModal() {
                     type="text"
                     value={temperature}
                     onChange={(e) => setTemperature(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
               </div>
@@ -613,7 +616,7 @@ export function EditEntityModal() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
 
@@ -627,7 +630,7 @@ export function EditEntityModal() {
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                   />
                 </div>
 
@@ -638,6 +641,7 @@ export function EditEntityModal() {
                     options={isStock ? stockStatusOptions : assetStatusOptions}
                     onChange={(val) => setStatus(val)}
                     className="w-full"
+                    buttonClassName="rounded-xl py-2"
                   />
                 </div>
               </div>
@@ -649,7 +653,7 @@ export function EditEntityModal() {
                     type="text"
                     value={serialNumber}
                     onChange={(e) => setSerialNumber(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                   />
                 </div>
               )}
@@ -670,6 +674,7 @@ export function EditEntityModal() {
                       allowCustom
                       searchPlaceholder="Search or type new category..."
                       className="w-full"
+                      buttonClassName="rounded-xl py-2"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -680,7 +685,7 @@ export function EditEntityModal() {
                         min="0"
                         value={quantity}
                         onChange={(e) => setQuantity(Number(e.target.value))}
-                        className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                       />
                     </div>
 
@@ -690,7 +695,7 @@ export function EditEntityModal() {
                         type="text"
                         value={unit}
                         onChange={(e) => setUnit(e.target.value)}
-                        className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                       />
                     </div>
                   </div>
@@ -708,6 +713,7 @@ export function EditEntityModal() {
                   options={locationOptions}
                   onChange={(val) => setLocation(val)}
                   className="w-full"
+                  buttonClassName="rounded-xl py-2"
                 />
               </div>
 
@@ -719,7 +725,7 @@ export function EditEntityModal() {
                     placeholder="e.g. Warranty 2027, Active, 3-Year Coverage"
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
               )}
@@ -736,7 +742,7 @@ export function EditEntityModal() {
                   rows={2}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 text-xs"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs"
                 />
               </div>
             </>
@@ -746,13 +752,13 @@ export function EditEntityModal() {
             <button
               type="button"
               onClick={closeEdit}
-              className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+              className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded-xl text-neutral-700 hover:bg-neutral-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800 cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 cursor-pointer"
             >
               Save Changes
             </button>

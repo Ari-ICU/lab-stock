@@ -227,7 +227,7 @@ export default function StockPage() {
 
         {/* Real-time Department Item & Furniture Count KPI Metric Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Total Counted Items</span>
               <Layers className="w-4 h-4 text-neutral-400" />
@@ -238,7 +238,7 @@ export default function StockPage() {
             <div className="text-[11px] text-neutral-500 mt-1">Across all department labs & rooms</div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Tables & Desks</span>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Furniture</span>
@@ -249,7 +249,7 @@ export default function StockPage() {
             <div className="text-[11px] text-neutral-500 mt-1">Workstations, lecturer & modular tables</div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Chairs & Seating</span>
               <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">Seating</span>
@@ -260,7 +260,7 @@ export default function StockPage() {
             <div className="text-[11px] text-neutral-500 mt-1">Ergonomic swivel, faculty & stacking chairs</div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-2xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-2xs">
             <div className="flex items-center justify-between text-neutral-500 mb-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Cabinets & Fixtures</span>
               <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Storage</span>
@@ -272,7 +272,7 @@ export default function StockPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-neutral-200 rounded-lg w-full shadow-2xs">
+        <div className="bg-white border border-neutral-200/80 rounded-2xl w-full shadow-2xs overflow-hidden">
           {/* Filters Toolbar with Category, Lab & Status Dropdowns */}
           <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 flex-wrap flex-1">
@@ -283,7 +283,7 @@ export default function StockPage() {
                   placeholder="Search tables, chairs, cabinets, tools..."
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
                 />
               </div>
 
@@ -294,6 +294,7 @@ export default function StockPage() {
                 onChange={setSelectedCategory}
                 placeholder="Category"
                 className="w-full sm:w-auto"
+                buttonClassName="rounded-xl py-1.5"
               />
 
               {/* Lab Filter Dropdown */}
@@ -303,6 +304,7 @@ export default function StockPage() {
                 onChange={setSelectedLab}
                 placeholder="Filter by Lab"
                 className="w-full sm:w-auto"
+                buttonClassName="rounded-xl py-1.5"
               />
 
               {/* Status Dropdown */}
@@ -312,6 +314,7 @@ export default function StockPage() {
                 onChange={setSelectedStatus}
                 placeholder="Status"
                 className="w-full sm:w-auto"
+                buttonClassName="rounded-xl py-1.5"
               />
             </div>
 
@@ -350,7 +353,7 @@ export default function StockPage() {
                         <td className="py-2.5 px-4">
                           <Link
                             href={`/stock/${item.id}`}
-                            className="w-10 h-10 rounded border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
+                            className="w-10 h-10 rounded-lg border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 cursor-pointer hover:border-neutral-400 transition-colors block"
                             title="Click to view details"
                           >
                             <LabThumbnail

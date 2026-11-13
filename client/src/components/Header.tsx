@@ -94,7 +94,7 @@ export function Header({
             type="button"
             onClick={handleExportClick}
             disabled={isExporting}
-            className="group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-50 active:bg-neutral-100 border border-neutral-200 hover:border-neutral-300 rounded shadow-2xs hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            className="group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-50 active:bg-neutral-100 border border-neutral-200 hover:border-neutral-300 rounded-xl shadow-2xs hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             title="Download formatted CSV dataset"
           >
             {isExporting ? (
@@ -112,7 +112,7 @@ export function Header({
         {showAction && onAction && !actions && (
           <button
             onClick={onAction}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-xl hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{actionLabel}</span>

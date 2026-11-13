@@ -15,7 +15,7 @@ const stockStatusOptions = [
 
 const assetStatusOptions = [
   { label: 'Operational', value: 'operational' },
-  { label: 'In Use / Production', value: 'in_use' },
+  { label: 'In Use', value: 'in_use' },
   { label: 'In Repair', value: 'maintenance' },
 ];
 
@@ -185,11 +185,11 @@ export function AddEntityModal() {
         if (e.target === e.currentTarget) closeModal();
       }}
     >
-      <div className="bg-white border border-neutral-200 rounded-xl max-w-lg w-full flex flex-col shadow-2xl relative max-h-[90vh] overflow-hidden">
+      <div className="bg-white border border-neutral-200/80 rounded-2xl max-w-lg w-full flex flex-col shadow-2xl relative max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 rounded-t-xl bg-white">
+        <div className="h-14 px-5 border-b border-neutral-200 flex items-center justify-between shrink-0 rounded-t-2xl bg-white">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded bg-neutral-900 text-white flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-neutral-900 text-white flex items-center justify-center">
               <Plus className="w-4 h-4 text-emerald-400" />
             </div>
             <h2 className="text-xs font-bold text-neutral-900">
@@ -218,7 +218,7 @@ export function AddEntityModal() {
                 placeholder="e.g. 10G SFP+ Optical Transceiver"
                 value={stockName}
                 onChange={(e) => setStockName(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -231,7 +231,7 @@ export function AddEntityModal() {
                   placeholder="e.g. SFP-10G-SR"
                   value={stockCode}
                   onChange={(e) => setStockCode(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                 />
               </div>
 
@@ -249,6 +249,7 @@ export function AddEntityModal() {
                   allowCustom
                   searchPlaceholder="Search or type new category..."
                   className="w-full"
+                  buttonClassName="rounded-xl py-2"
                 />
               </div>
             </div>
@@ -262,7 +263,7 @@ export function AddEntityModal() {
                   required
                   value={stockQuantity}
                   onChange={(e) => setStockQuantity(Number(e.target.value))}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
 
@@ -272,7 +273,7 @@ export function AddEntityModal() {
                   type="text"
                   value={stockUnit}
                   onChange={(e) => setStockUnit(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
             </div>
@@ -284,6 +285,7 @@ export function AddEntityModal() {
                 options={locationOptions}
                 onChange={setStockLocation}
                 className="w-full"
+                buttonClassName="rounded-xl py-2"
               />
             </div>
 
@@ -294,7 +296,7 @@ export function AddEntityModal() {
                 placeholder="e.g. Warranty 2027, Active, 3-Year Coverage"
                 value={stockExpiryDate}
                 onChange={(e) => setStockExpiryDate(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -312,7 +314,7 @@ export function AddEntityModal() {
                 placeholder="Technical specifications, notes or model details..."
                 value={stockDescription}
                 onChange={(e) => setStockDescription(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 text-xs"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs"
               />
             </div>
 
@@ -320,13 +322,13 @@ export function AddEntityModal() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50"
+                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded-xl text-neutral-700 hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800"
+                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-xl hover:bg-neutral-800"
               >
                 Save Item
               </button>
@@ -345,7 +347,7 @@ export function AddEntityModal() {
                 placeholder="e.g. Cisco Catalyst 9300 Switch"
                 value={assetName}
                 onChange={(e) => setAssetName(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -358,7 +360,7 @@ export function AddEntityModal() {
                   placeholder="e.g. C9300-48P-A"
                   value={assetModel}
                   onChange={(e) => setAssetModel(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                 />
               </div>
 
@@ -370,7 +372,7 @@ export function AddEntityModal() {
                   placeholder="e.g. FCW2348L09M"
                   value={assetSerial}
                   onChange={(e) => setAssetSerial(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                 />
               </div>
             </div>
@@ -383,6 +385,7 @@ export function AddEntityModal() {
                   options={assetStatusOptions}
                   onChange={(val) => setAssetStatus(val as any)}
                   className="w-full"
+                  buttonClassName="rounded-xl py-2"
                 />
               </div>
 
@@ -393,6 +396,7 @@ export function AddEntityModal() {
                   options={locationOptions}
                   onChange={setAssetLocation}
                   className="w-full"
+                  buttonClassName="rounded-xl py-2"
                 />
               </div>
             </div>
@@ -410,7 +414,7 @@ export function AddEntityModal() {
                 placeholder="Hardware specs, firmware version, interface configuration..."
                 value={assetDescription}
                 onChange={(e) => setAssetDescription(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 text-xs"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-xs"
               />
             </div>
 
@@ -418,13 +422,13 @@ export function AddEntityModal() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50"
+                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded-xl text-neutral-700 hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800"
+                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-xl hover:bg-neutral-800"
               >
                 Register Asset
               </button>
@@ -443,7 +447,7 @@ export function AddEntityModal() {
                 placeholder="e.g. Server Rack A3 (42U)"
                 value={rackName}
                 onChange={(e) => setRackName(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -456,7 +460,7 @@ export function AddEntityModal() {
                   placeholder="e.g. RCK-MDF-03"
                   value={rackCode}
                   onChange={(e) => setRackCode(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 font-mono"
                 />
               </div>
 
@@ -468,7 +472,7 @@ export function AddEntityModal() {
                   max="48"
                   value={rackSlots}
                   onChange={(e) => setRackSlots(Number(e.target.value))}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
             </div>
@@ -480,6 +484,7 @@ export function AddEntityModal() {
                 options={rackTypeOptions}
                 onChange={(val) => setRackType(val as any)}
                 className="w-full"
+                buttonClassName="rounded-xl py-2"
               />
             </div>
 
@@ -489,7 +494,7 @@ export function AddEntityModal() {
                 type="text"
                 value={rackLocation}
                 onChange={(e) => setRackLocation(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -497,13 +502,13 @@ export function AddEntityModal() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50"
+                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded-xl text-neutral-700 hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800"
+                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-xl hover:bg-neutral-800"
               >
                 Add Rack
               </button>
@@ -522,7 +527,7 @@ export function AddEntityModal() {
                 placeholder="e.g. Advanced Routing & Switching Lab"
                 value={locName}
                 onChange={(e) => setLocName(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />
             </div>
 
@@ -534,7 +539,7 @@ export function AddEntityModal() {
                   required
                   value={locBuilding}
                   onChange={(e) => setLocBuilding(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
 
@@ -546,7 +551,7 @@ export function AddEntityModal() {
                   placeholder="e.g. Room 304"
                   value={locRoom}
                   onChange={(e) => setLocRoom(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
             </div>
@@ -555,13 +560,13 @@ export function AddEntityModal() {
               <button
                 type="button"
                 onClick={closeModal}
-                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50"
+                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded-xl text-neutral-700 hover:bg-neutral-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800"
+                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-xl hover:bg-neutral-800"
               >
                 Add Location
               </button>
