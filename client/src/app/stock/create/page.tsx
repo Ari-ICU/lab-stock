@@ -9,14 +9,13 @@ import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { ScanCodeModal } from '@/components/ScanCodeModal';
+import { buildStockCategoryOptions } from '@/lib/categories';
 import {
   ArrowLeft,
   Save,
-  Sparkles,
   Cable,
   CheckCircle2,
   MapPin,
-  Tag,
   Hash,
   Layers,
   FileText,
@@ -31,17 +30,6 @@ const statusOptions = [
   { label: 'Out of Stock (Zero count)', value: 'out_of_stock' },
 ];
 
-const categoryOptions = [
-  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
-  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
-  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
-  { label: 'Monitors & Displays', value: 'Monitors' },
-  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
-  { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate Spares', value: 'Power & Climate' },
-  { label: 'Network Spares & Transceivers', value: 'Network Spares' },
-];
-
 const unitOptions = [
   { label: 'Units', value: 'Units' },
   { label: 'Pieces', value: 'Pieces' },
@@ -54,86 +42,13 @@ const unitOptions = [
   { label: 'Rolls', value: 'Rolls' },
 ];
 
-const PRESETS = [
-  {
-    name: 'Double A A4 80gsm Multipurpose Copy Paper (Box of 5 Reams)',
-    code: 'PAP-A4-80GSM-DBLA',
-    category: 'Office Stationery',
-    quantity: 10,
-    unit: 'Boxes',
-    location: 'Computer Lab Room 102B',
-    rack: 'Faculty Supply Cabinet CAB-01',
-    expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=600&q=80',
-    description: 'High-grade 80 GSM smooth white A4 copier paper (500 sheets/ream, 5 reams/box) for student exam sheets and lab syllabus printing.',
-  },
-  {
-    name: 'HP LaserJet 05A (CE505A) High-Yield Black Toner Cartridges',
-    code: 'TNR-HP-05A-BLK',
-    category: 'Printer Ink & Toner',
-    quantity: 4,
-    unit: 'Cartridges',
-    location: 'Computer Lab Room 102B',
-    rack: 'Supply Cabinet CAB-02',
-    expiryDate: 'Mfg 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
-    description: 'Original HP LaserJet monochrome toner cartridges for faculty lab report printer (HP LaserJet P2055dn).',
-  },
-  {
-    name: 'Canon GI-790 Genuine Ink Bottle 4-Pack (BK/C/M/Y)',
-    code: 'INK-CANON-GI790',
-    category: 'Printer Ink & Toner',
-    quantity: 2,
-    unit: 'Sets',
-    location: 'Computer Lab Room 102B',
-    rack: 'Supply Cabinet CAB-02',
-    expiryDate: 'Exp 2028',
-    imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
-    description: 'Genuine high-yield ink bottles for continuous tank printer; pigment black (135ml) and dye color bottles (70ml each).',
-  },
-  {
-    name: 'iFixit Pro Tech Electronics & Computer Repair Tool Kit',
-    code: 'TOOL-IFIX-PRO',
-    category: 'Tools & Equipment',
-    quantity: 3,
-    unit: 'Kits',
-    location: 'Hardware Staging & Maintenance Depot Room 102',
-    rack: 'Technician Workbench',
-    expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    description: 'Precision 64-bit screwdriver set with anti-static wrist strap, spudgers, suction handle, and reverse tweezers for PC/laptop disassembly.',
-  },
-  {
-    name: 'Klein Tools Ratcheting Modular RJ45 Crimper Toolkits',
-    code: 'TOOL-102-CRIMP',
-    category: 'Tools & Equipment',
-    quantity: 4,
-    unit: 'Kits',
-    location: 'Hardware Staging & Maintenance Depot Room 102',
-    rack: 'Technician Workbench',
-    expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    description: 'Professional field toolkits with wire strippers, flush cutters, and pass-through RJ45 crimpers.',
-  },
-  {
-    name: 'Cat6A UTP 2m RJ45 Blue Patch Cords',
-    code: 'CAB-102B-CAT6A',
-    category: 'Cables & Accessories',
-    quantity: 28,
-    unit: 'Cables',
-    location: 'Computer Lab Room 102B',
-    rack: 'Desk Outlets to PCs',
-    expiryDate: 'Active',
-    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-    description: 'High-speed 10Gbps factory-crimped Cat6A patch cords connecting student bench RJ45 jacks to workstation NICs.',
-  },
-];
-
 function CreateStockForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addStockItem, locations, showToast } = useStock();
+  const { addStockItem, stock, locations, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
+
+  const categoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
 
   // Find first manageable location for default
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
@@ -171,22 +86,6 @@ function CreateStockForm() {
     label: `${loc.name} (${loc.room})`,
     value: `${loc.name} (${loc.room})`,
   }));
-
-  const handleApplyPreset = (preset: typeof PRESETS[0]) => {
-    setName(preset.name);
-    setCode(preset.code);
-    setCategory(preset.category);
-    setQuantity(preset.quantity);
-    setUnit(preset.unit);
-    const presetLoc = canManageLocation(preset.location) ? preset.location : defaultLocation;
-    setLocation(presetLoc);
-    setRack(preset.rack);
-    setExpiryDate(preset.expiryDate);
-    setImageUrl(preset.imageUrl);
-    setDescription(preset.description);
-    setStatus(preset.quantity > 5 ? 'in_stock' : preset.quantity > 0 ? 'low_stock' : 'out_of_stock');
-    showToast(`Applied preset for ${preset.name}`, 'info');
-  };
 
   const handleGenerateSKU = () => {
     const prefix = category.substring(0, 3).toUpperCase();
@@ -272,45 +171,6 @@ function CreateStockForm() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 w-full">
-        {/* Quick Presets Carousel / Cards */}
-        <div className="bg-white border border-neutral-200 rounded p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                Quick Item Presets
-              </h2>
-            </div>
-            <span className="text-[11px] text-neutral-400">
-              Click any template to auto-populate fields
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 pt-1">
-            {PRESETS.map((p, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleApplyPreset(p)}
-                className="text-left p-3 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-semibold text-neutral-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
-                    {p.name}
-                  </div>
-                  <div className="text-[11px] text-neutral-500 font-mono mt-0.5">
-                    {p.code} • {p.quantity} {p.unit}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 mt-2 text-[10px] text-neutral-400">
-                  <Tag className="w-3 h-3" />
-                  <span>{p.category}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Main Creation Form */}
         <form id="new-stock-form" onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -395,6 +255,8 @@ function CreateStockForm() {
                         value={category}
                         options={categoryOptions}
                         onChange={setCategory}
+                        allowCustom
+                        searchPlaceholder="Search or type new category..."
                         placeholder="Select Category"
                       />
                     </div>

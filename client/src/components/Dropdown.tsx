@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronDown, Check, Search, X } from 'lucide-react';
+import { ChevronDown, Check, Search, X, Plus } from 'lucide-react';
 import { DropdownOption } from '@/types';
 
 export type { DropdownOption };
@@ -17,6 +17,7 @@ interface DropdownProps {
   direction?: 'auto' | 'up' | 'down';
   searchable?: boolean;
   searchPlaceholder?: string;
+  allowCustom?: boolean;
   disabled?: boolean;
 }
 
@@ -31,6 +32,7 @@ export function Dropdown({
   direction = 'auto',
   searchable,
   searchPlaceholder = 'Search options...',
+  allowCustom = false,
   disabled = false,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
@@ -39,8 +41,8 @@ export function Dropdown({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Auto-enable search if there are 6 or more options, unless explicitly turned off
-  const isSearchable = searchable ?? options.length >= 6;
+  // Auto-enable search if allowCustom is enabled or there are 6+ options
+  const isSearchable = searchable ?? (allowCustom || options.length >= 6);
 
   const selectedOption = options.find((o) => o.value === value);
 
@@ -194,7 +196,21 @@ export function Dropdown({
                   placeholder={searchPlaceholder}
                   className="w-full text-xs pl-8 pr-7 py-1.5 bg-white border border-neutral-200 rounded text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                   onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    const trimmed = searchQuery.trim();
+                    const hasExactMatch = effectiveOptions.some(
+                      (o) =>
+                        o.value.toLowerCase() === trimmed.toLowerCase() ||
+                        o.label.toLowerCase() === trimmed.toLowerCase()
+                    );
+                    if (e.key === 'Enter' && allowCustom && trimmed.length > 0 && !hasExactMatch) {
+                      e.preventDefault();
+                      onChange(trimmed);
+                      setOpen(false);
+                      setSearchQuery('');
+                    }
+                  }}
                 />
                 {searchQuery && (
                   <button
@@ -214,10 +230,34 @@ export function Dropdown({
           )}
 
           <div className="overflow-y-auto flex-1 py-1">
+            {allowCustom &&
+              searchQuery.trim().length > 0 &&
+              !effectiveOptions.some(
+                (o) =>
+                  o.value.toLowerCase() === searchQuery.trim().toLowerCase() ||
+                  o.label.toLowerCase() === searchQuery.trim().toLowerCase()
+              ) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const customVal = searchQuery.trim();
+                    onChange(customVal);
+                    setOpen(false);
+                    setSearchQuery('');
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100/70 border-b border-emerald-100 font-semibold transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Create &ldquo;{searchQuery.trim()}&rdquo;</span>
+                </button>
+              )}
+
             {filteredOptions.length === 0 ? (
-              <div className="px-3 py-4 text-neutral-400 text-center italic text-xs">
-                No matching options found
-              </div>
+              allowCustom && searchQuery.trim().length > 0 ? null : (
+                <div className="px-3 py-4 text-neutral-400 text-center italic text-xs">
+                  No matching options found
+                </div>
+              )
             ) : (
               filteredOptions.map((option) => {
                 const isSelected = option.value === value;

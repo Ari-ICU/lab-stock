@@ -7,17 +7,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
 import { ScanCodeModal } from '@/components/ScanCodeModal';
-
-const stockCategoryOptions = [
-  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
-  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
-  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
-  { label: 'Monitors & Displays', value: 'Monitors' },
-  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
-  { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate Spares', value: 'Power & Climate' },
-  { label: 'Network Spares & Transceivers', value: 'Network Spares' },
-];
+import { buildStockCategoryOptions } from '@/lib/categories';
 
 const stockStatusOptions = [
   { label: 'In Stock', value: 'in_stock' },
@@ -56,7 +46,10 @@ export function AddEntityModal() {
     addMaintenance,
     addLocation,
     locations,
+    stock,
   } = useStock();
+
+  const stockCategoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
 
   const locationOptions = locations.map((loc) => ({
     label: `${loc.name} (${loc.room})`,
@@ -300,6 +293,8 @@ export function AddEntityModal() {
                   value={stockCategory}
                   options={stockCategoryOptions}
                   onChange={setStockCategory}
+                  allowCustom
+                  searchPlaceholder="Search or type new category..."
                   className="w-full"
                 />
               </div>

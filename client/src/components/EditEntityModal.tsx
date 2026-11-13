@@ -7,6 +7,7 @@ import { MockItem, MockAsset, MockRack, MockMaintenance, MockLocation, RoomInven
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
+import { buildStockCategoryOptions } from '@/lib/categories';
 import { Boxes, ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export function EditEntityModal() {
@@ -28,6 +29,8 @@ export function EditEntityModal() {
     label: `${loc.name} (${loc.room})`,
     value: `${loc.name} (${loc.room})`,
   }));
+
+  const stockCategoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
 
   const isStock = editingItem ? 'quantity' in editingItem : false;
   const isAsset = editingItem ? 'serialNumber' in editingItem && 'model' in editingItem : false;
@@ -769,28 +772,41 @@ export function EditEntityModal() {
               )}
 
               {isStock && (
-                <div className="grid grid-cols-2 gap-3">
+                <>
                   <div>
-                    <label className="block font-semibold text-neutral-800 mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                    <label className="block font-semibold text-neutral-800 mb-1">Category</label>
+                    <Dropdown
+                      value={category}
+                      options={stockCategoryOptions}
+                      onChange={setCategory}
+                      allowCustom
+                      searchPlaceholder="Search or type new category..."
+                      className="w-full"
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-neutral-800 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Number(e.target.value))}
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block font-semibold text-neutral-800 mb-1">Unit</label>
-                    <input
-                      type="text"
-                      value={unit}
-                      onChange={(e) => setUnit(e.target.value)}
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
-                    />
+                    <div>
+                      <label className="block font-semibold text-neutral-800 mb-1">Unit</label>
+                      <input
+                        type="text"
+                        value={unit}
+                        onChange={(e) => setUnit(e.target.value)}
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
+                      />
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               <div>

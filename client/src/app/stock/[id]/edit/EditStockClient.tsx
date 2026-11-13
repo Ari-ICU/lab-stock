@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { buildStockCategoryOptions } from '@/lib/categories';
 import {
   ArrowLeft,
   Save,
@@ -32,17 +33,6 @@ const statusOptions = [
   { label: 'Out of Stock (Zero count)', value: 'out_of_stock' },
 ];
 
-const categoryOptions = [
-  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
-  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
-  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
-  { label: 'Monitors & Displays', value: 'Monitors' },
-  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
-  { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate Spares', value: 'Power & Climate' },
-  { label: 'Network Spares & Transceivers', value: 'Network Spares' },
-];
-
 const unitOptions = [
   { label: 'Units', value: 'Units' },
   { label: 'Pieces', value: 'Pieces' },
@@ -62,6 +52,8 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
 
   const { stock, updateStockItem, deleteStockItem, locations, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
+
+  const categoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
 
   const item = stock.find((s) => s.id === id);
   const isAllowed = item ? canManageLocation(item.location) : false;
@@ -380,6 +372,8 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                         value={category}
                         options={categoryOptions}
                         onChange={setCategory}
+                        allowCustom
+                        searchPlaceholder="Search or type new category..."
                         placeholder="Select Category"
                       />
                     </div>

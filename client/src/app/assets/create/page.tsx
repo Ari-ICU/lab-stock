@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   Router,
   Save,
-  Sparkles,
   CheckCircle2,
   Calendar,
   MapPin,
@@ -31,45 +30,6 @@ const statusOptions = [
   { label: 'Operational', value: 'operational' },
   { label: 'In Use', value: 'in_use' },
   { label: 'Maintenance', value: 'maintenance' },
-];
-
-const PRESETS = [
-  {
-    name: 'Dell OptiPlex 7090 Desktop Workstation',
-    model: 'OptiPlex 7090 MT / Core i7 / 16GB / 512GB SSD',
-    unitType: 'Desktops',
-    defaultUnits: 24,
-    location: 'Computer Lab Room 102B (Student Benches 1-24)',
-    imageUrl: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=600&q=80',
-    description: 'Student Desktop Workstation featuring Dell 24-inch FHD monitor, dual-boot Ubuntu & Windows 11 Pro, configured for network simulation.',
-  },
-  {
-    name: 'Cisco Catalyst 9300 48-Port PoE+ Managed Switch',
-    model: 'C9300-48P-A Gigabit L3 Enterprise Managed',
-    unitType: 'Switch',
-    defaultUnits: 1,
-    location: 'Computer Lab Room 102B (Wall Cabinet CAB-102B)',
-    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-    description: 'Core 48-port Gigabit PoE+ switch directly patched to student desks 1-24, instructor podium, Wi-Fi AP, and fiber optic uplink.',
-  },
-  {
-    name: 'Epson PowerLite 4K Laser Ceiling Projector',
-    model: 'PowerLite L630U 6200-Lumen WUXGA Laser',
-    unitType: 'Unit',
-    defaultUnits: 1,
-    location: 'Computer Lab Room 102B (Ceiling Center Mount)',
-    imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
-    description: 'High-lumens laser projector mounted to ceiling with motorized 120-inch projection screen, HDMI 2.1 input, and Miracast wireless mirroring.',
-  },
-  {
-    name: 'Daikin 2.5 HP Inverter Air Conditioner',
-    model: 'FTKC60UVM4 Inverter R32 Eco Cooling',
-    unitType: 'AC Units',
-    defaultUnits: 2,
-    location: 'Computer Lab Room 102B (North & South Walls)',
-    imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
-    description: 'Split inverter climate control unit maintaining constant 21°C - 23°C temperature and moisture protection for room 102B hardware.',
-  },
 ];
 
 function CreateAssetForm() {
@@ -113,21 +73,6 @@ function CreateAssetForm() {
     label: `${loc.name} (${loc.room})`,
     value: `${loc.name} (${loc.room})`,
   }));
-
-  const handleApplyPreset = (preset: typeof PRESETS[0]) => {
-    setName(preset.name);
-    setModel(preset.model);
-    setUnitType(preset.unitType);
-    setTotalUnits(preset.defaultUnits);
-    const presetLoc = canManageLocation(preset.location) ? preset.location : defaultLocation;
-    setLocation(presetLoc);
-    setImageUrl(preset.imageUrl);
-    setDescription(preset.description);
-    if (!serialNumber) {
-      setSerialNumber(`LAB-102B-${Math.floor(1000 + Math.random() * 9000)}`);
-    }
-    showToast(`Applied preset for ${preset.name}`, 'info');
-  };
 
   const handleGenerateTag = () => {
     const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -211,31 +156,6 @@ function CreateAssetForm() {
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-8xl w-full mx-auto">
-
-        {/* Quick Autofill Presets Bar */}
-        <div className="bg-white border border-neutral-200 rounded-lg p-4 shadow-xs">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <span className="text-xs font-bold text-neutral-900">
-              Quick Autofill From Lab 102B Standards
-            </span>
-          </div>
-          <p className="text-[11px] text-neutral-500 mb-3">
-            Click any standard equipment profile to instantly pre-fill specs, models, and locations:
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            {PRESETS.map((preset) => (
-              <button
-                key={preset.name}
-                type="button"
-                onClick={() => handleApplyPreset(preset)}
-                className="px-2.5 py-1.5 text-xs font-medium bg-neutral-50 hover:bg-neutral-900 hover:text-white border border-neutral-200 hover:border-neutral-900 rounded transition-all cursor-pointer text-neutral-700"
-              >
-                + {preset.name.split(' ')[0]} {preset.name.split(' ')[1]}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Form Container */}
         <form
