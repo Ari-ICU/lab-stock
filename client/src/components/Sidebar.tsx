@@ -119,7 +119,7 @@ export function Sidebar() {
                 </span>
               </div>
               <span className="text-[11px] text-neutral-500 font-medium truncate block mt-0.5">
-                Faculty Laboratories
+                Dept. of Computer Science
               </span>
             </div>
           </Link>
