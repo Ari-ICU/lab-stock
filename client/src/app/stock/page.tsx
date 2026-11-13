@@ -327,11 +327,11 @@ export default function StockPage() {
                 <tr>
                   <th className="py-3 px-4 w-12">Visual</th>
                   <th className="py-3 px-4">Item & Equipment Name</th>
-                  <th className="py-3 px-4">Part / SKU</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4 text-center">Count / Qty</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Part / SKU</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Category</th>
+                  <th className="py-3 px-4 text-center whitespace-nowrap">Count / Qty</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -376,7 +376,7 @@ export default function StockPage() {
                             </div>
                           )}
                         </td>
-                        <td className="py-3 px-4 font-mono text-neutral-600">
+                        <td className="py-3 px-4 font-mono text-neutral-600 whitespace-nowrap">
                           <Link
                             href={`/stock/${item.id}`}
                             className="hover:text-neutral-900 transition-colors"
@@ -384,12 +384,12 @@ export default function StockPage() {
                             {item.code}
                           </Link>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200/60">
                             {item.category}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
                           {(() => {
                             const alloc = allocatedMap[item.id] || { total: 0, roomBreakdown: [] };
                             const loanedCount = loans
@@ -403,7 +403,7 @@ export default function StockPage() {
                             return (
                               <div>
                                 <span
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-neutral-900 text-white shadow-2xs font-mono"
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-900 border border-neutral-200 font-mono"
                                   title={alloc.total > 0 ? `${item.quantity} in stock + ${alloc.total} deployed across ${alloc.roomBreakdown.length} rooms` : undefined}
                                 >
                                   {item.quantity} {item.unit || 'Units'}
@@ -417,7 +417,7 @@ export default function StockPage() {
                             );
                           })()}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-semibold border ${
                               item.status === 'in_stock'

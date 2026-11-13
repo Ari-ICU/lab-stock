@@ -184,12 +184,12 @@ export default function AssetsPage() {
                 <tr>
                   <th className="py-3 px-4 w-12">Image</th>
                   <th className="py-3 px-4">Equipment Name</th>
-                  <th className="py-3 px-4 text-center">Total Units</th>
-                  <th className="py-3 px-4">Serial / Tag</th>
+                  <th className="py-3 px-4 text-center whitespace-nowrap">Total Units</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Serial / Tag</th>
                   <th className="py-3 px-4">Model & Specs</th>
                   <th className="py-3 px-4">Assigned Location</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -228,12 +228,12 @@ export default function AssetsPage() {
                             {asset.name}
                           </Link>
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-neutral-100 text-neutral-900 border border-neutral-200">
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-neutral-100 text-neutral-900 border border-neutral-200 whitespace-nowrap font-mono">
                             {asset.totalUnits ?? 1} {asset.unitType ?? 'Unit'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-mono text-neutral-600">
+                        <td className="py-3 px-4 font-mono text-neutral-600 whitespace-nowrap">
                           <Link
                             href={`/assets/${asset.id}`}
                             className="hover:text-neutral-900 transition-colors"
