@@ -12,26 +12,24 @@ import { exportToCsv } from '@/lib/exportCsv';
 import {
   Package,
   Router,
-  AlertTriangle,
   ArrowRight,
-  QrCode,
   Building,
   ArrowLeftRight,
   Laptop,
   CheckCircle2,
   Plus,
   ShieldCheck,
-  Wrench,
-  Layers,
-  MapPin,
-  Calendar,
   Copy,
   Check,
-  Users,
-  Clock,
   Sparkles,
-  ExternalLink
 } from 'lucide-react';
+
+function formatOverviewDate(val?: string) {
+  if (!val) return '—';
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return val;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -40,8 +38,6 @@ export default function DashboardPage() {
     assets,
     locations,
     loans,
-    maintenance,
-    openScanner,
     deleteAsset,
     returnAsset,
     showToast,
@@ -128,12 +124,6 @@ export default function DashboardPage() {
         'Value': stock.length,
         'Notes': `${lowStockItems.length} items flagged as low or out of stock`,
       },
-      {
-        'Metric Category': 'Maintenance & Repairs',
-        'Parameter': 'Logged Service Tickets',
-        'Value': maintenance.length,
-        'Notes': `${maintenance.filter((m) => m.status !== 'Completed').length} active pending service tickets`,
-      },
     ];
 
     exportToCsv('faculty_executive_operations_summary', summaryRows);
@@ -219,7 +209,7 @@ export default function DashboardPage() {
               {locations.length} <span className="text-xs font-semibold text-neutral-500 font-sans">Facilities</span>
             </div>
             <div className="text-[11px] text-neutral-500 mt-2 flex items-center justify-between pt-2 border-t border-neutral-100 font-medium">
-              <span>Block A · Floors 1-3</span>
+              <span>{locations.filter((l) => l.type !== 'STORAGE').length} Labs · {locations.filter((l) => l.type === 'STORAGE').length} Depot</span>
               <span className="text-blue-700 font-semibold">
                 {totalRoomUnits} Equipment Units
               </span>
@@ -300,7 +290,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* Tile 1: Lend Device */}
             <Link
-              href="/loans"
+              href="/loans/checkout"
               className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left group shadow-2xs"
             >
               <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-100 transition-colors">
@@ -314,7 +304,7 @@ export default function DashboardPage() {
 
             {/* Tile 2: Relocate Asset */}
             <Link
-              href="/loans"
+              href="/loans/relocate"
               className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left group shadow-2xs"
             >
               <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-700 shrink-0 group-hover:bg-blue-100 transition-colors">
@@ -443,9 +433,9 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="text-[10px] text-neutral-400 font-mono flex items-center gap-2">
-                            <span>Out: {loan.borrowDate}</span>
+                            <span>Out: {formatOverviewDate(loan.borrowDate)}</span>
                             <span>·</span>
-                            <span>Due: <strong className={isOverdue ? 'text-rose-600' : 'text-neutral-700'}>{loan.expectedReturnDate}</strong></span>
+                            <span>Due: <strong className={isOverdue ? 'text-rose-600' : 'text-neutral-700'}>{formatOverviewDate(loan.expectedReturnDate)}</strong></span>
                           </div>
                         </div>
 
@@ -473,7 +463,7 @@ export default function DashboardPage() {
                   <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
                     Classrooms & Specialized Laboratories
                   </h2>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">Facility status and workstation readiness across Engineering Block A</p>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">Facility status and workstation readiness across CS labs &amp; classrooms</p>
                 </div>
                 <Link
                   href="/locations"
@@ -535,71 +525,9 @@ export default function DashboardPage() {
                 })}
               </div>
             </section>
-
-            {/* Consumables & Inventory Health */}
-            <section className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-2xs">
-              <div className="p-4 sm:p-5 border-b border-neutral-200/80 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                    Central Inventory & Consumables
-                  </h2>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">Replacement cables, connectors, tools and bench supplies</p>
-                </div>
-                <Link
-                  href="/stock"
-                  className="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition-colors"
-                >
-                  <span>View stock</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              {lowStockItems.length > 0 ? (
-                <div className="divide-y divide-neutral-100">
-                  {lowStockItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-neutral-50/70 transition-colors"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-neutral-900">{item.name}</div>
-                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                          SKU: {item.code} · <span className="text-neutral-600">{item.location}</span>
-                        </div>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0 font-mono">
-                        {item.quantity} {item.unit}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-5 bg-emerald-50/40 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-700" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-emerald-950">
-                        All {stock.length} Inventory Categories Fully Stocked
-                      </div>
-                      <div className="text-[11px] text-emerald-800 mt-0.5">
-                        Adequate replacement stock for student benches, patch cables, and laboratory tools.
-                      </div>
-                    </div>
-                  </div>
-                  <Link
-                    href="/stock"
-                    className="px-3 py-1.5 text-xs font-semibold text-neutral-900 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg transition-colors shrink-0 shadow-2xs"
-                  >
-                    Catalog
-                  </Link>
-                </div>
-              )}
-            </section>
           </div>
 
-          {/* ================= RIGHT COLUMN (5 COLS): HARDWARE FLEET & SERVICE ================= */}
+          {/* ================= RIGHT COLUMN (5 COLS): HARDWARE FLEET & INVENTORY ================= */}
           <div className="lg:col-span-5 space-y-6">
             
             {/* Faculty Hardware Directory */}
@@ -609,7 +537,7 @@ export default function DashboardPage() {
                   <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
                     Serialized Hardware Fleet
                   </h2>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">High-value compute & infrastructure units</p>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">High-value compute &amp; infrastructure units</p>
                 </div>
                 <Link
                   href="/assets"
@@ -686,6 +614,69 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            {/* Consumables & Inventory Health */}
+            <section className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-2xs">
+              <div className="p-4 sm:p-5 border-b border-neutral-200/80 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
+                    Central Inventory &amp; Consumables
+                  </h2>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">Replacement cables, connectors, tools and bench supplies</p>
+                </div>
+                <Link
+                  href="/stock"
+                  className="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition-colors shrink-0"
+                >
+                  <span>View stock</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              {lowStockItems.length > 0 ? (
+                <div className="divide-y divide-neutral-100">
+                  {lowStockItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/stock/${item.id}`}
+                      className="p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-neutral-50/70 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-neutral-900 truncate">{item.name}</div>
+                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5 truncate">
+                          SKU: {item.code} · <span className="text-neutral-600">{item.location}</span>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0 font-mono">
+                        {item.quantity} {item.unit}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-5 bg-emerald-50/40 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-emerald-950">
+                        All {stock.length} Inventory Categories Stocked
+                      </div>
+                      <div className="text-[11px] text-emerald-800 mt-0.5">
+                        Adequate replacement stock for student benches, patch cables, and lab tools.
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href="/stock"
+                    className="px-3 py-1.5 text-xs font-semibold text-neutral-900 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-lg transition-colors shrink-0 shadow-2xs"
+                  >
+                    Catalog
+                  </Link>
+                </div>
+              )}
             </section>
 
           </div>
