@@ -4,7 +4,7 @@
  * ECMA-376 / ISO 29500 (Excel for Mac, Windows, LibreOffice Calc, Apple Numbers),
  * featuring institutional masthead, metadata bar, shared string table, semantic status
  * styling, wrapped text, dynamic row heights, live Excel SUM totals, frozen header panes,
- * A4 landscape print setup with repeated headers, and formal verification sign-off blocks.
+ * ISO A4 print setup (portrait/landscape fit-to-width, repeated headers, print area), and sign-off blocks.
  */
 
 export interface ExportOptions {
@@ -18,6 +18,7 @@ export interface ExportOptions {
   includeRowNumbers?: boolean;
   includeSummaryRow?: boolean;
   includeSignOff?: boolean;
+  pageOrientation?: 'auto' | 'portrait' | 'landscape';
   format?: 'xlsx' | 'csv';
   notify?: (message: string) => void;
 }
@@ -526,23 +527,27 @@ function buildXlsxWorkbook(
   const sst = new SharedStringPool();
   const mergeRefs: string[] = [];
   let sheetDataXml = '<sheetData>';
+  const totalCharWidth = colWidths.reduce((sum, w) => sum + w, 0);
 
   // Row 1: Institutional Masthead Banner
-  const r1 = buildMergedBandRow(1, 24, totalCols, sst, [
+  const r1Lines = Math.max(1, Math.ceil(institutionLine.length / Math.max(24, totalCharWidth - 6)));
+  const r1 = buildMergedBandRow(1, Math.max(24, r1Lines * 16 + 8), totalCols, sst, [
     { startCol: 0, endCol: lastColIdx, style: S.MASTHEAD, value: institutionLine },
   ]);
   sheetDataXml += r1.rowXml;
   mergeRefs.push(...r1.mergeRefs);
 
   // Row 2: Faculty & Department Banner
-  const r2 = buildMergedBandRow(2, 21, totalCols, sst, [
+  const r2Lines = Math.max(1, Math.ceil(departmentLine.length / Math.max(28, totalCharWidth - 6)));
+  const r2 = buildMergedBandRow(2, Math.max(21, r2Lines * 14 + 7), totalCols, sst, [
     { startCol: 0, endCol: lastColIdx, style: S.SUBMASTHEAD, value: departmentLine },
   ]);
   sheetDataXml += r2.rowXml;
   mergeRefs.push(...r2.mergeRefs);
 
   // Row 3: Official Report Title
-  const r3 = buildMergedBandRow(3, 28, totalCols, sst, [
+  const r3Lines = Math.max(1, Math.ceil(reportTitle.length / Math.max(22, totalCharWidth - 8)));
+  const r3 = buildMergedBandRow(3, Math.max(28, r3Lines * 18 + 10), totalCols, sst, [
     { startCol: 0, endCol: lastColIdx, style: S.TITLE, value: reportTitle },
   ]);
   sheetDataXml += r3.rowXml;
@@ -550,30 +555,36 @@ function buildXlsxWorkbook(
 
   // Row 4: Document Reference & Metadata Strip
   if (totalCols === 1) {
-    const r4 = buildMergedBandRow(4, 20, totalCols, sst, [
+    const singleMeta = `Ref: ${docRef} | Records: ${rows.length} | By: ${preparedBy} | ${isoDate} ${timeShort}`;
+    const r4Lines = Math.max(1, Math.ceil(singleMeta.length / Math.max(20, totalCharWidth - 4)));
+    const r4 = buildMergedBandRow(4, Math.max(20, r4Lines * 14 + 6), totalCols, sst, [
       {
         startCol: 0,
         endCol: 0,
         style: S.META_LEFT,
-        value: `Ref: ${docRef} | Records: ${rows.length} | By: ${preparedBy} | ${isoDate} ${timeShort}`,
+        value: singleMeta,
       },
     ]);
     sheetDataXml += r4.rowXml;
     mergeRefs.push(...r4.mergeRefs);
   } else {
     const metaSplitIdx = Math.floor((totalCols - 1) / 2);
-    const r4 = buildMergedBandRow(4, 20, totalCols, sst, [
+    const leftText = `Document Ref: ${docRef}   |   Total Records: ${rows.length}`;
+    const rightText = `Prepared By: ${preparedBy}   |   Generated: ${isoDate} ${timeShort}`;
+    const halfWidth = Math.max(20, Math.floor(totalCharWidth / 2) - 4);
+    const r4Lines = Math.max(1, Math.ceil(leftText.length / halfWidth), Math.ceil(rightText.length / halfWidth));
+    const r4 = buildMergedBandRow(4, Math.max(20, r4Lines * 14 + 6), totalCols, sst, [
       {
         startCol: 0,
         endCol: metaSplitIdx,
         style: S.META_LEFT,
-        value: `Document Ref: ${docRef}   |   Total Records: ${rows.length}`,
+        value: leftText,
       },
       {
         startCol: metaSplitIdx + 1,
         endCol: lastColIdx,
         style: S.META_RIGHT,
-        value: `Prepared By: ${preparedBy}   |   Generated: ${isoDate} ${timeShort}`,
+        value: rightText,
       },
     ]);
     sheetDataXml += r4.rowXml;
@@ -799,6 +810,13 @@ function buildXlsxWorkbook(
       ? `<mergeCells count="${mergeRefs.length}">${mergeRefs.map((ref) => `<mergeCell ref="${ref}"/>`).join('')}</mergeCells>`
       : '';
 
+  const orientation: 'portrait' | 'landscape' =
+    options?.pageOrientation === 'portrait' || options?.pageOrientation === 'landscape'
+      ? options.pageOrientation
+      : totalCols <= 6
+      ? 'portrait'
+      : 'landscape';
+
   const sheet1Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetPr>
@@ -816,8 +834,9 @@ function buildXlsxWorkbook(
   ${sheetDataXml}
   ${autoFilterXml}
   ${mergeCellsXml}
-  <pageMargins left="0.4" right="0.4" top="0.55" bottom="0.55" header="0.25" footer="0.25"/>
-  <pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+  <printOptions horizontalCentered="1"/>
+  <pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.25" footer="0.25"/>
+  <pageSetup paperSize="9" orientation="${orientation}" fitToWidth="1" fitToHeight="0"/>
   <headerFooter>
     <oddFooter>&amp;LCSD Stock • Royal University of Phnom Penh&amp;C${escapeXml(docRef)}&amp;RPage &amp;P of &amp;N</oddFooter>
   </headerFooter>
@@ -890,8 +909,8 @@ function buildXlsxWorkbook(
     <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="3" fillId="0" borderId="3" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1"/></xf>
-    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" indent="1" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="4" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="1" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="1" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>
@@ -930,6 +949,7 @@ function buildXlsxWorkbook(
     <sheet name="${escapeXml(safeSheetTitle)}" sheetId="1" r:id="rId1"/>
   </sheets>
   <definedNames>
+    <definedName name="_xlnm.Print_Area" localSheetId="0">'${escapeXml(escapedPrintTitleSheet)}'!$A$1:$${lastColLetter}$${lastUsedRow}</definedName>
     <definedName name="_xlnm.Print_Titles" localSheetId="0">'${escapeXml(escapedPrintTitleSheet)}'!$1:$${HEADER_ROW}</definedName>
   </definedNames>
   <calcPr calcId="191029" fullCalcOnLoad="1"/>
