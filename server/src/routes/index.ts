@@ -7,6 +7,7 @@ import locationRoutes from '@/routes/locationRoutes.js';
 import maintenanceRoutes from '@/routes/maintenanceRoutes.js';
 import purchaseRequestRoutes from '@/routes/purchaseRequestRoutes.js';
 import transferRoutes from '@/routes/transferRoutes.js';
+import categoryRoutes from '@/routes/categoryRoutes.js';
 
 const router = Router();
 
@@ -24,6 +25,9 @@ router.use('/auth', authRoutes);
 
 // Consumables & Stock Inventory
 router.use('/stock', stockRoutes);
+
+// Inventory Categories
+router.use('/categories', categoryRoutes);
 
 // Hardware Equipment & Assets
 router.use('/assets', assetRoutes);

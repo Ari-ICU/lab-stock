@@ -224,6 +224,32 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       )
     `).catch(() => {});
 
+    // Sync existing stock_items categories + starter categories into the categories table
+    const starterCategories = [
+      'Office Stationery',
+      'Printer Ink & Toner',
+      'Tools & Equipment',
+      'Monitors',
+      'Mice & Keyboards',
+      'Cables & Accessories',
+      'Power & Climate',
+      'Network Spares',
+      'Networking Equipment',
+      'Electronics & Tools',
+    ];
+    for (const cat of starterCategories) {
+      await query(
+        `INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+        [cat]
+      ).catch(() => {});
+    }
+    await pool.query(`
+      INSERT INTO categories (name)
+      SELECT DISTINCT TRIM(category) FROM stock_items
+      WHERE category IS NOT NULL AND TRIM(category) <> ''
+      ON CONFLICT (name) DO NOTHING
+    `).catch(() => {});
+
     return { success: true, message: 'Database initialized successfully' };
   } catch (err: any) {
     return { success: false, message: `Database initialization failed: ${err.message}` };
