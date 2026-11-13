@@ -270,94 +270,78 @@ function CheckoutContent({
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* ================= 1. EXECUTIVE DARK BANNER ================= */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-4">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
-                <Laptop className="w-3.5 h-3.5 text-emerald-600" />
-                <span>CHECK-OUT WORKSPACE</span>
-              </span>
-
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                {targetType === 'stock' ? 'CONSUMABLE / TOOL STOCK' : 'HARDWARE ASSET'}
-              </span>
-
-              {activeItem && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    copyToClipboard(
-                      targetType === 'stock'
-                        ? (activeItem as MockItem).code
-                        : (activeItem as MockAsset).serialNumber
-                    )
-                  }
-                  className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-300 bg-neutral-800/90 hover:bg-neutral-700/90 px-2.5 py-1 rounded-md border border-neutral-700 transition-colors cursor-pointer"
-                  title="Click to copy identifier"
-                >
-                  <span>
-                    {targetType === 'stock' ? 'SKU' : 'SN'}:{' '}
-                    {targetType === 'stock'
-                      ? (activeItem as MockItem).code
-                      : (activeItem as MockAsset).serialNumber}
-                  </span>
-                  {copied ? (
-                    <Check className="w-3 h-3 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-3 h-3 text-neutral-400" />
-                  )}
-                </button>
-              )}
-
-              {activeItem && (
-                <span className="text-[10px] sm:text-xs font-semibold px-2.5 py-1 rounded-md bg-neutral-800/90 border border-neutral-700 text-neutral-300">
-                  Room: {activeItem.location}
+        {/* ================= 1. CLEAN CHECKOUT SUMMARY HEADER ================= */}
+        <div className="w-full rounded-xl bg-white border border-neutral-200 p-4 sm:p-5 shadow-2xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="min-w-0 space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                  <Laptop className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Department of Computer Science · {targetType === 'stock' ? 'Stock Check-Out' : 'Hardware Loan'}</span>
                 </span>
-              )}
-            </div>
-
-            {/* Banner Main Content */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
-                  Check Out {activeItem ? activeItem.name : 'Equipment'}
-                </h1>
-                <p className="text-neutral-400 text-xs sm:text-sm mt-1 flex items-center gap-2 flex-wrap">
-                  <span>Authorizing official faculty check-out, student project allocation, and audit tracking</span>
-                  <span>•</span>
-                  <span className="text-emerald-400 font-semibold font-mono">
-                    {targetType === 'stock'
-                      ? `${currentStockItem?.quantity ?? 0} ${currentStockItem?.unit || 'units'} available`
-                      : currentAssetItem?.loanStatus === 'on_loan'
-                      ? 'Currently On Loan'
-                      : 'Available for Lending'}
+                {activeItem && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(
+                        targetType === 'stock'
+                          ? (activeItem as MockItem).code
+                          : (activeItem as MockAsset).serialNumber
+                      )
+                    }
+                    className="inline-flex items-center gap-1 font-mono text-[10px] text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded border border-neutral-200 transition-colors cursor-pointer"
+                    title="Click to copy identifier"
+                  >
+                    <span>
+                      {targetType === 'stock' ? 'SKU' : 'SN'}:{' '}
+                      {targetType === 'stock'
+                        ? (activeItem as MockItem).code
+                        : (activeItem as MockAsset).serialNumber}
+                    </span>
+                    {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+                  </button>
+                )}
+                {activeItem?.location && (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-neutral-100 text-neutral-600">
+                    {activeItem.location}
                   </span>
-                </p>
+                )}
               </div>
 
-              {/* Live Borrower Summary Card */}
-              <div className="p-2.5 bg-neutral-800/80 backdrop-blur-md rounded-xl border border-neutral-700/80 shadow-xs flex items-center gap-3 shrink-0">
-                <div className="text-right">
-                  <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">
-                    Authorized Borrower
-                  </div>
-                  <div className="text-xs font-bold text-white truncate max-w-[130px]">
-                    {borrowerName.trim() || 'Pending Name'}
-                  </div>
+              <h1 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight truncate">
+                Check Out {activeItem ? activeItem.name : 'Equipment'}
+              </h1>
+
+              <p className="text-neutral-500 text-xs sm:text-sm flex items-center gap-2 flex-wrap">
+                <span>Record borrower details, expected return date, and purpose for lab checkout.</span>
+                <span>·</span>
+                <span className="text-emerald-700 font-semibold font-mono">
+                  {targetType === 'stock'
+                    ? `${currentStockItem?.quantity ?? 0} ${currentStockItem?.unit || 'units'} available`
+                    : currentAssetItem?.loanStatus === 'on_loan'
+                    ? 'Currently On Loan'
+                    : 'Available for Lending'}
+                </span>
+              </p>
+            </div>
+
+            {/* Live Borrower Summary Strip */}
+            <div className="px-3.5 py-2.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center gap-3 shrink-0 self-start md:self-auto">
+              <div className="text-right">
+                <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
+                  Borrower
                 </div>
-                <ArrowRight className="w-4 h-4 text-emerald-400 shrink-0" />
-                <div>
-                  <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">
-                    Due Date
-                  </div>
-                  <div className="text-xs font-bold text-emerald-400 font-mono">
-                    {expectedReturnDate || '7 Days'}
-                  </div>
+                <div className="text-xs font-bold text-neutral-900 truncate max-w-[140px]">
+                  {borrowerName.trim() || 'Pending Name'}
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div>
+                <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
+                  Due Date
+                </div>
+                <div className="text-xs font-bold text-emerald-700 font-mono">
+                  {expectedReturnDate || '7 Days'}
                 </div>
               </div>
             </div>

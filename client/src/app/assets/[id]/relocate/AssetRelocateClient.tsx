@@ -297,78 +297,54 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
       />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl w-full mx-auto">
-        {/* ================= 1. RELOCATION HEADER BANNER ================= */}
-        <div className="relative w-full rounded-2xl bg-neutral-900 text-white border border-neutral-800 p-5 sm:p-6 shadow-xs overflow-hidden">
-          {/* Ambient Glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-4">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-neutral-900 px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5">
-                <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
-                <span>RELOCATION WORKFLOW</span>
-              </span>
-
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-300 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                {asset.location.split('(')[0].trim()}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => copyToClipboard(asset.serialNumber)}
-                className="inline-flex items-center gap-1.5 font-mono text-[10px] sm:text-xs text-neutral-300 bg-neutral-800/90 hover:bg-neutral-700/90 px-2.5 py-1 rounded-md border border-neutral-700 transition-colors cursor-pointer"
-                title="Click to copy serial tag"
-              >
-                <span>SN: {asset.serialNumber}</span>
-                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-neutral-400" />}
-              </button>
-
-              <span className="font-mono text-[10px] sm:text-xs text-neutral-400 bg-neutral-800/90 px-2.5 py-1 rounded-md border border-neutral-700">
-                ID: {asset.id}
-              </span>
-            </div>
-
-            {/* Banner Main Content */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
-                  Relocate {asset.name}
-                </h1>
-                <p className="text-neutral-400 text-xs sm:text-sm mt-1 flex items-center gap-2 flex-wrap">
-                  <span>Physical placement transfer and campus inventory re-balancing</span>
-                  <span>•</span>
-                  <span className="text-neutral-300">
-                    Model: <span className="font-medium text-white">{asset.model}</span>
-                  </span>
-                  <span>•</span>
-                  <span className="text-neutral-300">
-                    Fleet Size: <span className="font-medium text-white">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</span>
-                  </span>
-                </p>
+        {/* ================= 1. CLEAN RELOCATION HEADER ================= */}
+        <div className="w-full rounded-xl bg-white border border-neutral-200 p-4 sm:p-5 shadow-2xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="min-w-0 space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                  <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Department of Computer Science · Equipment Relocation</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(asset.serialNumber)}
+                  className="inline-flex items-center gap-1 font-mono text-[10px] text-neutral-600 bg-neutral-100 hover:bg-neutral-200 px-2 py-0.5 rounded border border-neutral-200 transition-colors cursor-pointer"
+                  title="Click to copy serial tag"
+                >
+                  <span>SN: {asset.serialNumber}</span>
+                  {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+                </button>
               </div>
 
-              {/* Status & Live Route Indicator */}
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="p-2.5 bg-neutral-800/80 backdrop-blur-md rounded-xl border border-neutral-700/80 shadow-xs flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">
-                      Current Placement
-                    </div>
-                    <div className="text-xs font-bold text-white font-mono">
-                      {sourceLocation ? sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation : asset.location}
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-blue-400 shrink-0" />
-                  <div>
-                    <div className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">
-                      Target Lab
-                    </div>
-                    <div className="text-xs font-bold text-emerald-400 font-mono">
-                      {targetLocation ? targetLocation.split('(')[1]?.replace(')', '') || targetLocation : 'Pending Selection'}
-                    </div>
-                  </div>
+              <h1 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight truncate">
+                Relocate {asset.name}
+              </h1>
+
+              <p className="text-neutral-500 text-xs sm:text-sm flex items-center gap-2 flex-wrap">
+                <span>Model: <strong className="text-neutral-800 font-medium">{asset.model}</strong></span>
+                <span>·</span>
+                <span>Fleet Size: <strong className="text-neutral-800 font-medium">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</strong></span>
+              </p>
+            </div>
+
+            {/* Live Route Indicator */}
+            <div className="px-3.5 py-2.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center gap-3 shrink-0 self-start md:self-auto">
+              <div className="text-right">
+                <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
+                  From Lab
+                </div>
+                <div className="text-xs font-bold text-neutral-900 font-mono">
+                  {sourceLocation ? sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation : asset.location}
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-blue-600 shrink-0" />
+              <div>
+                <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
+                  To Lab
+                </div>
+                <div className="text-xs font-bold text-emerald-700 font-mono">
+                  {targetLocation ? targetLocation.split('(')[1]?.replace(')', '') || targetLocation : 'Pending Selection'}
                 </div>
               </div>
             </div>
