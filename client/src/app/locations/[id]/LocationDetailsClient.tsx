@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { useStock } from '@/context/StockContext';
@@ -19,21 +19,60 @@ import {
   Trash2,
   FileSpreadsheet,
   X,
+  Boxes,
+  Microscope,
 } from 'lucide-react';
 import {  AssetGroup } from '@/types';
 import { getRoomItemImage } from './items/shared';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
+const ASSET_STATUS_META: Record<
+  'operational' | 'in_use' | 'maintenance',
+  { label: string; dotClass: string; badgeClass: string }
+> = {
+  operational: {
+    label: 'Operational',
+    dotClass: 'bg-emerald-500',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+  },
+  in_use: {
+    label: 'In Use',
+    dotClass: 'bg-blue-500',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200/80',
+  },
+  maintenance: {
+    label: 'In Repair',
+    dotClass: 'bg-amber-500',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/80',
+  },
+};
+
+const ASSET_STATUS_FILTER_OPTIONS: DropdownOption[] = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'operational', label: 'Operational' },
+  { value: 'in_use', label: 'In Use' },
+  { value: 'maintenance', label: 'In Repair' },
+  { value: 'on_loan', label: 'On Loan' },
+];
+
 export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = propId || (params?.id as string);
+  const activeTab: 'inventory' | 'hardware' =
+    searchParams.get('tab') === 'hardware' ? 'hardware' : 'inventory';
+
+  const handleTabChange = (tab: 'inventory' | 'hardware') => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set('tab', tab === 'hardware' ? 'hardware' : 'stock');
+    router.replace(`/locations/${id}?${nextParams.toString()}`, { scroll: false });
+  };
 
   const {
     locations,
     assets,
     stock,
-    loans,
     openEdit,
     deleteLocation,
     updateRoomInventoryCount,
@@ -48,6 +87,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [filterText, setFilterText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
+  const [selectedAssetStatus, setSelectedAssetStatus] = useState<string>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -101,61 +141,65 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     locations.find(
       (l) =>
         l.id === id ||
-        (l as any).serverId === id ||
-        (l as any).code === id ||
+        (l as { serverId?: string }).serverId === id ||
+        (l as { code?: string }).code === id ||
         l.room.toLowerCase().replace(/[^a-z0-9]/g, '') === (id || '').toLowerCase().replace(/[^a-z0-9]/g, '')
     ) ||
     (locations.length > 0 ? locations[0] : undefined);
   const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
   const isAllowed = isAdmin || (loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false);
 
-  // Match legacy items belonging to this lab location
-  const { matchingAssets, matchingStock, totalHardwareUnits, totalStockUnits, activeLoansCount } = useMemo(() => {
+  // Match hardware assets belonging to this lab location using word-boundary room matching
+  const { matchingAssets, matchedHardwareUnits } = useMemo(() => {
     if (!loc) {
       return {
         matchingAssets: [],
-        matchingStock: [],
-        totalHardwareUnits: 0,
-        totalStockUnits: 0,
-        activeLoansCount: 0,
+        matchedHardwareUnits: 0,
       };
     }
 
     const roomKey = loc.room.replace(/^(rm|room)\s*/i, '').trim().toLowerCase();
+    const escapedRoomKey = roomKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const roomRegex = escapedRoomKey ? new RegExp(`\\b${escapedRoomKey}\\b`, 'i') : null;
+    const roomLower = loc.room.trim().toLowerCase();
+    const escapedRoomLower = roomLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const fullRoomRegex = escapedRoomLower ? new RegExp(`\\b${escapedRoomLower}\\b`, 'i') : null;
+    const nameLower = loc.name.trim().toLowerCase();
 
     const mAssets = assets.filter((a) => {
-      const l = a.location.toLowerCase();
+      const l = a.location.trim().toLowerCase();
       return (
-        l.includes(roomKey) ||
-        l.includes(loc.room.toLowerCase()) ||
-        l.includes(loc.name.toLowerCase())
-      );
-    });
-
-    const mStock = stock.filter((s) => {
-      const l = s.location.toLowerCase();
-      return (
-        l.includes(roomKey) ||
-        l.includes(loc.room.toLowerCase()) ||
-        l.includes(loc.name.toLowerCase())
+        (roomRegex ? roomRegex.test(l) : false) ||
+        (fullRoomRegex ? fullRoomRegex.test(l) : false) ||
+        (nameLower ? l.includes(nameLower) : false)
       );
     });
 
     const hUnits = mAssets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
-    const sUnits = mStock.reduce((sum, s) => sum + (s.quantity || 1), 0);
-
-    const loansInLab = loans.filter((loan) =>
-      mAssets.some((a) => a.id === loan.assetId && loan.status === 'active')
-    ).length;
 
     return {
       matchingAssets: mAssets,
-      matchingStock: mStock,
-      totalHardwareUnits: hUnits > 0 ? hUnits : loc.totalAssets,
-      totalStockUnits: sUnits > 0 ? sUnits : loc.totalItems,
-      activeLoansCount: loansInLab,
+      matchedHardwareUnits: hUnits,
     };
-  }, [loc, assets, stock, loans]);
+  }, [loc, assets]);
+
+  const filteredHardwareAssets = useMemo(() => {
+    const q = filterText.trim().toLowerCase();
+    return matchingAssets.filter((asset) => {
+      const matchesQuery =
+        !q ||
+        asset.name.toLowerCase().includes(q) ||
+        asset.serialNumber.toLowerCase().includes(q) ||
+        asset.model.toLowerCase().includes(q) ||
+        (asset.currentBorrower && asset.currentBorrower.toLowerCase().includes(q)) ||
+        (asset.description && asset.description.toLowerCase().includes(q));
+
+      if (!matchesQuery) return false;
+      if (selectedAssetStatus === 'all') return true;
+      if (selectedAssetStatus === 'on_loan') return asset.loanStatus === 'on_loan';
+      return asset.status === selectedAssetStatus;
+    });
+  }, [matchingAssets, filterText, selectedAssetStatus]);
 
   // Filtered room inventories based on search, category and condition
   const filteredRoomInventories = useMemo(() => {
@@ -447,59 +491,157 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
           </div>
         </div>
 
-        {/* 4. Facility & Condition Table */}
-        <div className="bg-white border border-neutral-200/80 rounded-2xl w-full shadow-2xs overflow-hidden">
-            {/* Filters Toolbar with Category & Condition Dropdowns */}
+        {/* 4. Room Inventory & Hardware Devices Tabs */}
+        <div className="bg-white border border-neutral-200/80 rounded-2xl w-full shadow-2xs">
+            {/* Tab Switcher Header */}
+            <div className="px-4 pt-3 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3 bg-neutral-50/60 rounded-t-2xl">
+              <div className="flex items-center gap-1.5 overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('inventory')}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+                    activeTab === 'inventory'
+                      ? 'border-neutral-900 text-neutral-900'
+                      : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                  }`}
+                >
+                  <Boxes className={`w-3.5 h-3.5 ${activeTab === 'inventory' ? 'text-emerald-600' : 'text-neutral-400'}`} />
+                  <span>Room Inventory</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums ${
+                      activeTab === 'inventory'
+                        ? 'bg-neutral-900 text-white'
+                        : 'bg-neutral-200/80 text-neutral-600'
+                    }`}
+                  >
+                    {loc.inventories?.length ?? 0}
+                  </span>
+                  <span className="hidden sm:inline text-[11px] font-normal text-neutral-400">
+                    · {inventorySummary.totalUnits} {inventorySummary.totalUnits === 1 ? 'unit' : 'units'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('hardware')}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+                    activeTab === 'hardware'
+                      ? 'border-neutral-900 text-neutral-900'
+                      : 'border-transparent text-neutral-500 hover:text-neutral-800'
+                  }`}
+                >
+                  <Microscope className={`w-3.5 h-3.5 ${activeTab === 'hardware' ? 'text-blue-600' : 'text-neutral-400'}`} />
+                  <span>Hardware Devices</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums ${
+                      activeTab === 'hardware'
+                        ? 'bg-neutral-900 text-white'
+                        : 'bg-neutral-200/80 text-neutral-600'
+                    }`}
+                  >
+                    {matchingAssets.length}
+                  </span>
+                  <span className="hidden sm:inline text-[11px] font-normal text-neutral-400">
+                    · {matchedHardwareUnits} {matchedHardwareUnits === 1 ? 'unit' : 'units'}
+                  </span>
+                </button>
+              </div>
+
+              <p className="hidden lg:block text-[11px] text-neutral-400 pb-2">
+                {activeTab === 'inventory'
+                  ? 'Room-level fixtures, workstations, AC & supplies audited per room'
+                  : 'Individually serialized lab equipment tracked under Hardware Assets'}
+              </p>
+            </div>
+
+            {/* Filters Toolbar with Tab-Specific Filters */}
             <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap flex-1">
                 <div className="relative w-full sm:w-72">
                   <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search equipment, specs, or remarks..."
+                    placeholder={
+                      activeTab === 'inventory'
+                        ? 'Search equipment, specs, or remarks...'
+                        : 'Search hardware name, serial, model, or borrower...'
+                    }
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-3 py-1.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs pl-8 pr-7 py-1.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400 font-medium shadow-2xs"
                   />
+                  {filterText && (
+                    <button
+                      type="button"
+                      onClick={() => setFilterText('')}
+                      aria-label="Clear search"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
-                <Dropdown
-                  value={selectedCategory}
-                  options={categoryOptions}
-                  onChange={setSelectedCategory}
-                  placeholder="Category"
-                  className="w-full sm:w-auto"
-                  buttonClassName="rounded-xl py-1.5"
-                />
+                {activeTab === 'inventory' ? (
+                  <>
+                    <Dropdown
+                      value={selectedCategory}
+                      options={categoryOptions}
+                      onChange={setSelectedCategory}
+                      placeholder="Category"
+                      className="w-full sm:w-auto"
+                      buttonClassName="rounded-xl py-1.5"
+                    />
 
-                <Dropdown
-                  value={selectedCondition}
-                  options={conditionOptions}
-                  onChange={setSelectedCondition}
-                  placeholder="Condition"
-                  className="w-full sm:w-auto"
-                  buttonClassName="rounded-xl py-1.5"
-                />
+                    <Dropdown
+                      value={selectedCondition}
+                      options={conditionOptions}
+                      onChange={setSelectedCondition}
+                      placeholder="Condition"
+                      className="w-full sm:w-auto"
+                      buttonClassName="rounded-xl py-1.5"
+                    />
+                  </>
+                ) : (
+                  <Dropdown
+                    value={selectedAssetStatus}
+                    options={ASSET_STATUS_FILTER_OPTIONS}
+                    onChange={setSelectedAssetStatus}
+                    placeholder="Status"
+                    className="w-full sm:w-auto"
+                    buttonClassName="rounded-xl py-1.5"
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-xs text-neutral-500">
-                  Showing <span className="font-semibold text-neutral-900">{filteredRoomInventories.length}</span> items
+                  Showing{' '}
+                  <span className="font-semibold text-neutral-900">
+                    {activeTab === 'inventory' ? filteredRoomInventories.length : filteredHardwareAssets.length}
+                  </span>{' '}
+                  {activeTab === 'inventory'
+                    ? 'items'
+                    : filteredHardwareAssets.length === 1
+                    ? 'device'
+                    : 'devices'}
                 </div>
                 {isAllowed && (
                   <Link
-                    href={`/locations/${loc.id}/items/new`}
+                    href={activeTab === 'inventory' ? `/locations/${loc.id}/items/new` : '/assets/create'}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors shadow-2xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Allocate from Central Stock</span>
+                    <span>
+                      {activeTab === 'inventory' ? 'Allocate from Central Stock' : 'Register Hardware Asset'}
+                    </span>
                   </Link>
                 )}
               </div>
             </div>
 
-            {/* Clean Responsive Table matching /stock and /assets */}
-            <div className="overflow-x-auto">
+            {activeTab === 'inventory' ? (
+            <div className="overflow-x-auto rounded-b-2xl">
               <table className="w-full text-left text-xs min-w-[900px]">
                 <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                   <tr>
@@ -647,6 +789,153 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 </tbody>
               </table>
             </div>
+            ) : (
+            <div className="overflow-x-auto rounded-b-2xl">
+              {matchingAssets.length === 0 ? (
+                <div className="px-6 py-14 text-center">
+                  <div className="w-11 h-11 rounded-2xl bg-neutral-100 border border-neutral-200/80 flex items-center justify-center mx-auto mb-3">
+                    <Microscope className="w-5 h-5 text-neutral-400" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-neutral-900">
+                    No serialized hardware devices assigned to {loc.room}
+                  </h3>
+                  <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1 leading-relaxed">
+                    Serialized hardware devices (such as firewalls, switches, routers, projectors, and lab workstations tracked individually) appear here when their location includes {loc.room}.
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange('inventory')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <Boxes className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>View Room Inventory ({loc.inventories?.length ?? 0})</span>
+                    </button>
+                    {isAllowed && (
+                      <Link
+                        href="/assets/create"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Register Hardware Asset</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : filteredHardwareAssets.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <p className="text-sm font-semibold text-neutral-800">
+                    No hardware devices match your search or status filter
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    Showing 0 of {matchingAssets.length}{' '}
+                    {matchingAssets.length === 1 ? 'device' : 'devices'} in {loc.room}.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterText('');
+                      setSelectedAssetStatus('all');
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-neutral-50/70 border-b border-neutral-200 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                      <th className="py-3 pl-4 pr-3 w-16">Visual</th>
+                      <th className="py-3 px-3">Equipment Name</th>
+                      <th className="py-3 px-3 text-center">Units</th>
+                      <th className="py-3 px-3">Serial / Tag</th>
+                      <th className="py-3 px-3">Model &amp; Specs</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 pl-3 pr-4 text-right w-16">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 text-xs">
+                    {filteredHardwareAssets.map((asset) => {
+                      const statusMeta = ASSET_STATUS_META[asset.status] || ASSET_STATUS_META.operational;
+                      const unitCount = asset.totalUnits ?? 1;
+                      const unitLabel = asset.unitType || (unitCount === 1 ? 'Unit' : 'Units');
+                      return (
+                        <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors">
+                          <td className="py-3 pl-4 pr-3">
+                            <Link
+                              href={`/assets/${asset.id}`}
+                              className="block w-10 h-10 rounded-lg border border-neutral-200 overflow-hidden bg-neutral-50 shrink-0"
+                            >
+                              <LabThumbnail src={asset.imageUrl} alt={asset.name} size="thumb" />
+                            </Link>
+                          </td>
+                          <td className="py-3 px-3 max-w-xs">
+                            <Link
+                              href={`/assets/${asset.id}`}
+                              className="text-xs font-semibold text-neutral-900 hover:text-emerald-700 hover:underline transition-colors block"
+                            >
+                              {asset.name}
+                            </Link>
+                            {asset.description && (
+                              <p className="text-[11px] text-neutral-500 italic line-clamp-1 mt-0.5">
+                                {asset.description}
+                              </p>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 text-xs font-medium whitespace-nowrap tabular-nums">
+                              {unitCount} {unitLabel}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="font-mono text-xs bg-neutral-50 border border-neutral-200/80 px-2 py-0.5 rounded-md text-neutral-700 whitespace-nowrap">
+                              {asset.serialNumber || '—'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="text-xs font-medium text-neutral-800">{asset.model || '—'}</div>
+                            {asset.nextCalibration && (
+                              <div className="text-[11px] text-neutral-400 mt-0.5">
+                                Next check: {asset.nextCalibration}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${statusMeta.badgeClass}`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${statusMeta.dotClass}`} />
+                                <span>{statusMeta.label}</span>
+                              </span>
+                              {asset.loanStatus === 'on_loan' && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 border border-violet-200/80 whitespace-nowrap">
+                                  On Loan
+                                </span>
+                              )}
+                            </div>
+                            {asset.loanStatus === 'on_loan' && asset.currentBorrower && (
+                              <div className="text-[11px] text-neutral-500 mt-1">
+                                To: <span className="font-medium text-neutral-700">{asset.currentBorrower}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 pl-3 pr-4 text-right">
+                            <RowActionMenu
+                              onViewDetails={() => router.push(`/assets/${asset.id}`)}
+                              onEdit={isAllowed ? () => router.push(`/assets/${asset.id}/edit`) : undefined}
+                              onDelete={isAllowed ? () => deleteAsset(asset.id) : undefined}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            )}
         </div>
       </div>
 
