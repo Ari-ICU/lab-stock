@@ -17,12 +17,10 @@ import {
   MapPin,
   CheckCircle2,
   AlertTriangle,
-  Building,
   Check,
   Copy,
   Shield,
   Cpu,
-  Sparkles,
   History,
 } from 'lucide-react';
 
@@ -301,11 +299,11 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
         {/* ================= 1. CLEAN RELOCATION HEADER ================= */}
         <div className="w-full rounded-xl bg-white border border-neutral-200 p-4 sm:p-5 shadow-2xs">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="min-w-0 space-y-1.5">
+            <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
                   <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Department of Computer Science · Equipment Relocation</span>
+                  <span>Equipment Relocation</span>
                 </span>
                 <button
                   type="button"
@@ -316,6 +314,9 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                   <span>SN: {asset.serialNumber}</span>
                   {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
                 </button>
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-neutral-100 text-neutral-600 font-mono">
+                  {asset.location}
+                </span>
               </div>
 
               <h1 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight truncate">
@@ -325,29 +326,19 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
               <p className="text-neutral-500 text-xs sm:text-sm flex items-center gap-2 flex-wrap">
                 <span>Model: <strong className="text-neutral-800 font-medium">{asset.model}</strong></span>
                 <span>·</span>
-                <span>Fleet Size: <strong className="text-neutral-800 font-medium">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</strong></span>
+                <span>Fleet: <strong className="text-neutral-800 font-medium font-mono">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</strong></span>
               </p>
             </div>
 
-            {/* Live Route Indicator */}
-            <div className="px-3.5 py-2.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center gap-3 shrink-0 self-start md:self-auto">
-              <div className="text-right">
-                <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
-                  From Lab
-                </div>
-                <div className="text-xs font-bold text-neutral-900 font-mono">
-                  {sourceLocation ? sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation : asset.location}
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-blue-600 shrink-0" />
-              <div>
-                <div className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider">
-                  To Lab
-                </div>
-                <div className="text-xs font-bold text-emerald-700 font-mono">
-                  {targetLocation ? targetLocation.split('(')[1]?.replace(')', '') || targetLocation : 'Pending Selection'}
-                </div>
-              </div>
+            {/* Clean Route Indicator */}
+            <div className="px-3.5 py-2 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-2.5 shrink-0 self-start md:self-auto font-mono text-xs">
+              <span className="font-semibold text-neutral-800">
+                {sourceLocation ? sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation : asset.location}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+              <span className="font-bold text-emerald-700">
+                {targetLocation ? targetLocation.split('(')[1]?.replace(')', '') || targetLocation : 'Select Destination'}
+              </span>
             </div>
           </div>
         </div>
@@ -372,34 +363,26 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
           {/* Left Column (7 Cols): Relocation Form */}
           <div className="lg:col-span-7 space-y-6">
             <form onSubmit={handleSubmit} className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-5">
-              <div className="border-b border-neutral-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                    <ArrowLeftRight className="w-4 h-4 text-blue-600" />
-                    <span>Configure Relocation Route</span>
-                  </h2>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">
-                    Select the equipment, origin laboratory room, and destination facility
-                  </p>
-                </div>
-                <span className="text-[10px] font-mono bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-md font-bold">
-                  Step 1 of 1
-                </span>
+              <div className="border-b border-neutral-100 pb-3">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                  <ArrowLeftRight className="w-4 h-4 text-blue-600" />
+                  <span>Relocation Configuration</span>
+                </h2>
               </div>
 
-              {/* Source & Destination Matrix */}
+              {/* Form Fields */}
               <div className="space-y-4">
-                {/* 0. Equipment Selector (Allows switching or picking any equipment) */}
+                {/* 0. Equipment Selector */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-neutral-800 flex items-center gap-1.5">
                       <Cpu className="w-3.5 h-3.5 text-blue-600" />
                       <span>Select Equipment to Relocate</span> <span className="text-rose-500">*</span>
-                    </span>
+                    </label>
                     <span className="text-[10px] font-mono text-neutral-400">
-                      SN: {asset.serialNumber}
+                      {assets.length} items
                     </span>
-                  </label>
+                  </div>
                   <Dropdown
                     value={asset.id}
                     options={assets.map((a) => ({
@@ -424,87 +407,58 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                   />
                 </div>
 
-                {/* 1. Source Room */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
+                {/* 1 & 2. Source & Destination Rooms */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Transfer From (Source Lab Room)</span> <span className="text-rose-500">*</span>
-                    </span>
-                    <span className="text-[10px] font-normal text-neutral-400">Current Deployment</span>
-                  </label>
-                  <Dropdown
-                    value={sourceLocation}
-                    options={locations.map((l) => ({
-                      value: `${l.name} (${l.room})`,
-                      label: `${l.room} — ${l.name} (${l.building})`,
-                    }))}
-                    onChange={(val) => {
-                      setSourceLocation(val);
-                      if (val === targetLocation) {
-                        setTargetLocation('');
-                      }
-                    }}
-                    placeholder="Select source lab room"
-                  />
-                  <p className="text-[10px] text-neutral-400 mt-1">
-                    The equipment units will be deducted from this room&apos;s active inventory roster.
-                  </p>
-                </div>
-
-                {/* 2. Destination Room */}
-                <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Transfer To (Destination Lab Room)</span> <span className="text-rose-500">*</span>
-                    </span>
-                    <span className="text-[10px] font-normal text-neutral-400">Target Station</span>
-                  </label>
-                  <Dropdown
-                    value={targetLocation}
-                    options={locations
-                      .filter((l) => `${l.name} (${l.room})` !== sourceLocation)
-                      .map((l) => ({
+                      <span>Transfer From (Source)</span> <span className="text-rose-500">*</span>
+                    </label>
+                    <Dropdown
+                      value={sourceLocation}
+                      options={locations.map((l) => ({
                         value: `${l.name} (${l.room})`,
-                        label: `${l.room} — ${l.name} (${l.building})`,
+                        label: `${l.room} — ${l.name}`,
                       }))}
-                    onChange={(val) => setTargetLocation(val)}
-                    placeholder="Select destination lab room"
-                  />
-                  <p className="text-[10px] text-neutral-400 mt-1">
-                    The equipment units will be registered and credited to this room&apos;s inventory.
-                  </p>
-                </div>
-
-                {/* Live Route Summary Card */}
-                {sourceLocation && targetLocation && (
-                  <div className="p-3.5 bg-neutral-50/90 border border-neutral-200/80 rounded-xl space-y-2">
-                    <div className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
-                      Verified Route Path
-                    </div>
-                    <div className="flex items-center gap-2.5 font-mono text-xs flex-wrap">
-                      <div className="flex items-center gap-1.5 font-bold text-neutral-900 bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs">
-                        <span className="w-2 h-2 rounded-full bg-amber-500" />
-                        <span>{sourceLocation.split('(')[1]?.replace(')', '') || sourceLocation}</span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-blue-600 shrink-0" />
-                      <div className="flex items-center gap-1.5 font-bold text-emerald-900 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span>{targetLocation.split('(')[1]?.replace(')', '') || targetLocation}</span>
-                      </div>
-                    </div>
+                      onChange={(val) => {
+                        setSourceLocation(val);
+                        if (val === targetLocation) {
+                          setTargetLocation('');
+                        }
+                      }}
+                      placeholder="Select source lab room"
+                    />
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Transfer To (Destination)</span> <span className="text-rose-500">*</span>
+                    </label>
+                    <Dropdown
+                      value={targetLocation}
+                      options={locations
+                        .filter((l) => `${l.name} (${l.room})` !== sourceLocation)
+                        .map((l) => ({
+                          value: `${l.name} (${l.room})`,
+                          label: `${l.room} — ${l.name}`,
+                        }))}
+                      onChange={(val) => setTargetLocation(val)}
+                      placeholder="Select destination lab room"
+                    />
+                  </div>
+                </div>
 
                 {/* 3. Quantity to Relocate */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
-                    <span>Units to Relocate</span>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-neutral-800">
+                      Units to Relocate
+                    </label>
                     <span className="text-[10px] font-mono text-neutral-500">
-                      Fleet capacity: {asset.totalUnits ?? 1} {asset.unitType ?? 'units'}
+                      Available: <strong className="text-neutral-800">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</strong>
                     </span>
-                  </label>
+                  </div>
                   <input
                     type="number"
                     min={1}
@@ -517,9 +471,6 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                     }
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-sm font-mono font-bold shadow-2xs"
                   />
-                  <p className="text-[10px] text-neutral-400 mt-1">
-                    Relocating {transferQuantity} of {asset.totalUnits ?? 1} {asset.unitType ?? 'units'}.
-                  </p>
                 </div>
 
                 {/* 4. Transferred By & Date */}
@@ -550,42 +501,16 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                   </div>
                 </div>
 
-                {/* 5. Reason for Movement with Clickable Presets */}
+                {/* 5. Reason for Movement */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-neutral-800">
-                      Reason for Movement & Administrative Notes
-                    </label>
-                    <span className="text-[10px] text-neutral-400">Click preset or type</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5 pb-1">
-                    {[
-                      'Lab Workshop Setup',
-                      'Routine Repair & Service',
-                      'Student Project Allocation',
-                      'Permanent Room Relocation',
-                    ].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setTransferReason(preset)}
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
-                          transferReason === preset
-                            ? 'bg-neutral-900 text-white border-neutral-900'
-                            : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border-neutral-200'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
+                  <label className="block text-xs font-bold text-neutral-800">
+                    Reason for Movement & Notes
+                  </label>
                   <textarea
                     rows={3}
                     value={transferReason}
                     onChange={(e) => setTransferReason(e.target.value)}
-                    placeholder="e.g. Relocated to Room 206 for practical server administration laboratory exercises, course block A."
+                    placeholder="e.g. Relocated to Room 206 for practical server administration laboratory exercises."
                     className="w-full bg-white border border-neutral-300 text-neutral-900 p-3 rounded-xl focus:outline-none focus:border-neutral-900 text-xs placeholder:text-neutral-400 shadow-2xs"
                   />
                 </div>
@@ -610,30 +535,16 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                 </button>
               </div>
             </form>
-
-            {/* Relocation SOP Guidelines Card */}
-            <div className="bg-neutral-100/70 border border-neutral-200/80 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center gap-2 text-neutral-800 font-bold text-xs">
-                <Sparkles className="w-4 h-4 text-amber-600" />
-                <span>Laboratory Movement Standard Operating Procedure</span>
-              </div>
-              <ul className="text-xs text-neutral-600 space-y-1.5 list-disc pl-5 leading-relaxed">
-                <li>Physical relocation must be authorized by the lab technician or department custodian.</li>
-                <li>Ensure all patch cables, power adapters, and peripherals are disconnected safely prior to transit.</li>
-                <li>Update campus server rack records immediately once the hardware is mounted at destination.</li>
-                <li>Conduct post-relocation diagnostic power-on test to verify operational status.</li>
-              </ul>
-            </div>
           </div>
 
-          {/* Right Column (5 Cols): Equipment Dossier, Active Allocations, and History */}
+          {/* Right Column (5 Cols): Equipment Dossier and History */}
           <div className="lg:col-span-5 space-y-6">
             {/* Equipment Dossier Card */}
             <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
                   <Cpu className="w-4 h-4 text-neutral-700" />
-                  <span>Equipment Specification</span>
+                  <span>Selected Equipment Dossier</span>
                 </h3>
                 <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {asset.status.toUpperCase()}
@@ -660,7 +571,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                     Serial: <span className="font-semibold text-neutral-800">{asset.serialNumber}</span>
                   </div>
                   <div className="text-xs text-neutral-500">
-                    Next Audit: <span className="font-semibold text-neutral-800">{asset.nextCalibration}</span>
+                    Fleet: <span className="font-semibold text-neutral-800 font-mono">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</span>
                   </div>
                 </div>
               </div>
@@ -688,64 +599,23 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
               </div>
             </div>
 
-            {/* Active Classroom Allocations Table */}
+            {/* Past Relocation Logs */}
             <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-3">
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                  <Building className="w-4 h-4 text-neutral-700" />
-                  <span>Stationed Lab Allocations</span>
+                  <History className="w-4 h-4 text-neutral-700" />
+                  <span>Recent Relocations</span>
                 </h3>
                 <span className="text-[10px] font-mono text-neutral-500">
-                  {allocations.length} Active {allocations.length === 1 ? 'Room' : 'Rooms'}
+                  {assetTransfers.length} {assetTransfers.length === 1 ? 'Record' : 'Records'}
                 </span>
               </div>
 
-              {allocations.length === 0 ? (
+              {assetTransfers.length === 0 ? (
                 <div className="py-6 text-center text-xs text-neutral-400">
-                  No active classroom deployments found.
+                  No previous relocations recorded for this device.
                 </div>
               ) : (
-                <div className="space-y-2.5">
-                  {allocations.map((alloc) => (
-                    <div
-                      key={alloc.locationId}
-                      className="p-3 rounded-xl border border-neutral-100 bg-neutral-50/70 hover:bg-neutral-50 transition-colors flex items-center justify-between text-xs"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="font-bold text-neutral-900">
-                          {alloc.locationName}
-                        </div>
-                        <div className="text-[11px] text-neutral-500 font-mono">
-                          {alloc.room} • {alloc.building}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-mono font-bold text-neutral-900 bg-white border border-neutral-200 px-2 py-0.5 rounded-md text-[11px]">
-                          {alloc.total} {alloc.unit}
-                        </span>
-                        <div className="text-[10px] text-emerald-700 font-medium mt-0.5">
-                          {alloc.qtyWorking} operational
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Past Relocation Logs */}
-            {assetTransfers.length > 0 && (
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                    <History className="w-4 h-4 text-neutral-700" />
-                    <span>Past Relocation History</span>
-                  </h3>
-                  <span className="text-[10px] font-mono text-neutral-500">
-                    {assetTransfers.length} records
-                  </span>
-                </div>
-
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {assetTransfers.map((t) => (
                     <div key={t.id} className="p-3 rounded-xl bg-neutral-50/60 border border-neutral-100 space-y-1.5 text-xs">
@@ -762,8 +632,8 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
