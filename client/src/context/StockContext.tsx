@@ -15,7 +15,6 @@ import {
   RoomInventoryItem,
 } from '@/types';
 import {
-  authService,
   assetService,
   stockService,
   categoryService,
@@ -156,21 +155,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
   const refreshBackendData = async () => {
     try {
-      let token = getAuthToken();
-      if (!token && typeof window !== 'undefined') {
-        try {
-          const authRes = await authService.login({
-            email: 'heng.sovannarith@rupp.edu.kh',
-            password: 'password123',
-          });
-          if (authRes?.token) {
-            localStorage.setItem('lab_auth_token', authRes.token);
-            token = authRes.token;
-          }
-        } catch {
-          // backend might be starting
-        }
-      }
+      const token = getAuthToken();
 
       if (!token) {
         setIsBackendConnected(false);

@@ -49,7 +49,7 @@ export const getApiBaseUrl = (): string => {
 export const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   try {
-    return localStorage.getItem('lab_auth_token');
+    return sessionStorage.getItem('lab_auth_token') || localStorage.getItem('lab_auth_token');
   } catch {
     // ignore
   }
@@ -131,8 +131,12 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
         !response.url.includes('/auth/login')
       ) {
         try {
-          if (localStorage.getItem('lab_auth_token')) {
+          const hadToken =
+            Boolean(localStorage.getItem('lab_auth_token')) ||
+            Boolean(sessionStorage.getItem('lab_auth_token'));
+          if (hadToken) {
             localStorage.removeItem('lab_auth_token');
+            sessionStorage.removeItem('lab_auth_token');
             window.dispatchEvent(new CustomEvent('csd-auth-expired'));
           }
         } catch {

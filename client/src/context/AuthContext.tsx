@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   User,
   DemoAccount,
@@ -12,6 +12,7 @@ import {
   canUserManageLocation,
 } from '@/types';
 import { authService } from '@/services';
+import { ApiError, getAuthToken } from '@/services/apiClient';
 
 export type {
   User,
@@ -39,44 +40,47 @@ export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
   },
 };
 
-export const DEMO_ACCOUNTS: DemoAccount[] = [
-  {
-    name: 'Dr. Heng Sovannarith',
-    email: 'heng.sovannarith@rupp.edu.kh',
-    password: 'password123',
-    role: 'Primary Lab Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'HS',
-    permissions: 'Full Read/Write Access & System Config (Super Admin)',
-    department: 'Engineering Block A - Room 102B',
-    description: 'Faculty supervisor & Super Admin with universal oversight across all department facilities',
-    assignedLabs: ['all'],
-  },
-  {
-    name: 'John Doe',
-    email: 'john.doe@rupp.edu.kh',
-    password: 'password123',
-    role: 'Department Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'JD',
-    permissions: 'Full Read/Write Access & Asset Management (Admin)',
-    department: 'Faculty of Engineering - Administration',
-    description: 'Department administrator managing furniture, fixtures, and asset counting',
-    assignedLabs: ['all'],
-  },
-  {
-    name: 'Thoeurn Ratha',
-    email: 'thoeurn.ratha@rupp.edu.kh',
-    password: 'password123',
-    role: 'Faculty Lecturer',
-    roleBadge: 'Lecturer',
-    avatarText: 'TR',
-    permissions: 'Course Hardware Allocation & Catalog View',
-    department: 'Software Engineering Department',
-    description: 'Faculty Lecturer managing student workstations and teaching resources',
-    assignedLabs: ['all'],
-  },
-];
+export const DEMO_ACCOUNTS: DemoAccount[] =
+  process.env.NODE_ENV === 'production'
+    ? []
+    : [
+        {
+          name: 'Dr. Heng Sovannarith',
+          email: 'heng.sovannarith@rupp.edu.kh',
+          password: 'password123',
+          role: 'Primary Lab Administrator',
+          roleBadge: 'Admin',
+          avatarText: 'HS',
+          permissions: 'Full Read/Write Access & System Config (Super Admin)',
+          department: 'Engineering Block A - Room 102B',
+          description: 'Faculty supervisor & Super Admin with universal oversight across all department facilities',
+          assignedLabs: ['all'],
+        },
+        {
+          name: 'John Doe',
+          email: 'john.doe@rupp.edu.kh',
+          password: 'password123',
+          role: 'Department Administrator',
+          roleBadge: 'Admin',
+          avatarText: 'JD',
+          permissions: 'Full Read/Write Access & Asset Management (Admin)',
+          department: 'Faculty of Engineering - Administration',
+          description: 'Department administrator managing furniture, fixtures, and asset counting',
+          assignedLabs: ['all'],
+        },
+        {
+          name: 'Thoeurn Ratha',
+          email: 'thoeurn.ratha@rupp.edu.kh',
+          password: 'password123',
+          role: 'Faculty Lecturer',
+          roleBadge: 'Lecturer',
+          avatarText: 'TR',
+          permissions: 'Course Hardware Allocation & Catalog View',
+          department: 'Software Engineering Department',
+          description: 'Faculty Lecturer managing student workstations and teaching resources',
+          assignedLabs: ['all'],
+        },
+      ];
 
 export const INITIAL_MANAGED_USERS: ManagedUser[] = [
   {
@@ -92,32 +96,7 @@ export const INITIAL_MANAGED_USERS: ManagedUser[] = [
     lastLogin: 'Today, 08:30 AM',
     assignedLabs: ['all'],
   },
-  {
-    id: 'user-admin-john',
-    name: 'John Doe',
-    email: 'john.doe@rupp.edu.kh',
-    role: 'Department Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'JD',
-    permissions: 'Full Read/Write Access & Asset Management (Admin)',
-    department: 'Faculty of Engineering',
-    status: 'active',
-    lastLogin: 'Today, 08:45 AM',
-    assignedLabs: ['all'],
-  },
-  {
-    id: 'user-lecturer',
-    name: 'Thoeurn Ratha',
-    email: 'thoeurn.ratha@rupp.edu.kh',
-    role: 'Faculty Lecturer',
-    roleBadge: 'Lecturer',
-    avatarText: 'TR',
-    permissions: 'Course Hardware Allocation & Catalog View',
-    department: 'Software Engineering Department',
-    status: 'active',
-    lastLogin: 'Active now',
-    assignedLabs: ['all'],
-  },
+
 ];
 
 export function detectCurrentDevice(): {
@@ -254,15 +233,16 @@ export function getInitialSessions(): SessionDevice[] {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isAuthInitialized: boolean;
   isLoading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  switchAccount: (account: DemoAccount) => void;
+  switchAccount: (account: DemoAccount) => Promise<{ success: boolean; error?: string }>;
   // User & Role Management
   managedUsers: ManagedUser[];
   updateUserRole: (userId: string, newRole: string) => void;
   updateUserAssignedLabs: (userId: string, assignedLabs: string[]) => void;
-  addUser: (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => void;
+  addUser: (newUser: Omit<ManagedUser, 'id' | 'lastLogin'> & { password?: string }) => void;
   deleteUser: (userId: string) => boolean;
   resetUsersToDefault: () => void;
   // Location Permissions Guard
@@ -278,67 +258,58 @@ const STORAGE_KEY = 'lab_auth_user';
 const USERS_STORAGE_KEY = 'lab_managed_users';
 const SESSIONS_STORAGE_KEY = 'lab_session_devices';
 
-export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
-  let role = u.role;
-  let roleBadge = u.roleBadge;
-  let permissions = u.permissions;
-  let department = u.department;
-  let assignedLabs = u.assignedLabs;
-  let supervisedBy = (u as { supervisedBy?: string }).supervisedBy;
+function generateTemporaryPassword(length = 16): string {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const symbols = '!@#$%^&*';
+  const all = upper + lower + digits + symbols;
+  const pick = (charset: string, byte: number) => charset[byte % charset.length];
 
-  if (assignedLabs && Array.isArray(assignedLabs)) {
-    assignedLabs = assignedLabs.map((r) => (typeof r === 'string' ? r.replace(/^Rm\s+/i, 'Room ') : r));
-  }
-
-  // Enforce canonical institutional identities to heal corrupted localStorage
-  const emailLower = (u.email || '').toLowerCase();
-  if (
-    emailLower === 'heng.sovannarith@rupp.edu.kh' ||
-    emailLower === 'sovannarith@lab.edu' ||
-    u.name?.includes('Sovannarith')
-  ) {
-    role = 'Primary Lab Administrator';
-    roleBadge = 'Admin';
-    permissions = 'Full Read/Write Access & System Config';
-    assignedLabs = ['all'];
-    department = 'Engineering Block A - Room 102B';
-    supervisedBy = undefined;
-  } else if (
-    emailLower === 'thoeurn.ratha@rupp.edu.kh' ||
-    emailLower === 'admin@lab.edu' ||
-    emailLower.includes('ratha') ||
-    u.name?.includes('Ratha')
-  ) {
-    role = 'Faculty Lecturer';
-    roleBadge = 'Lecturer';
-    permissions = 'Course Hardware Allocation & Catalog View';
-    assignedLabs = ['all'];
-    department = 'Software Engineering Department';
-    supervisedBy = undefined;
-  } else if (
-    emailLower === 'john.doe@rupp.edu.kh' ||
-    emailLower === 'john.doe@lab.edu' ||
-    u.name?.includes('John Doe')
-  ) {
-    role = 'Primary Lab Administrator';
-    roleBadge = 'Admin';
-    permissions = 'Full Read/Write Access & System Config';
-    assignedLabs = ['all'];
-    department = 'Faculty of Engineering';
-    supervisedBy = undefined;
-  } else {
-    // Custom registered user
-    if (role === 'Primary Lab Administrator' || roleBadge === 'Admin') {
-      roleBadge = 'Admin';
-      assignedLabs = ['all'];
-      supervisedBy = undefined;
-    } else {
-      role = 'Faculty Lecturer';
-      roleBadge = 'Lecturer';
-      assignedLabs = ['all'];
-      supervisedBy = undefined;
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const bytes = new Uint8Array(length);
+    window.crypto.getRandomValues(bytes);
+    const chars = [
+      pick(upper, bytes[0]),
+      pick(lower, bytes[1]),
+      pick(digits, bytes[2]),
+      pick(symbols, bytes[3]),
+    ];
+    for (let i = 4; i < length; i++) {
+      chars.push(pick(all, bytes[i]));
     }
+    return chars.join('');
   }
+
+  return `Tmp#${Date.now().toString(36)}A9x`;
+}
+
+export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
+  const roleLower = (u.role || '').trim().toLowerCase();
+  const isAdminRole =
+    u.roleBadge === 'Admin' ||
+    u.role === 'Primary Lab Administrator' ||
+    u.role === 'Department Administrator' ||
+    roleLower === 'administrator' ||
+    roleLower === 'admin' ||
+    roleLower.includes('admin');
+
+  const role = u.role || (isAdminRole ? 'Primary Lab Administrator' : 'Faculty Lecturer');
+  const roleBadge: RoleBadge = isAdminRole ? 'Admin' : 'Lecturer';
+  const permissions =
+    u.permissions ||
+    (isAdminRole
+      ? 'Full Read/Write Access & System Config'
+      : 'Course Hardware Allocation & Catalog View');
+  const department = u.department || 'Engineering Department';
+
+  const normalizedLabs = Array.isArray(u.assignedLabs)
+    ? u.assignedLabs
+        .map((r) => (typeof r === 'string' ? r.replace(/^Rm\s+/i, 'Room ').trim() : r))
+        .filter((r): r is string => Boolean(r))
+    : isAdminRole
+    ? ['all']
+    : [];
 
   const sanitized: T = {
     ...u,
@@ -346,125 +317,63 @@ export function sanitizeUser<T extends User | ManagedUser>(u: T): T {
     roleBadge,
     permissions,
     department,
-    assignedLabs,
+    assignedLabs: normalizedLabs,
   };
 
-  if (supervisedBy !== undefined) {
-    (sanitized as { supervisedBy?: string }).supervisedBy = supervisedBy;
-  } else {
-    delete (sanitized as { supervisedBy?: string }).supervisedBy;
-  }
-
+  delete (sanitized as { supervisedBy?: string }).supervisedBy;
   return sanitized;
 }
 
-const getDefaultUser = (): User => ({
-  id: 'user-admin',
-  name: DEMO_ACCOUNTS[0].name,
-  email: DEMO_ACCOUNTS[0].email,
-  role: DEMO_ACCOUNTS[0].role,
-  roleBadge: DEMO_ACCOUNTS[0].roleBadge,
-  avatarText: DEMO_ACCOUNTS[0].avatarText,
-  permissions: DEMO_ACCOUNTS[0].permissions,
-  department: DEMO_ACCOUNTS[0].department,
-  assignedLabs: DEMO_ACCOUNTS[0].assignedLabs,
-});
+const mapBackendUserToClient = (rawUser: any): User => {
+  const isAdminFlag =
+    Boolean(rawUser.is_admin) ||
+    (typeof rawUser.role === 'string' && rawUser.role.toLowerCase().includes('admin'));
 
-const getInitialUser = (): User | null => {
-  if (typeof window === 'undefined') {
-    return getDefaultUser();
-  }
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
-    if (stored) {
-      const parsed: User = JSON.parse(stored);
-      const sanitized = sanitizeUser(parsed);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-      return sanitized;
-    }
-    const defaultUser = getDefaultUser();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUser));
-    return defaultUser;
-  } catch {
-    return getDefaultUser();
-  }
-};
+  const assignedRooms: string[] =
+    Array.isArray(rawUser.assigned_labs) && rawUser.assigned_labs.length > 0
+      ? rawUser.assigned_labs
+      : isAdminFlag
+      ? ['all']
+      : [];
 
-const getStoredUsers = (): ManagedUser[] => {
-  if (typeof window === 'undefined') return INITIAL_MANAGED_USERS;
-  try {
-    const stored = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
-    if (stored) {
-      const parsed: ManagedUser[] = JSON.parse(stored);
-      return parsed
-        .filter(
-          (u) =>
-            u.role !== 'Lab Assistant' &&
-            (u.roleBadge as string) !== 'Lab Assistant' &&
-            !u.email.includes('vicheka') &&
-            !u.email.includes('assistant') &&
-            !u.email.includes('vakhim')
-        )
-        .map((u) => {
-          const migrated = {
-            ...u,
-            email: u.email.replace('@netlab.edu', '@lab.edu'),
-          };
-          return sanitizeUser(migrated);
-        });
-    }
-  } catch {
-    // fallback
-  }
-  return INITIAL_MANAGED_USERS;
-};
+  const initials =
+    String(rawUser.name || 'Operator')
+      .split(' ')
+      .filter(Boolean)
+      .map((n: string) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'OP';
 
-const getStoredSessions = (): SessionDevice[] => {
-  if (typeof window === 'undefined') return getInitialSessions();
-  try {
-    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY) || localStorage.getItem('netlab_session_devices');
-    if (stored) {
-      const parsed: SessionDevice[] = JSON.parse(stored);
-      // Remove legacy mock session devices
-      const clean = parsed.filter(
-        (s) => s.id !== 'sess-rack-console' && s.id !== 'sess-tablet-scanner' && s.id !== 'sess-faculty-pc'
-      );
-      const current = detectCurrentDevice();
-      if (clean.length > 0) {
-        return clean.map((s) =>
-          s.isCurrent
-            ? {
-                ...s,
-                browser: current.browser,
-                os: current.os,
-                deviceName: current.deviceName,
-                deviceType: current.deviceType,
-                ip: current.ip,
-                location: current.location,
-              }
-            : s
-        );
-      }
-    }
-  } catch {
-    // fallback
-  }
-  return getInitialSessions();
+  return sanitizeUser({
+    id: String(rawUser.id),
+    name: rawUser.name || 'Operator',
+    email: rawUser.email || '',
+    role: rawUser.role || (isAdminFlag ? 'Primary Lab Administrator' : 'Faculty Lecturer'),
+    roleBadge: isAdminFlag ? 'Admin' : 'Lecturer',
+    avatarText: initials,
+    permissions: isAdminFlag
+      ? 'Full Read/Write Access & System Config'
+      : 'Course Hardware Allocation & Catalog View',
+    department: rawUser.department || 'Engineering Block A',
+    assignedLabs: assignedRooms,
+  });
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  // Initialize with deterministic SSR defaults to prevent hydration mismatch
-  const [user, setUser] = useState<User | null>(getDefaultUser);
+  const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>(INITIAL_MANAGED_USERS);
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([]);
   const [sessionDevices, setSessionDevices] = useState<SessionDevice[]>(getInitialSessions);
 
   const refreshUsersFromBackend = async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('lab_auth_token') : null;
+      const token = getAuthToken();
       if (!token) return;
 
       const res = await authService.getUsers();
@@ -472,8 +381,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dbUsers: ManagedUser[] = res.users
           .filter((dbUser: any) => dbUser.role !== 'Lab Assistant' && !dbUser.email?.includes('vicheka') && !dbUser.email?.includes('assistant'))
           .map((dbUser: any) => {
+            const roleStr = String(dbUser.role || '');
             const roleBadge: RoleBadge =
-              dbUser.is_admin || dbUser.role === 'Primary Lab Administrator'
+              dbUser.is_admin || roleStr.toLowerCase().includes('admin')
                 ? 'Admin'
                 : 'Lecturer';
 
@@ -498,13 +408,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   : 'Course Hardware Allocation & Catalog View',
               department: dbUser.department || 'Engineering Department',
               status: 'active',
-              lastLogin: dbUser.email === 'admin@lab.edu' ? 'Active now' : 'Today, 09:00 AM',
+              lastLogin: 'Verified session',
               assignedLabs:
-                dbUser.assigned_labs && dbUser.assigned_labs.length > 0
+                Array.isArray(dbUser.assigned_labs) && dbUser.assigned_labs.length > 0
                   ? dbUser.assigned_labs
                   : roleBadge === 'Admin'
                   ? ['all']
-                  : ['Room 102B'],
+                  : [],
             };
           });
 
@@ -520,94 +430,106 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sync state from localStorage on mount (client-only)
+  // Bootstrap authenticated session & local device telemetry on mount
   useEffect(() => {
-    // 1. Sync User
-    try {
-      const storedUser = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('netlab_auth_user');
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        const sanitized = sanitizeUser(parsed);
-        setUser(sanitized);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+    let isCancelled = false;
+
+    const clearStoredSession = () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('netlab_auth_user');
+        localStorage.removeItem('lab_auth_token');
+        sessionStorage.removeItem('lab_auth_token');
+      } catch {
+        // ignore
+      }
+    };
+
+    const bootstrapAuth = async () => {
+      const existingToken = getAuthToken();
+      if (!existingToken) {
+        clearStoredSession();
+        if (!isCancelled) {
+          setUser(null);
+          setManagedUsers([]);
+          setIsAuthInitialized(true);
+        }
+        return;
       }
 
-      // Auto-acquire JWT token from backend for active account if not already cached
-      const existingToken = localStorage.getItem('lab_auth_token');
-      const userToAuth = storedUser ? JSON.parse(storedUser) : getDefaultUser();
-      if (!existingToken && userToAuth?.email) {
-        authService
-          .login({ email: userToAuth.email, password: 'password123' })
-          .then((res) => {
-            if (res?.token) {
-              localStorage.setItem('lab_auth_token', res.token);
-              window.dispatchEvent(new CustomEvent('csd-auth-token-ready'));
+      try {
+        const profileRes = await authService.getProfile();
+        if (!isCancelled && profileRes?.user) {
+          const verifiedUser = mapBackendUserToClient(profileRes.user);
+          setUser(verifiedUser);
+          try {
+            if (localStorage.getItem('lab_auth_token')) {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(verifiedUser));
             }
-          })
-          .catch(() => {});
-      } else if (existingToken) {
-        refreshUsersFromBackend();
-      }
-    } catch {
-      // ignore
-    }
-
-    // 2. Sync Managed Users
-    try {
-      const storedUsers = localStorage.getItem(USERS_STORAGE_KEY) || localStorage.getItem('netlab_managed_users');
-      if (storedUsers) {
-        const parsed: ManagedUser[] = JSON.parse(storedUsers);
-        const olderDemoNames = ['Sokha Chan', 'Kimleng Heng', 'Dara Kim', 'Leang Vakhim', 'Chan Vicheka'];
-        let updated = parsed
-          .filter(
-            (u) =>
-              !olderDemoNames.includes(u.name) &&
-              !u.email.includes('vakhim') &&
-              !u.email.includes('vicheka') &&
-              !u.email.includes('assistant') &&
-              u.role !== 'Lab Assistant' &&
-              (u.roleBadge as string) !== 'Lab Assistant'
-          )
-          .map((u) => {
-            const migrated = { ...u, email: u.email.replace('@netlab.edu', '@lab.edu') };
-            return sanitizeUser(migrated);
-          });
-
-        INITIAL_MANAGED_USERS.forEach((initUser) => {
-          if (!updated.some((u) => u.email === initUser.email)) {
-            updated.push(initUser);
+          } catch {
+            // ignore
           }
-        });
+          await refreshUsersFromBackend();
+          if (!isCancelled) {
+            setIsAuthInitialized(true);
+          }
+          return;
+        }
+      } catch (err) {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          clearStoredSession();
+          if (!isCancelled) {
+            setUser(null);
+            setManagedUsers([]);
+            setIsAuthInitialized(true);
+          }
+          return;
+        }
+      }
 
-        const finalUsers = updated.map(sanitizeUser);
-        setManagedUsers(finalUsers);
+      // Network unreachable in development: allow cached remembered profile only alongside existing token
+      if (process.env.NODE_ENV !== 'production') {
         try {
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(finalUsers));
+          const storedUser = localStorage.getItem(STORAGE_KEY);
+          if (storedUser && !isCancelled) {
+            setUser(sanitizeUser(JSON.parse(storedUser)));
+          }
         } catch {
           // ignore
         }
       } else {
-        setManagedUsers(INITIAL_MANAGED_USERS);
+        if (!isCancelled) {
+          setUser(null);
+        }
       }
-    } catch {
-      // ignore
-    }
 
-    refreshUsersFromBackend();
+      if (!isCancelled) {
+        setIsAuthInitialized(true);
+      }
+    };
+
+    bootstrapAuth();
 
     const handleAuthTokenReady = () => {
       refreshUsersFromBackend();
     };
-    window.addEventListener('csd-auth-token-ready', handleAuthTokenReady);
+    const handleAuthExpired = () => {
+      clearStoredSession();
+      setUser(null);
+      setManagedUsers([]);
+      router.replace('/login');
+    };
 
-    // 3. Sync Sessions & Detect Real Hardware/Browser (NO FAKE MOCK SESSIONS)
+    window.addEventListener('csd-auth-token-ready', handleAuthTokenReady);
+    window.addEventListener('csd-auth-expired', handleAuthExpired);
+
+    // Sync local browser session device telemetry (no external IP lookup calls)
     const current = detectCurrentDevice();
     let initialList: SessionDevice[] = [];
     try {
-      const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY) || localStorage.getItem('netlab_session_devices');
+      const storedSessions = localStorage.getItem(SESSIONS_STORAGE_KEY);
       if (storedSessions) {
         const parsed: SessionDevice[] = JSON.parse(storedSessions);
-        // Remove legacy mock sessions
         const clean = parsed.filter(
           (s) => s.id !== 'sess-rack-console' && s.id !== 'sess-tablet-scanner' && s.id !== 'sess-faculty-pc'
         );
@@ -655,45 +577,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
 
-    // Attempt live public IP detection asynchronously if available (cached in session)
-    const detectRealIp = async () => {
-      try {
-        const cachedIp = typeof window !== 'undefined' ? sessionStorage.getItem('csd_client_ip') : null;
-        if (cachedIp) {
-          const host = window.location.hostname || 'localhost';
-          const port = window.location.port ? `:${window.location.port}` : '';
-          const realIpText = `${cachedIp} (${host}${port})`;
-          setSessionDevices((prev) => prev.map((s) => (s.isCurrent ? { ...s, ip: realIpText } : s)));
-          return;
-        }
-
-        const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(1200) });
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.ip) {
-            sessionStorage.setItem('csd_client_ip', data.ip);
-            const host = window.location.hostname || 'localhost';
-            const port = window.location.port ? `:${window.location.port}` : '';
-            const realIpText = `${data.ip} (${host}${port})`;
-            setSessionDevices((prev) => {
-              const updated = prev.map((s) => (s.isCurrent ? { ...s, ip: realIpText } : s));
-              try {
-                localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(updated));
-              } catch {}
-              return updated;
-            });
-          }
-        }
-      } catch {
-        // Keeps local IP fallback (e.g. 127.0.0.1) without blocking
-      }
-    };
-    detectRealIp();
-
     return () => {
+      isCancelled = true;
       window.removeEventListener('csd-auth-token-ready', handleAuthTokenReady);
+      window.removeEventListener('csd-auth-expired', handleAuthExpired);
     };
   }, []);
+
+  // Redirect unauthenticated users away from protected routes
+  useEffect(() => {
+    if (!isAuthInitialized) return;
+    const isLoginRoute = pathname === '/login' || pathname?.startsWith('/login/');
+    if (!user && !isLoginRoute) {
+      router.replace('/login');
+    }
+  }, [isAuthInitialized, user, pathname, router]);
 
   const saveUsers = (usersList: ManagedUser[]) => {
     setManagedUsers(usersList);
@@ -717,8 +615,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false;
     return (
       user.role === 'Primary Lab Administrator' ||
-      user.roleBadge === 'Admin' ||
-      user.assignedLabs?.includes('all')
+      user.role === 'Department Administrator' ||
+      user.role === 'Administrator' ||
+      user.roleBadge === 'Admin'
     );
   };
 
@@ -728,9 +627,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const roleDef = ROLE_DEFINITIONS[newRole] || {
       role: newRole,
-      badge: 'Lab Assistant' as RoleBadge,
-      permissions: 'Standard Laboratory Access',
-      description: 'Standard laboratory user',
+      badge: 'Lecturer' as RoleBadge,
+      permissions: 'Course Hardware Allocation & Catalog View',
+      description: 'Standard faculty operator',
     };
 
     const updated = managedUsers.map((u) => {
@@ -810,30 +709,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return canUserManageLocation(user, locationStr);
   };
 
-  const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'>) => {
+  const addUser = (newUser: Omit<ManagedUser, 'id' | 'lastLogin'> & { password?: string }) => {
     const isAdmin = isCurrentUserAdmin();
     if (!isAdmin) return;
 
     const id = `user-${Date.now()}`;
+    const assignedLabs =
+      newUser.assignedLabs && newUser.assignedLabs.length > 0
+        ? newUser.assignedLabs
+        : newUser.role === 'Primary Lab Administrator'
+        ? ['all']
+        : [];
     const userToAdd: ManagedUser = {
       ...newUser,
       id,
       lastLogin: 'Never (Invited)',
-      assignedLabs: newUser.assignedLabs && newUser.assignedLabs.length > 0
-        ? newUser.assignedLabs
-        : (newUser.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
+      assignedLabs,
     };
     saveUsers([...managedUsers, userToAdd]);
     authService
       .register({
         name: userToAdd.name,
         email: userToAdd.email,
-        password: 'password123',
+        password: newUser.password || generateTemporaryPassword(),
         role: userToAdd.role,
         department: userToAdd.department,
         is_admin: userToAdd.roleBadge === 'Admin',
-        assigned_labs: userToAdd.assignedLabs,
+        assigned_labs: assignedLabs,
       })
+      .then(() => refreshUsersFromBackend())
       .catch(() => {});
   };
 
@@ -852,6 +756,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetUsersToDefault = () => {
+    if (process.env.NODE_ENV === 'production') {
+      refreshUsersFromBackend();
+      return;
+    }
     setManagedUsers(INITIAL_MANAGED_USERS);
     try {
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_MANAGED_USERS));
@@ -878,22 +786,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return s;
     });
     saveSessions(updated);
-
-    fetch('https://api.ipify.org?format=json')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.ip) {
-          const host = window.location.hostname || 'localhost';
-          const port = window.location.port ? `:${window.location.port}` : '';
-          const realIpText = `${data.ip} (${host}${port})`;
-          setSessionDevices((prev) => {
-            const reUpdated = prev.map((s) => (s.isCurrent ? { ...s, ip: realIpText } : s));
-            saveSessions(reUpdated);
-            return reUpdated;
-          });
-        }
-      })
-      .catch(() => {});
   };
 
   const revokeSession = (sessionId: string) => {
@@ -914,7 +806,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     const cleanEmail = email.trim().toLowerCase();
-    // Strict RBAC: Only Super Admin, Admin, and Lecturer can log in. Lab Assistants have View-Only inspection access.
+    // Strict RBAC: Lab Assistants cannot sign in as operators
     if (
       cleanEmail.includes('vicheka') ||
       cleanEmail.includes('assistant') ||
@@ -924,127 +816,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return {
         success: false,
         error:
-          'Access restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators. Please sign in as Super Admin, Admin, or Lecturer.',
+          'Access restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators.',
       };
     }
-    const emailAliases: Record<string, string> = {
-      'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-      'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-      'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-      'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
-      'assistant@lab.edu': 'chan.vicheka@rupp.edu.kh',
-      'vakhim@lab.edu': 'chan.vicheka@rupp.edu.kh',
-      'john.doe@lab.edu': 'john.doe@rupp.edu.kh',
-    };
+
+    const emailAliases: Record<string, string> =
+      process.env.NODE_ENV === 'production'
+        ? {}
+        : {
+            'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+            'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+            'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
+            'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
+            'john.doe@lab.edu': 'john.doe@rupp.edu.kh',
+          };
     const primaryEmail = emailAliases[cleanEmail] || cleanEmail;
 
-    // 1. Attempt live backend authentication
+    // 1. Live backend authentication
     try {
       const res = await authService.login({ email: primaryEmail, password });
       if (res?.token && res?.user) {
-        localStorage.setItem('lab_auth_token', res.token);
-
-        const assignedRooms =
-          res.user.assigned_labs && res.user.assigned_labs.length > 0
-            ? res.user.assigned_labs
-            : res.user.is_admin
-            ? ['all']
-            : ['Room 102B'];
-
-        const initials =
-          res.user.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2) || 'OP';
-
-        let badge: RoleBadge = 'Lecturer';
-        if (res.user.is_admin || res.user.role.toLowerCase().includes('admin')) {
-          badge = 'Admin';
+        if (res.user.role === 'Lab Assistant') {
+          setIsLoading(false);
+          return {
+            success: false,
+            error: 'Access restricted: Lab Assistants cannot sign in as operators.',
+          };
         }
 
-        const backendUser: User = {
-          id: String(res.user.id),
-          name: res.user.name,
-          email: res.user.email,
-          role: res.user.role,
-          roleBadge: badge,
-          avatarText: initials,
-          permissions: res.user.is_admin
-            ? 'Full Read/Write Access & System Config'
-            : 'Course Hardware Allocation & Catalog View',
-          department: res.user.department || 'Engineering Block A - Room 102B',
-          assignedLabs: assignedRooms,
-        };
-
-        const sanitized = sanitizeUser(backendUser);
-        setUser(sanitized);
-        if (rememberMe) {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
-          } catch {
-            // ignore
-          }
-        }
-        setIsLoading(false);
-        return { success: true };
-      }
-    } catch {
-      // Backend is offline or credentials rejected, proceed to local demo fallback
-    }
-
-    // 2. Check against managed users fallback
-    const matchedManaged = managedUsers.find(
-      (acc) =>
-        acc.email.toLowerCase() === cleanEmail ||
-        acc.email.toLowerCase() === primaryEmail
-    );
-
-    if (matchedManaged) {
-      if (password !== 'password123' && password !== 'admin123') {
-        setIsLoading(false);
-        return { success: false, error: 'Incorrect password. Demo password is: password123' };
-      }
-
-      const loggedUser: User = {
-        id: matchedManaged.id,
-        name: matchedManaged.name,
-        email: matchedManaged.email,
-        role: matchedManaged.role,
-        roleBadge: matchedManaged.roleBadge,
-        avatarText: matchedManaged.avatarText,
-        permissions: matchedManaged.permissions,
-        department: matchedManaged.department,
-        assignedLabs: matchedManaged.assignedLabs || (matchedManaged.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
-      };
-
-      setUser(loggedUser);
-      if (rememberMe) {
+        const clientUser = mapBackendUserToClient(res.user);
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedUser));
+          if (rememberMe) {
+            localStorage.setItem('lab_auth_token', res.token);
+            sessionStorage.removeItem('lab_auth_token');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(clientUser));
+          } else {
+            sessionStorage.setItem('lab_auth_token', res.token);
+            localStorage.removeItem('lab_auth_token');
+            localStorage.removeItem(STORAGE_KEY);
+          }
         } catch {
           // ignore
         }
+
+        setUser(clientUser);
+        setIsAuthInitialized(true);
+        window.dispatchEvent(new CustomEvent('csd-auth-token-ready'));
+        refreshUsersFromBackend();
+        setIsLoading(false);
+        return { success: true };
       }
+
       setIsLoading(false);
-      return { success: true };
+      return { success: false, error: 'Authentication response did not include a valid token.' };
+    } catch (err) {
+      // Never silently bypass explicit server rejections (401/403/400/429)
+      if (err instanceof ApiError) {
+        setIsLoading(false);
+        return {
+          success: false,
+          error: err.message || 'Invalid credentials.',
+        };
+      }
+
+      // In production, always fail closed when authentication backend is unreachable
+      if (process.env.NODE_ENV === 'production') {
+        setIsLoading(false);
+        return {
+          success: false,
+          error: 'Authentication server is unreachable. Please try again later.',
+        };
+      }
     }
 
-    // Check demo accounts
+    // 2. Development-only offline demo fallback when backend is unreachable
     const matchedAccount = DEMO_ACCOUNTS.find(
       (acc) =>
         acc.email.toLowerCase() === cleanEmail ||
         acc.email.toLowerCase() === primaryEmail
     );
 
-    if (matchedAccount) {
-      if (password !== matchedAccount.password && password !== 'password123' && password !== 'admin123') {
-        setIsLoading(false);
-        return { success: false, error: 'Incorrect password. Demo password is: password123' };
-      }
-
-      const loggedUser: User = {
+    if (matchedAccount && password === matchedAccount.password) {
+      const loggedUser: User = sanitizeUser({
         id: `user-${matchedAccount.email}`,
         name: matchedAccount.name,
         email: matchedAccount.email,
@@ -1053,50 +906,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatarText: matchedAccount.avatarText,
         permissions: matchedAccount.permissions,
         department: matchedAccount.department,
-        assignedLabs: matchedAccount.assignedLabs || (matchedAccount.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
-      };
+        assignedLabs: matchedAccount.assignedLabs || [],
+      });
 
       setUser(loggedUser);
-      if (rememberMe) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedUser));
-        } catch {
-          // ignore
-        }
-      }
-      setIsLoading(false);
-      return { success: true };
-    }
-
-    // Allow custom valid login for custom operators
-    if (cleanEmail.includes('@') && password.length >= 6) {
-      const initials = cleanEmail
-        .split('@')[0]
-        .split('.')
-        .map((s) => s.charAt(0).toUpperCase())
-        .join('')
-        .slice(0, 2) || 'OP';
-
-      const customUser: User = {
-        id: `user-${Date.now()}`,
-        name: cleanEmail.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, (m) => m.toUpperCase()),
-        email: cleanEmail,
-        role: 'Laboratory Operator',
-        roleBadge: 'Operator',
-        avatarText: initials,
-        permissions: 'Standard Laboratory Access',
-        department: 'Engineering Block A - Room 102B',
-        assignedLabs: ['Room 102B'],
-      };
-
-      setUser(customUser);
-      if (rememberMe) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(customUser));
-        } catch {
-          // ignore
-        }
-      }
+      setIsAuthInitialized(true);
       setIsLoading(false);
       return { success: true };
     }
@@ -1104,50 +918,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
     return {
       success: false,
-      error: 'Invalid credentials. Please enter a valid Lab email and password (min 6 characters).',
+      error: 'Unable to sign in. Verify your credentials and ensure the backend API is running.',
     };
   };
 
   const logout = () => {
     setUser(null);
+    setManagedUsers([]);
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('netlab_auth_user');
       localStorage.removeItem('lab_auth_token');
+      sessionStorage.removeItem('lab_auth_token');
     } catch {
       // ignore
     }
     router.push('/login');
   };
 
-  const switchAccount = (account: DemoAccount) => {
-    const newUser: User = {
-      id: `user-${account.email}`,
-      name: account.name,
-      email: account.email,
-      role: account.role,
-      roleBadge: account.roleBadge,
-      avatarText: account.avatarText,
-      permissions: account.permissions,
-      department: account.department,
-      assignedLabs: account.assignedLabs || (account.role === 'Primary Lab Administrator' ? ['all'] : ['Room 102B']),
-    };
-    setUser(newUser);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-    } catch {
-      // ignore
+  const switchAccount = async (
+    account: DemoAccount
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (process.env.NODE_ENV === 'production') {
+      return { success: false, error: 'Demo account switching is disabled in production.' };
     }
-
-    // Acquire that account's live JWT token from backend
-    authService
-      .login({ email: account.email, password: account.password || 'password123' })
-      .then((res) => {
-        if (res?.token) {
-          localStorage.setItem('lab_auth_token', res.token);
-          window.dispatchEvent(new CustomEvent('csd-auth-token-ready'));
-        }
-      })
-      .catch(() => {});
+    return login(account.email, account.password || '', true);
   };
 
   return (
@@ -1155,6 +950,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isAuthInitialized,
         isLoading,
         login,
         logout,

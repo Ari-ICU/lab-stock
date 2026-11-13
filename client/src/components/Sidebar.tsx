@@ -206,14 +206,14 @@ export function Sidebar() {
         <div className="p-3 border-t border-neutral-200 flex items-center justify-between" suppressHydrationWarning>
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold flex items-center justify-center text-xs shrink-0">
-              {mounted ? (user?.avatarText || 'TR') : 'HS'}
+              {mounted ? (user?.avatarText || '--') : '--'}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-neutral-900 truncate">
-                {mounted ? (user?.name || 'Dr. Heng Sovannarith') : 'Dr. Heng Sovannarith'}
+                {mounted ? (user?.name || 'Not signed in') : 'Not signed in'}
               </p>
               <p className="text-[11px] text-neutral-500 truncate">
-                {mounted ? (user?.role || 'Primary Lab Administrator') : 'Primary Lab Administrator'}
+                {mounted ? (user?.role || 'Guest') : 'Guest'}
               </p>
             </div>
           </div>

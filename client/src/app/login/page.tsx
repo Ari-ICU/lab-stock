@@ -65,10 +65,22 @@ export default function LoginPage() {
     setError(null);
   };
 
-  const handleQuickSignIn = (acc: DemoAccount) => {
-    switchAccount(acc);
-    showToast(`Signed in as ${acc.name} (${acc.role})`);
-    router.push('/');
+  const handleQuickSignIn = async (acc: DemoAccount) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await switchAccount(acc);
+      if (res.success) {
+        showToast(`Signed in as ${acc.name} (${acc.role})`);
+        router.push('/');
+      } else {
+        setError(res.error || 'Demo sign-in failed.');
+      }
+    } catch {
+      setError('An unexpected authentication error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -282,45 +294,47 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Demo Account Quick Switcher */}
-              <div className="mt-5 pt-4 border-t border-neutral-100">
-                <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
-                  One-Click Demo Roles
-                </div>
-                <div className="space-y-1.5">
-                  {DEMO_ACCOUNTS.map((acc) => (
-                    <div
-                      key={acc.email}
-                      onClick={() => handleSelectDemo(acc)}
-                      className="flex items-center justify-between p-2 rounded bg-neutral-50 hover:bg-neutral-100 text-left cursor-pointer transition-colors border border-neutral-200/80 group"
-                    >
-                      <div className="min-w-0 flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded bg-neutral-900 text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                          {acc.avatarText}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-neutral-900 truncate">
-                            {acc.name}
-                          </p>
-                          <p className="text-[10px] text-neutral-500 truncate">
-                            {acc.role} • {acc.email}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuickSignIn(acc);
-                        }}
-                        className="px-2.5 py-1 text-[10px] font-semibold bg-white group-hover:bg-neutral-900 group-hover:text-white text-neutral-700 rounded border border-neutral-300 transition-colors shadow-2xs"
+              {/* Demo Account Quick Switcher (Development Only) */}
+              {process.env.NODE_ENV !== 'production' && DEMO_ACCOUNTS.length > 0 && (
+                <div className="mt-5 pt-4 border-t border-neutral-100">
+                  <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
+                    One-Click Demo Roles
+                  </div>
+                  <div className="space-y-1.5">
+                    {DEMO_ACCOUNTS.map((acc) => (
+                      <div
+                        key={acc.email}
+                        onClick={() => handleSelectDemo(acc)}
+                        className="flex items-center justify-between p-2 rounded bg-neutral-50 hover:bg-neutral-100 text-left cursor-pointer transition-colors border border-neutral-200/80 group"
                       >
-                        Sign in
-                      </button>
-                    </div>
-                  ))}
+                        <div className="min-w-0 flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded bg-neutral-900 text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {acc.avatarText}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-neutral-900 truncate">
+                              {acc.name}
+                            </p>
+                            <p className="text-[10px] text-neutral-500 truncate">
+                              {acc.role} • {acc.email}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuickSignIn(acc);
+                          }}
+                          className="px-2.5 py-1 text-[10px] font-semibold bg-white group-hover:bg-neutral-900 group-hover:text-white text-neutral-700 rounded border border-neutral-300 transition-colors shadow-2xs"
+                        >
+                          Sign in
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* University Institutional Notice */}

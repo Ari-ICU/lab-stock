@@ -45,12 +45,46 @@ export interface ManagedUser {
 /**
  * Checks whether a user has administrative or assigned authority over a given laboratory location.
  */
+const escapeLocationRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export function canUserManageLocation(
   user: User | ManagedUser | DemoAccount | null | undefined,
-  _locationStr?: string
+  locationStr?: string
 ): boolean {
   if (!user) return false;
-  return true;
+
+  const roleLower = (user.role || '').trim().toLowerCase();
+  const badgeLower = (user.roleBadge || '').trim().toLowerCase();
+  if (badgeLower === 'admin' || roleLower === 'administrator' || roleLower === 'admin') {
+    return true;
+  }
+
+  const assignedLabs = Array.isArray(user.assignedLabs) ? user.assignedLabs : [];
+  if (
+    assignedLabs.some((lab) => {
+      const normalized = lab.trim().toLowerCase();
+      return normalized === 'all' || normalized === '*';
+    })
+  ) {
+    return true;
+  }
+
+  if (assignedLabs.length === 0) return false;
+  if (!locationStr || !locationStr.trim()) return false;
+
+  const normalizedTarget = locationStr.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  return assignedLabs.some((assigned) => {
+    const normAssigned = assigned.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!normAssigned) return false;
+    if (normAssigned === normalizedTarget) return true;
+    const regex = new RegExp(
+      `(?:^|[^a-z0-9])${escapeLocationRegex(normAssigned)}(?:$|[^a-z0-9])`,
+      'i'
+    );
+    return regex.test(normalizedTarget);
+  });
 }
 
 export interface SessionDevice {

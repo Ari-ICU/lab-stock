@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/Sidebar';
 import { GlobalSearchModal } from '@/components/GlobalSearchModal';
 import { AddEntityModal } from '@/components/AddEntityModal';
@@ -11,6 +12,7 @@ import { Toast } from '@/components/Toast';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isAuthenticated, isAuthInitialized } = useAuth();
   const isLoginPage = pathname === '/login' || pathname?.startsWith('/login/');
 
   if (isLoginPage) {
@@ -20,6 +22,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         <Toast />
+      </div>
+    );
+  }
+
+  if (!isAuthInitialized || !isAuthenticated) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-neutral-50 text-neutral-500 text-xs font-medium">
+        <span>Verifying session...</span>
       </div>
     );
   }
