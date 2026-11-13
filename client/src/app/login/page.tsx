@@ -168,10 +168,10 @@ export default function LoginPage() {
                   <ShieldCheck className="w-4 h-4 text-amber-600" />
                 </div>
                 <div className="text-xs font-bold text-neutral-900">
-                  Audit & Barcodes
+                  Audit & Asset Tags
                 </div>
                 <div className="text-[11px] text-neutral-500 leading-normal mt-1">
-                  Code128 barcode tags, calibration & maintenance logs.
+                  Serialized asset tags, SKU tracking &amp; check-out logs.
                 </div>
               </div>
             </div>

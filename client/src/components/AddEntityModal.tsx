@@ -5,7 +5,6 @@ import { useStock } from '@/context/StockContext';
 import { X, Plus } from 'lucide-react';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
-import { DatePicker } from '@/components/DatePicker';
 import { buildStockCategoryOptions } from '@/lib/categories';
 
 const stockStatusOptions = [
@@ -27,13 +26,6 @@ const rackTypeOptions = [
   { label: 'Storage Shelf', value: 'Storage Shelf' },
 ];
 
-const maintTypeOptions = [
-  { label: 'Firmware Upgrade', value: 'Firmware Upgrade' },
-  { label: 'Port Audit', value: 'Port Audit' },
-  { label: 'Hardware RMA', value: 'Hardware RMA' },
-  { label: 'Power Supply Replacement', value: 'Power Supply Replacement' },
-];
-
 export function AddEntityModal() {
   const {
     activeModal,
@@ -42,7 +34,6 @@ export function AddEntityModal() {
     addStockItem,
     addAsset,
     addRack,
-    addMaintenance,
     addLocation,
     locations,
     stock,
@@ -102,14 +93,6 @@ export function AddEntityModal() {
   const [rackType, setRackType] = useState<'42U Server Rack' | '24U Wall Mount' | 'IDF Distribution' | 'Storage Shelf'>('42U Server Rack');
   const [rackSlots, setRackSlots] = useState(42);
   const [rackLocation, setRackLocation] = useState('Computer Lab Room 102B');
-
-  // Maintenance Form State
-  const [maintAsset, setMaintAsset] = useState('');
-  const [maintSerial, setMaintSerial] = useState('');
-  const [maintType, setMaintType] = useState<'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement'>('Firmware Upgrade');
-  const [maintDate, setMaintDate] = useState('2026-11-01');
-  const [maintTech, setMaintTech] = useState('Thoeurn Ratha');
-  const [maintNotes, setMaintNotes] = useState('');
 
   // Location Form State
   const [locName, setLocName] = useState('');
@@ -180,24 +163,6 @@ export function AddEntityModal() {
     closeModal();
   };
 
-  const handleMaintenanceSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!maintAsset) return;
-    addMaintenance({
-      assetName: maintAsset,
-      serialNumber: maintSerial || 'SN-N/A',
-      type: maintType,
-      date: maintDate,
-      technician: maintTech,
-      status: 'Pending',
-      notes: maintNotes || 'Routine schedule logged',
-    });
-    setMaintAsset('');
-    setMaintSerial('');
-    setMaintNotes('');
-    closeModal();
-  };
-
   const handleLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!locName || !locRoom) return;
@@ -231,7 +196,6 @@ export function AddEntityModal() {
               {activeModal === 'add_stock' && 'Add Inventory Item'}
               {activeModal === 'add_asset' && 'Register Network Device'}
               {activeModal === 'add_rack' && 'Add Server Rack'}
-              {activeModal === 'add_maintenance' && 'Schedule Maintenance'}
               {activeModal === 'add_location' && 'Add Lab Location'}
             </h2>
           </div>
@@ -542,82 +506,6 @@ export function AddEntityModal() {
                 className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800"
               >
                 Add Rack
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Maintenance Form */}
-        {activeModal === 'add_maintenance' && (
-          <form onSubmit={handleMaintenanceSubmit} className="p-5 space-y-3.5 text-xs overflow-y-auto flex-1">
-            <div>
-              <label className="block font-semibold text-neutral-800 mb-1">Device Name</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Cisco Catalyst 9300 Switch"
-                value={maintAsset}
-                onChange={(e) => setMaintAsset(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-neutral-800 mb-1">Service Type</label>
-                <Dropdown
-                  value={maintType}
-                  options={maintTypeOptions}
-                  onChange={(val) => setMaintType(val as any)}
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-800 mb-1">Scheduled Date</label>
-                <DatePicker
-                  value={maintDate}
-                  onChange={setMaintDate}
-                  placeholder="Select scheduled date"
-                  align="right"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-neutral-800 mb-1">Assigned Technician</label>
-              <input
-                type="text"
-                value={maintTech}
-                onChange={(e) => setMaintTech(e.target.value)}
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-neutral-800 mb-1">Notes & Scope</label>
-              <textarea
-                rows={2}
-                value={maintNotes}
-                onChange={(e) => setMaintNotes(e.target.value)}
-                placeholder="Scope of upgrade or diagnosis notes..."
-                className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <div className="pt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-3.5 py-2 text-xs font-medium border border-neutral-300 rounded text-neutral-700 hover:bg-neutral-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-xs font-semibold bg-neutral-900 text-white rounded hover:bg-neutral-800"
-              >
-                Schedule Task
               </button>
             </div>
           </form>

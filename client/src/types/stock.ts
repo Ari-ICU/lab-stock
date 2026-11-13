@@ -173,7 +173,6 @@ export type ModalType =
   | 'add_stock'
   | 'add_asset'
   | 'add_rack'
-  | 'add_maintenance'
   | 'add_location'
   | 'lend_asset'
   | 'transfer_asset';

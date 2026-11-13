@@ -688,43 +688,6 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            {/* Scheduled & Recent Maintenance */}
-            <section className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-2xs">
-              <div className="p-4 sm:p-5 border-b border-neutral-200/80 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                    Service & Maintenance Activity
-                  </h2>
-                  <p className="text-[11px] text-neutral-500 mt-0.5">Audit reports, hardware fixes & calibrations</p>
-                </div>
-              </div>
-
-              <div className="divide-y divide-neutral-100">
-                {maintenance.slice(0, 4).map((rec) => (
-                  <div key={rec.id} className="p-3.5 sm:p-4 space-y-1.5 hover:bg-neutral-50/70 transition-colors">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-neutral-900 truncate">{rec.assetName}</span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                          rec.status === 'Completed'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : rec.status === 'In Progress'
-                            ? 'bg-blue-50 text-blue-800 border-blue-200'
-                            : 'bg-amber-50 text-amber-800 border-amber-200'
-                        }`}
-                      >
-                        {rec.status}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-neutral-600 truncate">{rec.type} · {rec.notes}</div>
-                    <div className="text-[10px] text-neutral-400 font-mono flex items-center justify-between pt-0.5">
-                      <span>{rec.date} · Tech: <strong className="text-neutral-700 font-sans">{rec.technician}</strong></span>
-                      {rec.cost && <span className="text-emerald-700 font-bold">${rec.cost}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
           </div>
         </div>
       </div>

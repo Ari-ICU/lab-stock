@@ -22,7 +22,6 @@ import {
   Tag,
   Hash,
   Layers,
-  Wrench,
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -48,8 +47,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     assets,
     updateAsset,
     deleteAsset,
-    maintenance,
-    addMaintenance,
     locations,
     loans,
     transfers,
@@ -61,13 +58,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
   const { user, canManageLocation } = useAuth();
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showAddLogModal, setShowAddLogModal] = useState(false);
-
-  // Maintenance form state
-  const [logType, setLogType] = useState<'Firmware Upgrade' | 'Port Audit' | 'Hardware RMA' | 'Power Supply Replacement'>('Port Audit');
-  const [logTechnician, setLogTechnician] = useState('Thoeurn Ratha');
-  const [logStatus, setLogStatus] = useState<'Completed' | 'Pending' | 'In Progress'>('Completed');
-  const [logNotes, setLogNotes] = useState('');
 
   const asset =
     assets.find(
@@ -248,22 +238,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     router.push('/assets');
   };
 
-  const handleAddMaintenanceLog = (e: React.FormEvent) => {
-    e.preventDefault();
-    addMaintenance({
-      assetName: asset.name,
-      serialNumber: asset.serialNumber,
-      type: logType,
-      date: new Date().toISOString().split('T')[0],
-      technician: logTechnician,
-      status: logStatus,
-      notes: logNotes || 'Routine inspection completed.',
-    });
-    setShowAddLogModal(false);
-    setLogNotes('');
-    showToast(`Added service log for ${asset.name}`);
-  };
-
   const handleReturnFromDetails = () => {
     const activeLoan = loans.find((l) => l.assetId === asset.id && l.status === 'active');
     if (activeLoan) {
@@ -278,14 +252,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       showToast(`${asset.name} marked as available`);
     }
   };
-
-  // Find related maintenance logs
-  const assetLogs = maintenance.filter(
-    (m) =>
-      m.serialNumber.toLowerCase() === asset.serialNumber.toLowerCase() ||
-      asset.name.toLowerCase().includes(m.assetName.toLowerCase()) ||
-      m.assetName.toLowerCase().includes(asset.name.toLowerCase())
-  );
 
   const statusBadge = {
     operational: {
@@ -856,110 +822,33 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                 </div>
               )}
             </div>
-
-            {/* Service & Maintenance History */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-neutral-800" />
-                    Service & Maintenance Log
-                  </h3>
-                  <p className="text-[11px] text-neutral-500">
-                    Inspection, firmware updates, and calibration history
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddLogModal(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 rounded transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Log Service</span>
-                </button>
-              </div>
-
-              {assetLogs.length === 0 ? (
-                <div className="p-6 text-center border border-dashed border-neutral-200 rounded-lg bg-neutral-50/50">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                  <div className="text-xs font-semibold text-neutral-800">No Pending Service Issues</div>
-                  <div className="text-[11px] text-neutral-500 mt-0.5">
-                    This equipment is operating normally with no recorded maintenance interventions.
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {assetLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="p-3.5 border border-neutral-200 rounded-lg bg-neutral-50/60 hover:bg-neutral-50 transition-colors space-y-1.5"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-neutral-900">{log.type}</span>
-                          <span className="text-[11px] text-neutral-500 font-mono">({log.date})</span>
-                        </div>
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
-                            log.status === 'Completed'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : log.status === 'In Progress'
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}
-                        >
-                          {log.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-neutral-600">{log.notes}</p>
-                      <div className="text-[11px] text-neutral-400">
-                        Technician in charge: <span className="font-medium text-neutral-700">{log.technician}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right Col: Identity & Tagging Sidebar */}
           <div className="space-y-6">
-            {/* Barcode & Physical Tag Card */}
-            <div className="bg-white border border-neutral-200 rounded-lg p-5 shadow-sm space-y-4">
+            {/* Asset Tag & Serial Card */}
+            <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
-                  <QrCode className="w-4 h-4 text-neutral-800" />
-                  Asset Tag & Barcode
+                  <Tag className="w-4 h-4 text-neutral-700" />
+                  Asset Tag & Serial
                 </span>
-                <span className="text-[10px] font-mono text-neutral-400">Code128</span>
+                <button
+                  type="button"
+                  onClick={handleCopySerial}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded text-neutral-700 cursor-pointer transition-colors"
+                >
+                  {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-neutral-400" />}
+                  <span>{copied ? 'Copied' : 'Copy'}</span>
+                </button>
               </div>
 
-              {/* Simulated Code128 Barcode */}
-              <div className="p-4 bg-white border border-neutral-300 rounded flex flex-col items-center justify-center space-y-2">
-                <div className="flex items-stretch h-14 gap-[2px] w-full max-w-[220px] justify-center py-1">
-                  <div className="w-[3px] bg-neutral-900" />
-                  <div className="w-[1px] bg-neutral-900" />
-                  <div className="w-[2px] bg-transparent" />
-                  <div className="w-[4px] bg-neutral-900" />
-                  <div className="w-[1px] bg-transparent" />
-                  <div className="w-[2px] bg-neutral-900" />
-                  <div className="w-[3px] bg-neutral-900" />
-                  <div className="w-[1px] bg-transparent" />
-                  <div className="w-[4px] bg-neutral-900" />
-                  <div className="w-[2px] bg-transparent" />
-                  <div className="w-[3px] bg-neutral-900" />
-                  <div className="w-[1px] bg-neutral-900" />
-                  <div className="w-[2px] bg-transparent" />
-                  <div className="w-[2px] bg-neutral-900" />
-                  <div className="w-[3px] bg-neutral-900" />
-                  <div className="w-[1px] bg-neutral-900" />
-                  <div className="w-[4px] bg-neutral-900" />
-                  <div className="w-[2px] bg-transparent" />
-                  <div className="w-[3px] bg-neutral-900" />
-                  <div className="w-[1px] bg-neutral-900" />
+              <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-lg text-center">
+                <div className="text-[10px] uppercase font-semibold text-neutral-400 mb-0.5">
+                  Registered Serial Number
                 </div>
-                <div className="text-[11px] font-mono font-bold tracking-widest text-neutral-800">
-                  *{asset.serialNumber}*
+                <div className="text-sm font-mono font-bold tracking-wide text-neutral-900">
+                  {asset.serialNumber}
                 </div>
               </div>
 
@@ -1029,18 +918,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
                   <Plus className="w-3 h-3 text-neutral-400" />
                 </Link>
 
-                <button
-                  type="button"
-                  onClick={() => setShowAddLogModal(true)}
-                  className="w-full flex items-center justify-between p-2.5 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors text-xs font-medium text-neutral-800 cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Wrench className="w-3.5 h-3.5 text-neutral-600" />
-                    Schedule Calibration / RMA
-                  </span>
-                  <Plus className="w-3 h-3 text-neutral-400" />
-                </button>
-
                 <Link
                   href="/assets/create"
                   className="w-full flex items-center justify-between p-2.5 rounded border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-colors text-xs font-medium text-neutral-800"
@@ -1056,101 +933,6 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
           </div>
         </div>
       </div>
-
-      {/* Add Maintenance Log Modal */}
-      {showAddLogModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg border border-neutral-300 shadow-xl max-w-md w-full p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-neutral-800" />
-                Log Maintenance for {asset.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowAddLogModal(false)}
-                className="text-neutral-400 hover:text-neutral-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddMaintenanceLog} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Service / Intervention Type
-                </label>
-                <Dropdown
-                  value={logType}
-                  options={[
-                    { label: 'Port Audit', value: 'Port Audit' },
-                    { label: 'Firmware Upgrade', value: 'Firmware Upgrade' },
-                    { label: 'Hardware RMA', value: 'Hardware RMA' },
-                    { label: 'Power Supply Replacement', value: 'Power Supply Replacement' },
-                  ]}
-                  onChange={(val) => setLogType(val as any)}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Technician
-                </label>
-                <input
-                  type="text"
-                  value={logTechnician}
-                  onChange={(e) => setLogTechnician(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-1.5 rounded focus:outline-none focus:border-neutral-900"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Status
-                </label>
-                <Dropdown
-                  value={logStatus}
-                  options={[
-                    { label: 'Completed', value: 'Completed' },
-                    { label: 'In Progress', value: 'In Progress' },
-                    { label: 'Pending', value: 'Pending' },
-                  ]}
-                  onChange={(val) => setLogStatus(val as any)}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-neutral-700 mb-1">
-                  Inspection Notes & Details
-                </label>
-                <textarea
-                  rows={3}
-                  value={logNotes}
-                  onChange={(e) => setLogNotes(e.target.value)}
-                  placeholder="e.g. Cleaned fan filters, upgraded BIOS/firmware to version 2.4, port loop verification passed."
-                  className="w-full bg-white border border-neutral-300 text-neutral-900 p-2.5 rounded focus:outline-none focus:border-neutral-900 placeholder:text-neutral-400"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200">
-                <button
-                  type="button"
-                  onClick={() => setShowAddLogModal(false)}
-                  className="px-3 py-1.5 border border-neutral-300 text-neutral-700 font-medium rounded hover:bg-neutral-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded"
-                >
-                  Save Service Record
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
