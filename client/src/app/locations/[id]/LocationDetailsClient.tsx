@@ -414,7 +414,14 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   <>
                     <span className="text-neutral-300 hidden sm:inline">·</span>
                     <span className="text-neutral-500 text-xs hidden sm:inline">
-                      Audited: {loc.lastAuditedAt}
+                      Audited:{' '}
+                      {Number.isNaN(new Date(loc.lastAuditedAt).getTime())
+                        ? loc.lastAuditedAt
+                        : new Date(loc.lastAuditedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
                     </span>
                   </>
                 )}
@@ -501,15 +508,15 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               <table className="w-full text-left text-xs min-w-[900px]">
                 <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                   <tr>
-                    <th className="py-3 px-3 w-14 text-center">Visual</th>
+                    <th className="py-3 px-3 w-14 text-center whitespace-nowrap">Visual</th>
                     <th className="py-3 px-4 min-w-[220px]">Item & Equipment Name</th>
-                    <th className="py-3 px-4 w-36">Category</th>
+                    <th className="py-3 px-4 w-36 whitespace-nowrap">Category</th>
                     <th className="py-3 px-4 min-w-[180px]">Specification / Model</th>
-                    <th className="py-3 px-3 w-16 text-center">Total</th>
-                    <th className="py-3 px-3 w-16 text-center">Working</th>
-                    <th className="py-3 px-3 w-20 text-center">Repair</th>
-                    <th className="py-3 px-3 w-16 text-center">Broken</th>
-                    <th className="py-3 px-4 w-12 text-right">Actions</th>
+                    <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Total</th>
+                    <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Working</th>
+                    <th className="py-3 px-3 w-20 text-center whitespace-nowrap">Repair</th>
+                    <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Broken</th>
+                    <th className="py-3 px-4 w-12 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
