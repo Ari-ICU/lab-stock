@@ -49,3 +49,4 @@ export const categoryModel = {
     return (res.rowCount ?? 0) > 0;
   },
 };
+

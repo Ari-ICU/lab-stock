@@ -7,6 +7,7 @@ export * from './apiClient';
 export * from './authService';
 export * from './assetService';
 export * from './stockService';
+export * from './categoryService';
 export * from './loanService';
 export * from './locationService';
 export * from './maintenanceService';

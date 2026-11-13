@@ -45,10 +45,13 @@ const unitOptions = [
 function CreateStockForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addStockItem, stock, locations, showToast } = useStock();
+  const { addStockItem, stock, categories, createCategory, locations, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
 
-  const categoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
+  const categoryOptions = React.useMemo(
+    () => buildStockCategoryOptions(stock, categories),
+    [stock, categories]
+  );
 
   // Find first manageable location for default
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
@@ -254,7 +257,12 @@ function CreateStockForm() {
                       <Dropdown
                         value={category}
                         options={categoryOptions}
-                        onChange={setCategory}
+                        onChange={(val) => {
+                          setCategory(val);
+                          if (!categoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
+                            void createCategory(val);
+                          }
+                        }}
                         allowCustom
                         searchPlaceholder="Search or type new category..."
                         placeholder="Select Category"

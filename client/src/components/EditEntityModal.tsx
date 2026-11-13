@@ -22,6 +22,8 @@ export function EditEntityModal() {
     updateRoomInventoryItem,
     locations,
     stock,
+    categories,
+    createCategory,
     assets,
   } = useStock();
 
@@ -30,7 +32,10 @@ export function EditEntityModal() {
     value: `${loc.name} (${loc.room})`,
   }));
 
-  const stockCategoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
+  const stockCategoryOptions = React.useMemo(
+    () => buildStockCategoryOptions(stock, categories),
+    [stock, categories]
+  );
 
   const isStock = editingItem ? 'quantity' in editingItem : false;
   const isAsset = editingItem ? 'serialNumber' in editingItem && 'model' in editingItem : false;
@@ -778,7 +783,12 @@ export function EditEntityModal() {
                     <Dropdown
                       value={category}
                       options={stockCategoryOptions}
-                      onChange={setCategory}
+                      onChange={(val) => {
+                        setCategory(val);
+                        if (!stockCategoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
+                          void createCategory(val);
+                        }
+                      }}
                       allowCustom
                       searchPlaceholder="Search or type new category..."
                       className="w-full"

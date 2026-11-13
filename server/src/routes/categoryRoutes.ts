@@ -33,3 +33,4 @@ router.post('/', requirePermission(Permission.STOCK_CREATE), createCategory);
 router.delete('/:id', requirePermission(Permission.STOCK_DELETE), deleteCategory);
 
 export default router;
+

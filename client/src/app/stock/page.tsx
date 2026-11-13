@@ -16,7 +16,7 @@ import { MockItem } from '@/types/stock';
 
 export default function StockPage() {
   const router = useRouter();
-  const { stock, locations, loans, deleteStockItem, lendStockItem, showToast } = useStock();
+  const { stock, categories, locations, loans, deleteStockItem, lendStockItem, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
   const [filterText, setFilterText] = useState('');
   const [selectedLab, setSelectedLab] = useState<string>('all');
@@ -41,9 +41,9 @@ export default function StockPage() {
     { label: 'Out of Stock', value: 'out_of_stock' },
   ];
 
-  // Dynamic category options extracted from current inventory
+  // Dynamic category options extracted from DB categories & current inventory
   const categoryOptions: DropdownOption[] = useMemo(() => {
-    const categoriesSet = new Set<string>();
+    const categoriesSet = new Set<string>(categories);
     stock.forEach((item) => {
       if (item.category) categoriesSet.add(item.category);
     });
@@ -52,7 +52,7 @@ export default function StockPage() {
       { label: 'All Categories', value: 'all' },
       ...sortedCats.map((cat) => ({ label: cat, value: cat })),
     ];
-  }, [stock]);
+  }, [stock, categories]);
 
   // Aggregate Department Furniture & Equipment Counts across Central Stock & All Classroom/Lab Locations
   const departmentCounts = useMemo(() => {

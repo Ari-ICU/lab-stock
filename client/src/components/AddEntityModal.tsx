@@ -47,9 +47,14 @@ export function AddEntityModal() {
     addLocation,
     locations,
     stock,
+    categories,
+    createCategory,
   } = useStock();
 
-  const stockCategoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
+  const stockCategoryOptions = React.useMemo(
+    () => buildStockCategoryOptions(stock, categories),
+    [stock, categories]
+  );
 
   const locationOptions = locations.map((loc) => ({
     label: `${loc.name} (${loc.room})`,
@@ -292,7 +297,12 @@ export function AddEntityModal() {
                 <Dropdown
                   value={stockCategory}
                   options={stockCategoryOptions}
-                  onChange={setStockCategory}
+                  onChange={(val) => {
+                    setStockCategory(val);
+                    if (!stockCategoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
+                      void createCategory(val);
+                    }
+                  }}
                   allowCustom
                   searchPlaceholder="Search or type new category..."
                   className="w-full"

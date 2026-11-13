@@ -57,3 +57,4 @@ export const deleteCategory = asyncHandler(async (req: Request, res: Response) =
     message: deleted ? 'Category deleted' : 'Category not found',
   });
 });
+

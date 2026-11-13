@@ -50,10 +50,13 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { stock, updateStockItem, deleteStockItem, locations, showToast, isLoading } = useStock();
+  const { stock, categories, createCategory, updateStockItem, deleteStockItem, locations, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
-  const categoryOptions = React.useMemo(() => buildStockCategoryOptions(stock), [stock]);
+  const categoryOptions = React.useMemo(
+    () => buildStockCategoryOptions(stock, categories),
+    [stock, categories]
+  );
 
   const item = stock.find((s) => s.id === id);
   const isAllowed = item ? canManageLocation(item.location) : false;
@@ -371,7 +374,12 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                       <Dropdown
                         value={category}
                         options={categoryOptions}
-                        onChange={setCategory}
+                        onChange={(val) => {
+                          setCategory(val);
+                          if (!categoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
+                            void createCategory(val);
+                          }
+                        }}
                         allowCustom
                         searchPlaceholder="Search or type new category..."
                         placeholder="Select Category"

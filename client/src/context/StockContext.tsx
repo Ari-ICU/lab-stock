@@ -20,6 +20,7 @@ import {
   authService,
   assetService,
   stockService,
+  categoryService,
   locationService,
   loanService,
   maintenanceService,
@@ -50,6 +51,8 @@ export type {
 
 interface StockContextType {
   stock: MockItem[];
+  categories: string[];
+  createCategory: (name: string) => Promise<void>;
   assets: MockAsset[];
   racks: MockRack[];
   maintenance: MockMaintenance[];
@@ -159,6 +162,7 @@ function setCachedData<T>(key: string, data: T) {
 
 export function StockProvider({ children }: { children: React.ReactNode }) {
   const [stock, setStock] = useState<MockItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [assets, setAssets] = useState<MockAsset[]>([]);
   const [racks, setRacks] = useState<MockRack[]>([]);
   const [maintenance, setMaintenance] = useState<MockMaintenance[]>([]);
@@ -192,7 +196,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const [assetsRes, stockRes, locsRes, loansRes, maintRes, reqsRes, transfersRes] = await Promise.allSettled([
+      const [assetsRes, stockRes, locsRes, loansRes, maintRes, reqsRes, transfersRes, catsRes] = await Promise.allSettled([
         assetService.getAssets(),
         stockService.getStockItems(),
         locationService.getLocations(),
@@ -200,6 +204,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         maintenanceService.getMaintenance(),
         purchaseRequestService.getPurchaseRequests(),
         transferService.getTransfers(),
+        categoryService.getAll(),
       ]);
 
       let connected = false;
@@ -218,6 +223,12 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         setStock(fetchedStock);
         setCachedData('stock', fetchedStock);
         connected = true;
+      }
+
+      if (catsRes.status === 'fulfilled' && Array.isArray(catsRes.value)) {
+        const fetchedCats = catsRes.value.map((c) => c.name).filter(Boolean);
+        setCategories(fetchedCats);
+        setCachedData('categories', fetchedCats);
       }
 
       if (locsRes.status === 'fulfilled' && Array.isArray(locsRes.value?.data)) {
@@ -455,6 +466,22 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const closeModal = () => {
     setActiveModal('none');
     setPrefillData(null);
+  };
+
+  const createCategory = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setCategories((prev) => {
+      if (prev.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return prev;
+      return [...prev, trimmed].sort((a, b) => a.localeCompare(b));
+    });
+    if (getAuthToken()) {
+      try {
+        await categoryService.create(trimmed);
+      } catch {
+        // ignore if offline or already exists
+      }
+    }
   };
 
   const addStockItem = (itemData: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }): MockItem => {
@@ -1146,6 +1173,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     <StockContext.Provider
       value={{
         stock,
+        categories,
+        createCategory,
         assets,
         racks,
         maintenance,

@@ -34,6 +34,13 @@ export const API_ENDPOINTS = {
     DELETE: (assetId: string) => `/assets/${assetId}`,
   },
 
+  // Inventory Categories
+  CATEGORIES: {
+    LIST: '/categories',
+    CREATE: '/categories',
+    DELETE: (id: string) => `/categories/${id}`,
+  },
+
   // Inventory Stock & Consumables
   STOCK: {
     LIST: '/stock',

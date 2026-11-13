@@ -15,13 +15,25 @@ export const DEFAULT_STOCK_CATEGORIES: DropdownOption[] = [
 ];
 
 /**
- * Merges default starter categories with any custom categories already used in inventory stock.
+ * Merges default starter categories with categories stored in PostgreSQL and inventory stock.
  */
-export function buildStockCategoryOptions(stock: MockItem[]): DropdownOption[] {
+export function buildStockCategoryOptions(
+  stock: MockItem[],
+  dbCategories: string[] = []
+): DropdownOption[] {
   const map = new Map<string, DropdownOption>();
 
   for (const opt of DEFAULT_STOCK_CATEGORIES) {
     map.set(opt.value.toLowerCase(), opt);
+  }
+
+  for (const cat of dbCategories) {
+    const raw = cat?.trim();
+    if (!raw) continue;
+    const key = raw.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, { label: raw, value: raw });
+    }
   }
 
   for (const item of stock) {
@@ -35,4 +47,3 @@ export function buildStockCategoryOptions(stock: MockItem[]): DropdownOption[] {
 
   return Array.from(map.values());
 }
-

@@ -1,4 +1,5 @@
 import { stockModel, StockItem } from '../models/stockModel.js';
+import { categoryModel } from '../models/categoryModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
 import { cache } from '../utils/cache.js';
 
@@ -46,10 +47,13 @@ export const stockService = {
     const threshold = Number(data.min_threshold ?? data.minThreshold ?? 10);
     const calculatedStatus = data.status || this.calculateStatus(quantity, threshold);
 
+    const categoryName = (data.category || 'Office Stationery').trim();
+    await categoryModel.ensureExists(categoryName).catch(() => {});
+
     const created = await stockModel.create({
       code,
       name,
-      category: data.category || 'Office Stationery',
+      category: categoryName,
       quantity,
       unit: data.unit || 'Units',
       location_id: data.location_id || data.locationId || null,
@@ -73,6 +77,10 @@ export const stockService = {
     const newQuantity = data.quantity !== undefined ? data.quantity : current.quantity;
     const newThreshold = data.min_threshold !== undefined ? data.min_threshold : (current.min_threshold || 10);
     const newStatus = data.status || this.calculateStatus(newQuantity, newThreshold);
+
+    if (data.category) {
+      await categoryModel.ensureExists(data.category).catch(() => {});
+    }
 
     const updated = await stockModel.update(id, {
       ...data,
