@@ -326,20 +326,19 @@ export default function DashboardPage() {
               </div>
             </Link>
 
-            {/* Tile 3: Barcode Scanner */}
-            <button
-              type="button"
-              onClick={openScanner}
-              className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left group cursor-pointer shadow-2xs"
+            {/* Tile 3: Add Stock */}
+            <Link
+              href="/stock/create"
+              className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/80 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left group shadow-2xs"
             >
               <div className="w-9 h-9 rounded-lg bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-800 shrink-0 group-hover:bg-neutral-200 transition-colors">
-                <QrCode className="w-4 h-4" />
+                <Package className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-neutral-900 truncate">Barcode Scan</div>
-                <div className="text-[11px] text-neutral-500 truncate">Instant tag scanner</div>
+                <div className="text-xs font-bold text-neutral-900 truncate">Add Inventory</div>
+                <div className="text-[11px] text-neutral-500 truncate">New stock SKU</div>
               </div>
-            </button>
+            </Link>
 
             {/* Tile 4: Add Asset */}
             <Link

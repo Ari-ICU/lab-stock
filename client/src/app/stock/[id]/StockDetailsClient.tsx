@@ -442,7 +442,7 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
               <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
                 <Package className="w-4 h-4 text-neutral-700" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                  Item Visual & Barcode
+                  Item Visual & SKU
                 </h3>
               </div>
 
@@ -456,12 +456,12 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                 />
               </div>
 
-              {/* Barcode Tag Box */}
+              {/* SKU Tag Box */}
               <div className="p-3 bg-neutral-50 border border-neutral-200 rounded flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <QrCode className="w-6 h-6 text-neutral-700" />
+                  <Tag className="w-5 h-5 text-neutral-700" />
                   <div>
-                    <div className="text-[10px] uppercase font-bold text-neutral-400">Barcode / SKU</div>
+                    <div className="text-[10px] uppercase font-bold text-neutral-400">Part Code / SKU</div>
                     <div className="font-mono text-xs font-bold text-neutral-900">{item.code}</div>
                   </div>
                 </div>

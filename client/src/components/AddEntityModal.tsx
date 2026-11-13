@@ -2,11 +2,10 @@
 
 import React, { useState } from 'react';
 import { useStock } from '@/context/StockContext';
-import { X, Plus, QrCode } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
-import { ScanCodeModal } from '@/components/ScanCodeModal';
 import { buildStockCategoryOptions } from '@/lib/categories';
 
 const stockStatusOptions = [
@@ -261,35 +260,15 @@ export function AddEntityModal() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block font-semibold text-neutral-800">Part / SKU</label>
-                  <button
-                    type="button"
-                    onClick={() => setScanTarget('stock_code')}
-                    className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    <QrCode className="w-3 h-3" />
-                    <span>Scan</span>
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. SFP-10G-SR"
-                    value={stockCode}
-                    onChange={(e) => setStockCode(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 pr-8 rounded focus:outline-none focus:border-neutral-900 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setScanTarget('stock_code')}
-                    title="Scan SKU Barcode"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 p-0.5 rounded cursor-pointer"
-                  >
-                    <QrCode className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <label className="block font-semibold text-neutral-800 mb-1">Part / SKU</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. SFP-10G-SR"
+                  value={stockCode}
+                  onChange={(e) => setStockCode(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                />
               </div>
 
               <div>
@@ -420,35 +399,15 @@ export function AddEntityModal() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block font-semibold text-neutral-800">Serial Number</label>
-                  <button
-                    type="button"
-                    onClick={() => setScanTarget('asset_serial')}
-                    className="text-[10px] text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    <QrCode className="w-3 h-3" />
-                    <span>Scan</span>
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. FCW2348L09M"
-                    value={assetSerial}
-                    onChange={(e) => setAssetSerial(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 pr-8 rounded focus:outline-none focus:border-neutral-900 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setScanTarget('asset_serial')}
-                    title="Scan Serial Barcode"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 p-0.5 rounded cursor-pointer"
-                  >
-                    <QrCode className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <label className="block font-semibold text-neutral-800 mb-1">Serial Number</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. FCW2348L09M"
+                  value={assetSerial}
+                  onChange={(e) => setAssetSerial(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded focus:outline-none focus:border-neutral-900 font-mono"
+                />
               </div>
             </div>
 
@@ -722,25 +681,6 @@ export function AddEntityModal() {
           </form>
         )}
       </div>
-
-      <ScanCodeModal
-        isOpen={scanTarget !== null}
-        onClose={() => setScanTarget(null)}
-        title={scanTarget === 'stock_code' ? 'Scan Peripheral Part SKU' : 'Scan Equipment Serial Tag'}
-        targetFieldLabel={scanTarget === 'stock_code' ? 'Stock SKU / Part' : 'Device Serial Number'}
-        onScan={(scannedCode, meta) => {
-          if (scanTarget === 'stock_code') {
-            setStockCode(scannedCode);
-            if (meta?.name && !stockName) setStockName(meta.name);
-            if (meta?.category && !stockCategory) setStockCategory(meta.category);
-          } else if (scanTarget === 'asset_serial') {
-            setAssetSerial(scannedCode);
-            if (meta?.model && !assetModel) setAssetModel(meta.model);
-            if (meta?.name && !assetName) setAssetName(meta.name);
-          }
-          setScanTarget(null);
-        }}
-      />
     </div>
   );
 }

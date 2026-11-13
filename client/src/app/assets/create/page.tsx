@@ -9,7 +9,6 @@ import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
-import { ScanCodeModal } from '@/components/ScanCodeModal';
 import {
   ArrowLeft,
   Router,
@@ -23,7 +22,6 @@ import {
   FileText,
   AlertCircle,
   HelpCircle,
-  QrCode,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -55,7 +53,6 @@ function CreateAssetForm() {
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
   // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
@@ -209,42 +206,22 @@ function CreateAssetForm() {
                   <label className="block text-xs font-semibold text-neutral-800">
                     Serial Number / Tag <span className="text-rose-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsScanModalOpen(true)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors shadow-2xs"
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>Scan Barcode / QR</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleGenerateTag}
-                      className="text-[11px] text-neutral-600 hover:text-neutral-900 hover:underline font-medium cursor-pointer"
-                    >
-                      Generate Tag
-                    </button>
-                  </div>
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. FCW2348L09M or OPT-102B-01"
-                    value={serialNumber}
-                    onChange={(e) => setSerialNumber(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 pr-10 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono uppercase transition-colors"
-                  />
                   <button
                     type="button"
-                    onClick={() => setIsScanModalOpen(true)}
-                    title="Scan Tag with Camera or Barcode"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900 p-1 rounded cursor-pointer transition-colors"
+                    onClick={handleGenerateTag}
+                    className="text-[11px] text-neutral-600 hover:text-neutral-900 hover:underline font-medium cursor-pointer"
                   >
-                    <QrCode className="w-4 h-4" />
+                    Generate Tag
                   </button>
                 </div>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. FCW2348L09M or OPT-102B-01"
+                  value={serialNumber}
+                  onChange={(e) => setSerialNumber(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3.5 py-2.5 rounded focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono uppercase transition-colors"
+                />
               </div>
             </div>
 
@@ -435,19 +412,6 @@ function CreateAssetForm() {
           </div>
         </form>
       </div>
-
-      <ScanCodeModal
-        isOpen={isScanModalOpen}
-        onClose={() => setIsScanModalOpen(false)}
-        title="Scan Hardware Serial / Asset Tag"
-        targetFieldLabel="Asset Serial Number / Tag"
-        onScan={(scannedCode, meta) => {
-          setSerialNumber(scannedCode);
-          if (meta?.model && !model) setModel(meta.model);
-          if (meta?.name && !name) setName(meta.name);
-          showToast(`Scanned tag inserted: ${scannedCode}`, 'success');
-        }}
-      />
     </div>
   );
 }
