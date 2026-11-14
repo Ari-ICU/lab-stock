@@ -401,7 +401,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     const ok = exportToCsv(filename, [...facilityRows, ...hardwareRows], {
       sheetTitle: loc.room || 'Room Audit',
       reportTitle: 'Laboratory Room Condition & Equipment Audit',
-      reportSubtitle: `${loc.name} (${loc.building} • ${loc.room} • Floor ${loc.floor ?? 1})`,
+      reportSubtitle: `${loc.name} (${loc.building} • ${loc.room})`,
     });
     if (ok) {
       showToast(`Exported room condition inventory for ${loc.name} to Excel (.xlsx)`);
@@ -425,7 +425,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       {/* 1. Unified Navigation Header */}
       <Header
         title={loc.name}
-        subtitle={`${loc.building} • Room ${loc.room.replace(/^(rm|room)\s*/i, '')} • Floor ${loc.floor ?? 1}`}
+        subtitle={`${loc.building} • Room ${loc.room.replace(/^(rm|room)\s*/i, '')}`}
         backHref="/locations"
         backLabel="Laboratory Facilities"
         showAction={false}
@@ -491,8 +491,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
               </h2>
               <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-600 mt-1.5 flex-wrap font-medium">
                 <span className="text-neutral-900 font-semibold">{loc.building}</span>
-                <span className="text-neutral-300">·</span>
-                <span>Floor {loc.floor ?? 1}</span>
                 {loc.lastAuditedAt && (
                   <>
                     <span className="text-neutral-300 hidden sm:inline">·</span>

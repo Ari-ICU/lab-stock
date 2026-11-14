@@ -771,7 +771,7 @@ function NewRoomItemInner({ id }: { id: string }) {
                 </div>
                 <div className="font-semibold text-neutral-900">{loc.name}</div>
                 <div className="text-[11px] text-neutral-500">
-                  {loc.building} • Floor {loc.floor ?? 1}
+                  {loc.building}
                 </div>
               </div>
 

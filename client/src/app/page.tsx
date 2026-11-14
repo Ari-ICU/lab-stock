@@ -550,7 +550,7 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 font-medium">
-                        <span>{loc.building} · Floor {loc.floor ?? 1}</span>
+                        <span>{loc.building}</span>
                         <span className="font-mono text-neutral-700">{totalCount} units</span>
                       </div>
                     </Link>

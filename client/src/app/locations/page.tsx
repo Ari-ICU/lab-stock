@@ -384,8 +384,6 @@ export default function LocationsPage() {
                   </Link>
                   <div className="text-xs text-neutral-500 mt-1 flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-neutral-600">{loc.building}</span>
-                    <span>·</span>
-                    <span>Floor {loc.floor ?? 1}</span>
                     {!isAllowed && (
                       <>
                         <span>·</span>
