@@ -26,6 +26,11 @@ import { LabThumbnail } from '@/components/LabThumbnail';
 
 type Source = 'stock' | 'asset';
 
+interface StockAllocationInput {
+  working: number;
+  broken: number;
+}
+
 function NewRoomItemInner({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,10 +53,8 @@ function NewRoomItemInner({ id }: { id: string }) {
   const source: Source = manualSource ?? initialSource;
 
   const [itemSearch, setItemSearch] = useState('');
-  const [selectedStockId, setSelectedStockId] = useState('');
-  const [selectedAssetId, setSelectedAssetId] = useState('');
-  const [qtyWorking, setQtyWorking] = useState(1);
-  const [qtyBroken, setQtyBroken] = useState(0);
+  const [selectedStockQty, setSelectedStockQty] = useState<Record<string, StockAllocationInput>>({});
+  const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -89,9 +92,6 @@ function NewRoomItemInner({ id }: { id: string }) {
     );
   }, [assignableAssets, itemSearch]);
 
-  const selectedStock = assignableStock.find((s) => s.id === selectedStockId);
-  const selectedAsset = assignableAssets.find((a) => a.id === selectedAssetId);
-
   const totalSourceCount = source === 'stock' ? assignableStock.length : assignableAssets.length;
   const pickerRows = useMemo(
     () =>
@@ -117,6 +117,24 @@ function NewRoomItemInner({ id }: { id: string }) {
     [source, filteredStock, filteredAssets]
   );
 
+  const selectedStockList = useMemo(
+    () =>
+      assignableStock
+        .filter((s) => Boolean(selectedStockQty[s.id]))
+        .map((item) => {
+          const counts = selectedStockQty[item.id];
+          const total = counts.working + counts.broken;
+          const invalid = total <= 0 || total > item.quantity;
+          return { item, counts, total, invalid };
+        }),
+    [assignableStock, selectedStockQty]
+  );
+
+  const selectedAssetList = useMemo(
+    () => assignableAssets.filter((a) => selectedAssetIds.includes(a.id)),
+    [assignableAssets, selectedAssetIds]
+  );
+
   if (isLoading || !loc) {
     return <LoadingScreen message="Loading classroom assignment workspace..." />;
   }
@@ -125,27 +143,85 @@ function NewRoomItemInner({ id }: { id: string }) {
   const isAllowed = isAdmin || canManageLocation(loc.room) || canManageLocation(loc.name);
   const backHref = `/locations/${loc.id}?tab=${source === 'asset' ? 'hardware' : 'stock'}`;
 
-  const handleSelectStock = (stockId: string) => {
-    setSelectedStockId(stockId);
-    const item = assignableStock.find((s) => s.id === stockId);
-    if (!item) return;
-    setQtyWorking(Math.min(item.quantity || 1, 1));
-    setQtyBroken(0);
-    setRemarks('');
+  const selectedAssetSet = new Set(selectedAssetIds);
+  const isRowSelected = (rowId: string) =>
+    source === 'stock' ? Boolean(selectedStockQty[rowId]) : selectedAssetSet.has(rowId);
+
+  const visibleSelectedCount = pickerRows.filter((row) => isRowSelected(row.id)).length;
+  const allVisibleSelected = pickerRows.length > 0 && visibleSelectedCount === pickerRows.length;
+
+  const toggleStockItem = (stockId: string) => {
+    setSelectedStockQty((prev) => {
+      if (prev[stockId]) {
+        const next = { ...prev };
+        delete next[stockId];
+        return next;
+      }
+      const target = assignableStock.find((s) => s.id === stockId);
+      if (!target) return prev;
+      return {
+        ...prev,
+        [stockId]: { working: Math.min(target.quantity || 1, 1), broken: 0 },
+      };
+    });
   };
 
-  const handleSelectAsset = (assetId: string) => {
-    setSelectedAssetId(assetId);
-    setRemarks('');
+  const updateStockQty = (stockId: string, field: 'working' | 'broken', value: number) => {
+    setSelectedStockQty((prev) => {
+      const current = prev[stockId];
+      if (!current) return prev;
+      return {
+        ...prev,
+        [stockId]: { ...current, [field]: Math.max(0, value) },
+      };
+    });
   };
 
-  const totalAllocated = (Number(qtyWorking) || 0) + (Number(qtyBroken) || 0);
-  const exceedsStock = source === 'stock' && selectedStock ? totalAllocated > selectedStock.quantity : false;
+  const toggleAssetItem = (assetId: string) => {
+    setSelectedAssetIds((prev) =>
+      prev.includes(assetId) ? prev.filter((idVal) => idVal !== assetId) : [...prev, assetId]
+    );
+  };
 
-  const canSubmit =
-    isAllowed &&
-    !submitting &&
-    (source === 'stock' ? Boolean(selectedStock) && totalAllocated > 0 && !exceedsStock : Boolean(selectedAsset));
+  const handleToggleSelectAllVisible = () => {
+    if (source === 'stock') {
+      setSelectedStockQty((prev) => {
+        const next = { ...prev };
+        if (allVisibleSelected) {
+          pickerRows.forEach((row) => delete next[row.id]);
+        } else {
+          filteredStock.forEach((item) => {
+            if (!next[item.id]) {
+              next[item.id] = { working: Math.min(item.quantity || 1, 1), broken: 0 };
+            }
+          });
+        }
+        return next;
+      });
+      return;
+    }
+
+    setSelectedAssetIds((prev) => {
+      const visibleIds = pickerRows.map((r) => r.id);
+      if (allVisibleSelected) {
+        const visibleSet = new Set(visibleIds);
+        return prev.filter((idVal) => !visibleSet.has(idVal));
+      }
+      const merged = new Set([...prev, ...visibleIds]);
+      return Array.from(merged);
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedStockQty({});
+    setSelectedAssetIds([]);
+  };
+
+  const totalSelectedCount = selectedStockList.length + selectedAssetList.length;
+  const totalStockUnitsToAssign = selectedStockList.reduce((sum, entry) => sum + entry.total, 0);
+  const totalHardwareUnitsToAssign = selectedAssetList.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+  const hasInvalidAllocation = selectedStockList.some((entry) => entry.invalid);
+  const canSubmit = isAllowed && !submitting && totalSelectedCount > 0 && !hasInvalidAllocation;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,86 +229,98 @@ function NewRoomItemInner({ id }: { id: string }) {
       showToast('You do not have permission to manage this classroom', 'error');
       return;
     }
-
-    if (source === 'asset') {
-      if (!selectedAsset) {
-        showToast('Please select a device from Hardware Assets', 'warning');
-        return;
-      }
-      setSubmitting(true);
-      transferAsset(
-        selectedAsset.id,
-        `${loc.name} (${loc.room})`,
-        remarks.trim() || `Assigned to ${loc.room}`,
-        user?.name || 'Admin'
-      );
-      showToast(`Assigned ${selectedAsset.name} to ${loc.room}`, 'success');
-      setTimeout(() => router.push(`/locations/${loc.id}?tab=hardware`), 200);
+    if (totalSelectedCount === 0) {
+      showToast('Please select at least one inventory item or hardware device', 'warning');
       return;
     }
-
-    if (!selectedStock) {
-      showToast('Please select an item from Inventory', 'warning');
-      return;
-    }
-    if (totalAllocated <= 0) {
-      showToast('Quantity must be at least 1', 'warning');
-      return;
-    }
-    if (exceedsStock) {
-      showToast(`Only ${selectedStock.quantity} ${selectedStock.unit} available in Inventory`, 'warning');
+    if (hasInvalidAllocation) {
+      showToast('Check assigned quantities — each item must be between 1 and available stock', 'warning');
       return;
     }
 
     setSubmitting(true);
-    const inferredGroup = inferAssetGroup(selectedStock.category || '', selectedStock.name);
-    addRoomInventoryItem(loc.id, {
-      stockItemId: selectedStock.id,
-      name: selectedStock.name,
-      group: inferredGroup,
-      brandSpec: selectedStock.description || selectedStock.rack || undefined,
-      unit: selectedStock.unit || 'pcs',
-      qtyWorking: Number(qtyWorking) || 0,
-      qtyBroken: Number(qtyBroken) || 0,
-      qtyMaintenance: 0,
-      remarks: remarks.trim() || undefined,
-    });
-    updateStockQuantity(selectedStock.id, -totalAllocated);
-    showToast(
-      `Assigned ${totalAllocated} ${selectedStock.unit || 'Units'} of "${selectedStock.name}" to ${loc.room}`,
-      'success'
-    );
-    setTimeout(() => router.push(`/locations/${loc.id}?tab=stock`), 200);
-  };
+    const noteText = remarks.trim();
 
-  const inputCls =
-    'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400';
+    selectedStockList.forEach(({ item, counts, total }) => {
+      const inferredGroup = inferAssetGroup(item.category || '', item.name);
+      addRoomInventoryItem(
+        loc.id,
+        {
+          stockItemId: item.id,
+          name: item.name,
+          group: inferredGroup,
+          brandSpec: item.description || item.rack || undefined,
+          unit: item.unit || 'pcs',
+          qtyWorking: counts.working,
+          qtyBroken: counts.broken,
+          qtyMaintenance: 0,
+          remarks: noteText || undefined,
+        },
+        { silent: true }
+      );
+      updateStockQuantity(item.id, -total, { silent: true });
+    });
+
+    selectedAssetList.forEach((asset) => {
+      transferAsset(
+        asset.id,
+        `${loc.name} (${loc.room})`,
+        noteText || `Assigned to ${loc.room}`,
+        user?.name || 'Admin',
+        undefined,
+        undefined,
+        { silent: true }
+      );
+    });
+
+    const parts: string[] = [];
+    if (selectedStockList.length > 0) {
+      parts.push(
+        `${selectedStockList.length} inventory ${selectedStockList.length === 1 ? 'item' : 'items'}`
+      );
+    }
+    if (selectedAssetList.length > 0) {
+      parts.push(
+        `${selectedAssetList.length} hardware ${selectedAssetList.length === 1 ? 'device' : 'devices'}`
+      );
+    }
+    showToast(`Assigned ${parts.join(' and ')} to ${loc.room}`, 'success');
+
+    const destTab =
+      selectedAssetList.length > 0 && (selectedStockList.length === 0 || source === 'asset')
+        ? 'hardware'
+        : 'stock';
+    setTimeout(() => router.push(`/locations/${loc.id}?tab=${destTab}`), 200);
+  };
 
   const sourceTabs: {
     key: Source;
     label: string;
     hint: string;
-    count: number;
+    availableCount: number;
+    selectedCount: number;
     icon: React.ReactNode;
   }[] = [
     {
       key: 'stock',
       label: 'From Inventory (/stock)',
-      hint: 'Assign quantity from confirmed inventory items',
-      count: assignableStock.length,
+      hint: 'Check one or more inventory items to allocate',
+      availableCount: assignableStock.length,
+      selectedCount: selectedStockList.length,
       icon: <Boxes className="w-4 h-4" />,
     },
     {
       key: 'asset',
       label: 'From Hardware Assets (/assets)',
-      hint: 'Assign serialized lab device or fleet',
-      count: assignableAssets.length,
+      hint: 'Check one or more hardware devices to assign',
+      availableCount: assignableAssets.length,
+      selectedCount: selectedAssetList.length,
       icon: <Microscope className="w-4 h-4" />,
     },
   ];
 
-  const derivedGroup = selectedStock ? inferAssetGroup(selectedStock.category || '', selectedStock.name) : null;
-  const selectedPickerId = source === 'stock' ? selectedStockId : selectedAssetId;
+  const numInputCls =
+    'w-20 bg-white border border-neutral-300 text-neutral-900 text-xs px-2.5 py-1.5 rounded-lg font-mono font-bold text-center focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900';
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-neutral-50/50">
@@ -257,7 +345,13 @@ function NewRoomItemInner({ id }: { id: string }) {
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-xs"
             >
               <ArrowRight className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{submitting ? 'Assigning...' : `Assign to ${loc.room}`}</span>
+              <span>
+                {submitting
+                  ? 'Assigning...'
+                  : totalSelectedCount > 0
+                  ? `Assign ${totalSelectedCount} to ${loc.room}`
+                  : `Assign to ${loc.room}`}
+              </span>
             </button>
           </div>
         }
@@ -278,14 +372,14 @@ function NewRoomItemInner({ id }: { id: string }) {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
         >
-          {/* Left: inline source selector + assignment configuration */}
+          {/* Left: inline multi-select catalog + selected configuration */}
           <div className="lg:col-span-8 space-y-5">
             <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap border-b border-neutral-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-neutral-700" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Choose Existing Equipment
+                    Choose Existing Equipment (Multi-Select)
                   </h3>
                 </div>
                 <span className="text-[11px] text-neutral-500">
@@ -305,11 +399,6 @@ function NewRoomItemInner({ id }: { id: string }) {
                       onClick={() => {
                         setManualSource(t.key);
                         setItemSearch('');
-                        setSelectedStockId('');
-                        setSelectedAssetId('');
-                        setQtyWorking(1);
-                        setQtyBroken(0);
-                        setRemarks('');
                       }}
                       className={`flex flex-col items-start gap-1 p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                         active
@@ -322,13 +411,20 @@ function NewRoomItemInner({ id }: { id: string }) {
                           <span className={active ? 'text-emerald-400' : 'text-neutral-500'}>{t.icon}</span>
                           <span>{t.label}</span>
                         </div>
-                        <span
-                          className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md ${
-                            active ? 'bg-white/15 text-white' : 'bg-neutral-200/80 text-neutral-600'
-                          }`}
-                        >
-                          {t.count}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {t.selectedCount > 0 && (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-emerald-500 text-white">
+                              {t.selectedCount} checked
+                            </span>
+                          )}
+                          <span
+                            className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md ${
+                              active ? 'bg-white/15 text-white' : 'bg-neutral-200/80 text-neutral-600'
+                            }`}
+                          >
+                            {t.availableCount}
+                          </span>
+                        </div>
                       </div>
                       <span className={`text-[11px] ${active ? 'text-neutral-300' : 'text-neutral-500'}`}>
                         {t.hint}
@@ -338,7 +434,7 @@ function NewRoomItemInner({ id }: { id: string }) {
                 })}
               </div>
 
-              {/* Search Bar + Unified Inline Picker List */}
+              {/* Search Bar + Select-All Controls */}
               {totalSourceCount === 0 ? (
                 <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="text-xs text-neutral-600">
@@ -363,29 +459,51 @@ function NewRoomItemInner({ id }: { id: string }) {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={itemSearch}
-                      onChange={(e) => setItemSearch(e.target.value)}
-                      placeholder={
-                        source === 'stock'
-                          ? 'Filter inventory by name, SKU, category, or current room...'
-                          : 'Filter devices by name, serial/tag, model, or current room...'
-                      }
-                      className="w-full bg-neutral-50/70 border border-neutral-200 text-neutral-900 text-xs pl-8 pr-8 py-2 rounded-xl focus:outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
-                    />
-                    {itemSearch && (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={itemSearch}
+                        onChange={(e) => setItemSearch(e.target.value)}
+                        placeholder={
+                          source === 'stock'
+                            ? 'Filter inventory by name, SKU, category, or current room...'
+                            : 'Filter devices by name, serial/tag, model, or current room...'
+                        }
+                        className="w-full bg-neutral-50/70 border border-neutral-200 text-neutral-900 text-xs pl-8 pr-8 py-2 rounded-xl focus:outline-none focus:bg-white focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
+                      />
+                      {itemSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setItemSearch('')}
+                          aria-label="Clear search"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => setItemSearch('')}
-                        aria-label="Clear search"
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                        onClick={handleToggleSelectAllVisible}
+                        disabled={pickerRows.length === 0}
+                        className="px-3 py-2 text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40 text-neutral-800 rounded-xl transition-colors cursor-pointer whitespace-nowrap"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        {allVisibleSelected ? 'Unselect All' : `Select All (${pickerRows.length})`}
                       </button>
-                    )}
+                      {totalSelectedCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearSelection}
+                          className="px-3 py-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          Clear ({totalSelectedCount})
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="border border-neutral-200/90 rounded-xl overflow-hidden bg-white">
@@ -397,13 +515,13 @@ function NewRoomItemInner({ id }: { id: string }) {
                     ) : (
                       <div className="max-h-[320px] overflow-y-auto divide-y divide-neutral-100">
                         {pickerRows.map((row) => {
-                          const isSelected = row.id === selectedPickerId;
+                          const isSelected = isRowSelected(row.id);
                           return (
                             <button
                               key={row.id}
                               type="button"
                               onClick={() =>
-                                source === 'stock' ? handleSelectStock(row.id) : handleSelectAsset(row.id)
+                                source === 'stock' ? toggleStockItem(row.id) : toggleAssetItem(row.id)
                               }
                               className={`w-full px-3.5 py-3 flex items-center gap-3 text-left transition-colors cursor-pointer ${
                                 isSelected
@@ -413,6 +531,17 @@ function NewRoomItemInner({ id }: { id: string }) {
                                   : 'hover:bg-neutral-50/80'
                               }`}
                             >
+                              <span
+                                className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                                  isSelected
+                                    ? source === 'stock'
+                                      ? 'bg-emerald-600 border-emerald-600 text-white'
+                                      : 'bg-neutral-900 border-neutral-900 text-white'
+                                    : 'border-neutral-300 bg-white'
+                                }`}
+                              >
+                                {isSelected && <Check className="w-3 h-3" />}
+                              </span>
                               <LabThumbnail
                                 src={row.imageUrl}
                                 alt={row.name}
@@ -433,22 +562,9 @@ function NewRoomItemInner({ id }: { id: string }) {
                                   <span className="text-neutral-600 font-medium">{row.locationLabel}</span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2.5 shrink-0">
-                                <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200/80 whitespace-nowrap">
-                                  {row.quantityLabel}
-                                </span>
-                                <span
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${
-                                    isSelected
-                                      ? source === 'stock'
-                                        ? 'bg-emerald-600 border-emerald-600 text-white'
-                                        : 'bg-neutral-900 border-neutral-900 text-white'
-                                      : 'border-neutral-300 bg-white'
-                                  }`}
-                                >
-                                  {isSelected && <Check className="w-3 h-3" />}
-                                </span>
-                              </div>
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200/80 whitespace-nowrap shrink-0">
+                                {row.quantityLabel}
+                              </span>
                             </button>
                           );
                         })}
@@ -459,93 +575,167 @@ function NewRoomItemInner({ id }: { id: string }) {
               )}
             </div>
 
-            {/* Selected Equipment Configuration */}
-            {(selectedStock || selectedAsset) && (
+            {/* Selected Items & Quantities Configuration */}
+            {totalSelectedCount > 0 && (
               <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="w-4 h-4 text-neutral-700" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                      {source === 'stock' ? 'Allocation Quantities & Placement' : 'Transfer & Placement Notes'}
+                      Selected Items ({totalSelectedCount}) &amp; Quantities
                     </h3>
                   </div>
-                  <span className="text-[11px] font-medium text-neutral-500">
-                    {selectedStock
-                      ? derivedGroup
-                        ? getCategoryLabel(derivedGroup)
-                        : selectedStock.category
-                      : selectedAsset?.model}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearSelection}
+                    className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-900 cursor-pointer"
+                  >
+                    Clear all
+                  </button>
                 </div>
 
-                {source === 'stock' && selectedStock && (
-                  <div className="p-3.5 bg-neutral-50/80 border border-neutral-200/70 rounded-xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-600">
-                        Units to Assign
-                      </span>
-                      <span className="text-[11px] font-mono font-bold text-neutral-900 bg-white px-2 py-0.5 rounded border border-neutral-200">
-                        {totalAllocated} / {selectedStock.quantity} {selectedStock.unit || 'Units'}
-                      </span>
+                {selectedStockList.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                      Inventory Quantities ({selectedStockList.length})
                     </div>
+                    <div className="divide-y divide-neutral-100 border border-neutral-200/80 rounded-xl overflow-hidden bg-neutral-50/40">
+                      {selectedStockList.map(({ item, counts, total, invalid }) => {
+                        const group = inferAssetGroup(item.category || '', item.name);
+                        return (
+                          <div key={item.id} className="p-3.5 space-y-2 bg-white">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <LabThumbnail
+                                  src={item.imageUrl}
+                                  alt={item.name}
+                                  size="thumb"
+                                  fallbackType="item"
+                                  className="w-9 h-9 rounded-lg border border-neutral-200 shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <div className="text-xs font-semibold text-neutral-900 truncate">
+                                    {item.name}
+                                  </div>
+                                  <div className="text-[11px] text-neutral-500 truncate">
+                                    {item.code} · {getCategoryLabel(group)} · Avail:{' '}
+                                    <span className="font-mono font-semibold text-neutral-800">
+                                      {item.quantity} {item.unit}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800 mb-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span>Working Units</span>
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          max={selectedStock.quantity}
-                          value={qtyWorking}
-                          onChange={(e) => setQtyWorking(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                          className={`${inputCls} font-mono font-bold`}
-                        />
-                      </div>
-                      <div>
-                        <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800 mb-1.5">
-                          <span className="w-2 h-2 rounded-full bg-rose-500" />
-                          <span>Broken Units</span>
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          max={selectedStock.quantity}
-                          value={qtyBroken}
-                          onChange={(e) => setQtyBroken(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                          className={`${inputCls} font-mono`}
-                        />
-                      </div>
+                              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800">
+                                  <span>OK</span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={item.quantity}
+                                    value={counts.working}
+                                    onChange={(e) =>
+                                      updateStockQty(item.id, 'working', parseInt(e.target.value, 10) || 0)
+                                    }
+                                    className={numInputCls}
+                                  />
+                                </label>
+                                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-700">
+                                  <span>Broken</span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={item.quantity}
+                                    value={counts.broken}
+                                    onChange={(e) =>
+                                      updateStockQty(item.id, 'broken', parseInt(e.target.value, 10) || 0)
+                                    }
+                                    className={numInputCls}
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleStockItem(item.id)}
+                                  aria-label={`Remove ${item.name}`}
+                                  className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {invalid && (
+                              <p className="text-[11px] text-rose-700 font-medium flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                <span>
+                                  {total <= 0
+                                    ? 'Assign at least 1 unit or remove this item.'
+                                    : `Requested ${total} exceeds available ${item.quantity} ${item.unit}.`}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
+                  </div>
+                )}
 
-                    {exceedsStock && (
-                      <p className="text-[11px] text-rose-700 font-medium flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                        <span>
-                          Requested {totalAllocated} {selectedStock.unit} exceeds available stock (
-                          {selectedStock.quantity} {selectedStock.unit}).
-                        </span>
-                      </p>
-                    )}
+                {selectedAssetList.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                      Hardware Devices to Relocate ({selectedAssetList.length})
+                    </div>
+                    <div className="divide-y divide-neutral-100 border border-neutral-200/80 rounded-xl overflow-hidden bg-white">
+                      {selectedAssetList.map((asset) => (
+                        <div key={asset.id} className="p-3 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <LabThumbnail
+                              src={asset.imageUrl}
+                              alt={asset.name}
+                              size="thumb"
+                              fallbackType="item"
+                              className="w-9 h-9 rounded-lg border border-neutral-200 shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <div className="text-xs font-semibold text-neutral-900 truncate">
+                                {asset.name}
+                              </div>
+                              <div className="text-[11px] text-neutral-500 truncate">
+                                {asset.serialNumber} · {asset.location || 'Unassigned'} →{' '}
+                                <span className="font-semibold text-emerald-700">{loc.room}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200/80">
+                              {asset.totalUnits ?? 1} {asset.unitType || 'Units'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => toggleAssetItem(asset.id)}
+                              aria-label={`Remove ${asset.name}`}
+                              className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
-                    {source === 'stock' ? 'Classroom Placement / Remarks' : 'Transfer / Placement Notes'}
+                    Classroom Placement / Transfer Notes (Applied to Selection)
                   </label>
                   <textarea
                     rows={2}
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    placeholder={
-                      source === 'stock'
-                        ? 'e.g. Student benches 1-4, instructor cabinet...'
-                        : `e.g. Deployed in ${loc.room} rack or lab stations...`
-                    }
-                    className={inputCls}
+                    placeholder={`e.g. Stationed in ${loc.room} benches or network rack...`}
+                    className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
                   />
                 </div>
               </div>
@@ -575,93 +765,48 @@ function NewRoomItemInner({ id }: { id: string }) {
 
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center py-1 border-b border-neutral-100">
-                  <span className="text-neutral-500">Source Registry</span>
-                  <span className="font-semibold text-neutral-900">
-                    {source === 'stock' ? 'Inventory (/stock)' : 'Hardware Assets (/assets)'}
+                  <span className="text-neutral-500">Inventory Items</span>
+                  <span className="font-mono font-semibold text-neutral-900">
+                    {selectedStockList.length} ({totalStockUnitsToAssign} units)
                   </span>
                 </div>
-
-                {source === 'stock' ? (
-                  <>
-                    <div className="flex justify-between items-start gap-3 py-1 border-b border-neutral-100">
-                      <span className="text-neutral-500 shrink-0">Selected Item</span>
-                      <span className="font-semibold text-neutral-900 text-right">
-                        {selectedStock ? selectedStock.name : 'Select an item on left'}
-                      </span>
-                    </div>
-                    {selectedStock && (
-                      <>
-                        <div className="flex justify-between items-center py-1 border-b border-neutral-100">
-                          <span className="text-neutral-500">Working / Broken</span>
-                          <span className="font-mono text-neutral-800">
-                            <span className="text-emerald-700 font-bold">{qtyWorking}</span>
-                            {' / '}
-                            <span className={qtyBroken > 0 ? 'text-rose-600 font-bold' : 'text-neutral-400'}>
-                              {qtyBroken}
-                            </span>
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center py-1">
-                          <span className="text-neutral-500">Total to assign</span>
-                          <span className="font-mono font-bold text-neutral-900 text-sm">
-                            {totalAllocated} {selectedStock.unit || 'Units'}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between items-start gap-3 py-1 border-b border-neutral-100">
-                      <span className="text-neutral-500 shrink-0">Selected Device</span>
-                      <span className="font-semibold text-neutral-900 text-right">
-                        {selectedAsset ? selectedAsset.name : 'Select a device on left'}
-                      </span>
-                    </div>
-                    {selectedAsset && (
-                      <>
-                        <div className="flex justify-between items-center py-1 border-b border-neutral-100">
-                          <span className="text-neutral-500">Moving From</span>
-                          <span className="font-medium text-neutral-700 text-right truncate max-w-[160px]">
-                            {selectedAsset.location || 'Unassigned'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center py-1">
-                          <span className="text-neutral-500">Units</span>
-                          <span className="font-mono font-bold text-neutral-900 text-sm">
-                            {selectedAsset.totalUnits ?? 1} {selectedAsset.unitType || 'Units'}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
+                <div className="flex justify-between items-center py-1 border-b border-neutral-100">
+                  <span className="text-neutral-500">Hardware Devices</span>
+                  <span className="font-mono font-semibold text-neutral-900">
+                    {selectedAssetList.length} ({totalHardwareUnitsToAssign} units)
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-neutral-500">Total Selected</span>
+                  <span className="font-mono font-bold text-neutral-900 text-sm">
+                    {totalSelectedCount} {totalSelectedCount === 1 ? 'record' : 'records'}
+                  </span>
+                </div>
               </div>
 
-              {source === 'stock' && selectedStock && (
-                <div
-                  className={`p-3 rounded-xl border ${
-                    exceedsStock ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50/80 border-emerald-200'
-                  }`}
-                >
-                  <div className="flex justify-between">
-                    <span className="text-neutral-600">Stock available now</span>
-                    <span className="font-mono font-bold text-neutral-900">
-                      {selectedStock.quantity} {selectedStock.unit}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-neutral-600">Remaining after assign</span>
-                    <span className={`font-mono font-bold ${exceedsStock ? 'text-rose-700' : 'text-emerald-700'}`}>
-                      {selectedStock.quantity - totalAllocated} {selectedStock.unit}
-                    </span>
-                  </div>
+              {totalSelectedCount > 0 ? (
+                <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200/80 space-y-1.5 max-h-48 overflow-y-auto">
+                  {selectedStockList.map(({ item, total }) => (
+                    <div key={item.id} className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="truncate text-neutral-800 font-medium">{item.name}</span>
+                      <span className="font-mono font-semibold text-emerald-700 shrink-0">
+                        {total} {item.unit}
+                      </span>
+                    </div>
+                  ))}
+                  {selectedAssetList.map((asset) => (
+                    <div key={asset.id} className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="truncate text-neutral-800 font-medium">{asset.name}</span>
+                      <span className="font-mono font-semibold text-blue-700 shrink-0">
+                        {asset.totalUnits ?? 1} {asset.unitType || 'Units'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              )}
-
-              {!selectedStock && !selectedAsset && (
+              ) : (
                 <p className="text-[11px] text-neutral-500 bg-neutral-50 border border-neutral-200/70 rounded-xl p-3 leading-relaxed">
-                  Click any row in the list on the left to choose what to assign to {loc.room}.
+                  Check one or more items on the left (across Inventory or Hardware Assets) to assign them to{' '}
+                  {loc.room} at once.
                 </p>
               )}
             </div>

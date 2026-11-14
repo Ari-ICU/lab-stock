@@ -53,7 +53,7 @@ interface StockContextType {
   isBackendConnected: boolean;
   refreshBackendData: () => Promise<void>;
   addStockItem: (item: Omit<MockItem, 'id' | 'status'> & { id?: string; status?: MockItem['status'] }) => MockItem;
-  updateStockQuantity: (id: string, delta: number) => void;
+  updateStockQuantity: (id: string, delta: number, options?: { silent?: boolean }) => void;
   updateStockItem: (item: MockItem) => void;
   deleteStockItem: (id: string) => void;
   addAsset: (asset: Omit<MockAsset, 'id'> & { id?: string }) => MockAsset;
@@ -80,7 +80,8 @@ interface StockContextType {
     reason?: string,
     transferredBy?: string,
     fromLocation?: string,
-    quantity?: number
+    quantity?: number,
+    options?: { silent?: boolean }
   ) => MockTransfer;
   addRack: (rack: Omit<MockRack, 'id'> & { id?: string }) => void;
   updateRack: (rack: MockRack) => void;
@@ -91,7 +92,11 @@ interface StockContextType {
   updateRoomInventoryCount: (roomId: string, itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number) => void;
   updateRoomInventoryItem: (roomId: string, itemId: string, updates: Partial<RoomInventoryItem>) => void;
   markRoomAudited: (roomId: string, auditorName: string) => void;
-  addRoomInventoryItem: (roomId: string, item: Omit<RoomInventoryItem, 'id' | 'roomId'>) => void;
+  addRoomInventoryItem: (
+    roomId: string,
+    item: Omit<RoomInventoryItem, 'id' | 'roomId'>,
+    options?: { silent?: boolean }
+  ) => void;
   deleteRoomInventoryItem: (roomId: string, itemId: string) => void;
   isScannerOpen: boolean;
   openScanner: () => void;
@@ -513,21 +518,25 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateStockQuantity = (id: string, delta: number) => {
-    setStock((prev) =>
-      prev.map((item) => {
+  const updateStockQuantity = (id: string, delta: number, options?: { silent?: boolean }) => {
+    setStock((prev) => {
+      const next = prev.map((item) => {
         if (item.id === id || item.code.toLowerCase() === id.toLowerCase()) {
           const newQty = Math.max(0, item.quantity + delta);
           return {
             ...item,
             quantity: newQty,
             status: newQty === 0 ? 'out_of_stock' : newQty <= 5 ? 'low_stock' : 'in_stock',
-          };
+          } as MockItem;
         }
         return item;
-      })
-    );
-    showToast(`Quantity adjusted (${delta > 0 ? `+${delta}` : delta})`);
+      });
+      setCachedData('stock', next);
+      return next;
+    });
+    if (!options?.silent) {
+      showToast(`Quantity adjusted (${delta > 0 ? `+${delta}` : delta})`);
+    }
     if (getAuthToken()) {
       const targetItem = stock.find((i) => i.id === id || i.code.toLowerCase() === id.toLowerCase());
       const targetId = targetItem ? targetItem.id : id;
@@ -817,14 +826,15 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     reason?: string,
     transferredBy?: string,
     fromLocation?: string,
-    quantity?: number
+    quantity?: number,
+    options?: { silent?: boolean }
   ): MockTransfer => {
     const asset = assets.find((a) => a.id === assetId);
     const fromLoc = fromLocation || asset?.location || 'Unknown';
     const moveQty = quantity && quantity > 0 ? quantity : (asset?.totalUnits || 1);
 
     const newTransfer: MockTransfer = {
-      id: `TR-${Date.now().toString().slice(-4)}`,
+      id: `TR-${Date.now().toString().slice(-4)}-${Math.random().toString(36).slice(2, 6)}`,
       assetId,
       assetName: asset?.name || 'Lab Asset',
       serialNumber: asset?.serialNumber || 'N/A',
@@ -874,7 +884,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         .catch(() => {});
     }
 
-    showToast(`Relocated ${asset?.name || 'Device'} from ${fromLoc} to ${toLocation}`);
+    if (!options?.silent) {
+      showToast(`Relocated ${asset?.name || 'Device'} from ${fromLoc} to ${toLocation}`);
+    }
     return newTransfer;
   };
 
@@ -981,30 +993,35 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
   const addRoomInventoryItem = (
     roomId: string,
-    itemData: Omit<RoomInventoryItem, 'id' | 'roomId'>
+    itemData: Omit<RoomInventoryItem, 'id' | 'roomId'>,
+    options?: { silent?: boolean }
   ) => {
     const newItem: RoomInventoryItem = {
-      id: `inv-${Date.now()}`,
+      id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       roomId,
       lastAuditedAt: new Date().toISOString().split('T')[0],
       ...itemData,
     };
-    setLocations((prev) =>
-      prev.map((loc) => {
+    setLocations((prev) => {
+      const next = prev.map((loc) => {
         if (loc.id !== roomId) return loc;
         return {
           ...loc,
           inventories: [...(loc.inventories || []), newItem],
         };
-      })
-    );
-    showToast(`Added ${newItem.name} to room inventory`, 'success');
+      });
+      setCachedData('locations', next);
+      return next;
+    });
+    if (!options?.silent) {
+      showToast(`Added ${newItem.name} to room inventory`, 'success');
+    }
     if (getAuthToken()) {
       locationService.addRoomInventory(roomId, itemData).then((res) => {
         if (res?.data?.id) {
           // Update temporary id with server id
-          setLocations((current) =>
-            current.map((l) =>
+          setLocations((current) => {
+            const next = current.map((l) =>
               l.id !== roomId
                 ? l
                 : {
@@ -1013,8 +1030,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
                       inv.id === newItem.id ? { ...inv, id: String(res.data.id) } : inv
                     ),
                   }
-            )
-          );
+            );
+            setCachedData('locations', next);
+            return next;
+          });
         }
       }).catch(() => {});
     }
