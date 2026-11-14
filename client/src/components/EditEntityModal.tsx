@@ -68,7 +68,7 @@ export function EditEntityModal() {
   const [conditionStatus, setConditionStatus] = useState<string>('operational');
 
   // Location fields
-  const [building, setBuilding] = useState('Engineering Block A');
+  const [building, setBuilding] = useState('');
   const [room, setRoom] = useState('');
 
   // Rack fields
@@ -151,7 +151,7 @@ export function EditEntityModal() {
     } else if (isLocation) {
       const loc = editingItem as MockLocation;
       setName(loc.name);
-      setBuilding(loc.building);
+      setBuilding(loc.building || '');
       setRoom(loc.room);
     } else if (isRack) {
       const r = editingItem as MockRack;
@@ -499,6 +499,7 @@ export function EditEntityModal() {
                   <input
                     type="text"
                     required
+                    placeholder="e.g. Engineering Block A"
                     value={building}
                     onChange={(e) => setBuilding(e.target.value)}
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"

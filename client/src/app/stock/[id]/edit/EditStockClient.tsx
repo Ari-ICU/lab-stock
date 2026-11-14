@@ -30,18 +30,6 @@ const statusOptions = [
   { label: 'Out of Stock', value: 'out_of_stock' },
 ];
 
-const unitOptions = [
-  { label: 'Units', value: 'Units' },
-  { label: 'Pieces', value: 'Pieces' },
-  { label: 'Reams (Paper)', value: 'Reams' },
-  { label: 'Cartridges (Toner/Ink)', value: 'Cartridges' },
-  { label: 'Bottles (Ink Refill)', value: 'Bottles' },
-  { label: 'Sets / Kits (Tools)', value: 'Sets' },
-  { label: 'Boxes / Packs', value: 'Boxes' },
-  { label: 'Cables', value: 'Cables' },
-  { label: 'Rolls', value: 'Rolls' },
-];
-
 export default function EditStockClient({ id: propId }: { id?: string }) {
   const params = useParams();
   const router = useRouter();
@@ -407,12 +395,12 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                       <label className="block text-xs font-semibold text-neutral-900">
                         Unit Type
                       </label>
-                      <Dropdown
+                      <input
+                        type="text"
                         value={unit}
-                        options={unitOptions}
-                        onChange={setUnit}
-                        placeholder="Select Unit"
-                        buttonClassName="rounded-xl py-2"
+                        onChange={(e) => setUnit(e.target.value)}
+                        placeholder="e.g. Units, Pieces, Boxes, Reams"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
                     </div>
 

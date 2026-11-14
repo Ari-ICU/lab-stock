@@ -104,7 +104,7 @@ export function AddEntityModal() {
 
   // Location Form State
   const [locName, setLocName] = useState('');
-  const [locBuilding, setLocBuilding] = useState('Engineering Block A');
+  const [locBuilding, setLocBuilding] = useState('');
   const [locRoom, setLocRoom] = useState('');
 
   if (activeModal === 'none') return null;
@@ -173,16 +173,17 @@ export function AddEntityModal() {
 
   const handleLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!locName || !locRoom) return;
+    if (!locName.trim() || !locBuilding.trim() || !locRoom.trim()) return;
     const created = await addLocation({
-      name: locName,
-      building: locBuilding,
-      room: locRoom,
+      name: locName.trim(),
+      building: locBuilding.trim(),
+      room: locRoom.trim(),
       totalAssets: 0,
       totalItems: 0,
     });
     if (created) {
       setLocName('');
+      setLocBuilding('');
       setLocRoom('');
       closeModal();
     }
@@ -545,6 +546,7 @@ export function AddEntityModal() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. Engineering Block A"
                   value={locBuilding}
                   onChange={(e) => setLocBuilding(e.target.value)}
                   className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
