@@ -482,7 +482,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         quantity: itemData.quantity || 1,
         unit: itemData.unit || 'Units',
         location: itemData.location || 'Unassigned',
-        rack: itemData.rack || 'Unassigned',
+        rack: itemData.rack?.trim() || '',
         status: (itemData.quantity || 1) > 5 ? 'in_stock' : 'low_stock',
         expiryDate: itemData.expiryDate || 'N/A',
         imageUrl: itemData.imageUrl || undefined,

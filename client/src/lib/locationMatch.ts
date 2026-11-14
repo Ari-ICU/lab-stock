@@ -110,6 +110,51 @@ export interface ConsolidatedRoomInventoryItem extends RoomInventoryItem {
 }
 
 /** Combine non-empty room remarks while removing exact duplicate segments. */
+export function buildRoomLabel(loc: Pick<MockLocation, 'name' | 'room'>): string {
+  return `${loc.name} (${loc.room})`;
+}
+
+/** Validate optional returnTo path so room redirects stay strictly on internal /locations/* routes. */
+export function getSafeLocationReturnPath(
+  rawReturnTo: string | null | undefined,
+  fallback: string
+): string {
+  if (!rawReturnTo) return fallback;
+  const trimmed = rawReturnTo.trim();
+  if (trimmed.startsWith('/locations/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
+  return fallback;
+}
+
+/** Collect distinct shelf / cabinet / bin labels used in stock, prioritizing the selected room. */
+export function collectShelfSuggestions(
+  stock: MockItem[],
+  selectedLocation?: string
+): string[] {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  const target = (selectedLocation || '').trim().toLowerCase();
+
+  const pushUnique = (raw?: string) => {
+    const clean = (raw || '').trim();
+    if (!clean) return;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    ordered.push(clean);
+  };
+
+  if (target) {
+    stock
+      .filter((item) => (item.location || '').trim().toLowerCase() === target)
+      .forEach((item) => pushUnique(item.rack));
+  }
+  stock.forEach((item) => pushUnique(item.rack));
+  return ordered.slice(0, 20);
+}
+
+/** Combine non-empty room remarks while removing exact duplicate segments. */
 export function mergeDistinctRemarks(...values: Array<string | undefined | null>): string | undefined {
   const seen = new Set<string>();
   const parts: string[] = [];

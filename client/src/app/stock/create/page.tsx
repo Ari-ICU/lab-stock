@@ -10,12 +10,14 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { NumberInput } from '@/components/NumberInput';
 import { buildStockCategoryOptions } from '@/lib/categories';
+import { collectShelfSuggestions, getSafeLocationReturnPath } from '@/lib/locationMatch';
 import {
   Save,
   Cable,
   MapPin,
   Hash,
   Layers,
+  Plus,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -27,8 +29,9 @@ const statusOptions = [
 function CreateStockForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addStockItem, stock, categories, createCategory, locations, showToast } = useStock();
+  const { addStockItem, stock, categories, createCategory, locations, openModal, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
+  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
 
   const categoryOptions = React.useMemo(
     () => buildStockCategoryOptions(stock, categories),
@@ -57,6 +60,12 @@ function CreateStockForm() {
 
   const paramLocation = searchParams.get('location') || '';
   const activeLocation = location || paramLocation || defaultLocation;
+  const backHref = getSafeLocationReturnPath(searchParams.get('returnTo'), '/stock');
+  const backLabel = backHref === '/stock' ? 'Inventory' : 'Back to Room';
+  const shelfSuggestions = React.useMemo(
+    () => collectShelfSuggestions(stock, activeLocation),
+    [stock, activeLocation]
+  );
 
   // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
@@ -110,7 +119,7 @@ function CreateStockForm() {
         quantity: Number(quantity) || 0,
         unit: unit.trim() || 'Units',
         location: activeLocation.trim(),
-        rack: rack.trim() || 'Storage Shelf',
+        rack: rack.trim(),
         status,
         expiryDate: expiryDate.trim() || 'Active',
         imageUrl: imageUrl.trim() || undefined,
@@ -118,7 +127,7 @@ function CreateStockForm() {
       });
 
       setTimeout(() => {
-        router.push('/stock');
+        router.push(backHref);
       }, 250);
     } catch {
       showToast('Failed to register stock item', 'error');
@@ -131,13 +140,13 @@ function CreateStockForm() {
       <Header
         title="Add Inventory Item"
         subtitle="Stationery, Printer Ink, Hardware Tools, Consumables & Spares"
-        backHref="/stock"
-        backLabel="Inventory"
+        backHref={backHref}
+        backLabel={backLabel}
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
             <Link
-              href="/stock"
+              href={backHref}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors"
             >
               Cancel
@@ -310,16 +319,30 @@ function CreateStockForm() {
 
               {/* Location & Storage Details */}
               <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                  <MapPin className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Location & Shelf Placement
-                  </h3>
+                <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-neutral-700" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                      Location &amp; Shelf Placement
+                    </h3>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => openModal('add_location')}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>New Room</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-neutral-900">Assigned Laboratory Room</label>
+                    <label className="block text-xs font-semibold text-neutral-900">
+                      Assigned Laboratory Room
+                    </label>
                     <Dropdown
                       value={activeLocation}
                       options={locationOptions}
@@ -327,17 +350,36 @@ function CreateStockForm() {
                       placeholder="Select Lab Room"
                       buttonClassName="rounded-xl py-2"
                     />
+                    <p className="text-[11px] text-neutral-500">
+                      Choose which classroom, lab, or storage room holds this item.
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-neutral-900">Shelf / Cabinet / Bin</label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Shelf / Cabinet / Bin
+                      </label>
+                      <span className="text-[11px] text-neutral-400">Optional</span>
+                    </div>
                     <input
                       type="text"
+                      list="create-stock-shelf-suggestions"
                       value={rack}
                       onChange={(e) => setRack(e.target.value)}
-                      placeholder="e.g. Benches & Shelf SHF-01"
+                      placeholder="e.g. Shelf A-01, Cabinet B, Bin 3"
                       className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                     />
+                    {shelfSuggestions.length > 0 && (
+                      <datalist id="create-stock-shelf-suggestions">
+                        {shelfSuggestions.map((shelf) => (
+                          <option key={shelf} value={shelf} />
+                        ))}
+                      </datalist>
+                    )}
+                    <p className="text-[11px] text-neutral-500">
+                      Exact shelf or bin inside that room. Leave blank if not tracked.
+                    </p>
                   </div>
                 </div>
               </div>

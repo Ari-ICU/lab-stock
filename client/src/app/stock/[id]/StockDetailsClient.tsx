@@ -464,7 +464,9 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
 
                 <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
                   <span className="font-medium text-neutral-500">Shelf / Bin / Cabinet</span>
-                  <span className="col-span-2 font-mono text-neutral-800">{item.rack || 'Standard Storage'}</span>
+                  <span className={`col-span-2 font-mono ${item.rack ? 'text-neutral-800' : 'text-neutral-400'}`}>
+                    {item.rack || 'Not specified'}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">

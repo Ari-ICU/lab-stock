@@ -61,7 +61,7 @@ export function mapServerStock(s: any): MockItem {
     quantity: Number(s.quantity ?? 1),
     unit: s.unit || 'Units',
     location: locStr,
-    rack: s.rack || 'Shelf 01',
+    rack: s.rack || '',
     status: (s.status as MockItem['status']) || (Number(s.quantity) > 5 ? 'in_stock' : 'low_stock'),
     expiryDate: s.expiry_date || s.expiryDate || 'Active',
     imageUrl: s.image_url || s.imageUrl,
