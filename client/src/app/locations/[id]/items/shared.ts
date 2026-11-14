@@ -1,4 +1,5 @@
 import { AssetGroup, MockLocation, MockItem, MockAsset, RoomInventoryItem } from '@/types';
+import { findLinkedStockItem } from '@/lib/locationMatch';
 
 /** Static params for room-level item pages (required for static export builds). */
 export const LOCATION_STATIC_PARAMS = [
@@ -47,29 +48,15 @@ export function findLocation(locations: MockLocation[], id: string): MockLocatio
 }
 
 export function findLinkedStock(item: RoomInventoryItem, stock: MockItem[]) {
-  if (item.stockItemId) {
-    const matched = stock.find((s) => s.id === item.stockItemId || s.code === item.stockItemId);
-    if (matched) return matched;
-  }
-  const nameNorm = (item.name || '').trim().toLowerCase();
-  if (!nameNorm) return undefined;
-  return stock.find((s) => {
-    const sNameNorm = (s.name || '').trim().toLowerCase();
-    return sNameNorm === nameNorm || sNameNorm.includes(nameNorm) || nameNorm.includes(sNameNorm);
-  });
+  return findLinkedStockItem(item, stock);
 }
 
 export function findLinkedAsset(item: RoomInventoryItem, assets: MockAsset[]) {
-  if (item.assetId) {
-    const matched = assets.find((a) => a.id === item.assetId || a.serialNumber === item.assetId);
-    if (matched) return matched;
-  }
-  const nameNorm = (item.name || '').trim().toLowerCase();
-  if (!nameNorm) return undefined;
-  return assets.find((a) => {
-    const aNameNorm = (a.name || '').trim().toLowerCase();
-    return aNameNorm === nameNorm || aNameNorm.includes(nameNorm) || nameNorm.includes(aNameNorm);
-  });
+  if (!item.assetId) return undefined;
+  const target = item.assetId.trim().toLowerCase();
+  return assets.find(
+    (a) => a.id.toLowerCase() === target || a.serialNumber.toLowerCase() === target
+  );
 }
 
 /**

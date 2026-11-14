@@ -119,11 +119,16 @@ export default function EditRoomItemClient({ id }: { id: string }) {
       showToast('Please enter an item name', 'warning');
       return;
     }
-    setSubmitting(true);
-
     const prevTotal = (item.qtyWorking || 0) + (item.qtyBroken || 0) + (item.qtyMaintenance || 0);
     const newTotal = qtyWorking + qtyBroken + qtyMaintenance;
     const diff = newTotal - prevTotal;
+
+    if (linkedStock && diff > linkedStock.quantity) {
+      showToast(`Only ${linkedStock.quantity} additional ${linkedStock.unit} available in Central Inventory`, 'warning');
+      return;
+    }
+
+    setSubmitting(true);
 
     updateRoomInventoryItem(loc.id, item.id, {
       name: name.trim(),
@@ -224,16 +229,29 @@ export default function EditRoomItemClient({ id }: { id: string }) {
 
         <form id="edit-room-item-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-8 space-y-6">
-            {/* Equipment details */}
+            {/* Equipment details (locked when linked to Central Inventory or Assets) */}
             <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                <ClipboardList className="w-4 h-4 text-neutral-700" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details</h3>
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">Equipment Details</h3>
+                </div>
+                {(linkedStock || linkedAsset) && (
+                  <span className="text-[10px] font-semibold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
+                    Synced from {linkedStock ? 'Inventory (/stock)' : 'Hardware Assets (/assets)'}
+                  </span>
+                )}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-neutral-800 mb-1">Item / Equipment Name *</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={`${inputCls} font-semibold`} />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={Boolean(linkedStock || linkedAsset)}
+                  className={`${inputCls} font-semibold disabled:bg-neutral-50 disabled:text-neutral-600`}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -243,19 +261,32 @@ export default function EditRoomItemClient({ id }: { id: string }) {
                     value={group}
                     options={categoryGroupOptions}
                     onChange={(v) => setGroup(v as AssetGroup)}
+                    disabled={Boolean(linkedStock || linkedAsset)}
                     className="w-full"
                     buttonClassName={dropdownBtn}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-neutral-800 mb-1">Unit</label>
-                  <input type="text" value={unit} onChange={(e) => setUnit(e.target.value)} className={inputCls} />
+                  <input
+                    type="text"
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    disabled={Boolean(linkedStock || linkedAsset)}
+                    className={`${inputCls} disabled:bg-neutral-50 disabled:text-neutral-600`}
+                  />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-neutral-800 mb-1">Specification / Model</label>
-                <input type="text" value={brandSpec} onChange={(e) => setBrandSpec(e.target.value)} className={inputCls} />
+                <input
+                  type="text"
+                  value={brandSpec}
+                  onChange={(e) => setBrandSpec(e.target.value)}
+                  disabled={Boolean(linkedStock || linkedAsset)}
+                  className={`${inputCls} disabled:bg-neutral-50 disabled:text-neutral-600`}
+                />
               </div>
             </div>
 
@@ -334,7 +365,10 @@ export default function EditRoomItemClient({ id }: { id: string }) {
               </div>
               {total !== item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0) && (
                 <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2.5">
-                  Total changed from {item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0)} to {total}. Central Stock is not adjusted automatically.
+                  Total changed from {item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0)} to {total}.{' '}
+                  {linkedStock
+                    ? 'Central Inventory (/stock) units will adjust automatically when saved.'
+                    : 'No linked Central Inventory item found.'}
                 </p>
               )}
             </div>

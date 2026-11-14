@@ -12,19 +12,21 @@ import { LabThumbnail } from '@/components/LabThumbnail';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Search,
   Plus,
   AlertTriangle,
   Edit3,
   Trash2,
   FileSpreadsheet,
+  RotateCcw,
   X,
   Boxes,
   Microscope,
 } from 'lucide-react';
 import { AssetGroup, MockItem, RoomInventoryItem } from '@/types';
 import { getRoomItemImage } from './items/shared';
-import { getRoomInventoryStats } from '@/lib/locationMatch';
+import { findLinkedStockItem, getRoomInventoryStats, inferAssetGroup } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
 type RoomInventoryRow =
@@ -66,20 +68,6 @@ type RoomInventoryRow =
       href: string;
       editHref: string;
     };
-
-function inferStockGroup(category: string, name: string): AssetGroup {
-  const text = `${category} ${name}`.toLowerCase();
-  if (/(chair|table|desk|cabinet|fixture|bench|whiteboard|seating|locker|furniture)/.test(text)) {
-    return 'FURNITURE';
-  }
-  if (/(electrical|hvac|light|socket|power|cable|cord|surge|battery|ups|adapter)/.test(text)) {
-    return 'ELECTRICAL';
-  }
-  if (/(safety|fire|extinguisher|misc|first aid|stationery|toner|ink|paper)/.test(text)) {
-    return 'SAFETY_MISC';
-  }
-  return 'IT_HARDWARE';
-}
 
 const ASSET_STATUS_META: Record<
   'operational' | 'in_use' | 'maintenance',
@@ -130,10 +118,10 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     stock,
     openEdit,
     deleteLocation,
-    updateRoomInventoryCount,
     deleteRoomInventoryItem,
-    deleteAsset,
-    deleteStockItem,
+    updateStockItem,
+    updateStockQuantity,
+    transferAsset,
     showToast,
     isLoading,
   } = useStock();
@@ -144,7 +132,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [selectedAssetStatus, setSelectedAssetStatus] = useState<string>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Dropdown Options
   const categoryOptions: DropdownOption[] = [
@@ -235,7 +222,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     if (!loc || !roomStats) return [];
 
     const directStockRows: RoomInventoryRow[] = roomStats.matchingStock.map((s) => {
-      const group = inferStockGroup(s.category, s.name);
+      const group = inferAssetGroup(s.category, s.name);
       return {
         id: `stock-${s.id}`,
         source: 'stock',
@@ -321,13 +308,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     };
   }, [roomStats]);
 
-
-  const copyToClipboard = (text: string, label: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    showToast(`Copied ${label} to clipboard`);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
 
   if (locations.length === 0) {
     return (
@@ -704,12 +684,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 </div>
                 {isAllowed && (
                   <Link
-                    href={activeTab === 'inventory' ? `/locations/${loc.id}/items/new` : '/assets/create'}
+                    href={
+                      activeTab === 'inventory'
+                        ? `/locations/${loc.id}/items/new?source=stock`
+                        : `/locations/${loc.id}/items/new?source=asset`
+                    }
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors shadow-2xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-400" />
                     <span>
-                      {activeTab === 'inventory' ? 'Allocate from Central Stock' : 'Register Hardware Asset'}
+                      {activeTab === 'inventory' ? 'Assign from Inventory' : 'Assign Hardware Device'}
                     </span>
                   </Link>
                 )}
@@ -742,11 +726,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     )}
                     {isAllowed && (
                       <Link
-                        href={`/locations/${loc.id}/items/new`}
+                        href={`/locations/${loc.id}/items/new?source=stock`}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Allocate from Central Stock</span>
+                        <span>Assign from Inventory</span>
                       </Link>
                     )}
                   </div>
@@ -887,12 +871,35 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             <RowActionMenu
                               onViewDetails={() => router.push(item.href)}
                               onEdit={isAllowed ? () => router.push(item.editHref) : undefined}
-                              onDelete={
-                                isAdmin
-                                  ? () =>
-                                      item.source === 'stock'
-                                        ? deleteStockItem(item.stockItem.id)
-                                        : deleteRoomInventoryItem(loc.id, item.allocation.id)
+                              actions={
+                                isAllowed
+                                  ? item.source === 'stock'
+                                    ? [
+                                        {
+                                          label: 'Unassign from Room',
+                                          icon: <RotateCcw className="w-3.5 h-3.5 text-amber-600" />,
+                                          variant: 'warning',
+                                          onClick: () =>
+                                            updateStockItem({
+                                              ...item.stockItem,
+                                              location: 'Unassigned',
+                                            }),
+                                        },
+                                      ]
+                                    : [
+                                        {
+                                          label: 'Return to Inventory',
+                                          icon: <RotateCcw className="w-3.5 h-3.5 text-amber-600" />,
+                                          variant: 'warning',
+                                          onClick: () => {
+                                            const linked = findLinkedStockItem(item.allocation, stock);
+                                            if (linked && item.total > 0) {
+                                              updateStockQuantity(linked.id, item.total);
+                                            }
+                                            deleteRoomInventoryItem(loc.id, item.allocation.id);
+                                          },
+                                        },
+                                      ]
                                   : undefined
                               }
                             />
@@ -916,7 +923,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     No serialized hardware devices assigned to {loc.room}
                   </h3>
                   <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1 leading-relaxed">
-                    Serialized hardware devices (such as firewalls, switches, routers, projectors, and lab workstations tracked individually) appear here when their location includes {loc.room}.
+                    Hardware devices from Hardware Assets (/assets) appear here when their location is assigned to {loc.room}.
                   </p>
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
                     <button
@@ -929,11 +936,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     </button>
                     {isAllowed && (
                       <Link
-                        href="/assets/create"
+                        href={`/locations/${loc.id}/items/new?source=asset`}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Register Hardware Asset</span>
+                        <span>Assign Hardware Device</span>
                       </Link>
                     )}
                   </div>
@@ -1041,7 +1048,29 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             <RowActionMenu
                               onViewDetails={() => router.push(`/assets/${asset.id}`)}
                               onEdit={isAllowed ? () => router.push(`/assets/${asset.id}/edit`) : undefined}
-                              onDelete={isAllowed ? () => deleteAsset(asset.id) : undefined}
+                              actions={
+                                isAllowed
+                                  ? [
+                                      {
+                                        label: 'Relocate Room',
+                                        icon: <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />,
+                                        onClick: () => router.push(`/assets/${asset.id}/relocate`),
+                                      },
+                                      {
+                                        label: 'Unassign from Room',
+                                        icon: <RotateCcw className="w-3.5 h-3.5 text-amber-600" />,
+                                        variant: 'warning',
+                                        onClick: () =>
+                                          transferAsset(
+                                            asset.id,
+                                            'Unassigned',
+                                            `Unassigned from ${loc.room}`,
+                                            user?.name || 'Admin'
+                                          ),
+                                      },
+                                    ]
+                                  : undefined
+                              }
                             />
                           </td>
                         </tr>

@@ -22,7 +22,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemId = searchParams.get('item') || '';
-  const { locations, stock, assets, deleteRoomInventoryItem, isLoading } = useStock();
+  const { locations, stock, assets, deleteRoomInventoryItem, updateStockQuantity, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -65,6 +65,9 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
       : { text: `${item.qtyBroken} Broken`, cls: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500' };
 
   const handleDelete = () => {
+    if (linkedStock && total > 0) {
+      updateStockQuantity(linkedStock.id, total);
+    }
     deleteRoomInventoryItem(loc.id, item.id);
     router.push(backHref);
   };
@@ -232,7 +235,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
                     <ExternalLink className="w-3.5 h-3.5 text-blue-700 shrink-0" />
                   </Link>
                 ) : (
-                  <p className="text-neutral-500">Custom item — not linked to Central Stock or Assets.</p>
+                  <p className="text-neutral-500">Allocation record — central link not available.</p>
                 )}
               </div>
             </div>
