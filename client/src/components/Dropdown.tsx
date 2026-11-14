@@ -70,69 +70,77 @@ export function Dropdown({
     ? value
     : placeholder;
 
+  const computeOpenUpwards = () => {
+    if (direction === 'up') return true;
+    if (direction === 'down') return false;
+    if (!containerRef.current) return false;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    let availableBelow = window.innerHeight - rect.bottom;
+    let availableAbove = rect.top;
+
+    // Check inside scrollable or dialog parent containers to avoid clipped overflow
+    let el = containerRef.current.parentElement;
+    while (el && el !== document.body) {
+      const style = window.getComputedStyle(el);
+      const overflowY = style.overflowY || style.overflow;
+      const isClipped = /(auto|scroll|clip)/.test(overflowY);
+      const isModal =
+        (el.hasAttribute('role') && el.getAttribute('role') === 'dialog') ||
+        el.classList.contains('shadow-2xl') ||
+        el.classList.contains('shadow-xl');
+
+      if (isClipped || isModal) {
+        const pRect = el.getBoundingClientRect();
+        availableBelow = Math.min(availableBelow, pRect.bottom - rect.bottom);
+        availableAbove = Math.min(availableAbove, rect.top - pRect.top);
+        break;
+      }
+      el = el.parentElement;
+    }
+
+    return availableBelow < 210 && availableAbove > availableBelow;
+  };
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (open) {
+      setOpen(false);
+      setSearchQuery('');
+    } else {
+      setOpenUpwards(computeOpenUpwards());
+      setSearchQuery('');
+      setOpen(true);
+    }
+  };
+
   useEffect(() => {
+    if (!open) return;
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setSearchQuery('');
       }
     }
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setOpen(false);
+        setSearchQuery('');
       }
     }
-    if (open) {
-      if (containerRef.current) {
-        if (direction === 'up') {
-          setOpenUpwards(true);
-        } else if (direction === 'down') {
-          setOpenUpwards(false);
-        } else {
-          const rect = containerRef.current.getBoundingClientRect();
-          let availableBelow = window.innerHeight - rect.bottom;
-          let availableAbove = rect.top;
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
 
-          // Check inside parent modal or scroll container to prevent clipped overflow
-          let el = containerRef.current.parentElement;
-          while (el && el !== document.body) {
-            const style = window.getComputedStyle(el);
-            const isScrollable = /(auto|scroll)/.test(style.overflowY || style.overflow);
-            const isModal =
-              (el.hasAttribute('role') && el.getAttribute('role') === 'dialog') ||
-              el.classList.contains('shadow-2xl') ||
-              el.classList.contains('shadow-xl') ||
-              el.tagName === 'FORM';
-
-            if (isScrollable || isModal) {
-              const pRect = el.getBoundingClientRect();
-              availableBelow = Math.min(availableBelow, pRect.bottom - rect.bottom);
-              availableAbove = Math.min(availableAbove, rect.top - pRect.top);
-              break;
-            }
-            el = el.parentElement;
-          }
-
-          // If space below is restricted (< 210px) and there's more room above, flip upwards
-          const shouldFlipUp = availableBelow < 210 && availableAbove > availableBelow;
-          setOpenUpwards(shouldFlipUp);
-        }
-      }
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-
-      if (isSearchable) {
-        setTimeout(() => {
-          searchInputRef.current?.focus();
-        }, 30);
-      }
-    } else {
-      setSearchQuery('');
+    if (isSearchable) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 30);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, direction, isSearchable]);
+  }, [open, isSearchable]);
 
   // Determine width
   const hasCustomWidth =
@@ -147,7 +155,7 @@ export function Dropdown({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
+        onClick={handleToggle}
         className={`w-full flex items-center justify-between gap-2.5 px-3 py-1.5 text-xs font-medium rounded transition-colors select-none text-left ${
           disabled
             ? 'bg-neutral-100/80 border border-neutral-200 text-neutral-400 cursor-not-allowed shadow-none'
