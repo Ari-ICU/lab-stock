@@ -69,13 +69,18 @@ export const seedLocations = [
   },
 ];
 
+/**
+ * Serialized Hardware Assets (PCs, Projectors, Switches, Firewalls, Access Points, Lab Instruments)
+ * Strictly distinct from Central Inventory (`seedStock`) and Room Facility Inventory (`seedRoomInventory`).
+ */
 export const seedAssets = [
+  // Room 102B
   {
     serial_number: 'OPT-102B-01-TO-24',
-    name: 'Desktop PC System Unit',
+    name: 'Dell OptiPlex 7090 Workstations (Lab 102B)',
     model: 'Dell OptiPlex 7090 Core i7 / 16GB / 512GB SSD',
     total_units: 40,
-    unit_type: 'units',
+    unit_type: 'Workstations',
     room: 'Room 102B',
     placement_rack: 'Computer Lab Room 102B (Student Benches 1-20)',
     status: 'operational',
@@ -85,16 +90,16 @@ export const seedAssets = [
   },
   {
     serial_number: 'EPS-L630U-8812',
-    name: 'LCD Projector & Screen',
+    name: 'Epson EB-2250U Laser Projector & Screen (Lab 102B)',
     model: 'Epson EB-2250U 5000 Lumens Full HD + 120" Screen',
     total_units: 1,
-    unit_type: 'sets',
+    unit_type: 'Projector',
     room: 'Room 102B',
     placement_rack: 'Computer Lab Room 102B (Ceiling Center Mount)',
     status: 'operational',
     loan_status: 'available',
     image_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
-    description: 'High-lumen laser projector dedicated to lecturer teaching.',
+    description: 'High-lumen ceiling projector with motorized 120-inch screen dedicated to Room 102B lectures.',
   },
   {
     serial_number: 'SW-CORE-3850-X1',
@@ -114,7 +119,7 @@ export const seedAssets = [
     name: 'Cisco Catalyst 9120AX Series Wi-Fi 6 Access Point',
     model: 'C9120AXI-B Dual-Band 802.11ax Ceiling AP',
     total_units: 1,
-    unit_type: 'Unit',
+    unit_type: 'Access Point',
     room: 'Room 102B',
     placement_rack: 'Room 102B - Ceiling Center Grid',
     status: 'operational',
@@ -122,6 +127,8 @@ export const seedAssets = [
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     description: 'Provides high-density 802.11ax wireless connectivity across Lab 102B.',
   },
+
+  // Room 201
   {
     serial_number: 'PREC-201-AI-01-12',
     name: 'Dell Precision 3660 GPU Workstations (Lab 201)',
@@ -129,18 +136,31 @@ export const seedAssets = [
     total_units: 12,
     unit_type: 'Workstations',
     room: 'Room 201',
-    placement_rack: 'Software Engineering & AI Lab Room 201',
+    placement_rack: 'Software Engineering & AI Lab Room 201 (Row A-B)',
     status: 'operational',
     loan_status: 'available',
     image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
     description: 'AI & Machine Learning student workstations equipped with dedicated RTX GPUs.',
   },
   {
+    serial_number: 'HP-ELITE-201-01-28',
+    name: 'HP EliteDesk 800 G6 Student PCs (Lab 201)',
+    model: 'HP EliteDesk 800 G6 Core i7 / RTX 3060 / 16GB RAM',
+    total_units: 28,
+    unit_type: 'Workstations',
+    room: 'Room 201',
+    placement_rack: 'Software Engineering & AI Lab Room 201 (Row C-D)',
+    status: 'operational',
+    loan_status: 'available',
+    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    description: 'Software engineering student workstations supporting containerization and coursework labs.',
+  },
+  {
     serial_number: 'SNY-PHZ60-201',
     name: 'Sony VPL-PHZ60 6000-Lumen Laser Projector (Lab 201)',
     model: '3LCD Laser WUXGA Installation Projector',
     total_units: 1,
-    unit_type: 'Unit',
+    unit_type: 'Projector',
     room: 'Room 201',
     placement_rack: 'Software Engineering & AI Lab Room 201',
     status: 'operational',
@@ -161,6 +181,21 @@ export const seedAssets = [
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     description: 'High-speed gigabit switch serving development pod network ports.',
   },
+
+  // Room 206
+  {
+    serial_number: 'OPT-206-NET-01-32',
+    name: 'Dell OptiPlex 7090 Dual-NIC Workstations (Lab 206)',
+    model: 'Dell OptiPlex 7090 Core i7 / 32GB RAM / Dual GbE NIC',
+    total_units: 32,
+    unit_type: 'Workstations',
+    room: 'Room 206',
+    placement_rack: 'Network & Server Lab Room 206 (Stations 1-32)',
+    status: 'operational',
+    loan_status: 'available',
+    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    description: 'Dual-NIC networking workstations configured for virtualized routing and packet capture labs.',
+  },
   {
     serial_number: 'FOC2341S5K2',
     name: 'Cisco Nexus 93180YC-FX3 100G Leaf Switch',
@@ -173,6 +208,49 @@ export const seedAssets = [
     loan_status: 'available',
     image_url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
     description: 'Data center leaf switch serving virtual server test environments.',
+  },
+
+  // Room 203
+  {
+    serial_number: 'RGL-DS1054Z-203',
+    name: 'Rigol DS1054Z 4-Channel Digital Oscilloscopes (Lab 203)',
+    model: 'DS1054Z 50MHz 1GSa/s 4-Channel Bench Scope',
+    total_units: 6,
+    unit_type: 'Oscilloscopes',
+    room: 'Room 203',
+    placement_rack: 'Electronics & Embedded IoT Lab Room 203 (Benches 1-6)',
+    status: 'operational',
+    loan_status: 'available',
+    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    description: 'Four-channel digital storage oscilloscopes for embedded systems signal analysis.',
+  },
+
+  // Room 305
+  {
+    serial_number: 'LNV-M70S-305-01-36',
+    name: 'Lenovo ThinkCentre M70s Security Workstations (Lab 305)',
+    model: 'Lenovo ThinkCentre M70s Core i7 / 16GB / 512GB NVMe',
+    total_units: 36,
+    unit_type: 'Workstations',
+    room: 'Room 305',
+    placement_rack: 'Cybersecurity & Cloud Lab Room 305 (Benches 1-18)',
+    status: 'in_use',
+    loan_status: 'available',
+    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    description: 'Hardened lab workstations isolating VM sandboxes for cybersecurity and cloud coursework.',
+  },
+  {
+    serial_number: 'BNQ-MH560-305',
+    name: 'BenQ MH560 Full HD DLP Projector (Lab 305)',
+    model: 'BenQ MH560 3800lm 1080p DLP Projector',
+    total_units: 1,
+    unit_type: 'Projector',
+    room: 'Room 305',
+    placement_rack: 'Cybersecurity Lab Room 305 (Ceiling Mount)',
+    status: 'maintenance',
+    loan_status: 'available',
+    image_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
+    description: 'Scheduled for replacement projector lamp assembly.',
   },
   {
     serial_number: 'USG-405-SEC-01',
@@ -187,272 +265,63 @@ export const seedAssets = [
     image_url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
     description: 'Next-generation perimeter firewall configured for student ethical hacking tests.',
   },
+
+  // Room 102 Staging Depot
+  {
+    serial_number: 'FLK-DSX8000-102',
+    name: 'Fluke Networks DSX-8000 CableAnalyzer Certifier',
+    model: 'DSX2-8000-PRO Cat 8 / Class I/II Field Tester',
+    total_units: 1,
+    unit_type: 'Tester',
+    room: 'Room 102',
+    placement_rack: 'Hardware Staging & Maintenance Depot (Secure Locker A1)',
+    status: 'operational',
+    loan_status: 'available',
+    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    description: 'Portable copper & fiber certification instrument shared for inter-lab cabling audits.',
+  },
 ];
 
+/**
+ * Central Depot Stock Inventory (Consumables, Cables, Optical Spares, Peripherals, Toner & Hand Tools).
+ * Stationed exclusively in Room 102 (Staging & Supply Depot) with zero overlap with Hardware Assets or Room Inventory.
+ */
 export const seedStock = [
-  {
-    code: 'TBL-102B-DESK',
-    name: 'Student Computer Desk',
-    category: 'Department Tables & Desks',
-    quantity: 60,
-    unit: 'sets',
-    room: 'Room 102B',
-    rack: 'Student Rows 1-4 (Benches 1-20 in Room 102B + Spares in Depot)',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80',
-    description: 'Dual-station wooden desks with heavy-duty steel frame, cable channel raceways, and CPU holder bays.',
-  },
-  {
-    code: 'CHR-102B-SWIV',
-    name: 'Student Chair',
-    category: 'Department Chairs & Seating',
-    quantity: 120,
-    unit: 'pcs',
-    room: 'Room 102B',
-    rack: 'Workstations 1-20 (40 in Room 102B, 32 in Room 206, 48 in Storage)',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=600&q=80',
-    description: 'Heavy-duty ergonomic mid-back breathable mesh student swivel chairs with adjustable height pneumatics.',
-  },
-  {
-    code: 'WBD-DEPT-MAG',
-    name: 'Whiteboard & Marker Tray',
-    category: 'Classroom Fixtures',
-    quantity: 12,
-    unit: 'pcs',
-    room: 'Room 102B',
-    rack: 'Front Lecture Wall & Collab Area',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=600&q=80',
-    description: 'Porcelain-on-steel magnetic dry-erase lecture boards (2.4m x 1.2m) with integrated marker tray.',
-  },
-  {
-    code: 'HVAC-AC-PANASONIC-25HP',
-    name: 'Air Conditioner',
-    category: 'Electrical & HVAC',
-    quantity: 16,
-    unit: 'units',
-    room: 'Room 102B',
-    rack: 'Wall Perimeter (Units A & B Window Side)',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=600&q=80',
-    description: 'Panasonic 2.5HP Inverter Split Unit air conditioners with nanoe-X air purification.',
-  },
-  {
-    code: 'ELEC-LED-TUBE-36W',
-    name: 'Ceiling LED Tube Light',
-    category: 'Electrical & HVAC',
-    quantity: 80,
-    unit: 'pcs',
-    room: 'Room 102B',
-    rack: 'Ceiling Grid Rows 1-5',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=80',
-    description: 'Philips 36W LED Tube 4000K Neutral White commercial ceiling lights.',
-  },
-  {
-    code: 'ELEC-PWR-STRIP-8',
-    name: 'Wall Power Sockets & Strips',
-    category: 'Electrical & HVAC',
-    quantity: 60,
-    unit: 'pcs',
-    room: 'Room 102B',
-    rack: 'Student Benches 1-20',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
-    description: 'Schneider Electric 8-way surge-protected bench power distribution strips.',
-  },
-  {
-    code: 'SAFE-FIRE-CO2-5KG',
-    name: 'Fire Extinguisher',
-    category: 'Safety & Miscellaneous',
-    quantity: 16,
-    unit: 'units',
-    room: 'Room 102B',
-    rack: 'Entrance Door Wall Bracket',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80',
-    description: 'CO2 5KG clean-agent gas fire extinguisher certified for electrical lab environments.',
-  },
-  {
-    code: 'TBL-102B-LEC',
-    name: 'Faculty Lecturer Demonstration Table & Lectern Desk',
-    category: 'Department Tables & Desks',
-    quantity: 2,
-    unit: 'Tables',
-    room: 'Room 102B',
-    rack: 'Instructor Podium & Demo Bench',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=600&q=80',
-    description: 'Faculty instructor teaching workstation desk with motorized height adjustment, HDMI/Type-C AV pass-through ports, and master lab power kill-switch.',
-  },
-  {
-    code: 'CHR-FAC-HIGH',
-    name: 'Faculty Ergonomic High-Back Executive Chairs',
-    category: 'Department Chairs & Seating',
-    quantity: 6,
-    unit: 'Chairs',
-    room: 'Room 102B',
-    rack: 'Faculty Office & Instructor Podiums',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=600&q=80',
-    description: 'Executive ergonomic high-back chairs with adjustable headrest, 3D armrests, and synchro-tilt mechanism reserved for faculty professors.',
-  },
-  {
-    code: 'TBL-206-MOD',
-    name: 'Networking & Systems Lab Modular Work Tables',
-    category: 'Department Tables & Desks',
-    quantity: 16,
-    unit: 'Tables',
-    room: 'Room 206',
-    rack: 'Server Pod Rows A-D',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80',
-    description: 'Modular heavy-gauge steel frame networking lab tables with anti-scratch laminate tops, lockable casters, and dual PDU power channels.',
-  },
-  {
-    code: 'CHR-206-SWIV',
-    name: 'Heavy-Duty Student Lab Swivel Chairs (Room 206)',
-    category: 'Department Chairs & Seating',
-    quantity: 32,
-    unit: 'Chairs',
-    room: 'Room 206',
-    rack: 'Server Pod Stations 1-16',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80',
-    description: 'High-density foam reinforced swivel chairs designed for extended 4-hour networking and ethical hacking practical laboratory sessions.',
-  },
-  {
-    code: 'CAB-102B-STL',
-    name: 'Heavy-Duty Dual-Door Steel Storage Cabinets',
-    category: 'Storage Cabinets & Lockers',
-    quantity: 8,
-    unit: 'Cabinets',
-    room: 'Room 102B',
-    rack: 'Rear Wall Perimeter Storage Bay',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=600&q=80',
-    description: 'Reinforced dual-door gauge steel storage cabinets with 4 adjustable load-bearing shelves (150kg/shelf) and three-point cylinder keyed security lock.',
-  },
-  {
-    code: 'WBD-DEPT-MAG',
-    name: 'Wall-Mounted Magnetic Dry-Erase Whiteboards (2.4m x 1.2m)',
-    category: 'Classroom Fixtures',
-    quantity: 6,
-    unit: 'Boards',
-    room: 'Room 102B',
-    rack: 'Front Lecture Wall & Collab Area',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=600&q=80',
-    description: 'Porcelain-on-steel magnetic dry-erase lecture boards with anti-glare finish, aluminum frame, and integrated full-length pen & duster tray.',
-  },
-  {
-    code: 'TBL-CONF-10',
-    name: 'Department Conference & Faculty Meeting Table (10-Seater)',
-    category: 'Department Tables & Desks',
-    quantity: 2,
-    unit: 'Tables',
-    room: 'Room 201',
-    rack: 'Department Meeting & Thesis Room',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=600&q=80',
-    description: '10-person department boardroom table with pop-up AC power ports, RJ-45 jacks, and central cable management core for faculty project reviews.',
-  },
-  {
-    code: 'CHR-CONF-STK',
-    name: 'Department Conference & Thesis Defense Stacking Chairs',
-    category: 'Department Chairs & Seating',
-    quantity: 30,
-    unit: 'Chairs',
-    room: 'Room 201',
-    rack: 'Conference Area & Wall Stacks',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1505843513577-22bb7d21e455?auto=format&fit=crop&w=600&q=80',
-    description: 'Padded chrome-frame conference chairs with durable fabric upholstery, stackable up to 10 high for department seminars and thesis defenses.',
-  },
-  {
-    code: 'TBL-ESD-BENCH',
-    name: 'Electronics Repair Workbench Tables (Anti-Static ESD)',
-    category: 'Department Tables & Desks',
-    quantity: 4,
-    unit: 'Benches',
-    room: 'Hardware Staging & Maintenance Depot',
-    rack: 'Hardware Diagnostic Workbenches A-D',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    description: 'Ground-isolated anti-static ESD dissipation workbenches with overhead LED illumination, power strip rails, and solder fume extraction ports.',
-  },
-  {
-    code: 'MON-102B-P2419H',
-    name: 'Dell 24" FHD IPS Monitors (Student Benches 1-24)',
-    category: 'Monitors',
-    quantity: 24,
-    unit: 'Units',
-    room: 'Room 102B',
-    rack: 'Student Benches 1-24',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
-    description: '24-inch Full HD 1080p IPS Dell display monitors connected to student desktop towers.',
-  },
-  {
-    code: 'MS-102B-MS116',
-    name: 'Dell Optical USB Mice (Lab 102B In-Use + Spares)',
-    category: 'Mice & Keyboards',
-    quantity: 28,
-    unit: 'Pieces',
-    room: 'Room 102B',
-    rack: 'Benches & Shelf SHF-01',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80',
-    description: 'Standard Dell wired USB optical scroll mice (24 deployed on desks + 4 spare in shelf).',
-  },
-  {
-    code: 'KB-102B-KB216',
-    name: 'Dell Multimedia USB Keyboards (Lab 102B In-Use + Spares)',
-    category: 'Mice & Keyboards',
-    quantity: 28,
-    unit: 'Pieces',
-    room: 'Room 102B',
-    rack: 'Benches & Shelf SHF-01',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
-    description: 'Dell wired USB keyboards with Khmer/English character layout.',
-  },
-  {
-    code: 'MON-201-U2724K',
-    name: 'Dell UltraSharp 27" 4K USB-C Hub Monitors (U2723QE)',
-    category: 'Monitors',
-    quantity: 12,
-    unit: 'Units',
-    room: 'Room 201',
-    rack: 'Developer Pods 1-12',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
-    description: '27-inch 4K IPS Black technology monitors for AI software development pods.',
-  },
-  {
-    code: 'MS-201-MX3S',
-    name: 'Logitech MX Master 3S Wireless Developer Mice',
-    category: 'Mice & Keyboards',
-    quantity: 12,
-    unit: 'Pieces',
-    room: 'Room 201',
-    rack: 'Developer Pods 1-12',
-    status: 'in_stock',
-    image_url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80',
-    description: 'High-precision wireless developer mice with MagSpeed electromagnetic scrolling.',
-  },
   {
     code: 'CBL-CAT6-BLU-1M',
     name: 'Cat6 UTP RJ45 Patch Cables 1-Meter (Blue)',
-    category: 'Cables & Adapters',
+    category: 'Cables & Accessories',
     quantity: 150,
     unit: 'Pcs',
-    room: 'Room 102B',
-    rack: 'MDF Server Rack Cabling Bin',
+    room: 'Room 102',
+    rack: 'Depot Rack S1 - Copper Cabling Bin',
     status: 'in_stock',
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-    description: '100% pure copper Gigabit Ethernet patch cords for workstation bench hookups.',
+    description: '100% pure copper Gigabit Ethernet patch cords held in central spares.',
+  },
+  {
+    code: 'CBL-OM3-LC-3M',
+    name: 'OM3 Multimode LC-LC Duplex Fiber Patch Cords (3m)',
+    category: 'Cables & Accessories',
+    quantity: 24,
+    unit: 'Pcs',
+    room: 'Room 102',
+    rack: 'Depot Rack S1 - Fiber Tray',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    description: 'Aqua OM3 10Gb multimode duplex LC fiber patch cords for rack uplinks.',
+  },
+  {
+    code: 'CBL-HDMI20-5M',
+    name: 'Braided HDMI 2.0 High-Speed Display Cables (5m)',
+    category: 'Cables & Accessories',
+    quantity: 14,
+    unit: 'Pcs',
+    room: 'Room 102',
+    rack: 'Depot Rack S2 - AV Spares Drawer',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    description: '4K60 replacement HDMI cables for lecturer podiums and classroom displays.',
   },
   {
     code: 'SFPP-10G-SR-CISCO',
@@ -460,11 +329,107 @@ export const seedStock = [
     category: 'Network Modules',
     quantity: 16,
     unit: 'Units',
-    room: 'Room 206',
-    rack: 'Server Rack 01 - Optical Tray',
+    room: 'Room 102',
+    rack: 'Depot Rack S1 - Optical Module Tray',
     status: 'in_stock',
     image_url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
-    description: 'Multimode 850nm 10G optical modules for inter-switch trunk links.',
+    description: 'Multimode 850nm 10G pluggable optical spare modules for switch uplinks.',
+  },
+  {
+    code: 'CON-RJ45-CAT6-100',
+    name: 'Shielded RJ45 Cat6 Modular Crimp Plugs (100-Pack)',
+    category: 'Network Spares',
+    quantity: 8,
+    unit: 'Packs',
+    room: 'Room 102',
+    rack: 'Depot Bin B4 - Termination Consumables',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+    description: 'Gold-plated pass-through RJ45 connectors for networking lab cabling exercises.',
+  },
+  {
+    code: 'PER-MS-DELL-116',
+    name: 'Dell Optical USB Mice (MS116 Replacement Spares)',
+    category: 'Mice & Keyboards',
+    quantity: 18,
+    unit: 'Pieces',
+    room: 'Room 102',
+    rack: 'Depot Shelf SHF-01',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80',
+    description: 'Unboxed spare Dell wired USB optical mice for faulty workstation replacements.',
+  },
+  {
+    code: 'PER-KB-DELL-216',
+    name: 'Dell Wired USB Keyboards (KB216 Replacement Spares)',
+    category: 'Mice & Keyboards',
+    quantity: 15,
+    unit: 'Pieces',
+    room: 'Room 102',
+    rack: 'Depot Shelf SHF-01',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
+    description: 'Spare wired USB keyboards with Khmer/English layout awaiting room issue.',
+  },
+  {
+    code: 'PER-MON-P2419H',
+    name: 'Dell 24" FHD IPS Replacement Monitors (P2419H Spares)',
+    category: 'Monitors',
+    quantity: 6,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Shelf SHF-02',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
+    description: 'Hot-swap 24-inch Full HD IPS spare monitors for student benches.',
+  },
+  {
+    code: 'SUP-TONER-05A',
+    name: 'HP LaserJet 05A (CE505A) Black Toner Cartridges',
+    category: 'Printer Ink & Toner',
+    quantity: 6,
+    unit: 'Cartridges',
+    room: 'Room 102',
+    rack: 'Depot Cabinet C2 - Print Consumables',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=600&q=80',
+    description: 'High-yield laser toner cartridges for department examination printing.',
+  },
+  {
+    code: 'SUP-MRK-4PK',
+    name: 'Dry-Erase Whiteboard Marker Sets (4-Color Box)',
+    category: 'Office Stationery',
+    quantity: 24,
+    unit: 'Boxes',
+    room: 'Room 102',
+    rack: 'Depot Cabinet C1 - Teaching Stationery',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=600&q=80',
+    description: 'Refillable dry-erase whiteboard marker packs issued to instructors across classrooms.',
+  },
+  {
+    code: 'TOOL-IFIXIT-PRO',
+    name: 'iFixit Pro Tech Electronics & PC Repair Tool Kits',
+    category: 'Tools & Equipment',
+    quantity: 3,
+    unit: 'Kits',
+    room: 'Room 102',
+    rack: 'Depot Workbench T1',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    description: 'Precision driver bit sets and ESD-safe prying tools for desktop & hardware repairs.',
+  },
+  {
+    code: 'TOOL-CRIMP-NET',
+    name: 'Klein Tools RJ45 Network Crimping & Continuity Kits',
+    category: 'Tools & Equipment',
+    quantity: 5,
+    unit: 'Kits',
+    room: 'Room 102',
+    rack: 'Depot Workbench T2',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    description: 'Modular RJ45 crimpers, punch-down tools, and wiremap testers for lab cable prep.',
   },
 ];
 
@@ -514,10 +479,10 @@ export const seedTransfers = [
 ];
 
 export const seedMaintenance = [
-  // 1. Dell OptiPlex 7090 Workstations (24 Units)
+  // 1. Dell OptiPlex 7090 Workstations (Lab 102B)
   {
     serial_number: 'OPT-102B-01-TO-24',
-    asset_name: 'Dell OptiPlex 7090 (24 Desktops in 102B)',
+    asset_name: 'Dell OptiPlex 7090 Workstations (Lab 102B)',
     type: 'Firmware Upgrade',
     date: '2026-10-25',
     technician: 'Thoeurn Ratha',
@@ -525,13 +490,13 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 0,
-    quantity: 24,
-    unit: 'Desktops',
-    notes: 'Golden master OS image deployed across all 24 student workstations. Deep Freeze enabled for disk freeze.',
+    quantity: 40,
+    unit: 'Workstations',
+    notes: 'Golden master OS image deployed across all student workstations. Deep Freeze enabled for disk freeze.',
   },
   {
     serial_number: 'OPT-102B-01-TO-24',
-    asset_name: 'Dell OptiPlex 7090 (24 Desktops in 102B)',
+    asset_name: 'Dell OptiPlex 7090 Workstations (Lab 102B)',
     type: 'Routine Inspection',
     date: '2026-03-18',
     technician: 'Thoeurn Ratha',
@@ -539,13 +504,13 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 35.0,
-    quantity: 24,
-    unit: 'Desktops',
+    quantity: 40,
+    unit: 'Workstations',
     notes: 'Spring semester hardware audit: CPU heatsink dust vacuuming, RAM reseating, and thermal paste reapplication on Row 1-4.',
   },
   {
     serial_number: 'OPT-102B-01-TO-24',
-    asset_name: 'Dell OptiPlex 7090 (24 Desktops in 102B)',
+    asset_name: 'Dell OptiPlex 7090 Workstations (Lab 102B)',
     type: 'Firmware Upgrade',
     date: '2025-09-12',
     technician: 'Thoeurn Ratha',
@@ -553,15 +518,15 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 0,
-    quantity: 24,
-    unit: 'Desktops',
+    quantity: 40,
+    unit: 'Workstations',
     notes: 'Initial lab commissioning: BIOS UEFI v1.14 security update, TPM 2.0 enablement, and Gigabit PXE boot configuration.',
   },
 
-  // 2. Daikin 2.5 HP Air Conditioners
+  // 2. Facility Air Conditioners (Lab 102B)
   {
     serial_number: 'DKN-FTKC60U-102B',
-    asset_name: 'Daikin 2.5 HP Air Conditioners (Lab 102B)',
+    asset_name: 'Panasonic 2.5HP Inverter Split Air Conditioners (Lab 102B)',
     type: 'Port Audit',
     date: '2026-11-02',
     technician: 'HVAC Maintenance Team',
@@ -575,7 +540,7 @@ export const seedMaintenance = [
   },
   {
     serial_number: 'DKN-FTKC60U-102B',
-    asset_name: 'Daikin 2.5 HP Air Conditioners (Lab 102B)',
+    asset_name: 'Panasonic 2.5HP Inverter Split Air Conditioners (Lab 102B)',
     type: 'Routine Inspection',
     date: '2026-06-15',
     technician: 'HVAC Maintenance Team',
@@ -589,7 +554,7 @@ export const seedMaintenance = [
   },
   {
     serial_number: 'DKN-FTKC60U-102B',
-    asset_name: 'Daikin 2.5 HP Air Conditioners (Lab 102B)',
+    asset_name: 'Panasonic 2.5HP Inverter Split Air Conditioners (Lab 102B)',
     type: 'Emergency Repair',
     date: '2025-11-18',
     technician: 'HVAC Maintenance Team',
@@ -602,10 +567,10 @@ export const seedMaintenance = [
     notes: 'Replaced faulty outdoor condenser run capacitor (45uF) on Unit A and recharged 400g R32 refrigerant.',
   },
 
-  // 3. Epson PowerLite Laser Projector
+  // 3. Epson EB-2250U Laser Projector
   {
     serial_number: 'EPS-L630U-8812',
-    asset_name: 'Epson PowerLite Laser Projector (Lab 102B)',
+    asset_name: 'Epson EB-2250U Laser Projector & Screen (Lab 102B)',
     type: 'Port Audit',
     date: '2026-10-20',
     technician: 'Audio-Visual Staff',
@@ -615,11 +580,11 @@ export const seedMaintenance = [
     cost: 20.0,
     quantity: 1,
     unit: 'Projector',
-    notes: 'Laser optical engine cleaned, motorized screen limit switches calibrated, HDMI 2.1 signal verified at 4K.',
+    notes: 'Optical lens cleaned, motorized screen limit switches calibrated, HDMI signal verified.',
   },
   {
     serial_number: 'EPS-L630U-8812',
-    asset_name: 'Epson PowerLite Laser Projector (Lab 102B)',
+    asset_name: 'Epson EB-2250U Laser Projector & Screen (Lab 102B)',
     type: 'Calibration',
     date: '2026-04-10',
     technician: 'Audio-Visual Staff',
@@ -631,25 +596,11 @@ export const seedMaintenance = [
     unit: 'Projector',
     notes: 'Semi-annual keystone correction and color temperature calibration (6500K D65 standard). Air filter cleaned.',
   },
-  {
-    serial_number: 'EPS-L630U-8812',
-    asset_name: 'Epson PowerLite Laser Projector (Lab 102B)',
-    type: 'Firmware Upgrade',
-    date: '2025-10-08',
-    technician: 'Audio-Visual Staff',
-    status: 'Completed',
-    image_url: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80',
-    location: 'Computer & Network Lab 102B',
-    cost: 0,
-    quantity: 1,
-    unit: 'Projector',
-    notes: 'Updated projector controller firmware to v1.21. Tested Crestron RoomView IP network control module.',
-  },
 
-  // 4. Cisco C9300 48P Switch
+  // 4. Cisco Catalyst 3850 Switch (Lab 102B)
   {
-    serial_number: 'FCW2348L09M',
-    asset_name: 'Cisco C9300 48P Switch (Lab 102B)',
+    serial_number: 'SW-CORE-3850-X1',
+    asset_name: 'Cisco Catalyst 3850 48-Port Gigabit PoE+ Switch',
     type: 'Firmware Upgrade',
     date: '2026-11-15',
     technician: 'Cisco TAC Support',
@@ -657,13 +608,13 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 150.0,
-    quantity: 5,
-    unit: 'Switches',
-    notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 24 port VLAN mappings.',
+    quantity: 1,
+    unit: 'Switch',
+    notes: 'Scheduled IOS-XE upgrade to 17.9.4a LTS and verify 48 port VLAN mappings.',
   },
   {
-    serial_number: 'FCW2348L09M',
-    asset_name: 'Cisco C9300 48P Switch (Lab 102B)',
+    serial_number: 'SW-CORE-3850-X1',
+    asset_name: 'Cisco Catalyst 3850 48-Port Gigabit PoE+ Switch',
     type: 'Port Audit',
     date: '2026-05-14',
     technician: 'Cisco TAC Support',
@@ -671,13 +622,13 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 120.0,
-    quantity: 5,
-    unit: 'Switches',
+    quantity: 1,
+    unit: 'Switch',
     notes: 'Mid-year 10Gbps optical uplink test, PoE+ budget verification across 48 ports, and LLDP neighbor audit.',
   },
   {
-    serial_number: 'FCW2348L09M',
-    asset_name: 'Cisco C9300 48P Switch (Lab 102B)',
+    serial_number: 'SW-CORE-3850-X1',
+    asset_name: 'Cisco Catalyst 3850 48-Port Gigabit PoE+ Switch',
     type: 'Routine Inspection',
     date: '2025-11-04',
     technician: 'Thoeurn Ratha',
@@ -685,9 +636,9 @@ export const seedMaintenance = [
     image_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
     location: 'Computer & Network Lab 102B',
     cost: 0,
-    quantity: 5,
-    unit: 'Switches',
-    notes: 'Initial rack installation in Rack 01, dual redundant PSU power validation, and StackWise-480 cable link test.',
+    quantity: 1,
+    unit: 'Switch',
+    notes: 'Initial rack installation in MDF Rack 42U, dual redundant PSU power validation, and StackWise cable link test.',
   },
 ];
 
@@ -762,11 +713,14 @@ export const seedPurchaseRequests = [
   },
 ];
 
+/**
+ * Room Facility & Condition Inventory (Furniture, Electrical/HVAC, Racks, Safety Equipment).
+ * Kept strictly separate from Hardware Assets (`seedAssets`) and Central Depot Consumables (`seedStock`).
+ */
 export const seedRoomInventory = [
-  // Room 102B
+  // Room 102B — Computer & Network Lab 102B
   {
     room_code: 'LOC-102B',
-    stock_code: 'CHR-102B-SWIV',
     name: 'Student Chair',
     group_type: 'FURNITURE',
     brand_spec: 'Heavy-duty Ergonomic Mesh Swivel',
@@ -778,7 +732,6 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
-    stock_code: 'TBL-102B-DESK',
     name: 'Student Computer Desk',
     group_type: 'FURNITURE',
     brand_spec: 'Dual-station Wooden Desk with cable channel',
@@ -790,55 +743,17 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
-    stock_code: 'HVAC-AC-PANASONIC-25HP',
-    name: 'Air Conditioner',
-    group_type: 'ELECTRICAL',
-    brand_spec: 'Panasonic 2.5HP Inverter Split Unit',
+    name: 'Steel Storage Cabinet',
+    group_type: 'FURNITURE',
+    brand_spec: 'Dual-Door Reinforced Steel Locker Cabinet (4-Shelf)',
     unit: 'units',
-    qty_working: 1,
-    qty_broken: 1,
-    qty_maintenance: 0,
-    remarks: 'Unit B (window side) water leak and compressor rattles',
-  },
-  {
-    room_code: 'LOC-102B',
-    stock_code: 'ELEC-LED-TUBE-36W',
-    name: 'Ceiling LED Tube Light',
-    group_type: 'ELECTRICAL',
-    brand_spec: 'Philips 36W LED Tube 4000K Neutral White',
-    unit: 'pcs',
-    qty_working: 8,
-    qty_broken: 2,
-    qty_maintenance: 0,
-    remarks: '2 tubes flickering above Lecturer podium',
-  },
-  {
-    room_code: 'LOC-102B',
-    asset_serial: 'OPT-102B-01-TO-24',
-    name: 'Desktop PC System Unit',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'Dell OptiPlex 7090 Core i7 / 16GB / 512GB SSD',
-    unit: 'units',
-    qty_working: 38,
-    qty_broken: 1,
-    qty_maintenance: 1,
-    remarks: 'Station #14 PSU failure; Station #22 under RAM replacement',
-  },
-  {
-    room_code: 'LOC-102B',
-    asset_serial: 'EPS-L630U-8812',
-    name: 'LCD Projector & Screen',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'Epson EB-2250U 5000 Lumens Full HD + 120" Motorized Screen',
-    unit: 'sets',
-    qty_working: 1,
+    qty_working: 2,
     qty_broken: 0,
     qty_maintenance: 0,
-    remarks: 'Lamp timer 310h (Good condition)',
+    remarks: 'Keyed perimeter cabinets in rear wall bay',
   },
   {
     room_code: 'LOC-102B',
-    stock_code: 'WBD-DEPT-MAG',
     name: 'Whiteboard & Marker Tray',
     group_type: 'FURNITURE',
     brand_spec: 'Porcelain Magnetic 2.4m x 1.2m Wall Mounted',
@@ -850,7 +765,28 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
-    stock_code: 'ELEC-PWR-STRIP-8',
+    name: 'Air Conditioner',
+    group_type: 'ELECTRICAL',
+    brand_spec: 'Panasonic 2.5HP Inverter Split Unit',
+    unit: 'units',
+    qty_working: 1,
+    qty_broken: 1,
+    qty_maintenance: 0,
+    remarks: 'Unit B (window side) water leak and compressor rattles',
+  },
+  {
+    room_code: 'LOC-102B',
+    name: 'Ceiling LED Tube Light',
+    group_type: 'ELECTRICAL',
+    brand_spec: 'Philips 36W LED Tube 4000K Neutral White',
+    unit: 'pcs',
+    qty_working: 8,
+    qty_broken: 2,
+    qty_maintenance: 0,
+    remarks: '2 tubes flickering above Lecturer podium',
+  },
+  {
+    room_code: 'LOC-102B',
     name: 'Wall Power Sockets & Strips',
     group_type: 'ELECTRICAL',
     brand_spec: 'Schneider Electric 8-way Surge Protected Strip',
@@ -862,8 +798,7 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-102B',
-    stock_code: 'SAFE-FIRE-CO2-5KG',
-    name: 'Fire Extinguisher',
+    name: 'CO2 Fire Extinguisher',
     group_type: 'SAFETY_MISC',
     brand_spec: 'CO2 5KG Clean Agent Gas Extinguisher',
     unit: 'units',
@@ -872,7 +807,8 @@ export const seedRoomInventory = [
     qty_maintenance: 0,
     remarks: 'Pressure gauge in green zone. Next inspection 2027-01',
   },
-  // Room 206
+
+  // Room 206 — Network & Server Lab 206
   {
     room_code: 'LOC-206',
     name: 'Student Chair',
@@ -886,14 +822,25 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-206',
-    name: 'Student Computer Desk',
+    name: 'Networking Lab Work Table',
     group_type: 'FURNITURE',
-    brand_spec: 'Dual-station Heavy Steel Frame',
+    brand_spec: 'Dual-station Heavy Steel Frame with Dual PDU Rail',
     unit: 'sets',
     qty_working: 16,
     qty_broken: 0,
     qty_maintenance: 0,
     remarks: 'Equipped with ESD grounding pads',
+  },
+  {
+    room_code: 'LOC-206',
+    name: '42U Server Rack Enclosure',
+    group_type: 'FURNITURE',
+    brand_spec: 'APC NetShelter SX 42U Lockable Cabinet',
+    unit: 'units',
+    qty_working: 2,
+    qty_broken: 0,
+    qty_maintenance: 0,
+    remarks: 'Locked and keyed to Primary Admin',
   },
   {
     room_code: 'LOC-206',
@@ -904,31 +851,21 @@ export const seedRoomInventory = [
     qty_working: 2,
     qty_broken: 0,
     qty_maintenance: 0,
-    remarks: 'Both units running at 21°C server lab standard',
+    remarks: 'Both units running at 21C server lab standard',
   },
   {
     room_code: 'LOC-206',
-    name: 'Desktop PC System Unit',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'Dell OptiPlex 7090 Core i7 / 32GB RAM / Dual NIC',
-    unit: 'units',
-    qty_working: 32,
+    name: 'Ceiling LED Panel Light',
+    group_type: 'ELECTRICAL',
+    brand_spec: 'Philips 40W Recessed LED Panel 60x60cm',
+    unit: 'pcs',
+    qty_working: 12,
     qty_broken: 0,
     qty_maintenance: 0,
-    remarks: 'All dual-NIC networking rigs verified',
+    remarks: 'Uniform illumination verified across server bays',
   },
-  {
-    room_code: 'LOC-206',
-    name: '42U Server Rack Enclosure',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'APC NetShelter SX 42U Server Rack',
-    unit: 'units',
-    qty_working: 2,
-    qty_broken: 0,
-    qty_maintenance: 0,
-    remarks: 'Locked and keyed to Primary Admin',
-  },
-  // Room 201
+
+  // Room 201 — Software Engineering & AI Lab 201
   {
     room_code: 'LOC-201',
     name: 'Student Chair',
@@ -953,6 +890,17 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-201',
+    name: 'Whiteboard & Marker Tray',
+    group_type: 'FURNITURE',
+    brand_spec: 'Porcelain Magnetic 2.4m x 1.2m Wall Mounted',
+    unit: 'pcs',
+    qty_working: 1,
+    qty_broken: 0,
+    qty_maintenance: 0,
+    remarks: 'Front lecture board installed cleanly',
+  },
+  {
+    room_code: 'LOC-201',
     name: 'Air Conditioner',
     group_type: 'ELECTRICAL',
     brand_spec: 'Panasonic 2.5HP Inverter Split Unit',
@@ -964,19 +912,20 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-201',
-    name: 'Desktop PC System Unit',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'HP EliteDesk 800 G6 Core i7 / RTX 3060 AI Rig',
-    unit: 'units',
-    qty_working: 39,
-    qty_broken: 1,
+    name: 'Ceiling LED Panel Light',
+    group_type: 'ELECTRICAL',
+    brand_spec: 'Philips 40W Recessed LED Panel 60x60cm',
+    unit: 'pcs',
+    qty_working: 12,
+    qty_broken: 0,
     qty_maintenance: 0,
-    remarks: 'Station #08 motherboard error (beeps on POST)',
+    remarks: 'All panels operational',
   },
-  // Room 203
+
+  // Room 203 — Electronics & Embedded IoT Lab 203
   {
     room_code: 'LOC-203',
-    name: 'Student Stool / Chair',
+    name: 'Anti-Static ESD Stool',
     group_type: 'FURNITURE',
     brand_spec: 'Anti-Static ESD Workbench Stool',
     unit: 'pcs',
@@ -984,6 +933,17 @@ export const seedRoomInventory = [
     qty_broken: 2,
     qty_maintenance: 0,
     remarks: '2 hydraulic lift cylinders sink under weight',
+  },
+  {
+    room_code: 'LOC-203',
+    name: 'Electronics ESD Workbench',
+    group_type: 'FURNITURE',
+    brand_spec: 'Ground-Isolated Anti-Static Lab Bench with Power Rail',
+    unit: 'sets',
+    qty_working: 15,
+    qty_broken: 0,
+    qty_maintenance: 0,
+    remarks: 'ESD wrist-strap ground jacks tested',
   },
   {
     room_code: 'LOC-203',
@@ -1007,7 +967,8 @@ export const seedRoomInventory = [
     qty_maintenance: 0,
     remarks: 'Operational',
   },
-  // Room 305
+
+  // Room 305 — Cybersecurity & Cloud Lab 305
   {
     room_code: 'LOC-305',
     name: 'Student Chair',
@@ -1018,6 +979,17 @@ export const seedRoomInventory = [
     qty_broken: 0,
     qty_maintenance: 0,
     remarks: 'All 36 chairs in good shape',
+  },
+  {
+    room_code: 'LOC-305',
+    name: 'Student Computer Desk',
+    group_type: 'FURNITURE',
+    brand_spec: 'Dual-station Laminate Desk with Cable Raceway',
+    unit: 'sets',
+    qty_working: 18,
+    qty_broken: 0,
+    qty_maintenance: 0,
+    remarks: 'All 18 benches level and cable-managed',
   },
   {
     room_code: 'LOC-305',
@@ -1032,27 +1004,17 @@ export const seedRoomInventory = [
   },
   {
     room_code: 'LOC-305',
-    name: 'LCD Projector & Screen',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'BenQ MH560 Full HD 3800lm DLP',
-    unit: 'sets',
-    qty_working: 0,
-    qty_broken: 1,
-    qty_maintenance: 0,
-    remarks: 'Lamp indicator red, bulb shattered during evening lecture',
-  },
-  {
-    room_code: 'LOC-305',
-    name: 'Desktop PC System Unit',
-    group_type: 'IT_HARDWARE',
-    brand_spec: 'Lenovo ThinkCentre M70s Core i7 / 16GB',
-    unit: 'units',
-    qty_working: 35,
+    name: 'Wall Power Sockets & Strips',
+    group_type: 'ELECTRICAL',
+    brand_spec: 'Schneider Electric 8-way Surge Protected Strip',
+    unit: 'pcs',
+    qty_working: 18,
     qty_broken: 0,
-    qty_maintenance: 1,
-    remarks: 'PC #19 SSD failed SMART test, pending ghost clone',
+    qty_maintenance: 0,
+    remarks: 'All 18 bench surge strips tested',
   },
-  // Room 102
+
+  // Room 102 — Hardware Staging & Maintenance Depot
   {
     room_code: 'LOC-102',
     name: 'Heavy-duty Metal Storage Rack',
@@ -1068,27 +1030,16 @@ export const seedRoomInventory = [
     room_code: 'LOC-102',
     name: 'Repair & Diagnostic Work Table',
     group_type: 'FURNITURE',
-    brand_spec: 'Hardwood Heavy Workbench 2m x 1m',
+    brand_spec: 'Hardwood Heavy Workbench 2m x 1m with Vices',
     unit: 'sets',
     qty_working: 3,
     qty_broken: 0,
     qty_maintenance: 0,
-    remarks: 'Includes integrated vices and power strip',
+    remarks: 'Includes integrated vices and ESD grounding strip',
   },
   {
     room_code: 'LOC-102',
-    name: 'Spare Student Chairs (Buffer)',
-    group_type: 'FURNITURE',
-    brand_spec: 'Ergonomic Mesh Mixed Stock',
-    unit: 'pcs',
-    qty_working: 15,
-    qty_broken: 8,
-    qty_maintenance: 0,
-    remarks: '8 units awaiting replacement castors and gas cylinders',
-  },
-  {
-    room_code: 'LOC-102',
-    name: 'Fire Extinguisher',
+    name: 'ABC Dry Chemical Fire Extinguisher',
     group_type: 'SAFETY_MISC',
     brand_spec: 'ABC Dry Chemical Powder 9KG',
     unit: 'units',
@@ -1099,8 +1050,35 @@ export const seedRoomInventory = [
   },
 ];
 
+/**
+ * Legacy stock codes that previously duplicated Room Facility Inventory (`seedRoomInventory`)
+ * or Hardware Assets (`seedAssets`). Removed cleanly on re-seed without touching custom user stock.
+ */
+export const LEGACY_OVERLAPPING_STOCK_CODES = [
+  'TBL-102B-DESK',
+  'CHR-102B-SWIV',
+  'WBD-DEPT-MAG',
+  'HVAC-AC-PANASONIC-25HP',
+  'ELEC-LED-TUBE-36W',
+  'ELEC-PWR-STRIP-8',
+  'SAFE-FIRE-CO2-5KG',
+  'TBL-102B-LEC',
+  'CHR-FAC-HIGH',
+  'TBL-206-MOD',
+  'CHR-206-SWIV',
+  'CAB-102B-STL',
+  'TBL-CONF-10',
+  'CHR-CONF-STK',
+  'TBL-ESD-BENCH',
+  'MON-102B-P2419H',
+  'MS-102B-MS116',
+  'KB-102B-KB216',
+  'MON-201-U2724K',
+  'MS-201-MX3S',
+];
+
 export async function seedAllData(): Promise<void> {
-  console.log('🌱 Populating database tables with institutional fleet records...');
+  console.log('🌱 Populating database tables with clean, non-overlapping fleet records...');
 
   // 1. Seed Locations
   const locationMap = new Map<string, string>();
@@ -1113,7 +1091,17 @@ export async function seedAllData(): Promise<void> {
            floor = EXCLUDED.floor, room_type = EXCLUDED.room_type, last_audited_at = EXCLUDED.last_audited_at,
            audited_by = EXCLUDED.audited_by
        RETURNING id, room, code`,
-      [loc.code, loc.name, loc.room, loc.building, loc.capacity, (loc as any).floor || 1, (loc as any).room_type || 'COMPUTER_LAB', (loc as any).last_audited_at || null, (loc as any).audited_by || null]
+      [
+        loc.code,
+        loc.name,
+        loc.room,
+        loc.building,
+        loc.capacity,
+        loc.floor || 1,
+        loc.room_type || 'COMPUTER_LAB',
+        loc.last_audited_at || null,
+        loc.audited_by || null,
+      ]
     );
     if (res.rows[0]) {
       locationMap.set(loc.room, res.rows[0].id);
@@ -1122,11 +1110,10 @@ export async function seedAllData(): Promise<void> {
   }
   console.log(`✅ Seeded ${seedLocations.length} University Laboratory Locations.`);
 
-  // 2. Seed Assets
-  const assetMap = new Map<string, string>();
+  // 2. Seed Hardware Assets
   for (const a of seedAssets) {
     const locId = locationMap.get(a.room) || null;
-    const res = await query(
+    await query(
       `INSERT INTO assets (
          serial_number, name, model, total_units, unit_type, 
          location_id, placement_rack, status, loan_status, image_url, description
@@ -1136,8 +1123,7 @@ export async function seedAllData(): Promise<void> {
        SET name = EXCLUDED.name, model = EXCLUDED.model, total_units = EXCLUDED.total_units,
            unit_type = EXCLUDED.unit_type, location_id = EXCLUDED.location_id,
            placement_rack = EXCLUDED.placement_rack, status = EXCLUDED.status,
-           image_url = EXCLUDED.image_url, description = EXCLUDED.description
-       RETURNING id, serial_number`,
+           image_url = EXCLUDED.image_url, description = EXCLUDED.description`,
       [
         a.serial_number,
         a.name,
@@ -1152,17 +1138,18 @@ export async function seedAllData(): Promise<void> {
         a.description,
       ]
     );
-    if (res.rows[0]) {
-      assetMap.set(a.serial_number, res.rows[0].id);
-    }
   }
-  console.log(`✅ Seeded ${seedAssets.length} Hardware Assets.`);
+  console.log(`✅ Seeded ${seedAssets.length} Distinct Hardware Assets.`);
 
-  // 3. Seed Stock Items
-  const stockMap = new Map<string, string>();
+  // 3. Remove legacy overlapping stock codes before seeding clean Central Inventory Stock
+  await query('DELETE FROM room_inventory');
+  await query('DELETE FROM stock_items WHERE code = ANY($1::text[])', [
+    LEGACY_OVERLAPPING_STOCK_CODES,
+  ]);
+
   for (const s of seedStock) {
     const locId = locationMap.get(s.room) || null;
-    const res = await query(
+    await query(
       `INSERT INTO stock_items (
          code, name, category, quantity, unit, 
          location_id, rack, status, image_url, description
@@ -1171,74 +1158,110 @@ export async function seedAllData(): Promise<void> {
        ON CONFLICT (code) DO UPDATE
        SET name = EXCLUDED.name, category = EXCLUDED.category, quantity = EXCLUDED.quantity,
            unit = EXCLUDED.unit, location_id = EXCLUDED.location_id, rack = EXCLUDED.rack,
-           status = EXCLUDED.status, image_url = EXCLUDED.image_url, description = EXCLUDED.description
-       RETURNING id, code`,
-      [s.code, s.name, s.category, s.quantity, s.unit, locId, s.rack, s.status, s.image_url, s.description]
+           status = EXCLUDED.status, image_url = EXCLUDED.image_url, description = EXCLUDED.description`,
+      [
+        s.code,
+        s.name,
+        s.category,
+        s.quantity,
+        s.unit,
+        locId,
+        s.rack,
+        s.status,
+        s.image_url,
+        s.description,
+      ]
     );
-    if (res.rows[0]) {
-      stockMap.set(s.code, res.rows[0].id);
-    }
   }
-  console.log(`✅ Seeded ${seedStock.length} Consumable Inventory Items.`);
+  console.log(`✅ Seeded ${seedStock.length} Distinct Central Inventory Items.`);
 
-  // 4. Seed Loans
+  // 4. Seed Loans (idempotent by asset_id + borrow_date + borrower_name)
   for (const l of seedLoans) {
     const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [l.serial_number]);
     const assetId = assetRes.rows[0]?.id;
     if (assetId) {
-      await query(
-        `INSERT INTO loans (
-           asset_id, borrower_name, borrower_role, borrower_contact, course_or_class,
-           borrow_date, expected_return_date, actual_return_date, status, notes
-         )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         ON CONFLICT DO NOTHING`,
-        [
-          assetId,
-          l.borrower_name,
-          l.borrower_role,
-          l.borrower_contact,
-          l.course_or_class,
-          l.borrow_date,
-          l.expected_return_date,
-          (l as any).actual_return_date || null,
-          l.status,
-          l.notes,
-        ]
+      const existing = await query(
+        `SELECT 1 FROM loans WHERE asset_id = $1 AND borrow_date = $2 AND borrower_name = $3 LIMIT 1`,
+        [assetId, l.borrow_date, l.borrower_name]
       );
+      if (existing.rowCount === 0) {
+        await query(
+          `INSERT INTO loans (
+             asset_id, borrower_name, borrower_role, borrower_contact, course_or_class,
+             borrow_date, expected_return_date, actual_return_date, status, notes
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            assetId,
+            l.borrower_name,
+            l.borrower_role,
+            l.borrower_contact,
+            l.course_or_class,
+            l.borrow_date,
+            l.expected_return_date,
+            l.actual_return_date || null,
+            l.status,
+            l.notes,
+          ]
+        );
+      }
     }
   }
-  console.log(`✅ Seeded ${seedLoans.length} Device Loans.`);
+  console.log(`✅ Verified ${seedLoans.length} Device Loans.`);
 
-  // 5. Seed Transfers
+  // 5. Seed Transfers (idempotent by asset_id + transfer_date)
   for (const t of seedTransfers) {
     const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [t.serial_number]);
     const assetId = assetRes.rows[0]?.id;
     const fromLocId = locationMap.get(t.from_room) || null;
     const toLocId = locationMap.get(t.to_room) || null;
     if (assetId) {
-      await query(
-        `INSERT INTO transfers (asset_id, from_location_id, to_location_id, transfer_date, transferred_by, reason)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT DO NOTHING`,
-        [assetId, fromLocId, toLocId, t.transfer_date, t.transferred_by, t.reason]
+      const existing = await query(
+        `SELECT 1 FROM transfers WHERE asset_id = $1 AND transfer_date = $2 LIMIT 1`,
+        [assetId, t.transfer_date]
       );
+      if (existing.rowCount === 0) {
+        await query(
+          `INSERT INTO transfers (asset_id, from_location_id, to_location_id, transfer_date, transferred_by, reason)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [assetId, fromLocId, toLocId, t.transfer_date, t.transferred_by, t.reason]
+        );
+      }
     }
   }
-  console.log(`✅ Seeded ${seedTransfers.length} Laboratory Relocations.`);
+  console.log(`✅ Verified ${seedTransfers.length} Laboratory Relocations.`);
 
-  // 6. Seed Maintenance Records
+  // 6. Seed Maintenance Records (idempotent by serial_number + date + type)
   for (const m of seedMaintenance) {
     const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [m.serial_number]);
     const assetId = assetRes.rows[0]?.id || null;
-    await query(
-      `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT DO NOTHING`,
-      [assetId, m.asset_name, m.serial_number, m.type, m.date, m.technician, m.status, m.notes]
+    const existing = await query(
+      `SELECT 1 FROM maintenance_records WHERE serial_number = $1 AND date = $2 AND type = $3 LIMIT 1`,
+      [m.serial_number, m.date, m.type]
     );
+    if (existing.rowCount === 0) {
+      await query(
+        `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes, image_url, location, cost, quantity, unit)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [
+          assetId,
+          m.asset_name,
+          m.serial_number,
+          m.type,
+          m.date,
+          m.technician,
+          m.status,
+          m.notes,
+          m.image_url,
+          m.location,
+          m.cost,
+          m.quantity,
+          m.unit,
+        ]
+      );
+    }
   }
-  console.log(`✅ Seeded ${seedMaintenance.length} Maintenance & Audit Records.`);
+  console.log(`✅ Verified ${seedMaintenance.length} Maintenance & Audit Records.`);
 
   // 7. Seed Purchase Requests
   for (const r of seedPurchaseRequests) {
@@ -1271,20 +1294,15 @@ export async function seedAllData(): Promise<void> {
   }
   console.log(`✅ Seeded ${seedPurchaseRequests.length} Purchase Requisition Requests.`);
 
-  // 8. Seed Room Facility Inventory (Bulk Furniture, HVAC, Classroom Equipment)
-  await query('DELETE FROM room_inventory');
+  // 8. Seed Room Facility Inventory (Strictly Fixtures, Furniture, Electrical & Safety)
   for (const inv of seedRoomInventory) {
     const roomId = locationMap.get(inv.room_code);
-    const stockId = (inv as any).stock_code ? stockMap.get((inv as any).stock_code) || null : null;
-    const assetId = (inv as any).asset_serial ? assetMap.get((inv as any).asset_serial) || null : null;
     if (roomId) {
       await query(
-        `INSERT INTO room_inventory (room_id, stock_item_id, asset_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        `INSERT INTO room_inventory (room_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           roomId,
-          stockId,
-          assetId,
           inv.name,
           inv.group_type,
           inv.brand_spec || null,
@@ -1297,6 +1315,5 @@ export async function seedAllData(): Promise<void> {
       );
     }
   }
-  console.log(`✅ Seeded ${seedRoomInventory.length} Room Facility Inventory Records.`);
+  console.log(`✅ Seeded ${seedRoomInventory.length} Distinct Room Facility Inventory Records.`);
 }
-
