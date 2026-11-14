@@ -46,11 +46,32 @@ const LOCATION_SELECT_QUERY = `
         FROM room_inventory ri
         WHERE ri.room_id = l.id
           AND (ri.stock_item_id IS NOT NULL OR ri.asset_id IS NOT NULL)
+        ORDER BY ri.created_at ASC, ri.id ASC
       ),
       '[]'::json
     ) AS inventories
   FROM locations l
 `;
+
+function mergeRoomRemarks(...values: Array<string | null | undefined>): string | null {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+
+  for (const raw of values) {
+    if (!raw || typeof raw !== 'string') continue;
+    for (const piece of raw.split(' · ')) {
+      const trimmed = piece.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        parts.push(trimmed);
+      }
+    }
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
 
 export const locationModel = {
   async findAll(): Promise<Location[]> {
@@ -178,23 +199,91 @@ export const locationModel = {
     return res.rows[0] || null;
   },
 
-  // Room Inventory (Facility Matrix)
+  // Room Inventory (Facility Matrix — merges repeated allocations of the same item into one row)
   async addRoomInventoryItem(roomId: string, item: any): Promise<any> {
+    const stockItemId = item.stockItemId || item.stock_item_id || null;
+    const assetId = item.assetId || item.asset_id || null;
+    const addWorking = Number(item.qtyWorking ?? item.qty_working ?? 1) || 0;
+    const addBroken = Number(item.qtyBroken ?? item.qty_broken ?? 0) || 0;
+    const addMaintenance = Number(item.qtyMaintenance ?? item.qty_maintenance ?? 0) || 0;
+
+    if (stockItemId || assetId) {
+      const existingRes = stockItemId
+        ? await query(
+            `SELECT * FROM room_inventory
+             WHERE room_id = $1 AND stock_item_id = $2
+             ORDER BY created_at ASC, id ASC`,
+            [roomId, stockItemId]
+          )
+        : await query(
+            `SELECT * FROM room_inventory
+             WHERE room_id = $1 AND stock_item_id IS NULL AND asset_id = $2
+             ORDER BY created_at ASC, id ASC`,
+            [roomId, assetId]
+          );
+
+      if (existingRes.rows.length > 0) {
+        const primary = existingRes.rows[0];
+        const totalWorking =
+          existingRes.rows.reduce((sum: number, r: any) => sum + Number(r.qty_working || 0), 0) +
+          addWorking;
+        const totalBroken =
+          existingRes.rows.reduce((sum: number, r: any) => sum + Number(r.qty_broken || 0), 0) +
+          addBroken;
+        const totalMaintenance =
+          existingRes.rows.reduce((sum: number, r: any) => sum + Number(r.qty_maintenance || 0), 0) +
+          addMaintenance;
+        const mergedRemarks = mergeRoomRemarks(
+          ...existingRes.rows.map((r: any) => r.remarks),
+          item.remarks
+        );
+
+        const duplicateIds = existingRes.rows.slice(1).map((r: any) => r.id);
+        if (duplicateIds.length > 0) {
+          await query('DELETE FROM room_inventory WHERE id = ANY($1::uuid[])', [duplicateIds]);
+        }
+
+        const updatedRes = await query(
+          `UPDATE room_inventory
+           SET qty_working = $1,
+               qty_broken = $2,
+               qty_maintenance = $3,
+               remarks = $4,
+               brand_spec = COALESCE($5, brand_spec),
+               unit = COALESCE($6, unit),
+               last_audited_at = CURRENT_TIMESTAMP,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $7
+           RETURNING *`,
+          [
+            totalWorking,
+            totalBroken,
+            totalMaintenance,
+            mergedRemarks,
+            item.brandSpec || item.brand_spec || null,
+            item.unit || null,
+            primary.id,
+          ]
+        );
+        return updatedRes.rows[0];
+      }
+    }
+
     const res = await query(
       `INSERT INTO room_inventory (room_id, stock_item_id, asset_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         roomId,
-        item.stockItemId || item.stock_item_id || null,
-        item.assetId || item.asset_id || null,
+        stockItemId,
+        assetId,
         item.name,
         item.group || item.group_type || 'FURNITURE',
         item.brandSpec || item.brand_spec || null,
         item.unit || 'pcs',
-        item.qtyWorking ?? item.qty_working ?? 1,
-        item.qtyBroken ?? item.qty_broken ?? 0,
-        item.qtyMaintenance ?? item.qty_maintenance ?? 0,
+        addWorking,
+        addBroken,
+        addMaintenance,
         item.remarks || null,
       ]
     );

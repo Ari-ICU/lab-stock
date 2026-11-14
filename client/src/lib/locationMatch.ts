@@ -105,9 +105,98 @@ export function findLinkedStockItem(
   );
 }
 
+export interface ConsolidatedRoomInventoryItem extends RoomInventoryItem {
+  sourceIds: string[];
+}
+
+/** Combine non-empty room remarks while removing exact duplicate segments. */
+export function mergeDistinctRemarks(...values: Array<string | undefined | null>): string | undefined {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+
+  for (const raw of values) {
+    if (!raw || typeof raw !== 'string') continue;
+    for (const piece of raw.split(' · ')) {
+      const trimmed = piece.trim();
+      if (!trimmed) continue;
+      const normalized = trimmed.toLowerCase();
+      if (!seen.has(normalized)) {
+        seen.add(normalized);
+        parts.push(trimmed);
+      }
+    }
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : undefined;
+}
+
+/** Stable identity key for grouping repeated allocations of the same item in one classroom. */
+export function getRoomInventoryItemKey(
+  inv: Pick<RoomInventoryItem, 'stockItemId' | 'assetId' | 'name' | 'unit'>,
+  stock: MockItem[]
+): string {
+  const linked = inv.stockItemId
+    ? findLinkedStockItem(inv as RoomInventoryItem, stock)
+    : undefined;
+  if (linked) return `stock:${linked.id.toLowerCase()}`;
+  if (inv.stockItemId) return `stock:${inv.stockItemId.trim().toLowerCase()}`;
+  if (inv.assetId) return `asset:${inv.assetId.trim().toLowerCase()}`;
+  return `name:${inv.name.trim().toLowerCase()}|unit:${(inv.unit || 'pcs').trim().toLowerCase()}`;
+}
+
+/** Consolidate duplicate room inventory records for the same SKU/item into a single display row. */
+export function consolidateRoomInventories(
+  inventories: RoomInventoryItem[],
+  stock: MockItem[]
+): ConsolidatedRoomInventoryItem[] {
+  const order: string[] = [];
+  const grouped = new Map<string, ConsolidatedRoomInventoryItem>();
+
+  for (const inv of inventories) {
+    const key = getRoomInventoryItemKey(inv, stock);
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      order.push(key);
+      grouped.set(key, {
+        ...inv,
+        qtyWorking: inv.qtyWorking || 0,
+        qtyBroken: inv.qtyBroken || 0,
+        qtyMaintenance: inv.qtyMaintenance || 0,
+        sourceIds: [inv.id],
+      });
+      continue;
+    }
+
+    existing.qtyWorking += inv.qtyWorking || 0;
+    existing.qtyBroken += inv.qtyBroken || 0;
+    existing.qtyMaintenance += inv.qtyMaintenance || 0;
+    existing.remarks = mergeDistinctRemarks(existing.remarks, inv.remarks);
+    if (inv.lastAuditedAt) {
+      existing.lastAuditedAt = inv.lastAuditedAt;
+    }
+    if (!existing.sourceIds.includes(inv.id)) {
+      existing.sourceIds.push(inv.id);
+    }
+  }
+
+  return order.map((k) => grouped.get(k)!);
+}
+
+/** Find a consolidated room inventory entry matching either its primary ID or any merged sibling ID. */
+export function findConsolidatedRoomItem(
+  loc: MockLocation | undefined,
+  itemId: string,
+  stock: MockItem[]
+): ConsolidatedRoomInventoryItem | undefined {
+  if (!loc || !itemId) return undefined;
+  const consolidated = consolidateRoomInventories(loc.inventories || [], stock);
+  return consolidated.find((c) => c.id === itemId || c.sourceIds.includes(itemId));
+}
+
 export interface RoomFleetStats {
   matchingStock: MockItem[];
-  linkedExtraInvs: RoomInventoryItem[];
+  linkedExtraInvs: ConsolidatedRoomInventoryItem[];
   matchingAssets: MockAsset[];
   stockItemsCount: number;
   totalStockUnits: number;
@@ -123,7 +212,7 @@ export interface RoomFleetStats {
 }
 
 /**
- * Single source of truth computing room-level Inventory (/stock + valid allocations)
+ * Single source of truth computing room-level Inventory (/stock + valid consolidated allocations)
  * and Hardware Assets (/assets) counts & health metrics.
  */
 export function getRoomInventoryStats(
@@ -134,11 +223,13 @@ export function getRoomInventoryStats(
   const matchingStock = stock.filter((s) => doesLocationMatchRoom(s.location, loc));
   const matchingStockIds = new Set(matchingStock.map((s) => s.id));
 
-  // Include explicit stock allocations assigned to this room unless already directly stationed here
-  const linkedExtraInvs = (loc.inventories || []).filter((inv) => {
+  // Include explicit stock allocations assigned to this room unless already directly stationed here,
+  // merging repeated allocations of the same item into a single entry.
+  const rawLinkedExtraInvs = (loc.inventories || []).filter((inv) => {
     const linked = findLinkedStockItem(inv, stock);
     return Boolean(linked) && !matchingStockIds.has(linked!.id);
   });
+  const linkedExtraInvs = consolidateRoomInventories(rawLinkedExtraInvs, stock);
 
   const directStockUnits = matchingStock.reduce((sum, s) => sum + (s.quantity || 0), 0);
   const allocWorkingUnits = linkedExtraInvs.reduce((sum, inv) => sum + (inv.qtyWorking || 0), 0);

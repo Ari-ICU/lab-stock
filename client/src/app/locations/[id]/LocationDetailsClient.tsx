@@ -53,6 +53,7 @@ type RoomInventoryRow =
       id: string;
       source: 'allocation';
       allocation: RoomInventoryItem;
+      sourceAllocationIds: string[];
       name: string;
       group: AssetGroup;
       categoryLabel: string;
@@ -248,6 +249,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       id: inv.id,
       source: 'allocation',
       allocation: inv,
+      sourceAllocationIds: inv.sourceIds,
       name: inv.name,
       group: inv.group,
       categoryLabel: getCategoryLabel(inv.group),
@@ -896,7 +898,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                                             if (linked && item.total > 0) {
                                               updateStockQuantity(linked.id, item.total);
                                             }
-                                            deleteRoomInventoryItem(loc.id, item.allocation.id);
+                                            const idsToRemove =
+                                              item.sourceAllocationIds.length > 0
+                                                ? item.sourceAllocationIds
+                                                : [item.allocation.id];
+                                            idsToRemove.forEach((allocId, idx) => {
+                                              deleteRoomInventoryItem(loc.id, allocId, { silent: idx > 0 });
+                                            });
                                           },
                                         },
                                       ]

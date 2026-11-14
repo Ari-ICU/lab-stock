@@ -199,6 +199,59 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       'DELETE FROM room_inventory WHERE stock_item_id IS NULL AND asset_id IS NULL'
     ).catch(() => {});
 
+    // Consolidate any legacy duplicate room_inventory rows referencing the same stock item or asset within the same room
+    const dupGroupsRes = await pool
+      .query(
+        `SELECT room_id, stock_item_id, asset_id, array_agg(id ORDER BY created_at ASC, id ASC) AS ids
+         FROM room_inventory
+         WHERE stock_item_id IS NOT NULL OR asset_id IS NOT NULL
+         GROUP BY room_id, stock_item_id, asset_id
+         HAVING COUNT(*) > 1`
+      )
+      .catch(() => ({ rows: [] as any[] }));
+
+    for (const group of dupGroupsRes.rows) {
+      const ids: string[] = group.ids || [];
+      if (ids.length < 2) continue;
+      const rowsRes = await query(
+        'SELECT * FROM room_inventory WHERE id = ANY($1::uuid[]) ORDER BY created_at ASC, id ASC',
+        [ids]
+      );
+      const rows = rowsRes.rows;
+      if (rows.length < 2) continue;
+
+      const primary = rows[0];
+      const sumWorking = rows.reduce((s: number, r: any) => s + Number(r.qty_working || 0), 0);
+      const sumBroken = rows.reduce((s: number, r: any) => s + Number(r.qty_broken || 0), 0);
+      const sumMaintenance = rows.reduce((s: number, r: any) => s + Number(r.qty_maintenance || 0), 0);
+      const uniqueRemarks = Array.from(
+        new Set(
+          rows
+            .flatMap((r: any) => String(r.remarks || '').split(' · '))
+            .map((s: string) => s.trim())
+            .filter(Boolean)
+        )
+      );
+
+      await query(
+        `UPDATE room_inventory
+         SET qty_working = $1,
+             qty_broken = $2,
+             qty_maintenance = $3,
+             remarks = $4,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $5`,
+        [
+          sumWorking,
+          sumBroken,
+          sumMaintenance,
+          uniqueRemarks.length > 0 ? uniqueRemarks.join(' · ') : null,
+          primary.id,
+        ]
+      );
+      await query('DELETE FROM room_inventory WHERE id = ANY($1::uuid[])', [ids.slice(1)]);
+    }
+
     // Sync existing stock_items categories + starter categories into the categories table
     const starterCategories = [
       'Office Stationery',

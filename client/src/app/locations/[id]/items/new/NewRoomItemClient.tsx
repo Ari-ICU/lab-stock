@@ -20,7 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { findLocation, getCategoryLabel } from '../shared';
-import { doesLocationMatchRoom, inferAssetGroup } from '@/lib/locationMatch';
+import { doesLocationMatchRoom, findLinkedStockItem, inferAssetGroup } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
 
@@ -92,6 +92,18 @@ function NewRoomItemInner({ id }: { id: string }) {
     );
   }, [assignableAssets, itemSearch]);
 
+  const existingRoomStockQty = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!loc) return map;
+    (loc.inventories || []).forEach((inv) => {
+      const linked = findLinkedStockItem(inv, stock);
+      if (!linked) return;
+      const units = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
+      map.set(linked.id, (map.get(linked.id) || 0) + units);
+    });
+    return map;
+  }, [loc, stock]);
+
   const totalSourceCount = source === 'stock' ? assignableStock.length : assignableAssets.length;
   const pickerRows = useMemo(
     () =>
@@ -104,6 +116,7 @@ function NewRoomItemInner({ id }: { id: string }) {
             locationLabel: item.location || 'Unassigned',
             imageUrl: item.imageUrl,
             quantityLabel: `${item.quantity} ${item.unit}`,
+            existingQty: existingRoomStockQty.get(item.id) || 0,
           }))
         : filteredAssets.map((asset) => ({
             id: asset.id,
@@ -113,8 +126,9 @@ function NewRoomItemInner({ id }: { id: string }) {
             locationLabel: asset.location || 'Unassigned',
             imageUrl: asset.imageUrl,
             quantityLabel: `${asset.totalUnits ?? 1} ${asset.unitType || 'Units'}`,
+            existingQty: 0,
           })),
-    [source, filteredStock, filteredAssets]
+    [source, filteredStock, filteredAssets, existingRoomStockQty]
   );
 
   const selectedStockList = useMemo(
@@ -555,6 +569,11 @@ function NewRoomItemInner({ id }: { id: string }) {
                                   <span className="text-[10px] font-mono bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded border border-neutral-200/70">
                                     {row.badge}
                                   </span>
+                                  {row.existingQty > 0 && (
+                                    <span className="text-[10px] font-medium bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200/80">
+                                      {row.existingQty} in {loc.room}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 flex-wrap">
                                   <span>{row.subtitle}</span>

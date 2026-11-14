@@ -32,6 +32,7 @@ import {
   toServerLocation,
   toServerLoan,
 } from '@/services';
+import { getRoomInventoryItemKey, mergeDistinctRemarks } from '@/lib/locationMatch';
 
 export type {
   ModalType,
@@ -97,7 +98,7 @@ interface StockContextType {
     item: Omit<RoomInventoryItem, 'id' | 'roomId'>,
     options?: { silent?: boolean }
   ) => void;
-  deleteRoomInventoryItem: (roomId: string, itemId: string) => void;
+  deleteRoomInventoryItem: (roomId: string, itemId: string, options?: { silent?: boolean }) => void;
   isScannerOpen: boolean;
   openScanner: () => void;
   closeScanner: () => void;
@@ -996,60 +997,186 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     itemData: Omit<RoomInventoryItem, 'id' | 'roomId'>,
     options?: { silent?: boolean }
   ) => {
+    const today = new Date().toISOString().split('T')[0];
+    const targetKey = getRoomInventoryItemKey(itemData, stock);
+    const currentRoom = locations.find((l) => l.id === roomId);
+    const existingMatches = (currentRoom?.inventories || []).filter(
+      (inv) => getRoomInventoryItemKey(inv, stock) === targetKey
+    );
+    const primaryMatch = existingMatches[0];
+    const duplicateIds = new Set(existingMatches.slice(1).map((inv) => inv.id));
+
+    const tempId = `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newItem: RoomInventoryItem = {
-      id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: tempId,
       roomId,
-      lastAuditedAt: new Date().toISOString().split('T')[0],
+      lastAuditedAt: today,
       ...itemData,
     };
+
+    setLocations((prev) => {
+      const next = prev.map((loc) => {
+        if (loc.id !== roomId) return loc;
+        const inventories = loc.inventories || [];
+        const matched = inventories.filter(
+          (inv) => getRoomInventoryItemKey(inv, stock) === targetKey
+        );
+        if (matched.length > 0) {
+          const primary = matched[0];
+          const extraIds = new Set(matched.slice(1).map((inv) => inv.id));
+          const mergedWorking =
+            matched.reduce((sum, inv) => sum + (inv.qtyWorking || 0), 0) +
+            (itemData.qtyWorking || 0);
+          const mergedBroken =
+            matched.reduce((sum, inv) => sum + (inv.qtyBroken || 0), 0) +
+            (itemData.qtyBroken || 0);
+          const mergedMaintenance =
+            matched.reduce((sum, inv) => sum + (inv.qtyMaintenance || 0), 0) +
+            (itemData.qtyMaintenance || 0);
+          const mergedRemarks = mergeDistinctRemarks(
+            ...matched.map((inv) => inv.remarks),
+            itemData.remarks
+          );
+          return {
+            ...loc,
+            inventories: inventories
+              .filter((inv) => !extraIds.has(inv.id))
+              .map((inv) =>
+                inv.id === primary.id
+                  ? {
+                      ...inv,
+                      qtyWorking: mergedWorking,
+                      qtyBroken: mergedBroken,
+                      qtyMaintenance: mergedMaintenance,
+                      remarks: mergedRemarks,
+                      lastAuditedAt: today,
+                    }
+                  : inv
+              ),
+          };
+        }
+        return {
+          ...loc,
+          inventories: [...inventories, newItem],
+        };
+      });
+      setCachedData('locations', next);
+      return next;
+    });
+
+    if (!options?.silent) {
+      showToast(
+        primaryMatch
+          ? `Updated ${itemData.name} count in room inventory`
+          : `Added ${newItem.name} to room inventory`,
+        'success'
+      );
+    }
+
+    if (getAuthToken()) {
+      locationService
+        .addRoomInventory(roomId, itemData)
+        .then((res) => {
+          const row = res?.data;
+          if (!row?.id) return;
+          const serverId = String(row.id);
+
+          setLocations((current) => {
+            const next = current.map((l) => {
+              if (l.id !== roomId) return l;
+              const list = l.inventories || [];
+
+              // Brand-new entry created on server: swap temporary ID with canonical server UUID
+              if (!primaryMatch) {
+                return {
+                  ...l,
+                  inventories: list.map((inv) =>
+                    inv.id === tempId ? { ...inv, id: serverId } : inv
+                  ),
+                };
+              }
+
+              // Updated backend consolidated directly into primaryMatch.id: sync exact server counts
+              if (serverId === primaryMatch.id) {
+                return {
+                  ...l,
+                  inventories: list.map((inv) =>
+                    inv.id === primaryMatch.id
+                      ? {
+                          ...inv,
+                          qtyWorking: Number(row.qtyWorking ?? row.qty_working ?? inv.qtyWorking),
+                          qtyBroken: Number(row.qtyBroken ?? row.qty_broken ?? inv.qtyBroken),
+                          qtyMaintenance: Number(
+                            row.qtyMaintenance ?? row.qty_maintenance ?? inv.qtyMaintenance
+                          ),
+                          remarks: row.remarks ?? inv.remarks,
+                        }
+                      : inv
+                  ),
+                };
+              }
+
+              // Fallback if an un-restarted backend inserted a separate row: restore raw rows so UI
+              // consolidation still displays 1 item while retaining every DB row ID for edits/deletes.
+              const restoredPrimary: RoomInventoryItem = {
+                ...primaryMatch,
+                id: primaryMatch.id,
+              };
+              const restoredExtras = existingMatches.slice(1);
+              const serverInserted: RoomInventoryItem = {
+                id: serverId,
+                roomId,
+                stockItemId: row.stock_item_id || itemData.stockItemId,
+                assetId: row.asset_id || itemData.assetId,
+                name: row.name || itemData.name,
+                group: row.group_type || itemData.group,
+                brandSpec: row.brand_spec ?? itemData.brandSpec,
+                unit: row.unit || itemData.unit,
+                qtyWorking: Number(row.qty_working ?? row.qtyWorking ?? itemData.qtyWorking ?? 0),
+                qtyBroken: Number(row.qty_broken ?? row.qtyBroken ?? itemData.qtyBroken ?? 0),
+                qtyMaintenance: Number(
+                  row.qty_maintenance ?? row.qtyMaintenance ?? itemData.qtyMaintenance ?? 0
+                ),
+                remarks: row.remarks ?? itemData.remarks,
+                lastAuditedAt: row.last_audited_at || today,
+              };
+              return {
+                ...l,
+                inventories: [
+                  ...list.filter((inv) => inv.id !== primaryMatch.id && !duplicateIds.has(inv.id)),
+                  restoredPrimary,
+                  ...restoredExtras,
+                  serverInserted,
+                ],
+              };
+            });
+            setCachedData('locations', next);
+            return next;
+          });
+        })
+        .catch(() => {});
+    }
+  };
+
+  const deleteRoomInventoryItem = (
+    roomId: string,
+    itemId: string,
+    options?: { silent?: boolean }
+  ) => {
     setLocations((prev) => {
       const next = prev.map((loc) => {
         if (loc.id !== roomId) return loc;
         return {
           ...loc,
-          inventories: [...(loc.inventories || []), newItem],
+          inventories: (loc.inventories || []).filter((inv) => inv.id !== itemId),
         };
       });
       setCachedData('locations', next);
       return next;
     });
     if (!options?.silent) {
-      showToast(`Added ${newItem.name} to room inventory`, 'success');
+      showToast(`Removed item from room inventory`, 'info');
     }
-    if (getAuthToken()) {
-      locationService.addRoomInventory(roomId, itemData).then((res) => {
-        if (res?.data?.id) {
-          // Update temporary id with server id
-          setLocations((current) => {
-            const next = current.map((l) =>
-              l.id !== roomId
-                ? l
-                : {
-                    ...l,
-                    inventories: (l.inventories || []).map((inv) =>
-                      inv.id === newItem.id ? { ...inv, id: String(res.data.id) } : inv
-                    ),
-                  }
-            );
-            setCachedData('locations', next);
-            return next;
-          });
-        }
-      }).catch(() => {});
-    }
-  };
-
-  const deleteRoomInventoryItem = (roomId: string, itemId: string) => {
-    setLocations((prev) =>
-      prev.map((loc) => {
-        if (loc.id !== roomId) return loc;
-        return {
-          ...loc,
-          inventories: (loc.inventories || []).filter((inv) => inv.id !== itemId),
-        };
-      })
-    );
-    showToast(`Removed item from room inventory`, 'info');
     if (getAuthToken()) {
       locationService.deleteRoomInventory(itemId).catch(() => {});
     }
@@ -1060,8 +1187,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     itemId: string,
     updates: Partial<RoomInventoryItem>
   ) => {
-    setLocations((prev) =>
-      prev.map((loc) => {
+    setLocations((prev) => {
+      const next = prev.map((loc) => {
         if (loc.id !== roomId) return loc;
         return {
           ...loc,
@@ -1069,8 +1196,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
             inv.id === itemId ? { ...inv, ...updates } : inv
           ),
         };
-      })
-    );
+      });
+      setCachedData('locations', next);
+      return next;
+    });
     showToast(`Updated facility equipment record`, 'success');
     if (getAuthToken()) {
       locationService.updateRoomInventoryItem(itemId, updates).catch(() => {});

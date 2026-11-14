@@ -16,6 +16,7 @@ import {
   getOperationalPercent,
   getRoomItemImage,
 } from '../shared';
+import { findConsolidatedRoomItem } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function RoomItemDetailsClient({ id }: { id: string }) {
@@ -27,7 +28,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const loc = findLocation(locations, id);
-  const item = loc?.inventories?.find((i) => i.id === itemId);
+  const item = findConsolidatedRoomItem(loc, itemId, stock);
 
   if (isLoading || !loc) {
     return <LoadingScreen message="Loading classroom equipment..." />;
@@ -68,7 +69,9 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
     if (linkedStock && total > 0) {
       updateStockQuantity(linkedStock.id, total);
     }
-    deleteRoomInventoryItem(loc.id, item.id);
+    item.sourceIds.forEach((sourceId, idx) => {
+      deleteRoomInventoryItem(loc.id, sourceId, { silent: idx > 0 });
+    });
     router.push(backHref);
   };
 

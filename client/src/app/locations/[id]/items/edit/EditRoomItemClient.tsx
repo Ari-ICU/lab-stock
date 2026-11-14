@@ -17,6 +17,7 @@ import {
   findLinkedStock,
   getConditionStatus,
 } from '../shared';
+import { findConsolidatedRoomItem } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function EditRoomItemClient({ id }: { id: string }) {
@@ -27,7 +28,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
-  const item = loc?.inventories?.find((i) => i.id === itemId);
+  const item = findConsolidatedRoomItem(loc, itemId, stock);
 
   const [name, setName] = useState('');
   const [group, setGroup] = useState<AssetGroup>('FURNITURE');
@@ -140,6 +141,9 @@ export default function EditRoomItemClient({ id }: { id: string }) {
       qtyMaintenance,
       remarks: remarks.trim(),
     });
+    item.sourceIds
+      .filter((sourceId) => sourceId !== item.id)
+      .forEach((dupId) => deleteRoomInventoryItem(loc.id, dupId, { silent: true }));
 
     if (linkedStock && diff !== 0) {
       updateStockQuantity(linkedStock.id, -diff);
@@ -152,7 +156,9 @@ export default function EditRoomItemClient({ id }: { id: string }) {
     if (linkedStock && total > 0) {
       updateStockQuantity(linkedStock.id, total);
     }
-    deleteRoomInventoryItem(loc.id, item.id);
+    item.sourceIds.forEach((sourceId) => {
+      deleteRoomInventoryItem(loc.id, sourceId, { silent: true });
+    });
     showToast(`Removed "${item.name}" from ${loc.room}`, 'info');
     router.push(backHref);
   };
