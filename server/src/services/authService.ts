@@ -16,6 +16,14 @@ const ALLOWED_USER_ROLES = [
   'Department Administrator',
 ] as const;
 
+let dummyHashPromise: Promise<string> | null = null;
+function getDummyPasswordHash(): Promise<string> {
+  if (!dummyHashPromise) {
+    dummyHashPromise = hashPassword('timing-equalization-dummy-value');
+  }
+  return dummyHashPromise;
+}
+
 export interface AuthSessionResponse {
   token: string;
   user: Omit<User, 'password_hash'>;
@@ -28,37 +36,12 @@ export const authService = {
   async login(email: string, plainTextPassword: string): Promise<AuthSessionResponse> {
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Email aliases mapping legacy @lab.edu addresses to official @rupp.edu.kh university accounts
-    const emailAliases: Record<string, string> = {
-      'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-      'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-      'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-      'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
-      'heng.sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
-      'assistant@lab.edu': 'chan.vicheka@rupp.edu.kh',
-      'vakhim@lab.edu': 'chan.vicheka@rupp.edu.kh',
-      'chan.vicheka@lab.edu': 'chan.vicheka@rupp.edu.kh',
-    };
-    const primaryEmail = emailAliases[normalizedEmail] || normalizedEmail;
-
-    // Strict RBAC: Only Super Admin, Admin, and Lecturer can log in. Lab Assistants have View-Only status.
-    if (
-      primaryEmail === 'chan.vicheka@rupp.edu.kh' ||
-      primaryEmail.includes('assistant') ||
-      primaryEmail.includes('vicheka')
-    ) {
-      throw new ForbiddenException(
-        'Login restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators. Please sign in as Super Admin, Admin, or Lecturer.'
-      );
-    }
-
-    // 1. Fetch user from PostgreSQL (check primary email, then fallback to original)
-    let user = await userModel.findByEmail(primaryEmail);
-    if (!user && primaryEmail !== normalizedEmail) {
-      user = await userModel.findByEmail(normalizedEmail);
-    }
+    // 1. Fetch user from PostgreSQL
+    const user = await userModel.findByEmail(normalizedEmail);
 
     if (!user) {
+      // Equalize bcrypt response timing so valid emails cannot be enumerated by latency
+      await verifyPassword(plainTextPassword, await getDummyPasswordHash());
       throw new UnauthorizedException('Invalid email or password credentials');
     }
 
@@ -66,6 +49,16 @@ export const authService = {
     const isPasswordValid = await verifyPassword(plainTextPassword, user.password_hash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password credentials');
+    }
+
+    // 3. Enforce operator role policy strictly after credential verification
+    const hasOperatorAccess =
+      Boolean(user.is_admin) ||
+      ALLOWED_USER_ROLES.includes(user.role as (typeof ALLOWED_USER_ROLES)[number]);
+    if (!hasOperatorAccess) {
+      throw new ForbiddenException(
+        'Access restricted: This account does not have portal sign-in permissions.'
+      );
     }
 
     // 3. Determine permissions based on role & admin status using RBAC matrix

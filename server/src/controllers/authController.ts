@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { authService } from '@/services/authService.js';
 import { asyncHandler, UnauthorizedException, ValidationException } from '@/exceptions/errorHandler.js';
 import { isValidUuid } from '@/validations/commonValidation.js';
+import { logSecurityEvent, maskEmail } from '@/utils/securityLogger.js';
 
 /**
  * POST /api/v1/auth/login
@@ -9,15 +10,32 @@ import { isValidUuid } from '@/validations/commonValidation.js';
  */
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  const maskedTarget = maskEmail(email);
 
-  const result = await authService.login(email, password);
+  try {
+    const result = await authService.login(email, password);
+    logSecurityEvent({
+      action: 'LOGIN_SUCCESS',
+      actor: result.user.id,
+      target: maskedTarget,
+      ip: req.ip,
+    });
 
-  return res.status(200).json({
-    status: 'ok',
-    message: 'Authentication successful',
-    token: result.token,
-    user: result.user,
-  });
+    return res.status(200).json({
+      status: 'ok',
+      message: 'Authentication successful',
+      token: result.token,
+      user: result.user,
+    });
+  } catch (err: any) {
+    logSecurityEvent({
+      action: err?.statusCode === 403 ? 'LOGIN_BLOCKED' : 'LOGIN_FAILED',
+      target: maskedTarget,
+      ip: req.ip,
+      reason: err?.errorCode || 'AUTH_FAILED',
+    });
+    throw err;
+  }
 });
 
 /**
@@ -27,6 +45,12 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
  */
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const newUser = await authService.register(req.body, req.user);
+  logSecurityEvent({
+    action: 'USER_CREATED',
+    actor: req.user?.sub,
+    target: newUser.id,
+    ip: req.ip,
+  });
 
   return res.status(201).json({
     status: 'ok',
@@ -98,6 +122,12 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
 
   const { currentPassword, newPassword } = req.body;
   await authService.changePassword(req.user.sub, currentPassword, newPassword);
+  logSecurityEvent({
+    action: 'PASSWORD_CHANGED',
+    actor: req.user.sub,
+    target: req.user.sub,
+    ip: req.ip,
+  });
 
   return res.status(200).json({
     status: 'ok',
@@ -178,6 +208,14 @@ export const updateUserRole = asyncHandler(async (req: Request, res: Response) =
   const cleanRole = role.trim();
   await authService.updateUserRole(userId, cleanRole, req.user?.sub);
 
+  logSecurityEvent({
+    action: 'USER_ROLE_UPDATED',
+    actor: req.user?.sub,
+    target: userId,
+    ip: req.ip,
+    reason: `role=${cleanRole}`,
+  });
+
   return res.status(200).json({
     status: 'ok',
     message: `User role successfully updated to ${cleanRole}`,
@@ -199,6 +237,13 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await authService.deleteUser(userId, req.user?.sub);
+
+  logSecurityEvent({
+    action: 'USER_DELETED',
+    actor: req.user?.sub,
+    target: userId,
+    ip: req.ip,
+  });
 
   return res.status(200).json({
     status: 'ok',

@@ -73,7 +73,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           );
         }
 
-        console.log(`✅ Seeded ${initialUsers.length} initial faculty users with official @rupp.edu.kh university credentials.`);
+        console.log(`✅ Seeded ${initialUsers.length} initial faculty accounts.`);
       }
     }
 

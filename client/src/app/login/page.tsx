@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   useAuth,
@@ -37,13 +37,8 @@ interface LoginErrorState {
 
 function buildAuthError(
   errorCode: AuthErrorCode | undefined,
-  rawMessage: string | undefined,
-  email: string
+  rawMessage: string | undefined
 ): LoginErrorState {
-  const cleanEmail = email.trim().toLowerCase();
-  const isUniversityDomain =
-    cleanEmail.endsWith('@rupp.edu.kh') || cleanEmail.endsWith('@lab.edu');
-
   switch (errorCode) {
     case 'FORBIDDEN':
       return {
@@ -52,7 +47,7 @@ function buildAuthError(
         message:
           rawMessage ||
           'This account does not have operator permissions to sign in.',
-        hint: 'Only Primary Lab Administrators, Department Administrators, and Faculty Lecturers can access the portal.',
+        hint: 'Contact a system administrator if you believe your account requires operator access.',
         field: 'email',
       };
     case 'RATE_LIMITED':
@@ -80,7 +75,7 @@ function buildAuthError(
         message:
           rawMessage ||
           'Unable to connect to the backend authentication server.',
-        hint: 'Ensure the API server is online and reachable from your browser (HTTPS deployments require an HTTPS API endpoint).',
+        hint: 'Ensure the API server is online and reachable from your browser.',
       };
     case 'SERVER_ERROR':
       return {
@@ -104,10 +99,8 @@ function buildAuthError(
       return {
         code: 'INVALID_CREDENTIALS',
         title: 'Sign-in failed',
-        message: rawMessage || 'Invalid email or password credentials.',
-        hint: isUniversityDomain
-          ? 'Verify that your password is correct and Caps Lock is turned off.'
-          : 'Make sure Caps Lock is off, and check your account email (faculty & staff accounts typically use an @rupp.edu.kh address).',
+        message: 'Invalid email or password credentials.',
+        hint: 'Verify your account email and password, ensure Caps Lock is off, or contact an administrator for a reset.',
         field: 'both',
       };
   }
@@ -116,7 +109,7 @@ function buildAuthError(
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isAuthInitialized } = useAuth();
   const { showToast } = useStock();
 
   const emailRef = useRef<HTMLInputElement>(null);
@@ -124,10 +117,17 @@ function LoginFormContent() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorState, setErrorState] = useState<LoginErrorState | null>(null);
   const [expiredDismissed, setExpiredDismissed] = useState(false);
+
+  useEffect(() => {
+    if (isAuthInitialized && isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, isAuthInitialized, router]);
 
   const isSessionExpiredNotice =
     searchParams.get('reason') === 'expired' && !expiredDismissed && !errorState;
@@ -140,7 +140,7 @@ function LoginFormContent() {
         code: 'CLIENT_VALIDATION',
         title: 'Email required',
         message: 'Please enter your laboratory account email.',
-        hint: 'Example: thoeurn.ratha@rupp.edu.kh',
+        hint: 'Enter the email address registered to your operator account.',
         field: 'email',
       });
       emailRef.current?.focus();
@@ -152,7 +152,7 @@ function LoginFormContent() {
         code: 'CLIENT_VALIDATION',
         title: 'Invalid email format',
         message: 'Enter a valid email address before signing in.',
-        hint: 'Example: thoeurn.ratha@rupp.edu.kh',
+        hint: 'Use a standard email format such as name@institution.edu.',
         field: 'email',
       });
       emailRef.current?.focus();
@@ -174,12 +174,13 @@ function LoginFormContent() {
     setIsLoading(true);
 
     try {
-      const res = await login(trimmedEmail, password, true);
+      const res = await login(trimmedEmail, password, rememberMe);
       if (res.success) {
+        setPassword('');
         showToast('Signed in successfully');
         router.push('/');
       } else {
-        setErrorState(buildAuthError(res.errorCode, res.error, trimmedEmail));
+        setErrorState(buildAuthError(res.errorCode, res.error));
       }
     } catch {
       setErrorState({
@@ -225,6 +226,10 @@ function LoginFormContent() {
     }
     return <AlertCircle className="w-4 h-4" />;
   };
+
+  if (isAuthInitialized && isAuthenticated) {
+    return <LoadingScreen message="Redirecting to Laboratory Portal..." />;
+  }
 
   return (
     <div className="min-h-screen w-full bg-neutral-50/70 text-neutral-900 font-sans relative flex flex-col justify-between selection:bg-neutral-900 selection:text-white">
@@ -341,14 +346,17 @@ function LoginFormContent() {
                 <span className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 uppercase tracking-wider bg-neutral-100 border border-neutral-200 font-mono">
                   STAFF & TECHNICIAN ACCESS
                 </span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  <span>Secured Session</span>
+                </span>
               </div>
 
               <h2 className="text-xl font-bold text-neutral-900 tracking-tight">
                 Sign in to Laboratory Portal
               </h2>
               <p className="text-xs text-neutral-500 mt-1 mb-5 leading-relaxed">
-                Enter your university credentials to access the portal.
+                Enter your authorized operator credentials to access the portal.
               </p>
 
               {/* Session Expired Notice */}
@@ -427,10 +435,10 @@ function LoginFormContent() {
                     )}
 
                     {/* Contextual Quick Recovery Actions */}
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      {(errorState.code === 'NETWORK_ERROR' ||
-                        errorState.code === 'TIMEOUT' ||
-                        errorState.code === 'SERVER_ERROR') && (
+                    {(errorState.code === 'NETWORK_ERROR' ||
+                      errorState.code === 'TIMEOUT' ||
+                      errorState.code === 'SERVER_ERROR') && (
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
                           onClick={attemptLogin}
@@ -440,22 +448,8 @@ function LoginFormContent() {
                           <RefreshCw className="w-3 h-3" />
                           <span>Retry Sign In</span>
                         </button>
-                      )}
-                      {errorState.code === 'INVALID_CREDENTIALS' && password && (
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-rose-200 hover:bg-rose-100/60 text-[11px] font-semibold text-rose-800 transition-colors cursor-pointer"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="w-3 h-3" />
-                          ) : (
-                            <Eye className="w-3 h-3" />
-                          )}
-                          <span>{showPassword ? 'Hide password' : 'Check typed password'}</span>
-                        </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -495,12 +489,15 @@ function LoginFormContent() {
                       id="email"
                       type="email"
                       autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
                         if (errorState) setErrorState(null);
                       }}
-                      placeholder="thoeurn.ratha@rupp.edu.kh"
+                      placeholder="name@institution.edu"
                       disabled={isLoading}
                       aria-invalid={hasEmailError || undefined}
                       aria-describedby={errorState ? 'login-error-alert' : undefined}
@@ -532,6 +529,9 @@ function LoginFormContent() {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -564,6 +564,22 @@ function LoginFormContent() {
                   </div>
                 </div>
 
+                {/* Remember Device */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      disabled={isLoading}
+                      className="w-3.5 h-3.5 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 accent-neutral-900 cursor-pointer"
+                    />
+                    <span className="text-xs text-neutral-600">
+                      Keep me signed in on this device
+                    </span>
+                  </label>
+                </div>
+
                 {/* Sign In Button */}
                 <button
                   type="submit"
@@ -586,7 +602,7 @@ function LoginFormContent() {
             <div className="text-[11px] text-neutral-500 text-center px-4 leading-normal">
               CSD Stock • Faculty of Science Laboratory Management System.
               <br />
-              Authorized staff and student access only.
+              Authorized laboratory personnel only. Sign-in events are audited.
             </div>
           </div>
         </div>

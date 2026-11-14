@@ -211,6 +211,47 @@ const STORAGE_KEY = 'lab_auth_user';
 const USERS_STORAGE_KEY = 'lab_managed_users';
 const SESSIONS_STORAGE_KEY = 'lab_session_devices';
 
+const CACHE_STORAGE_KEYS = [
+  STORAGE_KEY,
+  'netlab_auth_user',
+  'lab_auth_token',
+  USERS_STORAGE_KEY,
+  SESSIONS_STORAGE_KEY,
+  'csd_cache_assets',
+  'csd_cache_stock',
+  'csd_cache_locations',
+  'csd_cache_loans',
+  'csd_cache_transfers',
+  'csd_cache_racks',
+  'csd_cache_categories',
+] as const;
+
+function clearClientSessionStorage(): void {
+  try {
+    if (typeof window === 'undefined') return;
+    for (const key of CACHE_STORAGE_KEYS) {
+      localStorage.removeItem(key);
+    }
+    sessionStorage.removeItem('lab_auth_token');
+  } catch {
+    // ignore storage access errors
+  }
+}
+
+function isJwtExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3 || !parts[1]) return true;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    if (typeof payload?.exp !== 'number') return false;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
 function generateTemporaryPassword(length = 16): string {
   const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
   const lower = 'abcdefghjkmnpqrstuvwxyz';
@@ -406,19 +447,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isCancelled = false;
 
     const clearStoredSession = () => {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem('netlab_auth_user');
-        localStorage.removeItem('lab_auth_token');
-        sessionStorage.removeItem('lab_auth_token');
-      } catch {
-        // ignore
-      }
+      clearClientSessionStorage();
     };
 
     const bootstrapAuth = async () => {
       const existingToken = getAuthToken();
-      if (!existingToken) {
+      if (!existingToken || isJwtExpired(existingToken)) {
         clearStoredSession();
         if (!isCancelled) {
           setUser(null);
@@ -458,8 +492,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Network unreachable in development: allow cached remembered profile only alongside existing token
-      if (process.env.NODE_ENV !== 'production') {
+      // Network unreachable in development: allow cached remembered profile only alongside unexpired token
+      if (process.env.NODE_ENV !== 'production' && !isJwtExpired(existingToken)) {
         try {
           const storedUser = localStorage.getItem(STORAGE_KEY);
           if (storedUser && !isCancelled) {
@@ -768,32 +802,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ): Promise<AuthActionResult> => {
     setIsLoading(true);
 
-    const cleanEmail = email.trim().toLowerCase();
-    // Strict RBAC: Lab Assistants cannot sign in as operators
-    if (
-      cleanEmail.includes('vicheka') ||
-      cleanEmail.includes('assistant') ||
-      cleanEmail === 'chan.vicheka@rupp.edu.kh'
-    ) {
-      setIsLoading(false);
-      return {
-        success: false,
-        errorCode: 'FORBIDDEN',
-        error:
-          'Access restricted: Lab Assistants possess View-Only inspection status and cannot sign in as operators.',
-      };
-    }
-
-    const emailAliases: Record<string, string> =
-      process.env.NODE_ENV === 'production'
-        ? {}
-        : {
-            'admin@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-            'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-            'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
-            'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
-          };
-    const primaryEmail = emailAliases[cleanEmail] || cleanEmail;
+    const primaryEmail = email.trim().toLowerCase();
 
     // 1. Live backend authentication
     try {
@@ -804,7 +813,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return {
             success: false,
             errorCode: 'FORBIDDEN',
-            error: 'Access restricted: Lab Assistants cannot sign in as operators.',
+            error: 'Access restricted for this account role.',
           };
         }
 
@@ -905,14 +914,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setManagedUsers([]);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem('netlab_auth_user');
-      localStorage.removeItem('lab_auth_token');
-      sessionStorage.removeItem('lab_auth_token');
-    } catch {
-      // ignore
-    }
+    setSessionDevices([]);
+    clearClientSessionStorage();
     router.push('/login');
   };
 

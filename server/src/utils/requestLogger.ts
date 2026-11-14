@@ -1,5 +1,6 @@
 import morgan from 'morgan';
 import { Request, Response } from 'express';
+import { redactSensitiveUrl, sanitizeLogText } from './securityLogger.js';
 
 // ANSI styling
 const c = {
@@ -64,8 +65,10 @@ const formatLatency = (msStr?: string): string => {
 export const requestLogger = morgan((tokens, req: Request, res: Response) => {
   const now = new Date();
   const time = `${c.gray}${now.toLocaleTimeString()}${c.reset}`;
-  const method = getMethodBadge(tokens.method(req, res) || 'GET');
-  const url = `${c.bold}${c.white}${tokens.url(req, res)}${c.reset}`;
+  const rawMethod = sanitizeLogText(tokens.method(req, res) || 'GET', 16);
+  const method = getMethodBadge(rawMethod);
+  const safeUrl = redactSensitiveUrl(tokens.url(req, res) || '/');
+  const url = `${c.bold}${c.white}${safeUrl}${c.reset}`;
   const status = getStatusBadge(tokens.status(req, res));
   const latency = formatLatency(tokens['response-time'](req, res));
 

@@ -82,13 +82,14 @@ export const globalRateLimiter = rateLimit({
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 10,                   // Max 10 authentication attempts
+  max: 10,                   // Max 10 failed authentication attempts per window
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     status: 'error',
     code: 'AUTH_RATE_LIMIT_EXCEEDED',
-    message: 'Too many authentication attempts. IP temporarily throttled for 15 minutes.',
+    message: 'Too many authentication attempts. Please try again later.',
   },
 });
 

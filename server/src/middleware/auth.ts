@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtUserPayload } from '../utils/jwt.js';
+import { redactSensitiveUrl, sanitizeLogText } from '../utils/securityLogger.js';
 import { UnauthorizedException, ForbiddenException } from '../exceptions/errorHandler.js';
 import {
   hasPermission,
@@ -57,33 +58,34 @@ export function isUserAdmin(user?: JwtUserPayload): boolean {
 }
 
 /**
- * Helper to log RBAC diagnostic events in development or when DEBUG_AUTH=true
+ * Helper to log RBAC events cleanly (DENIED always logged without PII; GRANTED only when DEBUG_AUTH=true)
  */
 function logRbacDebug(params: {
   action: 'GRANTED' | 'DENIED';
   path: string;
   method: string;
-  userName: string;
+  userId?: string;
   userRole: string;
   required: string[];
   missing?: string[];
 }) {
-  const isDev = process.env.NODE_ENV !== 'production' || process.env.DEBUG_AUTH === 'true';
-  if (!isDev) return;
+  const debugAuth = process.env.DEBUG_AUTH === 'true';
+  if (params.action === 'GRANTED' && !debugAuth) return;
 
+  const cleanPath = redactSensitiveUrl(params.path || '');
   const tag =
     params.action === 'GRANTED'
       ? `${logStyles.green}🛡️ [RBAC:GRANTED]${logStyles.reset}`
       : `${logStyles.red}⛔ [RBAC:DENIED]${logStyles.reset}`;
 
-  const route = `${logStyles.cyan}${params.method} ${params.path}${logStyles.reset}`;
-  const user = `${logStyles.bold}${params.userName}${logStyles.reset} (${logStyles.yellow}${params.userRole}${logStyles.reset})`;
+  const route = `${logStyles.cyan}${sanitizeLogText(params.method, 16)} ${cleanPath}${logStyles.reset}`;
+  const actor = `${logStyles.bold}${sanitizeLogText(params.userId || 'unknown', 64)}${logStyles.reset} (${logStyles.yellow}${sanitizeLogText(params.userRole, 64)}${logStyles.reset})`;
   const reqStr = `required: [${params.required.join(', ')}]`;
   const missStr = params.missing?.length
     ? ` ${logStyles.red}missing: [${params.missing.join(', ')}]${logStyles.reset}`
     : '';
 
-  console.log(`${tag} ${route} │ ${user} │ ${reqStr}${missStr}`);
+  console.log(`${tag} ${route} │ ${actor} │ ${reqStr}${missStr}`);
 }
 
 /**
@@ -138,7 +140,7 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
         action: 'GRANTED',
         path: req.originalUrl || req.path,
         method: req.method,
-        userName: user.name,
+        userId: user.sub,
         userRole: user.role,
         required: requiredPermissions,
       });
@@ -153,7 +155,7 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
         action: 'DENIED',
         path: req.originalUrl || req.path,
         method: req.method,
-        userName: user.name,
+        userId: user.sub,
         userRole: user.role,
         required: requiredPermissions,
         missing,
@@ -171,7 +173,7 @@ export function requirePermission(...requiredPermissions: PermissionType[]) {
       action: 'GRANTED',
       path: req.originalUrl || req.path,
       method: req.method,
-      userName: user.name,
+      userId: user.sub,
       userRole: user.role,
       required: requiredPermissions,
     });
@@ -201,7 +203,7 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
         action: 'GRANTED',
         path: req.originalUrl || req.path,
         method: req.method,
-        userName: user.name,
+        userId: user.sub,
         userRole: user.role,
         required: permissions,
       });
@@ -215,7 +217,7 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
         action: 'DENIED',
         path: req.originalUrl || req.path,
         method: req.method,
-        userName: user.name,
+        userId: user.sub,
         userRole: user.role,
         required: permissions,
         missing: permissions,
@@ -233,7 +235,7 @@ export function requireAnyPermission(...permissions: PermissionType[]) {
       action: 'GRANTED',
       path: req.originalUrl || req.path,
       method: req.method,
-      userName: user.name,
+      userId: user.sub,
       userRole: user.role,
       required: permissions,
     });
@@ -259,7 +261,7 @@ export function requireRole(...allowedRoles: string[]) {
         action: 'GRANTED',
         path: req.originalUrl || req.path,
         method: req.method,
-        userName: user.name,
+        userId: user.sub,
         userRole: user.role,
         required: allowedRoles,
       });
@@ -274,7 +276,7 @@ export function requireRole(...allowedRoles: string[]) {
         action: 'DENIED',
         path: req.originalUrl || req.path,
         method: req.method,
-        userName: user.name,
+        userId: user.sub,
         userRole: user.role,
         required: allowedRoles,
       });
@@ -291,7 +293,7 @@ export function requireRole(...allowedRoles: string[]) {
       action: 'GRANTED',
       path: req.originalUrl || req.path,
       method: req.method,
-      userName: user.name,
+      userId: user.sub,
       userRole: user.role,
       required: allowedRoles,
     });
@@ -313,7 +315,7 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
       action: 'DENIED',
       path: req.originalUrl || req.path,
       method: req.method,
-      userName: req.user.name,
+      userId: req.user.sub,
       userRole: req.user.role,
       required: ['Administrator'],
     });
@@ -327,7 +329,7 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
     action: 'GRANTED',
     path: req.originalUrl || req.path,
     method: req.method,
-    userName: req.user.name,
+    userId: req.user.sub,
     userRole: req.user.role,
     required: ['Administrator'],
   });

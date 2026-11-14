@@ -119,24 +119,23 @@ export function errorHandler(
       ? err.message
       : 'An unexpected internal server error occurred.';
 
-  // Log non-operational errors for observability
+  // Log non-operational errors cleanly for server diagnostics
   if (!isOperational) {
-    console.error('💥 [CRITICAL SERVER ERROR]:', err);
+    console.error('💥 [CRITICAL SERVER ERROR]:', {
+      name: err?.name || 'Error',
+      message: err?.message || 'Unexpected error',
+      code: errorCode,
+      stack: err?.stack,
+    });
   }
 
-  // Protect against information disclosure: only expose field validation details in production
-  const safeDetails =
-    errorCode === 'VALIDATION_ERROR'
-      ? err.details
-      : !isProduction
-      ? err.details
-      : undefined;
+  // Never leak raw SQL/internal error objects or filesystem stack traces to HTTP clients
+  const safeDetails = errorCode === 'VALIDATION_ERROR' ? err.details : undefined;
 
   return res.status(statusCode).json({
     status: 'error',
     code: errorCode,
     message: responseMessage,
     ...(safeDetails && { details: safeDetails }),
-    ...(!isProduction && { stack: err.stack }),
   });
 }
