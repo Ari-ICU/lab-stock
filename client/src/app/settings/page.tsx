@@ -970,10 +970,10 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm font-bold text-neutral-900">
-                    {user?.name || 'Thoeurn Ratha'}
+                    {user?.name || 'Operator'}
                   </div>
                   <div className="text-xs text-neutral-500 font-mono">
-                    {user?.email || 'thoeurn.ratha@rupp.edu.kh'}
+                    {user?.email || 'Not signed in'}
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     <span
@@ -991,7 +991,7 @@ export default function SettingsPage() {
                     Permissions: {user?.permissions || 'Course Hardware Allocation & Catalog View'}
                   </div>
                   <div className="text-[10px] text-neutral-400 pt-0.5">
-                    Terminal Workstation: {user?.department || 'Engineering Block A - Room 102B & Room 206'}
+                    Terminal Workstation: {user?.department || 'Faculty Laboratory Portal'}
                   </div>
                 </div>
               </div>

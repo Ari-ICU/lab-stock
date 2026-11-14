@@ -142,7 +142,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
             </div>
             <h2 className="text-base font-bold text-neutral-900">Restricted Laboratory Scope</h2>
             <p className="text-xs text-neutral-600 leading-relaxed">
-              This inventory item is stored in <span className="font-semibold text-neutral-800">{item.location}</span>. Your account ({user?.role}) is assigned to manage: <span className="font-semibold text-neutral-800">{user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}</span>.
+              This inventory item is stored in <span className="font-semibold text-neutral-800">{item.location}</span>. Your account ({user?.role}) is assigned to manage: <span className="font-semibold text-neutral-800">{user?.assignedLabs?.join(', ') || 'None assigned'}</span>.
             </p>
             <p className="text-xs text-neutral-500">
               Modifications and deletions are restricted to operators assigned to this laboratory. Universal access is strictly reserved for Primary Lab Administrators.
@@ -211,7 +211,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
     }
 
     if (!canManageLocation(location)) {
-      showToast(`You cannot move this item to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}`, 'warning');
+      showToast(`You cannot move this item to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'None assigned'}`, 'warning');
       return;
     }
 

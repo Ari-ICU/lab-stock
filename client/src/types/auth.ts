@@ -7,20 +7,6 @@ export interface User {
   avatarText: string;
   permissions: string;
   department: string;
-  assignedLabs: string[]; // ['all'] or specific room codes e.g. ['Room 102B', 'Room 206']
-  supervisedBy?: string;
-}
-
-export interface DemoAccount {
-  name: string;
-  email: string;
-  role: string;
-  roleBadge: string;
-  password: string;
-  avatarText: string;
-  permissions: string;
-  department: string;
-  description: string;
   assignedLabs: string[]; // ['all'] or specific room codes
   supervisedBy?: string;
 }
@@ -49,7 +35,7 @@ const escapeLocationRegex = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function canUserManageLocation(
-  user: User | ManagedUser | DemoAccount | null | undefined,
+  user: User | ManagedUser | null | undefined,
   locationStr?: string
 ): boolean {
   if (!user) return false;

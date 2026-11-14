@@ -4,8 +4,6 @@ import React, { Suspense, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   useAuth,
-  DEMO_ACCOUNTS,
-  DemoAccount,
   AuthErrorCode,
 } from '@/context/AuthContext';
 import { useStock } from '@/context/StockContext';
@@ -118,7 +116,7 @@ function buildAuthError(
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, switchAccount } = useAuth();
+  const { login } = useAuth();
   const { showToast } = useStock();
 
   const emailRef = useRef<HTMLInputElement>(null);
@@ -200,34 +198,6 @@ function LoginFormContent() {
     await attemptLogin();
   };
 
-  const handleSelectDemo = (acc: DemoAccount) => {
-    setEmail(acc.email);
-    setPassword(acc.password);
-    setErrorState(null);
-  };
-
-  const handleQuickSignIn = async (acc: DemoAccount) => {
-    setIsLoading(true);
-    setErrorState(null);
-    try {
-      const res = await switchAccount(acc);
-      if (res.success) {
-        showToast(`Signed in as ${acc.name} (${acc.role})`);
-        router.push('/');
-      } else {
-        setErrorState(buildAuthError(res.errorCode, res.error, acc.email));
-      }
-    } catch {
-      setErrorState({
-        code: 'UNKNOWN',
-        title: 'Demo sign-in failed',
-        message: 'An unexpected authentication error occurred.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const hasEmailError =
     errorState?.field === 'email' || errorState?.field === 'both';
   const hasPasswordError =
@@ -304,7 +274,7 @@ function LoginFormContent() {
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-50 text-[11px] font-semibold text-emerald-800 border border-emerald-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                6 Connected Lab Classrooms
+                Faculty Lab Portal
               </span>
             </div>
 
@@ -333,7 +303,7 @@ function LoginFormContent() {
                   Multi-Lab Fleet
                 </div>
                 <div className="text-[11px] text-neutral-500 leading-normal mt-1">
-                  Manage Room 102B, 206, 201, 203, 305 & 102 Depot.
+                  Manage classrooms, hardware assets & depot supplies.
                 </div>
               </div>
 
@@ -378,7 +348,7 @@ function LoginFormContent() {
                 Sign in to Laboratory Portal
               </h2>
               <p className="text-xs text-neutral-500 mt-1 mb-5 leading-relaxed">
-                Enter your university credentials or select a verified lab role below.
+                Enter your university credentials to access the portal.
               </p>
 
               {/* Session Expired Notice */}
@@ -610,48 +580,6 @@ function LoginFormContent() {
                   )}
                 </button>
               </form>
-
-              {/* Demo Account Quick Switcher (Development Only) */}
-              {process.env.NODE_ENV !== 'production' && DEMO_ACCOUNTS.length > 0 && (
-                <div className="mt-5 pt-4 border-t border-neutral-100">
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-2">
-                    One-Click Demo Roles
-                  </div>
-                  <div className="space-y-1.5">
-                    {DEMO_ACCOUNTS.map((acc) => (
-                      <div
-                        key={acc.email}
-                        onClick={() => handleSelectDemo(acc)}
-                        className="flex items-center justify-between p-2 rounded-lg bg-neutral-50 hover:bg-neutral-100 text-left cursor-pointer transition-colors border border-neutral-200/80 group"
-                      >
-                        <div className="min-w-0 flex items-center gap-2.5">
-                          <span className="w-6 h-6 rounded bg-neutral-900 text-emerald-400 text-[10px] font-bold flex items-center justify-center shrink-0">
-                            {acc.avatarText}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-neutral-900 truncate">
-                              {acc.name}
-                            </p>
-                            <p className="text-[10px] text-neutral-500 truncate">
-                              {acc.role} • {acc.email}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleQuickSignIn(acc);
-                          }}
-                          className="px-2.5 py-1 text-[10px] font-semibold bg-white group-hover:bg-neutral-900 group-hover:text-white text-neutral-700 rounded border border-neutral-300 transition-colors shadow-2xs"
-                        >
-                          Sign in
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* University Institutional Notice */}

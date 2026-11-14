@@ -121,7 +121,7 @@ export function AddEntityModal() {
       location: effectiveStockLocation,
       rack: effectiveStockLocation,
       expiryDate: stockExpiryDate.trim() || 'Active',
-      imageUrl: stockImageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
+      imageUrl: stockImageUrl || undefined,
       description: stockDescription,
     });
     setStockName('');
@@ -143,7 +143,7 @@ export function AddEntityModal() {
       location: effectiveAssetLocation,
       status: assetStatus,
       nextCalibration: '2027-04-01',
-      imageUrl: assetImageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
+      imageUrl: assetImageUrl || undefined,
       description: assetDescription,
     });
     setAssetName('');

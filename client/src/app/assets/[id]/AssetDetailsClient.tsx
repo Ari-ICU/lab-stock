@@ -157,7 +157,7 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           title="Hardware Asset Not Found"
-          subtitle="Lab 102B Hardware"
+          subtitle="Hardware Asset Registry"
           showExport={false}
           actionLabel="All Assets"
           onAction={() => router.push('/assets')}

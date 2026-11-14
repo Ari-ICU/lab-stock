@@ -99,7 +99,7 @@ function CreateStockForm() {
     e.preventDefault();
 
     if (!canManageLocation(activeLocation)) {
-      showToast(`You can only register items within your assigned laboratories (${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'})`, 'warning');
+      showToast(`You can only register items within your assigned laboratories (${user?.assignedLabs?.join(', ') || 'None assigned'})`, 'warning');
       return;
     }
 
@@ -125,7 +125,7 @@ function CreateStockForm() {
         rack: rack.trim() || 'Storage Shelf',
         status,
         expiryDate: expiryDate.trim() || 'Active',
-        imageUrl: imageUrl.trim() || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
+        imageUrl: imageUrl.trim() || undefined,
         description: description.trim(),
       });
 

@@ -61,7 +61,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
   const [transferQuantity, setTransferQuantity] = useState(1);
   const [transferReason, setTransferReason] = useState('');
   const [transferDate, setTransferDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [transferredBy, setTransferredBy] = useState(() => user?.name || 'Dr. Heng Sovannarith');
+  const [transferredBy, setTransferredBy] = useState(() => user?.name || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Classroom Allocations for this asset

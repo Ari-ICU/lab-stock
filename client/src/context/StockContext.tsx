@@ -242,6 +242,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         }));
         setRacks(genRacks);
         setCachedData('racks', genRacks);
+      } else {
+        setRacks([]);
+        setCachedData('racks', []);
       }
 
       setIsBackendConnected(connected);
@@ -253,49 +256,51 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // 1. Immediately hydrate cached data on client mount without causing SSR mismatch
+    // 1. Hydrate cached data only when an authenticated session token exists
     try {
-      const cachedAssets = localStorage.getItem('csd_cache_assets');
-      if (cachedAssets) {
-        const parsed = JSON.parse(cachedAssets);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAssets(parsed);
-          setIsLoading(false);
+      if (getAuthToken()) {
+        const cachedAssets = localStorage.getItem('csd_cache_assets');
+        if (cachedAssets) {
+          const parsed = JSON.parse(cachedAssets);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAssets(parsed);
+            setIsLoading(false);
+          }
         }
-      }
-      const cachedStock = localStorage.getItem('csd_cache_stock');
-      if (cachedStock) {
-        const parsed = JSON.parse(cachedStock);
-        if (Array.isArray(parsed) && parsed.length > 0) setStock(parsed);
-      }
-      const cachedLocations = localStorage.getItem('csd_cache_locations');
-      if (cachedLocations) {
-        const parsed = JSON.parse(cachedLocations);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setLocations(
-            parsed.map((loc: MockLocation) => ({
-              ...loc,
-              inventories: Array.isArray(loc.inventories)
-                ? loc.inventories.filter((inv: RoomInventoryItem) => Boolean(inv.stockItemId))
-                : [],
-            }))
-          );
+        const cachedStock = localStorage.getItem('csd_cache_stock');
+        if (cachedStock) {
+          const parsed = JSON.parse(cachedStock);
+          if (Array.isArray(parsed) && parsed.length > 0) setStock(parsed);
         }
-      }
-      const cachedLoans = localStorage.getItem('csd_cache_loans');
-      if (cachedLoans) {
-        const parsed = JSON.parse(cachedLoans);
-        if (Array.isArray(parsed)) setLoans(parsed);
-      }
-      const cachedTransfers = localStorage.getItem('csd_cache_transfers');
-      if (cachedTransfers) {
-        const parsed = JSON.parse(cachedTransfers);
-        if (Array.isArray(parsed)) setTransfers(parsed);
-      }
-      const cachedRacks = localStorage.getItem('csd_cache_racks');
-      if (cachedRacks) {
-        const parsed = JSON.parse(cachedRacks);
-        if (Array.isArray(parsed)) setRacks(parsed);
+        const cachedLocations = localStorage.getItem('csd_cache_locations');
+        if (cachedLocations) {
+          const parsed = JSON.parse(cachedLocations);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setLocations(
+              parsed.map((loc: MockLocation) => ({
+                ...loc,
+                inventories: Array.isArray(loc.inventories)
+                  ? loc.inventories.filter((inv: RoomInventoryItem) => Boolean(inv.stockItemId))
+                  : [],
+              }))
+            );
+          }
+        }
+        const cachedLoans = localStorage.getItem('csd_cache_loans');
+        if (cachedLoans) {
+          const parsed = JSON.parse(cachedLoans);
+          if (Array.isArray(parsed)) setLoans(parsed);
+        }
+        const cachedTransfers = localStorage.getItem('csd_cache_transfers');
+        if (cachedTransfers) {
+          const parsed = JSON.parse(cachedTransfers);
+          if (Array.isArray(parsed)) setTransfers(parsed);
+        }
+        const cachedRacks = localStorage.getItem('csd_cache_racks');
+        if (cachedRacks) {
+          const parsed = JSON.parse(cachedRacks);
+          if (Array.isArray(parsed)) setRacks(parsed);
+        }
       }
     } catch {
       // ignore
@@ -467,7 +472,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         rack: itemData.rack || 'Unassigned',
         status: (itemData.quantity || 1) > 5 ? 'in_stock' : 'low_stock',
         expiryDate: itemData.expiryDate || 'N/A',
-        imageUrl: itemData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
+        imageUrl: itemData.imageUrl || undefined,
         description: itemData.description,
       };
       setStock((prev) => {
@@ -573,8 +578,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   const addAsset = (assetData: Omit<MockAsset, 'id'> & { id?: string }): MockAsset => {
     const newAsset: MockAsset = {
       id: assetData.id || `A${Date.now()}`,
-      imageUrl: assetData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
       ...assetData,
+      imageUrl: assetData.imageUrl || undefined,
     };
     setAssets((prev) => {
       const next = [newAsset, ...prev];
@@ -842,7 +847,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       fromLocation: fromLoc,
       toLocation,
       transferDate: new Date().toISOString().split('T')[0],
-      transferredBy: transferredBy || 'Thoeurn Ratha',
+      transferredBy: transferredBy || 'Lab Administrator',
       reason: reason || 'Location relocation between faculty labs',
     };
 
@@ -868,7 +873,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
           asset_id: asset?.serverId || assetId,
           from_location: fromLoc,
           to_location: toLocation,
-          transferred_by: transferredBy || 'Thoeurn Ratha',
+          transferred_by: transferredBy || 'Lab Administrator',
           reason: reason || 'Location relocation between faculty labs',
           transfer_date: newTransfer.transferDate,
           quantity: moveQty,

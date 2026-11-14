@@ -78,7 +78,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           title="Hardware Asset Not Found"
-          subtitle="Lab 102B Hardware"
+          subtitle="Hardware Asset Registry"
           showExport={false}
           actionLabel="All Assets"
           onAction={() => router.push('/assets')}
@@ -123,7 +123,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
             </div>
             <h2 className="text-base font-bold text-neutral-900">Restricted Laboratory Scope</h2>
             <p className="text-xs text-neutral-600 leading-relaxed">
-              This hardware asset is stationed in <span className="font-semibold text-neutral-800">{asset.location}</span>. Your account ({user?.role}) is assigned to manage: <span className="font-semibold text-neutral-800">{user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}</span>.
+              This hardware asset is stationed in <span className="font-semibold text-neutral-800">{asset.location}</span>. Your account ({user?.role}) is assigned to manage: <span className="font-semibold text-neutral-800">{user?.assignedLabs?.join(', ') || 'None assigned'}</span>.
             </p>
             <p className="text-xs text-neutral-500">
               Modification and deletion rights are restricted to operators assigned to this laboratory. Universal access is strictly reserved for Primary Lab Administrators.
@@ -184,7 +184,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
     }
 
     if (!canManageLocation(location)) {
-      showToast(`You cannot move this asset to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'}`, 'warning');
+      showToast(`You cannot move this asset to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'None assigned'}`, 'warning');
       return;
     }
 

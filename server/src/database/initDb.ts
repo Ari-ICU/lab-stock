@@ -3,13 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import {
-  seedAllData,
-  seedLoans,
-  seedMaintenance,
-  seedPurchaseRequests,
-  ensureClassroomStockSeeded,
-} from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,49 +77,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       }
     }
 
-    // Check if locations/assets/stock are empty; seed if needed
-    const assetCountRes = await pool.query('SELECT COUNT(*)::int as count FROM assets');
-    const assetCount = assetCountRes.rows[0]?.count || 0;
-
-    if (assetCount === 0) {
-      await seedAllData();
-    } else {
-      await ensureClassroomStockSeeded().catch(() => {});
-    }
-
-    // Ensure loans and transfers are populated in PostgreSQL
-    const loanCountRes = await pool.query('SELECT COUNT(*)::int as count FROM loans');
-    const loanCount = loanCountRes.rows[0]?.count || 0;
-    if (loanCount === 0) {
-      for (const l of seedLoans) {
-        const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [l.serial_number]);
-        const assetId = assetRes.rows[0]?.id;
-        if (assetId) {
-          await query(
-            `INSERT INTO loans (
-               asset_id, borrower_name, borrower_role, borrower_contact, course_or_class,
-               borrow_date, expected_return_date, actual_return_date, status, notes
-             )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-             ON CONFLICT DO NOTHING`,
-            [
-              assetId,
-              l.borrower_name,
-              l.borrower_role,
-              l.borrower_contact,
-              l.course_or_class,
-              l.borrow_date,
-              l.expected_return_date,
-              (l as any).actual_return_date || null,
-              l.status,
-              l.notes,
-            ]
-          );
-        }
-      }
-      console.log('✅ Seeded device loans into PostgreSQL.');
-    }
-
     // Ensure backward-compatible columns exist on older database instances
     await pool.query(`
       ALTER TABLE locations DROP COLUMN IF EXISTS image_url;
@@ -137,70 +87,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'units';
       ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS supervised_by VARCHAR(150);
     `);
-
-    // Seed historical maintenance records only when the table is empty
-    const maintCountRes = await pool.query('SELECT COUNT(*)::int as count FROM maintenance_records');
-    const maintCount = maintCountRes.rows[0]?.count || 0;
-    if (maintCount === 0) {
-      for (const m of seedMaintenance) {
-        const assetRes = await query('SELECT id FROM assets WHERE serial_number = $1', [m.serial_number]);
-        const assetId = assetRes.rows[0]?.id || null;
-        await query(
-          `INSERT INTO maintenance_records (asset_id, asset_name, serial_number, type, date, technician, status, notes, image_url, location, cost, quantity, unit)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-          [
-            assetId,
-            m.asset_name,
-            m.serial_number,
-            m.type,
-            m.date,
-            m.technician,
-            m.status,
-            m.notes,
-            m.image_url,
-            m.location,
-            m.cost,
-            m.quantity,
-            m.unit,
-          ]
-        );
-      }
-      console.log(`✅ Seeded ${seedMaintenance.length} historical maintenance records into PostgreSQL.`);
-    }
-
-    // Ensure purchase requests are populated in PostgreSQL
-    const reqCountRes = await pool.query('SELECT COUNT(*)::int as count FROM purchase_requests');
-    const reqCount = reqCountRes.rows[0]?.count || 0;
-    if (reqCount === 0) {
-      for (const r of seedPurchaseRequests) {
-        await query(
-          `INSERT INTO purchase_requests (
-             id, title, category, target_room, quantity, unit,
-             estimated_cost, priority, status, reason, requested_by, requester_role, request_date, image_url, notes
-           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-           ON CONFLICT (id) DO NOTHING`,
-          [
-            r.id,
-            r.title,
-            r.category,
-            r.target_room,
-            r.quantity,
-            r.unit,
-            r.estimated_cost,
-            r.priority,
-            r.status,
-            r.reason,
-            r.requested_by,
-            r.requester_role,
-            r.request_date,
-            (r as any).image_url || null,
-            r.notes,
-          ]
-        );
-      }
-      console.log('✅ Seeded purchase requisitions into PostgreSQL.');
-    }
 
     // Purge any unlinked standalone room_inventory rows so classrooms strictly reflect Inventory (/stock) or Hardware Assets (/assets)
     await pool.query(

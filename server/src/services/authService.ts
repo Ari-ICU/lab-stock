@@ -24,7 +24,6 @@ export interface AuthSessionResponse {
 export const authService = {
   /**
    * Authenticate user credentials against PostgreSQL database
-   * (With development fallback accounts if the database is offline or not yet initialized)
    */
   async login(email: string, plainTextPassword: string): Promise<AuthSessionResponse> {
     const normalizedEmail = email.trim().toLowerCase();
@@ -39,7 +38,6 @@ export const authService = {
       'assistant@lab.edu': 'chan.vicheka@rupp.edu.kh',
       'vakhim@lab.edu': 'chan.vicheka@rupp.edu.kh',
       'chan.vicheka@lab.edu': 'chan.vicheka@rupp.edu.kh',
-      'john.doe@lab.edu': 'john.doe@rupp.edu.kh',
     };
     const primaryEmail = emailAliases[normalizedEmail] || normalizedEmail;
 
@@ -54,90 +52,19 @@ export const authService = {
       );
     }
 
-    // Standard faculty accounts for development & fallback when database is offline or initializing
-    const DEV_SEED_USERS = [
-      {
-        id: 'usr_admin_01',
-        name: 'Dr. Heng Sovannarith',
-        email: 'heng.sovannarith@rupp.edu.kh',
-        password: 'password123',
-        role: Role.ADMIN,
-        is_admin: true,
-        department: 'Engineering Block A - Room 102B',
-        assigned_labs: ['all'],
-      },
-      {
-        id: 'usr_lecturer_02',
-        name: 'Thoeurn Ratha',
-        email: 'thoeurn.ratha@rupp.edu.kh',
-        password: 'password123',
-        role: Role.LECTURER,
-        is_admin: false,
-        department: 'Software Engineering Department',
-        assigned_labs: ['Room 102B', 'Room 206'],
-      },
-      {
-        id: '1234567890',
-        name: 'John Doe',
-        email: 'john.doe@rupp.edu.kh',
-        password: 'password123',
-        role: Role.ADMIN,
-        is_admin: true,
-        department: 'Faculty of Engineering',
-        assigned_labs: ['all'],
-      },
-    ];
-
-    let user: User | null = null;
-    let isDbAvailable = true;
-
     // 1. Fetch user from PostgreSQL (check primary email, then fallback to original)
-    try {
-      user = await userModel.findByEmail(primaryEmail);
-      if (!user && primaryEmail !== normalizedEmail) {
-        user = await userModel.findByEmail(normalizedEmail);
-      }
-    } catch (dbErr: any) {
-      isDbAvailable = false;
-      if (process.env.NODE_ENV === 'production') {
-        throw dbErr;
-      }
-    }
-
-    // 2. If PostgreSQL is online, verify credentials strictly against DB
-    if (isDbAvailable) {
-      if (!user) {
-        throw new UnauthorizedException('Invalid email or password credentials');
-      }
-      const isPasswordValid = await verifyPassword(plainTextPassword, user.password_hash);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid email or password credentials');
-      }
-    } else if (process.env.NODE_ENV !== 'production') {
-      // Development-only offline fallback when PostgreSQL service is unavailable
-      const devMatch = DEV_SEED_USERS.find(
-        (u) =>
-          (u.email.toLowerCase() === primaryEmail || u.email.toLowerCase() === normalizedEmail) &&
-          u.password === plainTextPassword
-      );
-
-      if (devMatch) {
-        user = {
-          id: devMatch.id,
-          name: devMatch.name,
-          email: devMatch.email,
-          password_hash: '',
-          role: devMatch.role,
-          is_admin: devMatch.is_admin,
-          department: devMatch.department,
-          assigned_labs: devMatch.assigned_labs,
-        };
-      } else {
-        throw new UnauthorizedException('Invalid email or password credentials');
-      }
+    let user = await userModel.findByEmail(primaryEmail);
+    if (!user && primaryEmail !== normalizedEmail) {
+      user = await userModel.findByEmail(normalizedEmail);
     }
 
     if (!user) {
+      throw new UnauthorizedException('Invalid email or password credentials');
+    }
+
+    // 2. Verify credentials strictly against database password hash
+    const isPasswordValid = await verifyPassword(plainTextPassword, user.password_hash);
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password credentials');
     }
 
@@ -157,7 +84,7 @@ export const authService = {
       ? user.assigned_labs
       : user.is_admin
       ? ['all']
-      : ['Room 102B'];
+      : [];
 
     // 4. Issue cryptographically signed JWT with assigned laboratories scope
     const token = signToken({
@@ -223,11 +150,7 @@ export const authService = {
       ? input.assigned_labs.map((l) => String(l).trim()).filter(Boolean)
       : effectiveIsAdmin
       ? ['all']
-      : ['Room 102B'];
-
-    if (effectiveAssignedLabs.length === 0) {
-      throw new ValidationException('At least one assigned laboratory room is required');
-    }
+      : [];
 
     // Hash password with bcrypt work factor 12
     const hashedPassword = await hashPassword(input.password);

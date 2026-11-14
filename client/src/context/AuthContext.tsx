@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   User,
-  DemoAccount,
   ManagedUser,
   SessionDevice,
   RoleDefinition,
@@ -16,7 +15,6 @@ import { ApiError, getAuthToken } from '@/services/apiClient';
 
 export type {
   User,
-  DemoAccount,
   ManagedUser,
   SessionDevice,
   RoleDefinition,
@@ -39,65 +37,6 @@ export const ROLE_DEFINITIONS: Record<string, RoleDefinition> = {
     description: 'Course workstation allocation, teaching resource schedule, and inventory review',
   },
 };
-
-export const DEMO_ACCOUNTS: DemoAccount[] =
-  process.env.NODE_ENV === 'production'
-    ? []
-    : [
-        {
-          name: 'Dr. Heng Sovannarith',
-          email: 'heng.sovannarith@rupp.edu.kh',
-          password: 'password123',
-          role: 'Primary Lab Administrator',
-          roleBadge: 'Admin',
-          avatarText: 'HS',
-          permissions: 'Full Read/Write Access & System Config (Super Admin)',
-          department: 'Engineering Block A - Room 102B',
-          description: 'Faculty supervisor & Super Admin with universal oversight across all department facilities',
-          assignedLabs: ['all'],
-        },
-        {
-          name: 'John Doe',
-          email: 'john.doe@rupp.edu.kh',
-          password: 'password123',
-          role: 'Department Administrator',
-          roleBadge: 'Admin',
-          avatarText: 'JD',
-          permissions: 'Full Read/Write Access & Asset Management (Admin)',
-          department: 'Faculty of Engineering - Administration',
-          description: 'Department administrator managing furniture, fixtures, and asset counting',
-          assignedLabs: ['all'],
-        },
-        {
-          name: 'Thoeurn Ratha',
-          email: 'thoeurn.ratha@rupp.edu.kh',
-          password: 'password123',
-          role: 'Faculty Lecturer',
-          roleBadge: 'Lecturer',
-          avatarText: 'TR',
-          permissions: 'Course Hardware Allocation & Catalog View',
-          department: 'Software Engineering Department',
-          description: 'Faculty Lecturer managing student workstations and teaching resources',
-          assignedLabs: ['all'],
-        },
-      ];
-
-export const INITIAL_MANAGED_USERS: ManagedUser[] = [
-  {
-    id: 'user-director',
-    name: 'Dr. Heng Sovannarith',
-    email: 'heng.sovannarith@rupp.edu.kh',
-    role: 'Primary Lab Administrator',
-    roleBadge: 'Admin',
-    avatarText: 'HS',
-    permissions: 'Full Read/Write Access & System Config (Super Admin)',
-    department: 'Engineering Block A - Room 102B',
-    status: 'active',
-    lastLogin: 'Today, 08:30 AM',
-    assignedLabs: ['all'],
-  },
-
-];
 
 export function detectCurrentDevice(): {
   browser: string;
@@ -253,14 +192,12 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<AuthActionResult>;
   logout: () => void;
-  switchAccount: (account: DemoAccount) => Promise<AuthActionResult>;
   // User & Role Management
   managedUsers: ManagedUser[];
   updateUserRole: (userId: string, newRole: string) => void;
   updateUserAssignedLabs: (userId: string, assignedLabs: string[]) => void;
   addUser: (newUser: Omit<ManagedUser, 'id' | 'lastLogin'> & { password?: string }) => void;
   deleteUser: (userId: string) => boolean;
-  resetUsersToDefault: () => void;
   // Location Permissions Guard
   canManageLocation: (locationStr: string) => boolean;
   // Session Devices
@@ -794,19 +731,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  const resetUsersToDefault = () => {
-    if (process.env.NODE_ENV === 'production') {
-      refreshUsersFromBackend();
-      return;
-    }
-    setManagedUsers(INITIAL_MANAGED_USERS);
-    try {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_MANAGED_USERS));
-    } catch {
-      // ignore
-    }
-  };
-
   const refreshSessionDevices = () => {
     const current = detectCurrentDevice();
     const updated = sessionDevices.map((s) => {
@@ -868,7 +792,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             'ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
             'thoeurn.ratha@lab.edu': 'thoeurn.ratha@rupp.edu.kh',
             'sovannarith@lab.edu': 'heng.sovannarith@rupp.edu.kh',
-            'john.doe@lab.edu': 'john.doe@rupp.edu.kh',
           };
     const primaryEmail = emailAliases[cleanEmail] || cleanEmail;
 
@@ -959,62 +882,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
         }
 
-        // Network/CORS failure (status 0) or timeout (408): fail closed in production
-        if (process.env.NODE_ENV === 'production') {
-          setIsLoading(false);
-          return {
-            success: false,
-            errorCode: err.status === 408 ? 'TIMEOUT' : 'NETWORK_ERROR',
-            error:
-              err.status === 408
-                ? 'The authentication server took too long to respond.'
-                : 'Unable to reach the authentication server. Verify the backend gateway is online.',
-          };
-        }
-      } else if (process.env.NODE_ENV === 'production') {
         setIsLoading(false);
         return {
           success: false,
-          errorCode: 'NETWORK_ERROR',
-          error: 'Unable to reach the authentication server. Please try again later.',
+          errorCode: err.status === 408 ? 'TIMEOUT' : 'NETWORK_ERROR',
+          error:
+            err.status === 408
+              ? 'The authentication server took too long to respond.'
+              : 'Unable to reach the authentication server. Verify the backend gateway is online.',
         };
       }
-    }
 
-    // 2. Development-only offline demo fallback when backend is unreachable
-    const matchedAccount = DEMO_ACCOUNTS.find(
-      (acc) =>
-        acc.email.toLowerCase() === cleanEmail ||
-        acc.email.toLowerCase() === primaryEmail
-    );
-
-    if (matchedAccount && password === matchedAccount.password) {
-      const loggedUser: User = sanitizeUser({
-        id: `user-${matchedAccount.email}`,
-        name: matchedAccount.name,
-        email: matchedAccount.email,
-        role: matchedAccount.role,
-        roleBadge: matchedAccount.roleBadge,
-        avatarText: matchedAccount.avatarText,
-        permissions: matchedAccount.permissions,
-        department: matchedAccount.department,
-        assignedLabs: matchedAccount.assignedLabs || [],
-      });
-
-      setUser(loggedUser);
-      setIsAuthInitialized(true);
       setIsLoading(false);
-      return { success: true };
+      return {
+        success: false,
+        errorCode: 'NETWORK_ERROR',
+        error: 'Unable to reach the authentication server. Please try again later.',
+      };
     }
-
-    setIsLoading(false);
-    return {
-      success: false,
-      errorCode: matchedAccount ? 'INVALID_CREDENTIALS' : 'NETWORK_ERROR',
-      error: matchedAccount
-        ? 'Invalid email or password credentials.'
-        : 'Unable to connect to the backend API and no matching offline development account was found.',
-    };
   };
 
   const logout = () => {
@@ -1031,19 +916,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
-  const switchAccount = async (
-    account: DemoAccount
-  ): Promise<AuthActionResult> => {
-    if (process.env.NODE_ENV === 'production') {
-      return {
-        success: false,
-        errorCode: 'FORBIDDEN',
-        error: 'Demo account switching is disabled in production.',
-      };
-    }
-    return login(account.email, account.password || '', true);
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -1053,13 +925,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         logout,
-        switchAccount,
         managedUsers,
         updateUserRole,
         updateUserAssignedLabs,
         addUser,
         deleteUser,
-        resetUsersToDefault,
         canManageLocation,
         sessionDevices,
         refreshSessionDevices,
