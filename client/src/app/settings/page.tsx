@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { PageBanner } from '@/components/PageBanner';
 import { Dropdown } from '@/components/Dropdown';
+import { NumberInput } from '@/components/NumberInput';
 import { usePersistentTab } from '@/hooks/usePersistentTab';
 import { systemService } from '@/services';
 import { useStock } from '@/context/StockContext';
@@ -742,14 +743,13 @@ export default function SettingsPage() {
                     <p className="text-[11px] text-neutral-500">
                       When consumable items drop to or below this count, a warning pill is triggered across the inventory table.
                     </p>
-                    <input
-                      type="number"
+                    <NumberInput
                       min={1}
                       max={100}
                       disabled={!isAdmin}
                       readOnly={!isAdmin}
                       value={lowStockThreshold}
-                      onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                      onChange={setLowStockThreshold}
                       className={`w-full border text-xs px-3.5 py-2 rounded-xl font-mono transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'
@@ -770,14 +770,13 @@ export default function SettingsPage() {
                     <p className="text-[11px] text-neutral-500">
                       Equipment scheduled for calibration or firmware servicing within this window will be flagged as pending.
                     </p>
-                    <input
-                      type="number"
+                    <NumberInput
                       min={1}
                       max={90}
                       disabled={!isAdmin}
                       readOnly={!isAdmin}
                       value={calibrationDaysAhead}
-                      onChange={(e) => setCalibrationDaysAhead(Number(e.target.value))}
+                      onChange={setCalibrationDaysAhead}
                       className={`w-full border text-xs px-3.5 py-2 rounded-xl font-mono transition-colors ${
                         !isAdmin
                           ? 'bg-neutral-100/80 border-neutral-200 text-neutral-500 cursor-not-allowed select-none'

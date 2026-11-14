@@ -7,6 +7,7 @@ import { MockItem, MockAsset, MockRack, MockLocation, RoomInventoryItem } from '
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
 import { DatePicker } from '@/components/DatePicker';
+import { NumberInput } from '@/components/NumberInput';
 import { buildStockCategoryOptions } from '@/lib/categories';
 import { Boxes, ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -409,12 +410,11 @@ export function EditEntityModal() {
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="p-2.5 bg-emerald-50/40 border border-emerald-200/80 rounded-xl">
                     <label className="block text-[11px] font-bold text-emerald-800 mb-1">Working Units</label>
-                    <input
-                      type="number"
-                      min="0"
+                    <NumberInput
+                      min={0}
                       value={qtyWorking}
-                      onChange={(e) => {
-                        const w = Math.max(0, Number(e.target.value));
+                      onChange={(val) => {
+                        const w = Math.max(0, val);
                         setQtyWorking(w);
                         if (w > 0 && Number(qtyBroken) === 0 && Number(qtyMaintenance) === 0) {
                           setConditionStatus('operational');
@@ -426,12 +426,11 @@ export function EditEntityModal() {
 
                   <div className="p-2.5 bg-rose-50/40 border border-rose-200/80 rounded-xl">
                     <label className="block text-[11px] font-bold text-rose-800 mb-1">Broken / Defective</label>
-                    <input
-                      type="number"
-                      min="0"
+                    <NumberInput
+                      min={0}
                       value={qtyBroken}
-                      onChange={(e) => {
-                        const b = Math.max(0, Number(e.target.value));
+                      onChange={(val) => {
+                        const b = Math.max(0, val);
                         setQtyBroken(b);
                         if (b > 0) {
                           setConditionStatus('defective');
@@ -445,12 +444,11 @@ export function EditEntityModal() {
 
                   <div className="p-2.5 bg-blue-50/40 border border-blue-200/80 rounded-xl">
                     <label className="block text-[11px] font-bold text-blue-800 mb-1">In Repair</label>
-                    <input
-                      type="number"
-                      min="0"
+                    <NumberInput
+                      min={0}
                       value={qtyMaintenance}
-                      onChange={(e) => {
-                        const m = Math.max(0, Number(e.target.value));
+                      onChange={(val) => {
+                        const m = Math.max(0, val);
                         setQtyMaintenance(m);
                         if (m > 0) {
                           setConditionStatus('maintenance');
@@ -561,23 +559,21 @@ export function EditEntityModal() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-neutral-800 mb-1">Total Units (U)</label>
-                  <input
-                    type="number"
-                    min="1"
+                  <NumberInput
+                    min={1}
                     value={totalSlots}
-                    onChange={(e) => setTotalSlots(Number(e.target.value))}
+                    onChange={setTotalSlots}
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
 
                 <div>
                   <label className="block font-semibold text-neutral-800 mb-1">Occupied Units (U)</label>
-                  <input
-                    type="number"
-                    min="0"
+                  <NumberInput
+                    min={0}
                     max={totalSlots}
                     value={usedSlots}
-                    onChange={(e) => setUsedSlots(Number(e.target.value))}
+                    onChange={setUsedSlots}
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                   />
                 </div>
@@ -683,11 +679,10 @@ export function EditEntityModal() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block font-semibold text-neutral-800 mb-1">Quantity</label>
-                      <input
-                        type="number"
-                        min="0"
+                      <NumberInput
+                        min={0}
                         value={quantity}
-                        onChange={(e) => setQuantity(Number(e.target.value))}
+                        onChange={setQuantity}
                         className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                       />
                     </div>

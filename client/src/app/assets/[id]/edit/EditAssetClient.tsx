@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
+import { NumberInput } from '@/components/NumberInput';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
@@ -342,12 +343,11 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
                       <label className="block text-xs font-semibold text-neutral-900">
                         Total Units
                       </label>
-                      <input
-                        type="number"
+                      <NumberInput
                         min={1}
                         max={999}
                         value={totalUnits}
-                        onChange={(e) => setTotalUnits(parseInt(e.target.value, 10) || 1)}
+                        onChange={(val) => setTotalUnits(Math.max(1, val))}
                         className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
                     </div>

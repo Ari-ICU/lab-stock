@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Dropdown } from '@/components/Dropdown';
+import { NumberInput } from '@/components/NumberInput';
 import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { AssetGroup } from '@/types';
@@ -167,11 +168,10 @@ export default function EditRoomItemClient({ id }: { id: string }) {
     'w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors';
   const dropdownBtn = 'w-full justify-between bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl';
   const numInput = (value: number, onChange: (n: number) => void, color: string) => (
-    <input
-      type="number"
+    <NumberInput
       min={0}
       value={value}
-      onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))}
+      onChange={(val) => onChange(Math.max(0, val))}
       className={`w-full bg-white border text-xs px-3 py-2 rounded focus:outline-none font-mono font-bold text-center ${color}`}
     />
   );

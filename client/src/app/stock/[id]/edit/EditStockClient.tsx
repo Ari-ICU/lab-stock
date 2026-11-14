@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
+import { NumberInput } from '@/components/NumberInput';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { buildStockCategoryOptions } from '@/lib/categories';
 import {
@@ -388,13 +389,11 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                       <label className="block text-xs font-semibold text-neutral-900">
                         Quantity in Stock <span className="text-rose-500">*</span>
                       </label>
-                      <input
-                        type="number"
+                      <NumberInput
                         min={0}
                         required
                         value={quantity}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
+                        onChange={(val) => {
                           setQuantity(val);
                           if (val === 0) setStatus('out_of_stock');
                           else if (val <= 5) setStatus('low_stock');

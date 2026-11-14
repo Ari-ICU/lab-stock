@@ -5,6 +5,7 @@ import { useStock } from '@/context/StockContext';
 import { X, Plus } from 'lucide-react';
 import { Dropdown } from '@/components/Dropdown';
 import { ImageUpload } from '@/components/ImageUpload';
+import { NumberInput } from '@/components/NumberInput';
 import { buildStockCategoryOptions } from '@/lib/categories';
 
 const stockStatusOptions = [
@@ -264,12 +265,11 @@ export function AddEntityModal() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-semibold text-neutral-800 mb-1">Quantity</label>
-                <input
-                  type="number"
-                  min="1"
+                <NumberInput
+                  min={1}
                   required
                   value={stockQuantity}
-                  onChange={(e) => setStockQuantity(Number(e.target.value))}
+                  onChange={setStockQuantity}
                   className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>
@@ -473,12 +473,11 @@ export function AddEntityModal() {
 
               <div>
                 <label className="block font-semibold text-neutral-800 mb-1">Total Units (U)</label>
-                <input
-                  type="number"
-                  min="6"
-                  max="48"
+                <NumberInput
+                  min={6}
+                  max={48}
                   value={rackSlots}
-                  onChange={(e) => setRackSlots(Number(e.target.value))}
+                  onChange={setRackSlots}
                   className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
               </div>

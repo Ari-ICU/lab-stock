@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import { LabThumbnail } from '@/components/LabThumbnail';
+import { NumberInput } from '@/components/NumberInput';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
@@ -474,15 +475,14 @@ function CheckoutContent({
                     </span>
                   </div>
 
-                  <input
-                    type="number"
+                  <NumberInput
                     min={1}
                     max={Math.max(1, currentStockItem.quantity)}
                     value={quantity}
                     disabled={currentStockItem.quantity <= 0}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setQuantity(
-                        Math.max(1, Math.min(currentStockItem.quantity, parseInt(e.target.value) || 1))
+                        Math.max(1, Math.min(currentStockItem.quantity, val))
                       )
                     }
                     className="w-full sm:w-48 bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-sm font-mono font-bold shadow-2xs"

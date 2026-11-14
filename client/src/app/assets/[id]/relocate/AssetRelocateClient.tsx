@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
+import { NumberInput } from '@/components/NumberInput';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { findMatchingRoom } from '@/lib/locationMatch';
@@ -450,14 +451,13 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
                       Available: <strong className="text-neutral-800">{asset.totalUnits ?? 1} {asset.unitType ?? 'units'}</strong>
                     </span>
                   </div>
-                  <input
-                    type="number"
+                  <NumberInput
                     min={1}
                     max={asset.totalUnits ?? 1}
                     value={transferQuantity}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setTransferQuantity(
-                        Math.max(1, Math.min(asset.totalUnits ?? 1, parseInt(e.target.value) || 1))
+                        Math.max(1, Math.min(asset.totalUnits ?? 1, val))
                       )
                     }
                     className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 text-sm font-mono font-bold shadow-2xs"

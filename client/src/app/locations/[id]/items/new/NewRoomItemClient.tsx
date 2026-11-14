@@ -23,6 +23,7 @@ import { findLocation, getCategoryLabel } from '../shared';
 import { doesLocationMatchRoom, findLinkedStockItem, inferAssetGroup } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
+import { NumberInput } from '@/components/NumberInput';
 
 type Source = 'stock' | 'asset';
 
@@ -648,27 +649,19 @@ function NewRoomItemInner({ id }: { id: string }) {
                               <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
                                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800">
                                   <span>OK</span>
-                                  <input
-                                    type="number"
+                                  <NumberInput
                                     min={0}
-                                    max={item.quantity}
                                     value={counts.working}
-                                    onChange={(e) =>
-                                      updateStockQty(item.id, 'working', parseInt(e.target.value, 10) || 0)
-                                    }
+                                    onChange={(val) => updateStockQty(item.id, 'working', val)}
                                     className={numInputCls}
                                   />
                                 </label>
                                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-700">
                                   <span>Broken</span>
-                                  <input
-                                    type="number"
+                                  <NumberInput
                                     min={0}
-                                    max={item.quantity}
                                     value={counts.broken}
-                                    onChange={(e) =>
-                                      updateStockQty(item.id, 'broken', parseInt(e.target.value, 10) || 0)
-                                    }
+                                    onChange={(val) => updateStockQty(item.id, 'broken', val)}
                                     className={numInputCls}
                                   />
                                 </label>
