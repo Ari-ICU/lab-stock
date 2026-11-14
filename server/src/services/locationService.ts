@@ -39,6 +39,8 @@ export const locationService = {
       throw new NotFoundException(`Location with ID ${id}`);
     }
     cache.invalidatePattern('location:');
+    cache.invalidatePattern('stock:');
+    cache.invalidatePattern('asset:');
     return updated;
   },
 
@@ -47,6 +49,8 @@ export const locationService = {
     const deleted = await locationModel.delete(existing.id);
     if (deleted) {
       cache.invalidatePattern('location:');
+      cache.invalidatePattern('stock:');
+      cache.invalidatePattern('asset:');
     }
     return deleted;
   },

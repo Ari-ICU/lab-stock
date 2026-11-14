@@ -167,7 +167,7 @@ export function EditEntityModal() {
 
   if (!editingItem) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isRoomInventory) {
@@ -212,12 +212,13 @@ export function EditEntityModal() {
       });
     } else if (isLocation) {
       const loc = editingItem as MockLocation;
-      updateLocation({
+      const updated = await updateLocation({
         ...loc,
         name,
         building,
         room,
       });
+      if (!updated) return;
     } else if (isRack) {
       const r = editingItem as MockRack;
       updateRack({

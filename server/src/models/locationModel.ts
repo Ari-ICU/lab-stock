@@ -42,11 +42,11 @@ const LOCATION_SELECT_QUERY = `
             'remarks', ri.remarks,
             'lastAuditedAt', ri.last_audited_at
           )
+          ORDER BY ri.created_at ASC, ri.id ASC
         )
         FROM room_inventory ri
         WHERE ri.room_id = l.id
           AND (ri.stock_item_id IS NOT NULL OR ri.asset_id IS NOT NULL)
-        ORDER BY ri.created_at ASC, ri.id ASC
       ),
       '[]'::json
     ) AS inventories

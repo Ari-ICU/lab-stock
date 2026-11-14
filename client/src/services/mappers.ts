@@ -122,12 +122,44 @@ export function mapServerLocation(l: any): MockLocation {
   };
 }
 
-export function toServerLocation(l: Partial<MockLocation>): Record<string, any> {
-  return {
+function buildLocationCode(room?: string, explicitCode?: string): string | undefined {
+  if (explicitCode && explicitCode.trim().length >= 2) {
+    return explicitCode.trim().toUpperCase();
+  }
+  if (!room || !room.trim()) return undefined;
+  const cleaned = room
+    .trim()
+    .replace(/^(room|rm|lab)\s*/i, '')
+    .replace(/[^a-zA-Z0-9]+/g, '')
+    .toUpperCase();
+  if (cleaned.length >= 2) {
+    return cleaned.startsWith('L') ? cleaned : `L${cleaned}`;
+  }
+  const fallback = room.trim().replace(/[^a-zA-Z0-9]+/g, '').toUpperCase();
+  return fallback.length >= 2 ? fallback : `LOC${fallback || 'ROOM'}`;
+}
+
+export function toServerLocation(l: Partial<MockLocation>): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
     name: l.name,
     room: l.room,
     building: l.building,
   };
+
+  const code = buildLocationCode(l.room, l.code);
+  if (code) payload.code = code;
+
+  if (l.capacity !== undefined && Number.isInteger(Number(l.capacity)) && Number(l.capacity) >= 1) {
+    payload.capacity = Number(l.capacity);
+  }
+  if (l.floor !== undefined && Number.isInteger(Number(l.floor))) {
+    payload.floor = Number(l.floor);
+  }
+  if (l.type !== undefined) {
+    payload.room_type = l.type;
+  }
+
+  return payload;
 }
 
 export function mapServerLoan(l: any): MockLoan {

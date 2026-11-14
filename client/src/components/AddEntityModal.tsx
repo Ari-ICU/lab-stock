@@ -171,19 +171,21 @@ export function AddEntityModal() {
     closeModal();
   };
 
-  const handleLocationSubmit = (e: React.FormEvent) => {
+  const handleLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!locName || !locRoom) return;
-    addLocation({
+    const created = await addLocation({
       name: locName,
       building: locBuilding,
       room: locRoom,
       totalAssets: 0,
       totalItems: 0,
     });
-    setLocName('');
-    setLocRoom('');
-    closeModal();
+    if (created) {
+      setLocName('');
+      setLocRoom('');
+      closeModal();
+    }
   };
 
   return (

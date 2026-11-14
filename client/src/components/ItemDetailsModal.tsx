@@ -60,13 +60,15 @@ export function ItemDetailsModal() {
       : assets.find((a) => a.name.toLowerCase() === roomInvItem.name?.toLowerCase())
     : null;
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this record?')) {
       if (isStock && stockItem) deleteStockItem(stockItem.id);
       else if (isAsset && assetItem) deleteAsset(assetItem.id);
       else if (isRack && rackItem) deleteRack(rackItem.id);
-      else if (isLocation && locItem) deleteLocation(locItem.id);
-      else if (isRoomInventory && roomInvItem) deleteRoomInventoryItem(roomInvItem.roomId, roomInvItem.id);
+      else if (isLocation && locItem) {
+        const ok = await deleteLocation(locItem.id);
+        if (!ok) return;
+      } else if (isRoomInventory && roomInvItem) deleteRoomInventoryItem(roomInvItem.roomId, roomInvItem.id);
       closeDetails();
     }
   };

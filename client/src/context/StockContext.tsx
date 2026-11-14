@@ -87,9 +87,9 @@ interface StockContextType {
   addRack: (rack: Omit<MockRack, 'id'> & { id?: string }) => void;
   updateRack: (rack: MockRack) => void;
   deleteRack: (id: string) => void;
-  addLocation: (loc: Omit<MockLocation, 'id'> & { id?: string }) => void;
-  updateLocation: (loc: MockLocation) => void;
-  deleteLocation: (id: string) => void;
+  addLocation: (loc: Omit<MockLocation, 'id'> & { id?: string }) => Promise<MockLocation | null>;
+  updateLocation: (loc: MockLocation) => Promise<MockLocation | null>;
+  deleteLocation: (id: string) => Promise<boolean>;
   updateRoomInventoryCount: (roomId: string, itemId: string, field: 'qtyWorking' | 'qtyBroken' | 'qtyMaintenance', delta: number) => void;
   updateRoomInventoryItem: (roomId: string, itemId: string, updates: Partial<RoomInventoryItem>) => void;
   markRoomAudited: (roomId: string, auditorName: string) => void;
@@ -146,6 +146,17 @@ function setCachedData<T>(key: string, data: T) {
   } catch {
     // ignore
   }
+}
+
+function getErrorInfo(err: unknown): { message?: string; status?: number } {
+  if (typeof err === 'object' && err !== null) {
+    const record = err as { message?: unknown; status?: unknown };
+    return {
+      message: typeof record.message === 'string' ? record.message : undefined,
+      status: typeof record.status === 'number' ? record.status : undefined,
+    };
+  }
+  return {};
 }
 
 export function StockProvider({ children }: { children: React.ReactNode }) {
@@ -206,6 +217,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         setLocations(fetchedLocs);
         setCachedData('locations', fetchedLocs);
         connected = true;
+      } else if (locsRes.status === 'rejected') {
+        console.error('Failed to sync locations from backend:', locsRes.reason);
       }
 
       if (loansRes.status === 'fulfilled' && Array.isArray(loansRes.value?.data)) {
@@ -916,32 +929,136 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     showToast(`Deleted rack ${target?.name || ''}`);
   };
 
-  const addLocation = (locData: Omit<MockLocation, 'id'> & { id?: string }) => {
-    const newLoc: MockLocation = {
-      id: locData.id || `L${Date.now()}`,
+  const addLocation = async (
+    locData: Omit<MockLocation, 'id'> & { id?: string }
+  ): Promise<MockLocation | null> => {
+    if (!getAuthToken()) {
+      showToast('Authentication required to register a classroom on the server.', 'error');
+      return null;
+    }
+
+    const tempId = locData.id || `L${Date.now()}`;
+    const provisionalLoc: MockLocation = {
+      id: tempId,
       ...locData,
     };
-    setLocations((prev) => [newLoc, ...prev]);
-    showToast(`Registered location ${newLoc.name}`);
-    if (getAuthToken()) {
-      locationService.createLocation(toServerLocation(newLoc) as any).catch(() => {});
+
+    setLocations((prev) => {
+      const next = [provisionalLoc, ...prev];
+      setCachedData('locations', next);
+      return next;
+    });
+
+    try {
+      const res = await locationService.createLocation(toServerLocation(provisionalLoc) as any);
+      if (res?.data?.id) {
+        const saved = mapServerLocation(res.data);
+        setLocations((prev) => {
+          const next = prev.map((l) => (l.id === tempId ? saved : l));
+          setCachedData('locations', next);
+          return next;
+        });
+        showToast(`Registered location ${saved.name}`);
+        return saved;
+      }
+      showToast(`Registered location ${provisionalLoc.name}`);
+      return provisionalLoc;
+    } catch (err: unknown) {
+      setLocations((prev) => {
+        const next = prev.filter((l) => l.id !== tempId);
+        setCachedData('locations', next);
+        return next;
+      });
+      showToast(getErrorInfo(err).message || 'Failed to register classroom on backend', 'error');
+      return null;
     }
   };
 
-  const updateLocation = (updatedLoc: MockLocation) => {
-    setLocations((prev) => prev.map((l) => (l.id === updatedLoc.id ? updatedLoc : l)));
-    showToast(`Updated location ${updatedLoc.name}`);
-    if (getAuthToken()) {
-      locationService.updateLocation(updatedLoc.id, toServerLocation(updatedLoc) as any).catch(() => {});
+  const updateLocation = async (updatedLoc: MockLocation): Promise<MockLocation | null> => {
+    if (!getAuthToken()) {
+      showToast('Authentication required to update a classroom on the server.', 'error');
+      return null;
+    }
+
+    const previousLoc = locations.find((l) => l.id === updatedLoc.id);
+    const targetId = updatedLoc.serverId || updatedLoc.id;
+
+    setLocations((prev) => {
+      const next = prev.map((l) => (l.id === updatedLoc.id ? updatedLoc : l));
+      setCachedData('locations', next);
+      return next;
+    });
+
+    try {
+      const res = await locationService.updateLocation(
+        targetId,
+        toServerLocation(updatedLoc) as any
+      );
+      if (res?.data?.id) {
+        const saved = mapServerLocation(res.data);
+        setLocations((prev) => {
+          const next = prev.map((l) => (l.id === updatedLoc.id ? saved : l));
+          setCachedData('locations', next);
+          return next;
+        });
+        showToast(`Updated location ${saved.name}`);
+        return saved;
+      }
+      showToast(`Updated location ${updatedLoc.name}`);
+      return updatedLoc;
+    } catch (err: unknown) {
+      if (previousLoc) {
+        setLocations((prev) => {
+          const next = prev.map((l) => (l.id === updatedLoc.id ? previousLoc : l));
+          setCachedData('locations', next);
+          return next;
+        });
+      }
+      showToast(getErrorInfo(err).message || 'Failed to update classroom on backend', 'error');
+      return null;
     }
   };
 
-  const deleteLocation = (id: string) => {
-    const target = locations.find((l) => l.id === id);
-    setLocations((prev) => prev.filter((l) => l.id !== id));
-    showToast(`Deleted location ${target?.name || ''}`);
-    if (getAuthToken()) {
-      locationService.deleteLocation(id).catch(() => {});
+  const deleteLocation = async (id: string): Promise<boolean> => {
+    if (!getAuthToken()) {
+      showToast('Authentication required to remove a classroom from the server.', 'error');
+      return false;
+    }
+
+    const targetIndex = locations.findIndex((l) => l.id === id);
+    const target = targetIndex >= 0 ? locations[targetIndex] : undefined;
+
+    setLocations((prev) => {
+      const next = prev.filter((l) => l.id !== id);
+      setCachedData('locations', next);
+      return next;
+    });
+
+    try {
+      const serverTargetId = target?.serverId || target?.id || id;
+      await locationService.deleteLocation(serverTargetId);
+      showToast(`Deleted location ${target?.name || ''}`);
+      void refreshBackendData();
+      return true;
+    } catch (err: unknown) {
+      const errInfo = getErrorInfo(err);
+      if (errInfo.status === 404) {
+        showToast(`Removed stale location ${target?.name || ''} (not in database)`, 'info');
+        void refreshBackendData();
+        return true;
+      }
+
+      if (target) {
+        setLocations((prev) => {
+          if (prev.some((l) => l.id === target.id)) return prev;
+          const next = [...prev];
+          next.splice(Math.min(targetIndex, next.length), 0, target);
+          setCachedData('locations', next);
+          return next;
+        });
+      }
+      showToast(errInfo.message || 'Failed to delete classroom from backend', 'error');
+      return false;
     }
   };
 

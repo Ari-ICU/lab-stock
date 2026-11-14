@@ -408,14 +408,16 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!isAdmin) {
       showToast('Permission denied: Only Primary Administrators can remove laboratory facilities.', 'error');
       return;
     }
-    deleteLocation(loc.id);
-    showToast(`Laboratory location ${loc.name} removed`);
-    router.push('/locations');
+    const ok = await deleteLocation(loc.id);
+    setShowDeleteConfirm(false);
+    if (ok) {
+      router.push('/locations');
+    }
   };
 
   return (
