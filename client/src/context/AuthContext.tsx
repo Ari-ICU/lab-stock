@@ -384,12 +384,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await authService.getUsers();
       if (res?.users && Array.isArray(res.users) && res.users.length > 0) {
         const dbUsers: ManagedUser[] = (res.users as BackendUserRecord[])
-          .filter(
-            (dbUser) =>
-              dbUser.role !== 'Lab Assistant' &&
-              !dbUser.email?.includes('vicheka') &&
-              !dbUser.email?.includes('assistant')
-          )
+          .filter((dbUser) => dbUser.role !== 'Lab Assistant')
           .map((dbUser) => {
             const roleStr = String(dbUser.role || '');
             const roleBadge: RoleBadge =
