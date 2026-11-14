@@ -462,12 +462,12 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
-                  <span className="font-medium text-neutral-500">Shelf / Bin / Cabinet</span>
-                  <span className={`col-span-2 font-mono ${item.rack ? 'text-neutral-800' : 'text-neutral-400'}`}>
-                    {item.rack || 'Not specified'}
-                  </span>
-                </div>
+                {item.rack && (
+                  <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
+                    <span className="font-medium text-neutral-500">Shelf / Bin / Cabinet</span>
+                    <span className="col-span-2 font-mono text-neutral-800">{item.rack}</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
                   <span className="font-medium text-neutral-500">Stock &amp; Availability</span>

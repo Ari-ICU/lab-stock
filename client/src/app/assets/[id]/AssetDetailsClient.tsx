@@ -79,7 +79,10 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
     locations.forEach((loc) => {
       (loc.inventories || []).forEach((inv) => {
         const isMatch = Boolean(
-          inv.assetId && (inv.assetId === asset.id || inv.assetId === asset.serialNumber)
+          inv.assetId &&
+            (inv.assetId === asset.id ||
+              (asset.serverId && inv.assetId === asset.serverId) ||
+              inv.assetId === asset.serialNumber)
         );
 
         if (isMatch) {
@@ -521,9 +524,18 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
 
                 <div className="grid grid-cols-3 px-5 py-3 items-center gap-4">
                   <span className="font-medium text-neutral-500">Assigned Laboratory</span>
-                  <span className="col-span-2 font-medium text-neutral-900 flex items-center gap-1.5">
+                  <span className="col-span-2 font-medium text-neutral-900 flex items-center gap-1.5 flex-wrap">
                     <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                    <span>{asset.location}</span>
+                    {allocations.length > 0 ? (
+                      <span>
+                        {allocations.map((a) => `${a.room} (${a.total})`).join(' · ')}
+                        {totalAllocated < (asset.totalUnits ?? 1)
+                          ? ` · ${(asset.totalUnits ?? 1) - totalAllocated} Unassigned`
+                          : ''}
+                      </span>
+                    ) : (
+                      <span>{asset.location || 'Unassigned'}</span>
+                    )}
                   </span>
                 </div>
 

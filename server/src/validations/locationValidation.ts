@@ -79,8 +79,8 @@ export function validateAddRoomInventory(req: Request, _res: Response, next: Nex
   const assetId = req.body.assetId ?? req.body.asset_id;
   const errors: Record<string, string> = {};
 
-  if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 150) {
-    errors.name = 'Item name must be between 2 and 150 characters';
+  if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 200) {
+    errors.name = 'Item name must be between 2 and 200 characters';
   }
 
   if (group !== undefined && !VALID_INVENTORY_GROUPS.includes(group)) {
@@ -135,8 +135,8 @@ export function validateUpdateRoomInventory(req: Request, _res: Response, next: 
   const stockItemId = req.body.stockItemId ?? req.body.stock_item_id;
   const assetId = req.body.assetId ?? req.body.asset_id;
 
-  if (name !== undefined && (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 150)) {
-    errors.name = 'Item name must be between 2 and 150 characters';
+  if (name !== undefined && (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 200)) {
+    errors.name = 'Item name must be between 2 and 200 characters';
   }
 
   if (group !== undefined && !VALID_INVENTORY_GROUPS.includes(group)) {

@@ -197,21 +197,23 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
   const roomStats = useMemo(() => {
     if (!loc) return null;
-    return getRoomInventoryStats(loc, stock, assets);
-  }, [loc, stock, assets]);
+    return getRoomInventoryStats(loc, stock, assets, locations);
+  }, [loc, stock, assets, locations]);
 
   const matchingAssets = useMemo(() => roomStats?.matchingAssets ?? [], [roomStats]);
+  const hardwareEntries = useMemo(() => roomStats?.hardwareEntries ?? [], [roomStats]);
   const matchedHardwareUnits = roomStats?.totalHardwareUnits ?? 0;
 
-  const filteredHardwareAssets = useMemo(() => {
+  const filteredHardwareEntries = useMemo(() => {
     const q = filterText.trim().toLowerCase();
-    return matchingAssets.filter((asset) => {
+    return hardwareEntries.filter(({ asset, allocationItem }) => {
       const matchesQuery =
         !q ||
         asset.name.toLowerCase().includes(q) ||
         asset.serialNumber.toLowerCase().includes(q) ||
         asset.model.toLowerCase().includes(q) ||
         (asset.currentBorrower && asset.currentBorrower.toLowerCase().includes(q)) ||
+        (allocationItem?.remarks && allocationItem.remarks.toLowerCase().includes(q)) ||
         (asset.description && asset.description.toLowerCase().includes(q));
 
       if (!matchesQuery) return false;
@@ -219,7 +221,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
       if (selectedAssetStatus === 'on_loan') return asset.loanStatus === 'on_loan';
       return asset.status === selectedAssetStatus;
     });
-  }, [matchingAssets, filterText, selectedAssetStatus]);
+  }, [hardwareEntries, filterText, selectedAssetStatus]);
 
   // Unified room inventory strictly from confirmed /stock items in this room + valid linked allocations
   const roomInventoryRows = useMemo<RoomInventoryRow[]>(() => {
@@ -385,19 +387,19 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         row.source === 'allocation' ? row.allocation.lastAuditedAt || '' : row.stockItem.expiryDate || '',
     }));
 
-    const hardwareRows = matchingAssets.map((a) => ({
+    const hardwareRows = hardwareEntries.map((entry) => ({
       'Record Type': 'Hardware Device',
       'Room Number': loc.room,
       'Facility Name': loc.name,
       'Category Group': 'IT_HARDWARE',
-      'Item Name': a.name,
-      'Brand / Specification': a.model,
-      'Working Units': a.status === 'operational' ? a.totalUnits ?? 1 : 0,
-      'Broken Units': a.status === 'maintenance' ? a.totalUnits ?? 1 : 0,
-      'In Repair Units': 0,
-      Unit: a.unitType || 'Units',
-      'Defect Notes & Remarks': `Serial: ${a.serialNumber}`,
-      'Last Audited Date': a.nextCalibration || '',
+      'Item Name': entry.asset.name,
+      'Brand / Specification': entry.asset.model,
+      'Working Units': entry.qtyWorking,
+      'Broken Units': entry.qtyBroken,
+      'In Repair Units': entry.qtyMaintenance,
+      Unit: entry.asset.unitType || 'Units',
+      'Defect Notes & Remarks': entry.allocationItem?.remarks || `Serial: ${entry.asset.serialNumber}`,
+      'Last Audited Date': entry.allocationItem?.lastAuditedAt || entry.asset.nextCalibration || '',
     }));
 
     const filename = `${loc.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_condition_audit`;
@@ -673,11 +675,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <div className="text-xs text-neutral-500">
                   Showing{' '}
                   <span className="font-semibold text-neutral-900">
-                    {activeTab === 'inventory' ? filteredRoomInventories.length : filteredHardwareAssets.length}
+                    {activeTab === 'inventory' ? filteredRoomInventories.length : filteredHardwareEntries.length}
                   </span>{' '}
                   {activeTab === 'inventory'
                     ? 'items'
-                    : filteredHardwareAssets.length === 1
+                    : filteredHardwareEntries.length === 1
                     ? 'device'
                     : 'devices'}
                 </div>
@@ -950,7 +952,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     )}
                   </div>
                 </div>
-              ) : filteredHardwareAssets.length === 0 ? (
+              ) : filteredHardwareEntries.length === 0 ? (
                 <div className="px-6 py-12 text-center">
                   <p className="text-sm font-semibold text-neutral-800">
                     No hardware devices match your search or status filter
@@ -984,12 +986,15 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100 text-xs">
-                    {filteredHardwareAssets.map((asset) => {
+                    {filteredHardwareEntries.map((entry) => {
+                      const { asset, allocationItem } = entry;
                       const statusMeta = ASSET_STATUS_META[asset.status] || ASSET_STATUS_META.operational;
-                      const unitCount = asset.totalUnits ?? 1;
+                      const unitCount = entry.units;
+                      const totalAssetUnits = asset.totalUnits ?? 1;
                       const unitLabel = asset.unitType || (unitCount === 1 ? 'Unit' : 'Units');
+                      const isSplitAllocation = entry.source === 'allocation' && allocationItem;
                       return (
-                        <tr key={asset.id} className="hover:bg-neutral-50/70 transition-colors">
+                        <tr key={entry.key} className="hover:bg-neutral-50/70 transition-colors">
                           <td className="py-3 pl-4 pr-3">
                             <Link
                               href={`/assets/${asset.id}`}
@@ -1005,9 +1010,9 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             >
                               {asset.name}
                             </Link>
-                            {asset.description && (
+                            {(allocationItem?.remarks || asset.description) && (
                               <p className="text-[11px] text-neutral-500 italic line-clamp-1 mt-0.5">
-                                {asset.description}
+                                {allocationItem?.remarks || asset.description}
                               </p>
                             )}
                           </td>
@@ -1015,6 +1020,11 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 text-xs font-medium whitespace-nowrap tabular-nums">
                               {unitCount} {unitLabel}
                             </span>
+                            {isSplitAllocation && unitCount < totalAssetUnits && (
+                              <div className="text-[10px] text-neutral-400 mt-0.5 tabular-nums whitespace-nowrap">
+                                of {totalAssetUnits} total
+                              </div>
+                            )}
                           </td>
                           <td className="py-3 px-3">
                             <span className="font-mono text-xs bg-neutral-50 border border-neutral-200/80 px-2 py-0.5 rounded-md text-neutral-700 whitespace-nowrap">
@@ -1052,28 +1062,60 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           <td className="py-3 pl-3 pr-4 text-right">
                             <RowActionMenu
                               onViewDetails={() => router.push(`/assets/${asset.id}`)}
-                              onEdit={isAllowed ? () => router.push(`/assets/${asset.id}/edit`) : undefined}
+                              onEdit={
+                                isAllowed
+                                  ? () =>
+                                      router.push(
+                                        isSplitAllocation
+                                          ? `/locations/${loc.id}/items/edit?item=${allocationItem.id}`
+                                          : `/assets/${asset.id}/edit`
+                                      )
+                                  : undefined
+                              }
                               actions={
                                 isAllowed
-                                  ? [
-                                      {
-                                        label: 'Relocate Room',
-                                        icon: <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />,
-                                        onClick: () => router.push(`/assets/${asset.id}/relocate`),
-                                      },
-                                      {
-                                        label: 'Unassign from Room',
-                                        icon: <RotateCcw className="w-3.5 h-3.5 text-amber-600" />,
-                                        variant: 'warning',
-                                        onClick: () =>
-                                          transferAsset(
-                                            asset.id,
-                                            'Unassigned',
-                                            `Unassigned from ${loc.room}`,
-                                            user?.name || 'Admin'
-                                          ),
-                                      },
-                                    ]
+                                  ? isSplitAllocation
+                                    ? [
+                                        {
+                                          label: 'Edit Room Count',
+                                          icon: <Edit3 className="w-3.5 h-3.5 text-neutral-500" />,
+                                          onClick: () =>
+                                            router.push(`/locations/${loc.id}/items/edit?item=${allocationItem.id}`),
+                                        },
+                                        {
+                                          label: 'Unassign from Room',
+                                          icon: <RotateCcw className="w-3.5 h-3.5 text-amber-600" />,
+                                          variant: 'warning',
+                                          onClick: () => {
+                                            const idsToRemove =
+                                              allocationItem.sourceIds.length > 0
+                                                ? allocationItem.sourceIds
+                                                : [allocationItem.id];
+                                            idsToRemove.forEach((allocId, idx) => {
+                                              deleteRoomInventoryItem(loc.id, allocId, { silent: idx > 0 });
+                                            });
+                                          },
+                                        },
+                                      ]
+                                    : [
+                                        {
+                                          label: 'Relocate Room',
+                                          icon: <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />,
+                                          onClick: () => router.push(`/assets/${asset.id}/relocate`),
+                                        },
+                                        {
+                                          label: 'Unassign from Room',
+                                          icon: <RotateCcw className="w-3.5 h-3.5 text-amber-600" />,
+                                          variant: 'warning',
+                                          onClick: () =>
+                                            transferAsset(
+                                              asset.id,
+                                              'Unassigned',
+                                              `Unassigned from ${loc.room}`,
+                                              user?.name || 'Admin'
+                                            ),
+                                        },
+                                      ]
                                   : undefined
                               }
                             />

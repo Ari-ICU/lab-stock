@@ -20,7 +20,14 @@ import {
   X,
 } from 'lucide-react';
 import { findLocation, getCategoryLabel } from '../shared';
-import { doesLocationMatchRoom, findLinkedStockItem, inferAssetGroup } from '@/lib/locationMatch';
+import {
+  AssetAllocationSummary,
+  doesLocationMatchRoom,
+  findLinkedStockItem,
+  getAssetAllocationSummary,
+  inferAssetGroup,
+} from '@/lib/locationMatch';
+import { MockAsset } from '@/types';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { NumberInput } from '@/components/NumberInput';
@@ -32,6 +39,15 @@ interface StockAllocationInput {
   broken: number;
 }
 
+interface AssignableAssetEntry {
+  asset: MockAsset;
+  summary: AssetAllocationSummary;
+  availableUnits: number;
+  existingInRoom: number;
+  sourceKind: 'pool' | 'direct-transfer';
+  locationLabel: string;
+}
+
 function NewRoomItemInner({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,11 +57,13 @@ function NewRoomItemInner({ id }: { id: string }) {
     assets,
     addRoomInventoryItem,
     updateStockQuantity,
+    updateAsset,
     transferAsset,
     showToast,
     isLoading,
   } = useStock();
   const { user, canManageLocation } = useAuth();
+  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
 
   const loc = findLocation(locations, id);
 
@@ -55,7 +73,7 @@ function NewRoomItemInner({ id }: { id: string }) {
 
   const [itemSearch, setItemSearch] = useState('');
   const [selectedStockQty, setSelectedStockQty] = useState<Record<string, StockAllocationInput>>({});
-  const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
+  const [selectedAssetQty, setSelectedAssetQty] = useState<Record<string, number>>({});
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -64,10 +82,52 @@ function NewRoomItemInner({ id }: { id: string }) {
     [stock, loc]
   );
 
-  const assignableAssets = useMemo(
-    () => (loc ? assets.filter((a) => !doesLocationMatchRoom(a.location, loc)) : []),
-    [assets, loc]
-  );
+  const assignableAssets = useMemo<AssignableAssetEntry[]>(() => {
+    if (!loc) return [];
+    return assets.flatMap<AssignableAssetEntry>((asset) => {
+      const summary = getAssetAllocationSummary(asset, locations);
+      const allocInCurrent = summary.allocations.find((a) => a.location.id === loc.id)?.totalQty || 0;
+
+      if (summary.unassignedUnits > 0) {
+        const locationLabel =
+          summary.allocations.length > 0
+            ? `Unassigned pool · ${summary.allocations.map((a) => `${a.location.room} (${a.totalQty})`).join(', ')}`
+            : 'Unassigned';
+        return [
+          {
+            asset,
+            summary,
+            availableUnits: summary.unassignedUnits,
+            existingInRoom: allocInCurrent,
+            sourceKind: 'pool',
+            locationLabel,
+          },
+        ];
+      }
+
+      if (summary.mode === 'direct' && summary.directRoom && summary.directRoom.id !== loc.id) {
+        const sourceRoom = summary.directRoom;
+        const canManageSource =
+          isAdmin ||
+          canManageLocation(`${sourceRoom.name} (${sourceRoom.room})`) ||
+          canManageLocation(sourceRoom.room);
+        if (!canManageSource) return [];
+
+        return [
+          {
+            asset,
+            summary,
+            availableUnits: summary.totalUnits,
+            existingInRoom: 0,
+            sourceKind: 'direct-transfer',
+            locationLabel: `${sourceRoom.name} (${sourceRoom.room})`,
+          },
+        ];
+      }
+
+      return [];
+    });
+  }, [assets, locations, loc, isAdmin, canManageLocation]);
 
   const filteredStock = useMemo(() => {
     const q = itemSearch.trim().toLowerCase();
@@ -85,11 +145,11 @@ function NewRoomItemInner({ id }: { id: string }) {
     const q = itemSearch.trim().toLowerCase();
     if (!q) return assignableAssets;
     return assignableAssets.filter(
-      (a) =>
-        a.name.toLowerCase().includes(q) ||
-        a.serialNumber.toLowerCase().includes(q) ||
-        (a.model && a.model.toLowerCase().includes(q)) ||
-        (a.location && a.location.toLowerCase().includes(q))
+      ({ asset, locationLabel }) =>
+        asset.name.toLowerCase().includes(q) ||
+        asset.serialNumber.toLowerCase().includes(q) ||
+        (asset.model && asset.model.toLowerCase().includes(q)) ||
+        locationLabel.toLowerCase().includes(q)
     );
   }, [assignableAssets, itemSearch]);
 
@@ -119,15 +179,15 @@ function NewRoomItemInner({ id }: { id: string }) {
             quantityLabel: `${item.quantity} ${item.unit}`,
             existingQty: existingRoomStockQty.get(item.id) || 0,
           }))
-        : filteredAssets.map((asset) => ({
-            id: asset.id,
-            name: asset.name,
-            badge: asset.serialNumber,
-            subtitle: asset.model || 'Standard Model',
-            locationLabel: asset.location || 'Unassigned',
-            imageUrl: asset.imageUrl,
-            quantityLabel: `${asset.totalUnits ?? 1} ${asset.unitType || 'Units'}`,
-            existingQty: 0,
+        : filteredAssets.map((entry) => ({
+            id: entry.asset.id,
+            name: entry.asset.name,
+            badge: entry.asset.serialNumber,
+            subtitle: entry.asset.model || 'Standard Model',
+            locationLabel: entry.locationLabel,
+            imageUrl: entry.asset.imageUrl,
+            quantityLabel: `${entry.availableUnits} ${entry.asset.unitType || 'Units'} avail`,
+            existingQty: entry.existingInRoom,
           })),
     [source, filteredStock, filteredAssets, existingRoomStockQty]
   );
@@ -146,21 +206,26 @@ function NewRoomItemInner({ id }: { id: string }) {
   );
 
   const selectedAssetList = useMemo(
-    () => assignableAssets.filter((a) => selectedAssetIds.includes(a.id)),
-    [assignableAssets, selectedAssetIds]
+    () =>
+      assignableAssets
+        .filter((entry) => selectedAssetQty[entry.asset.id] !== undefined)
+        .map((entry) => {
+          const qty = selectedAssetQty[entry.asset.id];
+          const invalid = qty <= 0 || qty > entry.availableUnits;
+          return { entry, qty, invalid };
+        }),
+    [assignableAssets, selectedAssetQty]
   );
 
   if (isLoading || !loc) {
     return <LoadingScreen message="Loading classroom assignment workspace..." />;
   }
 
-  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
   const isAllowed = isAdmin || canManageLocation(loc.room) || canManageLocation(loc.name);
   const backHref = `/locations/${loc.id}?tab=${source === 'asset' ? 'hardware' : 'stock'}`;
 
-  const selectedAssetSet = new Set(selectedAssetIds);
   const isRowSelected = (rowId: string) =>
-    source === 'stock' ? Boolean(selectedStockQty[rowId]) : selectedAssetSet.has(rowId);
+    source === 'stock' ? Boolean(selectedStockQty[rowId]) : selectedAssetQty[rowId] !== undefined;
 
   const visibleSelectedCount = pickerRows.filter((row) => isRowSelected(row.id)).length;
   const allVisibleSelected = pickerRows.length > 0 && visibleSelectedCount === pickerRows.length;
@@ -193,9 +258,29 @@ function NewRoomItemInner({ id }: { id: string }) {
   };
 
   const toggleAssetItem = (assetId: string) => {
-    setSelectedAssetIds((prev) =>
-      prev.includes(assetId) ? prev.filter((idVal) => idVal !== assetId) : [...prev, assetId]
-    );
+    setSelectedAssetQty((prev) => {
+      if (prev[assetId] !== undefined) {
+        const next = { ...prev };
+        delete next[assetId];
+        return next;
+      }
+      const target = assignableAssets.find((e) => e.asset.id === assetId);
+      if (!target) return prev;
+      return {
+        ...prev,
+        [assetId]: Math.min(target.availableUnits || 1, 1),
+      };
+    });
+  };
+
+  const updateAssetQty = (assetId: string, value: number) => {
+    setSelectedAssetQty((prev) => {
+      if (prev[assetId] === undefined) return prev;
+      return {
+        ...prev,
+        [assetId]: Math.max(0, value),
+      };
+    });
   };
 
   const handleToggleSelectAllVisible = () => {
@@ -216,26 +301,32 @@ function NewRoomItemInner({ id }: { id: string }) {
       return;
     }
 
-    setSelectedAssetIds((prev) => {
-      const visibleIds = pickerRows.map((r) => r.id);
+    setSelectedAssetQty((prev) => {
+      const next = { ...prev };
       if (allVisibleSelected) {
-        const visibleSet = new Set(visibleIds);
-        return prev.filter((idVal) => !visibleSet.has(idVal));
+        pickerRows.forEach((row) => delete next[row.id]);
+      } else {
+        filteredAssets.forEach((entry) => {
+          if (next[entry.asset.id] === undefined) {
+            next[entry.asset.id] = Math.min(entry.availableUnits || 1, 1);
+          }
+        });
       }
-      const merged = new Set([...prev, ...visibleIds]);
-      return Array.from(merged);
+      return next;
     });
   };
 
   const handleClearSelection = () => {
     setSelectedStockQty({});
-    setSelectedAssetIds([]);
+    setSelectedAssetQty({});
   };
 
   const totalSelectedCount = selectedStockList.length + selectedAssetList.length;
   const totalStockUnitsToAssign = selectedStockList.reduce((sum, entry) => sum + entry.total, 0);
-  const totalHardwareUnitsToAssign = selectedAssetList.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
-  const hasInvalidAllocation = selectedStockList.some((entry) => entry.invalid);
+  const totalHardwareUnitsToAssign = selectedAssetList.reduce((sum, item) => sum + item.qty, 0);
+  const hasInvalidAllocation =
+    selectedStockList.some((entry) => entry.invalid) ||
+    selectedAssetList.some((entry) => entry.invalid);
   const canSubmit = isAllowed && !submitting && totalSelectedCount > 0 && !hasInvalidAllocation;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -249,7 +340,7 @@ function NewRoomItemInner({ id }: { id: string }) {
       return;
     }
     if (hasInvalidAllocation) {
-      showToast('Check assigned quantities — each item must be between 1 and available stock', 'warning');
+      showToast('Check assigned quantities — each item must be between 1 and available units', 'warning');
       return;
     }
 
@@ -261,7 +352,7 @@ function NewRoomItemInner({ id }: { id: string }) {
       addRoomInventoryItem(
         loc.id,
         {
-          stockItemId: item.id,
+          stockItemId: item.serverId || item.id,
           name: item.name,
           group: inferredGroup,
           brandSpec: item.description || item.rack || undefined,
@@ -276,14 +367,58 @@ function NewRoomItemInner({ id }: { id: string }) {
       updateStockQuantity(item.id, -total, { silent: true });
     });
 
-    selectedAssetList.forEach((asset) => {
-      transferAsset(
-        asset.id,
-        `${loc.name} (${loc.room})`,
-        noteText || `Assigned to ${loc.room}`,
-        user?.name || 'Admin',
-        undefined,
-        undefined,
+    selectedAssetList.forEach(({ entry, qty }) => {
+      const { asset, availableUnits, sourceKind, summary } = entry;
+      const assetRef = asset.serverId || asset.id;
+      const isMaintAsset = asset.status === 'maintenance';
+
+      if (sourceKind === 'direct-transfer' && summary.directRoom) {
+        if (qty === availableUnits) {
+          transferAsset(
+            asset.id,
+            `${loc.name} (${loc.room})`,
+            noteText || `Assigned to ${loc.room}`,
+            user?.name || 'Admin',
+            undefined,
+            undefined,
+            { silent: true }
+          );
+          return;
+        }
+
+        // Splitting a direct single-room asset across multiple classrooms via room_inventory
+        const remainder = availableUnits - qty;
+        addRoomInventoryItem(
+          summary.directRoom.id,
+          {
+            assetId: assetRef,
+            name: asset.name,
+            group: 'IT_HARDWARE',
+            brandSpec: asset.model || undefined,
+            unit: asset.unitType || 'Units',
+            qtyWorking: isMaintAsset ? 0 : remainder,
+            qtyBroken: 0,
+            qtyMaintenance: isMaintAsset ? remainder : 0,
+            remarks: asset.description || undefined,
+          },
+          { silent: true }
+        );
+        updateAsset({ ...asset, location: 'Unassigned' }, { silent: true });
+      }
+
+      addRoomInventoryItem(
+        loc.id,
+        {
+          assetId: assetRef,
+          name: asset.name,
+          group: 'IT_HARDWARE',
+          brandSpec: asset.model || undefined,
+          unit: asset.unitType || 'Units',
+          qtyWorking: isMaintAsset ? 0 : qty,
+          qtyBroken: 0,
+          qtyMaintenance: isMaintAsset ? qty : 0,
+          remarks: noteText || undefined,
+        },
         { silent: true }
       );
     });
@@ -696,44 +831,74 @@ function NewRoomItemInner({ id }: { id: string }) {
                 {selectedAssetList.length > 0 && (
                   <div className="space-y-2.5">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                      Hardware Devices to Relocate ({selectedAssetList.length})
+                      Hardware Device Quantities ({selectedAssetList.length})
                     </div>
                     <div className="divide-y divide-neutral-100 border border-neutral-200/80 rounded-xl overflow-hidden bg-white">
-                      {selectedAssetList.map((asset) => (
-                        <div key={asset.id} className="p-3 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <LabThumbnail
-                              src={asset.imageUrl}
-                              alt={asset.name}
-                              size="thumb"
-                              fallbackType="item"
-                              className="w-9 h-9 rounded-lg border border-neutral-200 shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <div className="text-xs font-semibold text-neutral-900 truncate">
-                                {asset.name}
+                      {selectedAssetList.map(({ entry, qty, invalid }) => {
+                        const { asset, availableUnits, locationLabel } = entry;
+                        return (
+                          <div key={asset.id} className="p-3.5 space-y-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <LabThumbnail
+                                  src={asset.imageUrl}
+                                  alt={asset.name}
+                                  size="thumb"
+                                  fallbackType="item"
+                                  className="w-9 h-9 rounded-lg border border-neutral-200 shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <div className="text-xs font-semibold text-neutral-900 truncate">
+                                    {asset.name}
+                                  </div>
+                                  <div className="text-[11px] text-neutral-500 truncate">
+                                    {asset.serialNumber} · {locationLabel} →{' '}
+                                    <span className="font-semibold text-emerald-700">{loc.room}</span> · Avail:{' '}
+                                    <span className="font-mono font-semibold text-neutral-800">
+                                      {availableUnits} {asset.unitType || 'Units'}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-[11px] text-neutral-500 truncate">
-                                {asset.serialNumber} · {asset.location || 'Unassigned'} →{' '}
-                                <span className="font-semibold text-emerald-700">{loc.room}</span>
+
+                              <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-neutral-700">
+                                  <span>Assign</span>
+                                  <NumberInput
+                                    min={1}
+                                    max={availableUnits}
+                                    value={qty}
+                                    onChange={(val) => updateAssetQty(asset.id, val)}
+                                    className={numInputCls}
+                                  />
+                                  <span className="text-neutral-500 font-normal">
+                                    / {availableUnits} {asset.unitType || 'Units'}
+                                  </span>
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleAssetItem(asset.id)}
+                                  aria-label={`Remove ${asset.name}`}
+                                  className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
+
+                            {invalid && (
+                              <p className="text-[11px] text-rose-700 font-medium flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                <span>
+                                  {qty <= 0
+                                    ? 'Assign at least 1 unit or remove this device.'
+                                    : `Requested ${qty} exceeds available ${availableUnits} ${asset.unitType || 'Units'}.`}
+                                </span>
+                              </p>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200/80">
-                              {asset.totalUnits ?? 1} {asset.unitType || 'Units'}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => toggleAssetItem(asset.id)}
-                              aria-label={`Remove ${asset.name}`}
-                              className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -806,11 +971,11 @@ function NewRoomItemInner({ id }: { id: string }) {
                       </span>
                     </div>
                   ))}
-                  {selectedAssetList.map((asset) => (
-                    <div key={asset.id} className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="truncate text-neutral-800 font-medium">{asset.name}</span>
+                  {selectedAssetList.map(({ entry, qty }) => (
+                    <div key={entry.asset.id} className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="truncate text-neutral-800 font-medium">{entry.asset.name}</span>
                       <span className="font-mono font-semibold text-blue-700 shrink-0">
-                        {asset.totalUnits ?? 1} {asset.unitType || 'Units'}
+                        {qty} {entry.asset.unitType || 'Units'}
                       </span>
                     </div>
                   ))}

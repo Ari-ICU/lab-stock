@@ -10,11 +10,9 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { NumberInput } from '@/components/NumberInput';
 import { buildStockCategoryOptions } from '@/lib/categories';
-import { collectShelfSuggestions } from '@/lib/locationMatch';
 import {
   Save,
   Cable,
-  MapPin,
   Hash,
   Layers,
 } from 'lucide-react';
@@ -36,20 +34,21 @@ function CreateStockForm() {
     [stock, categories]
   );
 
-  // Find first manageable location for default
+  // Default Admins to Unassigned central inventory so units can be split across rooms via Assign to Room;
+  // scoped non-admin users default to their first manageable room.
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
   const depotFirst = managedLocations.find((loc) => loc.type === 'STORAGE') || managedLocations[0];
-  const defaultLocation = depotFirst
-    ? `${depotFirst.name} (${depotFirst.room})`
-    : 'Unassigned';
+  const defaultLocation = canManageLocation('Unassigned')
+    ? 'Unassigned'
+    : depotFirst
+      ? `${depotFirst.name} (${depotFirst.room})`
+      : 'Unassigned';
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [category, setCategory] = useState('Cables & Accessories');
   const [quantity, setQuantity] = useState(10);
   const [unit, setUnit] = useState('Units');
-  const [location, setLocation] = useState('');
-  const [rack, setRack] = useState('');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [expiryDate, setExpiryDate] = useState('Active');
   const [imageUrl, setImageUrl] = useState('');
@@ -57,11 +56,7 @@ function CreateStockForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const paramLocation = searchParams.get('location') || '';
-  const activeLocation = location || paramLocation || defaultLocation;
-  const shelfSuggestions = React.useMemo(
-    () => collectShelfSuggestions(stock, activeLocation),
-    [stock, activeLocation]
-  );
+  const activeLocation = paramLocation || defaultLocation;
 
   // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
@@ -72,14 +67,6 @@ function CreateStockForm() {
     if (paramName) setName(paramName);
     if (paramCategory) setCategory(paramCategory);
   }, [searchParams]);
-
-  const locationOptions = [
-    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-      label: `${loc.name} (${loc.room})`,
-      value: `${loc.name} (${loc.room})`,
-    })),
-    ...(canManageLocation('Unassigned') ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }] : []),
-  ];
 
   const handleGenerateSKU = () => {
     const prefix = category.substring(0, 3).toUpperCase();
@@ -108,14 +95,14 @@ function CreateStockForm() {
     setIsSubmitting(true);
 
     try {
-      const created = addStockItem({
+      addStockItem({
         name: name.trim(),
         code: code.trim().toUpperCase(),
         category: category.trim() || 'General Inventory',
         quantity: Number(quantity) || 0,
         unit: unit.trim() || 'Units',
         location: activeLocation.trim(),
-        rack: rack.trim(),
+        rack: '',
         status,
         expiryDate: expiryDate.trim() || 'Active',
         imageUrl: imageUrl.trim() || undefined,
@@ -309,61 +296,6 @@ function CreateStockForm() {
                       placeholder="Specify cable lengths, pinout standards, compatibility notes, or lab storage procedures..."
                       className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed"
                     />
-                  </div>
-                </div>
-              </div>
-
-              {/* Location & Storage Details */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                  <MapPin className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Location &amp; Shelf Placement
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-neutral-900">
-                      Assigned Laboratory Room
-                    </label>
-                    <Dropdown
-                      value={activeLocation}
-                      options={locationOptions}
-                      onChange={setLocation}
-                      placeholder="Select Lab Room"
-                      buttonClassName="rounded-xl py-2"
-                    />
-                    <p className="text-[11px] text-neutral-500">
-                      Choose which classroom, lab, or storage room holds this item.
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-semibold text-neutral-900">
-                        Shelf / Cabinet / Bin
-                      </label>
-                      <span className="text-[11px] text-neutral-400">Optional</span>
-                    </div>
-                    <input
-                      type="text"
-                      list="create-stock-shelf-suggestions"
-                      value={rack}
-                      onChange={(e) => setRack(e.target.value)}
-                      placeholder="e.g. Shelf A-01, Cabinet B, Bin 3"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
-                    />
-                    {shelfSuggestions.length > 0 && (
-                      <datalist id="create-stock-shelf-suggestions">
-                        {shelfSuggestions.map((shelf) => (
-                          <option key={shelf} value={shelf} />
-                        ))}
-                      </datalist>
-                    )}
-                    <p className="text-[11px] text-neutral-500">
-                      Exact shelf or bin inside that room. Leave blank if not tracked.
-                    </p>
                   </div>
                 </div>
               </div>

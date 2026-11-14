@@ -58,7 +58,7 @@ interface StockContextType {
   updateStockItem: (item: MockItem) => void;
   deleteStockItem: (id: string) => void;
   addAsset: (asset: Omit<MockAsset, 'id'> & { id?: string }) => MockAsset;
-  updateAsset: (asset: MockAsset) => void;
+  updateAsset: (asset: MockAsset, options?: { silent?: boolean }) => void;
   deleteAsset: (id: string) => void;
   lendAsset: (data: Omit<MockLoan, 'id' | 'status'> & { id?: string }) => MockLoan;
   lendStockItem: (
@@ -293,7 +293,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
               parsed.map((loc: MockLocation) => ({
                 ...loc,
                 inventories: Array.isArray(loc.inventories)
-                  ? loc.inventories.filter((inv: RoomInventoryItem) => Boolean(inv.stockItemId))
+                  ? loc.inventories.filter((inv: RoomInventoryItem) =>
+                      Boolean(inv.stockItemId || inv.assetId)
+                    )
                   : [],
               }))
             );
@@ -618,13 +620,15 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     return newAsset;
   };
 
-  const updateAsset = (updatedAsset: MockAsset) => {
+  const updateAsset = (updatedAsset: MockAsset, options?: { silent?: boolean }) => {
     setAssets((prev) => {
       const next = prev.map((a) => (a.id === updatedAsset.id ? updatedAsset : a));
       setCachedData('assets', next);
       return next;
     });
-    showToast(`Updated ${updatedAsset.name}`);
+    if (!options?.silent) {
+      showToast(`Updated ${updatedAsset.name}`);
+    }
     if (getAuthToken()) {
       assetService
         .updateAsset(updatedAsset.id, toServerAsset(updatedAsset) as any)
@@ -1120,10 +1124,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     options?: { silent?: boolean }
   ) => {
     const today = new Date().toISOString().split('T')[0];
-    const targetKey = getRoomInventoryItemKey(itemData, stock);
+    const targetKey = getRoomInventoryItemKey(itemData, stock, assets);
     const currentRoom = locations.find((l) => l.id === roomId);
     const existingMatches = (currentRoom?.inventories || []).filter(
-      (inv) => getRoomInventoryItemKey(inv, stock) === targetKey
+      (inv) => getRoomInventoryItemKey(inv, stock, assets) === targetKey
     );
     const primaryMatch = existingMatches[0];
     const duplicateIds = new Set(existingMatches.slice(1).map((inv) => inv.id));
@@ -1141,7 +1145,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         if (loc.id !== roomId) return loc;
         const inventories = loc.inventories || [];
         const matched = inventories.filter(
-          (inv) => getRoomInventoryItemKey(inv, stock) === targetKey
+          (inv) => getRoomInventoryItemKey(inv, stock, assets) === targetKey
         );
         if (matched.length > 0) {
           const primary = matched[0];
@@ -1276,7 +1280,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
             return next;
           });
         })
-        .catch(() => {});
+        .catch((err) => {
+          showToast(err?.message || 'Failed to assign item to classroom', 'error');
+          void refreshBackendData();
+        });
     }
   };
 

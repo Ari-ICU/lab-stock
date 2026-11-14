@@ -27,18 +27,20 @@ function CreateAssetForm() {
   const { addAsset, locations, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
 
-  // Find first manageable location for default
+  // Default Admins to Unassigned central pool so units can be allocated to multiple rooms by count;
+  // scoped non-admin users default to their first manageable room.
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
-  const defaultLocation = managedLocations.length > 0
-    ? `${managedLocations[0].name} (${managedLocations[0].room})`
-    : 'Unassigned';
+  const defaultLocation = canManageLocation('Unassigned')
+    ? 'Unassigned'
+    : managedLocations.length > 0
+      ? `${managedLocations[0].name} (${managedLocations[0].room})`
+      : 'Unassigned';
 
   const [name, setName] = useState('');
   const [model, setModel] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [totalUnits, setTotalUnits] = useState(1);
   const [unitType, setUnitType] = useState('Units');
-  const [location, setLocation] = useState('');
   const [status, setStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [nextCalibration, setNextCalibration] = useState('2027-06-01');
   const [imageUrl, setImageUrl] = useState('');
@@ -46,7 +48,7 @@ function CreateAssetForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const paramLocation = searchParams.get('location') || '';
-  const activeLocation = location || paramLocation || defaultLocation;
+  const activeLocation = paramLocation || defaultLocation;
 
   // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
@@ -57,14 +59,6 @@ function CreateAssetForm() {
     if (paramModel) setModel(paramModel);
     if (paramName) setName(paramName);
   }, [searchParams]);
-
-  const locationOptions = [
-    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-      label: `${loc.name} (${loc.room})`,
-      value: `${loc.name} (${loc.room})`,
-    })),
-    ...(canManageLocation('Unassigned') ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }] : []),
-  ];
 
   const handleGenerateTag = () => {
     const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -92,7 +86,7 @@ function CreateAssetForm() {
     setIsSubmitting(true);
 
     try {
-      const created = addAsset({
+      addAsset({
         name: name.trim(),
         model: model.trim() || 'Standard Model',
         serialNumber: serialNumber.trim().toUpperCase(),
@@ -247,21 +241,8 @@ function CreateAssetForm() {
               </div>
             </div>
 
-            {/* Location & Status */}
+            {/* Operational Status & Next Calibration Audit Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
-                  Assigned Lab Location
-                </label>
-                <Dropdown
-                  value={activeLocation}
-                  options={locationOptions}
-                  onChange={(val) => setLocation(val)}
-                  className="w-full"
-                  buttonClassName="rounded-xl py-2 text-xs font-medium"
-                />
-              </div>
-
               <div>
                 <label className="block text-xs font-semibold text-neutral-800 mb-1.5">
                   Operational Status
@@ -274,19 +255,18 @@ function CreateAssetForm() {
                   buttonClassName="rounded-xl py-2 text-xs font-medium"
                 />
               </div>
-            </div>
 
-            {/* Next Calibration Audit Date */}
-            <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1.5 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-neutral-500" />
-                <span>Next Calibration / Audit Due Date</span>
-              </label>
-              <DatePicker
-                value={nextCalibration}
-                onChange={setNextCalibration}
-                placeholder="Select calibration / audit date"
-              />
+              <div>
+                <label className="block text-xs font-semibold text-neutral-800 mb-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-neutral-500" />
+                  <span>Next Calibration / Audit Due Date</span>
+                </label>
+                <DatePicker
+                  value={nextCalibration}
+                  onChange={setNextCalibration}
+                  placeholder="Select calibration / audit date"
+                />
+              </div>
             </div>
 
             {/* Detailed Description */}

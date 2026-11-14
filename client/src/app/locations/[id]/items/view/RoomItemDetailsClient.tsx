@@ -16,7 +16,7 @@ import {
   getOperationalPercent,
   getRoomItemImage,
 } from '../shared';
-import { findConsolidatedRoomItem } from '@/lib/locationMatch';
+import { findConsolidatedRoomItem, getAssetAllocationSummary } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function RoomItemDetailsClient({ id }: { id: string }) {
@@ -28,7 +28,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const loc = findLocation(locations, id);
-  const item = findConsolidatedRoomItem(loc, itemId, stock);
+  const item = findConsolidatedRoomItem(loc, itemId, stock, assets);
 
   if (isLoading || !loc) {
     return <LoadingScreen message="Loading classroom equipment..." />;
@@ -51,10 +51,12 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
   const isAllowed = isAdmin || canManageLocation(loc.room) || canManageLocation(loc.name);
   const linkedStock = findLinkedStock(item, stock);
   const linkedAsset = findLinkedAsset(item, assets);
+  const assetAllocationSummary = linkedAsset ? getAssetAllocationSummary(linkedAsset, locations) : null;
   const imageUrl = getRoomItemImage(item, stock, assets);
   const total = item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0);
   const percent = getOperationalPercent(item);
   const editHref = `/locations/${loc.id}/items/edit?item=${item.id}`;
+  const roomTabHref = linkedAsset ? `/locations/${loc.id}?tab=hardware` : backHref;
 
   const statusBadge =
     percent === 100
@@ -72,7 +74,7 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
     item.sourceIds.forEach((sourceId, idx) => {
       deleteRoomInventoryItem(loc.id, sourceId, { silent: idx > 0 });
     });
-    router.push(backHref);
+    router.push(roomTabHref);
   };
 
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -235,7 +237,12 @@ export default function RoomItemDetailsClient({ id }: { id: string }) {
                         <div className="font-mono text-[11px] text-blue-800">{linkedAsset.serialNumber}</div>
                       </div>
                     </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono font-bold text-blue-800">
+                        {assetAllocationSummary?.unassignedUnits ?? 0} / {linkedAsset.totalUnits ?? 1} unassigned
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-blue-700" />
+                    </div>
                   </Link>
                 ) : (
                   <p className="text-neutral-500">Allocation record — central link not available.</p>

@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS room_inventory (
     room_id UUID REFERENCES locations(id) ON DELETE CASCADE,
     stock_item_id UUID REFERENCES stock_items(id) ON DELETE SET NULL,
     asset_id UUID REFERENCES assets(id) ON DELETE SET NULL,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(200) NOT NULL,
     group_type VARCHAR(50) NOT NULL, -- 'FURNITURE', 'ELECTRICAL', 'IT_HARDWARE', 'SAFETY_MISC'
     brand_spec VARCHAR(150),
     unit VARCHAR(50) DEFAULT 'pcs',

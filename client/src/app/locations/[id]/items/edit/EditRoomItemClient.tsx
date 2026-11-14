@@ -18,7 +18,7 @@ import {
   findLinkedStock,
   getConditionStatus,
 } from '../shared';
-import { findConsolidatedRoomItem } from '@/lib/locationMatch';
+import { findConsolidatedRoomItem, getAssetAllocationSummary } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function EditRoomItemClient({ id }: { id: string }) {
@@ -29,7 +29,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
-  const item = findConsolidatedRoomItem(loc, itemId, stock);
+  const item = findConsolidatedRoomItem(loc, itemId, stock, assets);
 
   const [name, setName] = useState('');
   const [group, setGroup] = useState<AssetGroup>('FURNITURE');
@@ -87,6 +87,8 @@ export default function EditRoomItemClient({ id }: { id: string }) {
   const isAllowed = isAdmin || canManageLocation(loc.room) || canManageLocation(loc.name);
   const linkedStock = findLinkedStock(item, stock);
   const linkedAsset = findLinkedAsset(item, assets);
+  const assetAllocationSummary = linkedAsset ? getAssetAllocationSummary(linkedAsset, locations) : null;
+  const availableAssetExtra = assetAllocationSummary ? assetAllocationSummary.unassignedUnits : 0;
 
   const total = qtyWorking + qtyBroken + qtyMaintenance;
   const percent = total > 0 ? Math.round((qtyWorking / total) * 100) : 100;
@@ -130,6 +132,19 @@ export default function EditRoomItemClient({ id }: { id: string }) {
       return;
     }
 
+    if (linkedAsset && diff > availableAssetExtra) {
+      showToast(
+        `Only ${availableAssetExtra} additional ${linkedAsset.unitType || unit} unassigned (${linkedAsset.totalUnits ?? 1} total).`,
+        'warning'
+      );
+      return;
+    }
+
+    if (linkedAsset && newTotal < 1) {
+      showToast('Hardware allocation must keep at least 1 unit, or remove it from the room.', 'warning');
+      return;
+    }
+
     setSubmitting(true);
 
     updateRoomInventoryItem(loc.id, item.id, {
@@ -161,7 +176,7 @@ export default function EditRoomItemClient({ id }: { id: string }) {
       deleteRoomInventoryItem(loc.id, sourceId, { silent: true });
     });
     showToast(`Removed "${item.name}" from ${loc.room}`, 'info');
-    router.push(backHref);
+    router.push(linkedAsset ? `/locations/${loc.id}?tab=hardware` : backHref);
   };
 
   const inputCls =
@@ -374,7 +389,9 @@ export default function EditRoomItemClient({ id }: { id: string }) {
                   Total changed from {item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0)} to {total}.{' '}
                   {linkedStock
                     ? 'Central Inventory (/stock) units will adjust automatically when saved.'
-                    : 'No linked Central Inventory item found.'}
+                    : linkedAsset
+                    ? `Unassigned fleet balance: ${availableAssetExtra} ${linkedAsset.unitType || unit} left of ${linkedAsset.totalUnits ?? 1} total.`
+                    : 'No linked Central Inventory or Hardware Asset record found.'}
                 </p>
               )}
             </div>
@@ -390,9 +407,14 @@ export default function EditRoomItemClient({ id }: { id: string }) {
                   </Link>
                 )}
                 {linkedAsset && (
-                  <Link href={`/assets/${linkedAsset.id}`} className="flex items-center gap-2 text-blue-800 hover:underline">
-                    <Microscope className="w-3.5 h-3.5" />
-                    <span className="font-mono">{linkedAsset.serialNumber}</span>
+                  <Link href={`/assets/${linkedAsset.id}`} className="flex items-center justify-between gap-2 text-blue-800 hover:underline">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Microscope className="w-3.5 h-3.5 shrink-0" />
+                      <span className="font-mono truncate">{linkedAsset.serialNumber}</span>
+                    </span>
+                    <span className="text-neutral-500 shrink-0">
+                      • {availableAssetExtra} of {linkedAsset.totalUnits ?? 1} unassigned
+                    </span>
                   </Link>
                 )}
               </div>

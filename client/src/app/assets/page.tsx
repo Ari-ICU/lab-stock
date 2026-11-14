@@ -13,6 +13,7 @@ import { Dropdown, DropdownOption } from '@/components/Dropdown';
 import { exportToCsv } from '@/lib/exportCsv';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { MockAsset } from '@/types';
+import { AssetAllocationSummary, doesLocationMatchRoom, getAssetAllocationSummary } from '@/lib/locationMatch';
 import { Search, Router, ChevronDown, Check, X } from 'lucide-react';
 
 type AssetStatusValue = MockAsset['status'];
@@ -280,28 +281,50 @@ export default function AssetsPage() {
     })),
   ];
 
+  const assetSummaryMap = useMemo(() => {
+    const map = new Map<string, AssetAllocationSummary>();
+    assets.forEach((asset) => {
+      map.set(asset.id, getAssetAllocationSummary(asset, locations));
+    });
+    return map;
+  }, [assets, locations]);
+
   // Filter by search + lab first so status tab counts reflect current search & lab scope
   const searchAndLabAssets = useMemo(() => {
     const q = filterText.trim().toLowerCase();
+    const selectedLoc =
+      labFilter !== 'all' && labFilter !== 'my_assigned'
+        ? locations.find((l) => l.room.toLowerCase() === labFilter.toLowerCase())
+        : undefined;
+
     return assets.filter((asset) => {
+      const summary = assetSummaryMap.get(asset.id);
       const matchesQuery =
         !q ||
         asset.name.toLowerCase().includes(q) ||
         asset.serialNumber.toLowerCase().includes(q) ||
         asset.model.toLowerCase().includes(q) ||
         asset.location.toLowerCase().includes(q) ||
+        (summary?.allocations.some((a) => a.label.toLowerCase().includes(q)) ?? false) ||
         (asset.currentBorrower || '').toLowerCase().includes(q);
 
       const matchesLab =
         labFilter === 'all'
           ? true
           : labFilter === 'my_assigned'
-          ? canManageLocation(asset.location)
-          : asset.location.toLowerCase().includes(labFilter.toLowerCase());
+          ? canManageLocation(asset.location) ||
+            (summary?.allocations.some((a) => canManageLocation(a.label)) ?? false)
+          : (selectedLoc
+              ? doesLocationMatchRoom(asset.location, selectedLoc)
+              : asset.location.toLowerCase().includes(labFilter.toLowerCase())) ||
+            (summary?.allocations.some(
+              (a) => a.location.room.toLowerCase() === labFilter.toLowerCase()
+            ) ??
+              false);
 
       return matchesQuery && matchesLab;
     });
-  }, [assets, filterText, labFilter, canManageLocation]);
+  }, [assets, assetSummaryMap, locations, filterText, labFilter, canManageLocation]);
 
   const statusCounts = useMemo(
     () => ({
@@ -567,9 +590,35 @@ export default function AssetsPage() {
                         </td>
                         <td className="py-3 px-4 text-neutral-600 font-mono text-[11px]">{asset.model}</td>
                         <td className="py-3 px-4 text-neutral-600">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span>{asset.location}</span>
-                          </div>
+                          {(() => {
+                            const summary = assetSummaryMap.get(asset.id);
+                            if (summary && summary.allocations.length > 0) {
+                              return (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {summary.allocations.map((alloc) => (
+                                    <Link
+                                      key={alloc.location.id}
+                                      href={`/locations/${alloc.location.id}?tab=hardware`}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-800 border border-blue-200/80 hover:bg-blue-100 transition-colors whitespace-nowrap"
+                                    >
+                                      <span>{alloc.location.room}</span>
+                                      <span className="font-mono font-bold">({alloc.totalQty})</span>
+                                    </Link>
+                                  ))}
+                                  {summary.unassignedUnits > 0 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100 text-neutral-600 border border-neutral-200/80 whitespace-nowrap">
+                                      +{summary.unassignedUnits} Unassigned
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span>{asset.location || 'Unassigned'}</span>
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-4">
                           <AssetStatusControl

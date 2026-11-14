@@ -47,7 +47,7 @@ export default function LocationsPage() {
   // Compute room statistics strictly from confirmed Inventory (/stock) and Hardware Assets (/assets)
   const enhancedLocations = useMemo(() => {
     return locations.map((loc) => {
-      const stats = getRoomInventoryStats(loc, stock, assets);
+      const stats = getRoomInventoryStats(loc, stock, assets, locations);
 
       return {
         ...loc,
@@ -62,6 +62,7 @@ export default function LocationsPage() {
         healthStatus: stats.healthStatus,
         linkedExtraInvs: stats.linkedExtraInvs,
         matchingAssets: stats.matchingAssets,
+        hardwareEntries: stats.hardwareEntries,
       };
     });
   }, [locations, stock, assets]);
@@ -87,29 +88,33 @@ export default function LocationsPage() {
         }
       });
 
-      loc.matchingAssets
-        .filter((a) => a.status === 'maintenance')
-        .forEach((asset) => {
+      loc.hardwareEntries.forEach((entry) => {
+        if (entry.qtyBroken > 0 || entry.qtyMaintenance > 0) {
+          const asset = entry.asset;
           list.push({
             roomId: loc.id,
             roomName: loc.name,
             roomCode: loc.room,
             item: {
-              id: asset.id,
+              id: entry.allocationItem?.id || asset.id,
               roomId: loc.id,
               assetId: asset.id,
               name: asset.name,
               group: 'IT_HARDWARE',
               brandSpec: asset.model || 'Standard Hardware',
               unit: asset.unitType || 'Units',
-              qtyWorking: 0,
-              qtyBroken: 0,
-              qtyMaintenance: asset.totalUnits ?? 1,
-              remarks: asset.description || `Serial: ${asset.serialNumber}`,
-              lastAuditedAt: asset.nextCalibration,
+              qtyWorking: entry.qtyWorking,
+              qtyBroken: entry.qtyBroken,
+              qtyMaintenance: entry.qtyMaintenance,
+              remarks:
+                entry.allocationItem?.remarks ||
+                asset.description ||
+                `Serial: ${asset.serialNumber}`,
+              lastAuditedAt: entry.allocationItem?.lastAuditedAt || asset.nextCalibration,
             },
           });
-        });
+        }
+      });
     });
 
     return list;

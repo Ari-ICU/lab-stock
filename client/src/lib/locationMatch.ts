@@ -101,7 +101,25 @@ export function findLinkedStockItem(
   if (!inv.stockItemId) return undefined;
   const target = inv.stockItemId.trim().toLowerCase();
   return stock.find(
-    (s) => s.id.toLowerCase() === target || s.code.toLowerCase() === target
+    (s) =>
+      s.id.toLowerCase() === target ||
+      Boolean(s.serverId && s.serverId.toLowerCase() === target) ||
+      s.code.toLowerCase() === target
+  );
+}
+
+/** Resolve an explicit Hardware Asset (/assets) record referenced by a room inventory row. */
+export function findLinkedAssetItem(
+  inv: Pick<RoomInventoryItem, 'assetId'>,
+  assets: MockAsset[]
+): MockAsset | undefined {
+  if (!inv.assetId) return undefined;
+  const target = inv.assetId.trim().toLowerCase();
+  return assets.find(
+    (a) =>
+      a.id.toLowerCase() === target ||
+      Boolean(a.serverId && a.serverId.toLowerCase() === target) ||
+      a.serialNumber.toLowerCase() === target
   );
 }
 
@@ -160,13 +178,18 @@ export function mergeDistinctRemarks(...values: Array<string | undefined | null>
 /** Stable identity key for grouping repeated allocations of the same item in one classroom. */
 export function getRoomInventoryItemKey(
   inv: Pick<RoomInventoryItem, 'stockItemId' | 'assetId' | 'name' | 'unit'>,
-  stock: MockItem[]
+  stock: MockItem[],
+  assets: MockAsset[] = []
 ): string {
   const linked = inv.stockItemId
     ? findLinkedStockItem(inv as RoomInventoryItem, stock)
     : undefined;
   if (linked) return `stock:${linked.id.toLowerCase()}`;
   if (inv.stockItemId) return `stock:${inv.stockItemId.trim().toLowerCase()}`;
+  const linkedAsset = inv.assetId
+    ? findLinkedAssetItem(inv, assets)
+    : undefined;
+  if (linkedAsset) return `asset:${linkedAsset.id.toLowerCase()}`;
   if (inv.assetId) return `asset:${inv.assetId.trim().toLowerCase()}`;
   return `name:${inv.name.trim().toLowerCase()}|unit:${(inv.unit || 'pcs').trim().toLowerCase()}`;
 }
@@ -174,13 +197,14 @@ export function getRoomInventoryItemKey(
 /** Consolidate duplicate room inventory records for the same SKU/item into a single display row. */
 export function consolidateRoomInventories(
   inventories: RoomInventoryItem[],
-  stock: MockItem[]
+  stock: MockItem[],
+  assets: MockAsset[] = []
 ): ConsolidatedRoomInventoryItem[] {
   const order: string[] = [];
   const grouped = new Map<string, ConsolidatedRoomInventoryItem>();
 
   for (const inv of inventories) {
-    const key = getRoomInventoryItemKey(inv, stock);
+    const key = getRoomInventoryItemKey(inv, stock, assets);
     const existing = grouped.get(key);
 
     if (!existing) {
@@ -214,17 +238,122 @@ export function consolidateRoomInventories(
 export function findConsolidatedRoomItem(
   loc: MockLocation | undefined,
   itemId: string,
-  stock: MockItem[]
+  stock: MockItem[],
+  assets: MockAsset[] = []
 ): ConsolidatedRoomInventoryItem | undefined {
   if (!loc || !itemId) return undefined;
-  const consolidated = consolidateRoomInventories(loc.inventories || [], stock);
+  const consolidated = consolidateRoomInventories(loc.inventories || [], stock, assets);
   return consolidated.find((c) => c.id === itemId || c.sourceIds.includes(itemId));
+}
+
+export interface AssetRoomAllocation {
+  location: MockLocation;
+  label: string;
+  qtyWorking: number;
+  qtyBroken: number;
+  qtyMaintenance: number;
+  totalQty: number;
+  item: ConsolidatedRoomInventoryItem;
+}
+
+export interface AssetAllocationSummary {
+  totalUnits: number;
+  mode: 'split' | 'direct' | 'unassigned';
+  allocatedUnits: number;
+  assignedUnits: number;
+  unassignedUnits: number;
+  directRoom?: MockLocation;
+  allocations: AssetRoomAllocation[];
+}
+
+/**
+ * Compute per-room allocation breakdown and remaining unassigned pool units for a Hardware Asset.
+ */
+export function getAssetAllocationSummary(
+  asset: MockAsset,
+  locations: MockLocation[]
+): AssetAllocationSummary {
+  const totalUnits = Math.max(1, asset.totalUnits ?? 1);
+  const allocations: AssetRoomAllocation[] = [];
+
+  for (const loc of locations) {
+    const rawMatches = (loc.inventories || []).filter((inv) =>
+      Boolean(findLinkedAssetItem(inv, [asset]))
+    );
+    if (rawMatches.length === 0) continue;
+
+    const consolidated = consolidateRoomInventories(rawMatches, [], [asset]);
+    const merged = consolidated[0];
+    if (!merged) continue;
+
+    const qtyWorking = merged.qtyWorking || 0;
+    const qtyBroken = merged.qtyBroken || 0;
+    const qtyMaintenance = merged.qtyMaintenance || 0;
+    const totalQty = qtyWorking + qtyBroken + qtyMaintenance;
+    if (totalQty <= 0) continue;
+
+    allocations.push({
+      location: loc,
+      label: `${loc.name} (${loc.room})`,
+      qtyWorking,
+      qtyBroken,
+      qtyMaintenance,
+      totalQty,
+      item: merged,
+    });
+  }
+
+  const allocatedUnits = allocations.reduce((sum, a) => sum + a.totalQty, 0);
+  if (allocatedUnits > 0) {
+    return {
+      totalUnits,
+      mode: 'split',
+      allocatedUnits,
+      assignedUnits: allocatedUnits,
+      unassignedUnits: Math.max(0, totalUnits - allocatedUnits),
+      allocations,
+    };
+  }
+
+  const directRoom = findMatchingRoom(asset.location, locations);
+  if (directRoom) {
+    return {
+      totalUnits,
+      mode: 'direct',
+      allocatedUnits: 0,
+      assignedUnits: totalUnits,
+      unassignedUnits: 0,
+      directRoom,
+      allocations: [],
+    };
+  }
+
+  return {
+    totalUnits,
+    mode: 'unassigned',
+    allocatedUnits: 0,
+    assignedUnits: 0,
+    unassignedUnits: totalUnits,
+    allocations: [],
+  };
+}
+
+export interface RoomHardwareEntry {
+  key: string;
+  source: 'allocation' | 'direct';
+  asset: MockAsset;
+  units: number;
+  qtyWorking: number;
+  qtyBroken: number;
+  qtyMaintenance: number;
+  allocationItem?: ConsolidatedRoomInventoryItem;
 }
 
 export interface RoomFleetStats {
   matchingStock: MockItem[];
   linkedExtraInvs: ConsolidatedRoomInventoryItem[];
   matchingAssets: MockAsset[];
+  hardwareEntries: RoomHardwareEntry[];
   stockItemsCount: number;
   totalStockUnits: number;
   hardwareAssetsCount: number;
@@ -240,12 +369,13 @@ export interface RoomFleetStats {
 
 /**
  * Single source of truth computing room-level Inventory (/stock + valid consolidated allocations)
- * and Hardware Assets (/assets) counts & health metrics.
+ * and Hardware Assets (/assets + per-room split allocations) counts & health metrics.
  */
 export function getRoomInventoryStats(
   loc: MockLocation,
   stock: MockItem[],
-  assets: MockAsset[]
+  assets: MockAsset[],
+  allLocations?: MockLocation[]
 ): RoomFleetStats {
   const matchingStock = stock.filter((s) => doesLocationMatchRoom(s.location, loc));
   const matchingStockIds = new Set(matchingStock.map((s) => s.id));
@@ -256,7 +386,7 @@ export function getRoomInventoryStats(
     const linked = findLinkedStockItem(inv, stock);
     return Boolean(linked) && !matchingStockIds.has(linked!.id);
   });
-  const linkedExtraInvs = consolidateRoomInventories(rawLinkedExtraInvs, stock);
+  const linkedExtraInvs = consolidateRoomInventories(rawLinkedExtraInvs, stock, assets);
 
   const directStockUnits = matchingStock.reduce((sum, s) => sum + (s.quantity || 0), 0);
   const allocWorkingUnits = linkedExtraInvs.reduce((sum, inv) => sum + (inv.qtyWorking || 0), 0);
@@ -267,24 +397,90 @@ export function getRoomInventoryStats(
   const stockItemsCount = matchingStock.length + linkedExtraInvs.length;
   const totalStockUnits = directStockUnits + allocTotalUnits;
 
-  const matchingAssets = assets.filter((a) => doesLocationMatchRoom(a.location, loc));
-  const hardwareAssetsCount = matchingAssets.length;
-  const totalHardwareUnits = matchingAssets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+  // Identify hardware assets that use explicit per-room split allocations anywhere so direct room
+  // fallback never double-counts split assets.
+  const scopeLocations = allLocations && allLocations.length > 0 ? allLocations : [loc];
+  const assetIdsWithRoomAllocations = new Set<string>();
+  for (const roomLoc of scopeLocations) {
+    for (const inv of roomLoc.inventories || []) {
+      if (findLinkedStockItem(inv, stock)) continue;
+      const linkedAsset = findLinkedAssetItem(inv, assets);
+      const total =
+        (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
+      if (linkedAsset && total > 0) {
+        assetIdsWithRoomAllocations.add(linkedAsset.id);
+      }
+    }
+  }
 
-  const maintenanceHardwareUnits = matchingAssets
-    .filter((a) => a.status === 'maintenance')
-    .reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+  const rawHardwareInvs = (loc.inventories || []).filter((inv) => {
+    if (findLinkedStockItem(inv, stock)) return false;
+    return Boolean(findLinkedAssetItem(inv, assets));
+  });
+  const consolidatedHardwareInvs = consolidateRoomInventories(rawHardwareInvs, stock, assets);
 
-  const workingHardwareUnits = matchingAssets
-    .filter((a) => a.status !== 'maintenance')
-    .reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
+  const hardwareEntries: RoomHardwareEntry[] = [];
+  const seenAssetIds = new Set<string>();
+
+  for (const inv of consolidatedHardwareInvs) {
+    const linkedAsset = findLinkedAssetItem(inv, assets);
+    if (!linkedAsset) continue;
+    const qtyWorking = inv.qtyWorking || 0;
+    const qtyBroken = inv.qtyBroken || 0;
+    const qtyMaintenance = inv.qtyMaintenance || 0;
+    const units = qtyWorking + qtyBroken + qtyMaintenance;
+    if (units <= 0) continue;
+
+    seenAssetIds.add(linkedAsset.id);
+    hardwareEntries.push({
+      key: `alloc-${linkedAsset.id}`,
+      source: 'allocation',
+      asset: linkedAsset,
+      units,
+      qtyWorking,
+      qtyBroken,
+      qtyMaintenance,
+      allocationItem: inv,
+    });
+  }
+
+  const directAssets = assets.filter(
+    (a) =>
+      doesLocationMatchRoom(a.location, loc) &&
+      !assetIdsWithRoomAllocations.has(a.id) &&
+      !seenAssetIds.has(a.id)
+  );
+
+  for (const asset of directAssets) {
+    const units = asset.totalUnits ?? 1;
+    const isMaint = asset.status === 'maintenance';
+    hardwareEntries.push({
+      key: `direct-${asset.id}`,
+      source: 'direct',
+      asset,
+      units,
+      qtyWorking: isMaint ? 0 : units,
+      qtyBroken: 0,
+      qtyMaintenance: isMaint ? units : 0,
+    });
+  }
+
+  const matchingAssets = hardwareEntries.map((entry) => entry.asset);
+  const hardwareAssetsCount = hardwareEntries.length;
+  const totalHardwareUnits = hardwareEntries.reduce((sum, e) => sum + e.units, 0);
+  const maintenanceHardwareUnits = hardwareEntries.reduce(
+    (sum, e) => sum + e.qtyMaintenance,
+    0
+  );
+  const brokenHardwareUnits = hardwareEntries.reduce((sum, e) => sum + e.qtyBroken, 0);
+  const workingHardwareUnits = hardwareEntries.reduce((sum, e) => sum + e.qtyWorking, 0);
 
   const lowStockCount = matchingStock.filter((s) => s.status !== 'in_stock').length;
   const outOfStockUnits = matchingStock
     .filter((s) => s.status === 'out_of_stock')
     .reduce((sum, s) => sum + (s.quantity || 0), 0);
 
-  const totalBrokenCount = allocBrokenUnits;
+  const totalBrokenCount = allocBrokenUnits + brokenHardwareUnits;
   const totalMaintenanceCount = allocMaintUnits + maintenanceHardwareUnits;
   const totalAllUnits = totalStockUnits + totalHardwareUnits;
   const totalWorkingUnits =
@@ -306,6 +502,7 @@ export function getRoomInventoryStats(
     matchingStock,
     linkedExtraInvs,
     matchingAssets,
+    hardwareEntries,
     stockItemsCount,
     totalStockUnits,
     hardwareAssetsCount,

@@ -88,6 +88,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'units';
       ALTER TABLE purchase_requests ADD COLUMN IF NOT EXISTS supervised_by VARCHAR(150);
+      ALTER TABLE room_inventory ALTER COLUMN name TYPE VARCHAR(200);
     `);
 
     // Purge any unlinked standalone room_inventory rows so classrooms strictly reflect Inventory (/stock) or Hardware Assets (/assets)

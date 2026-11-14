@@ -187,6 +187,28 @@ export const locationModel = {
     return res.rows[0] || null;
   },
 
+  async findRoomInventoryItemById(itemId: string): Promise<any | null> {
+    if (!isValidUuid(itemId)) return null;
+    const res = await query('SELECT * FROM room_inventory WHERE id = $1 LIMIT 1', [itemId.trim()]);
+    return res.rows[0] || null;
+  },
+
+  async getTotalAllocatedUnitsForAsset(assetId: string, excludeItemId?: string): Promise<number> {
+    if (!isValidUuid(assetId)) return 0;
+    const params: any[] = [assetId.trim()];
+    let sql = `
+      SELECT COALESCE(SUM(qty_working + qty_broken + qty_maintenance), 0)::int AS total
+      FROM room_inventory
+      WHERE asset_id = $1
+    `;
+    if (excludeItemId && isValidUuid(excludeItemId)) {
+      params.push(excludeItemId.trim());
+      sql += ' AND id <> $2';
+    }
+    const res = await query(sql, params);
+    return Number(res.rows[0]?.total || 0);
+  },
+
   // Room Inventory (Facility Matrix — merges repeated allocations of the same item into one row)
   async addRoomInventoryItem(roomId: string, item: any): Promise<any> {
     const stockItemId = item.stockItemId || item.stock_item_id || null;

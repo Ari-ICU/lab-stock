@@ -11,7 +11,6 @@ import { Dropdown } from '@/components/Dropdown';
 import { NumberInput } from '@/components/NumberInput';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { buildStockCategoryOptions } from '@/lib/categories';
-import { collectShelfSuggestions } from '@/lib/locationMatch';
 import {
   ArrowLeft,
   Save,
@@ -19,7 +18,6 @@ import {
   Trash2,
   AlertTriangle,
   Cable,
-  MapPin,
   Hash,
   Layers,
   Shield,
@@ -36,7 +34,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { stock, categories, createCategory, updateStockItem, deleteStockItem, locations, showToast, isLoading } = useStock();
+  const { stock, categories, createCategory, updateStockItem, deleteStockItem, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const categoryOptions = React.useMemo(
@@ -52,8 +50,6 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const [category, setCategory] = useState('Cables & Accessories');
   const [quantity, setQuantity] = useState(0);
   const [unit, setUnit] = useState('Units');
-  const [location, setLocation] = useState('Unassigned');
-  const [rack, setRack] = useState('');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [expiryDate, setExpiryDate] = useState('Active');
   const [imageUrl, setImageUrl] = useState('');
@@ -68,8 +64,6 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       setCategory(item.category || 'Cables & Accessories');
       setQuantity(item.quantity ?? 0);
       setUnit(item.unit || 'Units');
-      setLocation(item.location || 'Unassigned');
-      setRack(item.rack || '');
       setStatus(item.status || 'in_stock');
       setExpiryDate(item.expiryDate || 'Active');
       setImageUrl(item.imageUrl || '');
@@ -157,26 +151,12 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
     );
   }
 
-  // Only allow selecting locations the user is authorized to manage (unless administrator)
-  const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
-  const locationOptions = [
-    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-      label: `${loc.name} (${loc.room})`,
-      value: `${loc.name} (${loc.room})`,
-    })),
-    ...(canManageLocation('Unassigned') || item.location === 'Unassigned'
-      ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }]
-      : []),
-  ];
-
   const handleReset = () => {
     setName(item.name || '');
     setCode(item.code || '');
     setCategory(item.category || 'Cables & Accessories');
     setQuantity(item.quantity ?? 0);
     setUnit(item.unit || 'Units');
-    setLocation(item.location || 'Unassigned');
-    setRack(item.rack || '');
     setStatus(item.status || 'in_stock');
     setExpiryDate(item.expiryDate || 'Active');
     setImageUrl(item.imageUrl || '');
@@ -199,11 +179,6 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       return;
     }
 
-    if (!canManageLocation(location)) {
-      showToast(`You cannot move this item to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'None assigned'}`, 'warning');
-      return;
-    }
-
     if (!name.trim()) {
       showToast('Please enter an item name', 'warning');
       return;
@@ -223,8 +198,8 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
         category: category.trim() || 'General Inventory',
         quantity: Number(quantity) || 0,
         unit: unit.trim() || 'Units',
-        location: location.trim(),
-        rack: rack.trim(),
+        location: item.location || 'Unassigned',
+        rack: item.rack || '',
         status,
         expiryDate: expiryDate.trim() || 'Active',
         imageUrl: imageUrl.trim(),
@@ -445,59 +420,6 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
                       placeholder="Specify cable pinouts, compatibility, or lab storage procedures..."
                       className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed placeholder:text-neutral-400"
                     />
-                  </div>
-                </div>
-              </div>
-
-              {/* Location & Storage Details */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                  <MapPin className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Location &amp; Shelf Placement
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-neutral-900">
-                      Assigned Laboratory Room
-                    </label>
-                    <Dropdown
-                      value={location}
-                      options={locationOptions}
-                      onChange={setLocation}
-                      placeholder="Select Lab Room"
-                      buttonClassName="rounded-xl py-2"
-                    />
-                    <p className="text-[11px] text-neutral-500">
-                      Choose which classroom, lab, or storage room holds this item.
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-semibold text-neutral-900">
-                        Shelf / Cabinet / Bin
-                      </label>
-                      <span className="text-[11px] text-neutral-400">Optional</span>
-                    </div>
-                    <input
-                      type="text"
-                      list="edit-stock-shelf-suggestions"
-                      value={rack}
-                      onChange={(e) => setRack(e.target.value)}
-                      placeholder="e.g. Shelf A-01, Cabinet B, Bin 3"
-                      className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors placeholder:text-neutral-400"
-                    />
-                    <datalist id="edit-stock-shelf-suggestions">
-                      {collectShelfSuggestions(stock, location).map((shelf) => (
-                        <option key={shelf} value={shelf} />
-                      ))}
-                    </datalist>
-                    <p className="text-[11px] text-neutral-500">
-                      Exact shelf or bin inside that room. Leave blank if not tracked.
-                    </p>
                   </div>
                 </div>
               </div>

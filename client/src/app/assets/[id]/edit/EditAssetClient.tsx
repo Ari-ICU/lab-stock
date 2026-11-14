@@ -17,7 +17,6 @@ import {
   RotateCcw,
   Trash2,
   AlertTriangle,
-  MapPin,
   Layers,
   Cpu,
   Shield,
@@ -34,7 +33,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { assets, updateAsset, deleteAsset, locations, showToast, isLoading } = useStock();
+  const { assets, updateAsset, deleteAsset, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const asset = assets.find((a) => a.id === id);
@@ -45,7 +44,6 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   const [serialNumber, setSerialNumber] = useState('');
   const [totalUnits, setTotalUnits] = useState(1);
   const [unitType, setUnitType] = useState('Units');
-  const [location, setLocation] = useState('Unassigned');
   const [status, setStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [nextCalibration, setNextCalibration] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -61,7 +59,6 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       setSerialNumber(asset.serialNumber || '');
       setTotalUnits(asset.totalUnits ?? 1);
       setUnitType(asset.unitType ?? 'Units');
-      setLocation(asset.location || 'Unassigned');
       setStatus(asset.status || 'operational');
       setNextCalibration(asset.nextCalibration || '2027-06-01');
       setImageUrl(asset.imageUrl || '');
@@ -149,25 +146,12 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
     );
   }
 
-  // Only allow selecting locations the user is authorized to manage (unless administrator)
-  const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
-  const locationOptions = [
-    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-      label: `${loc.name} (${loc.room})`,
-      value: `${loc.name} (${loc.room})`,
-    })),
-    ...(canManageLocation('Unassigned') || asset.location === 'Unassigned'
-      ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }]
-      : []),
-  ];
-
   const handleReset = () => {
     setName(asset.name || '');
     setModel(asset.model || '');
     setSerialNumber(asset.serialNumber || '');
     setTotalUnits(asset.totalUnits ?? 1);
     setUnitType(asset.unitType ?? 'Units');
-    setLocation(asset.location || 'Unassigned');
     setStatus(asset.status || 'operational');
     setNextCalibration(asset.nextCalibration || '2027-06-01');
     setImageUrl(asset.imageUrl || '');
@@ -180,11 +164,6 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
 
     if (!isAllowed) {
       showToast('You do not have permission to modify assets stationed in this lab', 'error');
-      return;
-    }
-
-    if (!canManageLocation(location)) {
-      showToast(`You cannot move this asset to "${location}". Your assigned labs: ${user?.assignedLabs?.join(', ') || 'None assigned'}`, 'warning');
       return;
     }
 
@@ -207,7 +186,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
         serialNumber: serialNumber.trim().toUpperCase(),
         totalUnits: Number(totalUnits) || 1,
         unitType: unitType.trim() || 'Units',
-        location: location.trim(),
+        location: asset.location || 'Unassigned',
         status,
         nextCalibration: nextCalibration || '2027-06-01',
         imageUrl: imageUrl.trim() || undefined,
@@ -403,29 +382,6 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
                       className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2.5 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors leading-relaxed placeholder:text-neutral-400"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Location Assignment */}
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
-                  <MapPin className="w-4 h-4 text-neutral-700" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                    Location Assignment
-                  </h3>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-neutral-900">
-                    Assigned Laboratory Room
-                  </label>
-                  <Dropdown
-                    value={location}
-                    options={locationOptions}
-                    onChange={setLocation}
-                    placeholder="Select room location"
-                    buttonClassName="rounded-xl py-2"
-                  />
                 </div>
               </div>
 

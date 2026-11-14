@@ -68,7 +68,7 @@ export default function DashboardPage() {
   } = useMemo(() => {
     const mapped = locations.map((loc) => ({
       loc,
-      stats: getRoomInventoryStats(loc, stock, assets),
+      stats: getRoomInventoryStats(loc, stock, assets, locations),
     }));
     const allRoom = mapped.reduce((sum, entry) => sum + entry.stats.totalAllUnits, 0);
     const working = mapped.reduce((sum, entry) => sum + entry.stats.totalWorkingUnits, 0);
