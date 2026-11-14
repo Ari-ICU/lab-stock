@@ -9,10 +9,10 @@ export interface Asset {
   model: string;
   total_units: number;
   unit_type: string;
-  location_id?: string;
-  location_name?: string;
-  location_room?: string;
-  placement_rack?: string;
+  location_id?: string | null;
+  location_name?: string | null;
+  location_room?: string | null;
+  placement_rack?: string | null;
   status: 'operational' | 'in_use' | 'maintenance';
   loan_status: 'available' | 'on_loan';
   current_borrower?: string;
@@ -106,7 +106,7 @@ export const assetModel = {
         asset.description || null,
       ]
     );
-    return res.rows[0];
+    return (await this.findById(res.rows[0].id)) || res.rows[0];
   },
 
   async update(id: string, asset: Partial<Asset>): Promise<Asset | null> {
@@ -143,7 +143,8 @@ export const assetModel = {
     const idClause = isUuid ? `id = $${values.length}` : `UPPER(serial_number) = UPPER($${values.length})`;
     const sql = `UPDATE assets SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE ${idClause} RETURNING *`;
     const res = await query(sql, values);
-    return res.rows[0] || null;
+    if (!res.rows[0]) return null;
+    return (await this.findById(res.rows[0].id)) || res.rows[0];
   },
 
   async delete(id: string): Promise<boolean> {

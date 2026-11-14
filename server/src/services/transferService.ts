@@ -123,7 +123,7 @@ export const transferService = {
       );
       if (toLocRes.rows.length === 0) {
         toLocRes = await client.query(
-          `SELECT id, name, room FROM locations WHERE $1 ILIKE '%' || room || '%' OR $1 ILIKE '%' || name || '%' LIMIT 1`,
+          `SELECT id, name, room FROM locations WHERE $1 ILIKE '%' || room || '%' OR $1 ILIKE '%' || name || '%' ORDER BY LENGTH(room) DESC, LENGTH(name) DESC LIMIT 1`,
           [toLocationInput]
         );
       }
@@ -134,7 +134,7 @@ export const transferService = {
       let fromLocId = asset.location_id;
       if (fromLocationInput) {
         const fromLocRes = await client.query(
-          `SELECT id, name, room FROM locations WHERE id::text = $1 OR LOWER(room) = LOWER($1) OR LOWER(name) = LOWER($1) OR $1 ILIKE '%' || room || '%' LIMIT 1`,
+          `SELECT id, name, room FROM locations WHERE id::text = $1 OR LOWER(room) = LOWER($1) OR LOWER(name) = LOWER($1) OR $1 ILIKE '%' || room || '%' ORDER BY LENGTH(room) DESC, LENGTH(name) DESC LIMIT 1`,
           [fromLocationInput]
         );
         if (fromLocRes.rows.length > 0) {
@@ -151,39 +151,11 @@ export const transferService = {
       );
       const transferRow = insertTransferRes.rows[0];
 
-      // 5. Update asset location_id
-      if (toLocId) {
-        await client.query(`UPDATE assets SET location_id = $1 WHERE id = $2`, [toLocId, asset.id]);
-      }
-
-      // 6. Update room_inventory if locations exist
-      if (fromLocId && toLocId && fromLocId !== toLocId) {
-        // Reduce from origin
-        await client.query(
-          `UPDATE room_inventory
-           SET qty_working = GREATEST(0, qty_working - $1), updated_at = CURRENT_TIMESTAMP
-           WHERE room_id = $2 AND (asset_id = $3 OR LOWER(name) = LOWER($4))`,
-          [quantity, fromLocId, asset.id, asset.name]
-        );
-
-        // Add or update target
-        const existingTargetInv = await client.query(
-          `SELECT id, qty_working FROM room_inventory WHERE room_id = $1 AND (asset_id = $2 OR LOWER(name) = LOWER($3)) LIMIT 1`,
-          [toLocId, asset.id, asset.name]
-        );
-        if (existingTargetInv.rows.length > 0) {
-          await client.query(
-            `UPDATE room_inventory SET qty_working = qty_working + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
-            [quantity, existingTargetInv.rows[0].id]
-          );
-        } else {
-          await client.query(
-            `INSERT INTO room_inventory (room_id, asset_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance)
-             VALUES ($1, $2, $3, 'IT_HARDWARE', $4, $5, $6, 0, 0)`,
-            [toLocId, asset.id, asset.name, asset.model || 'Standard Specification', asset.unit_type || 'Units', quantity]
-          );
-        }
-      }
+      // 5. Update asset location_id (Classrooms derive Hardware Devices directly from assets.location_id)
+      await client.query(`UPDATE assets SET location_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [
+        toLocId,
+        asset.id,
+      ]);
 
       // Invalidate cache
       cache.invalidatePattern('transfer:');

@@ -2,6 +2,8 @@ import { stockModel, StockItem } from '../models/stockModel.js';
 import { categoryModel } from '../models/categoryModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
 import { cache } from '../utils/cache.js';
+import { resolveLocationIdFromPayload } from '../utils/locationResolver.js';
+import { query } from '../config/database.js';
 
 export const stockService = {
   /**
@@ -50,14 +52,16 @@ export const stockService = {
     const categoryName = (data.category || 'Office Stationery').trim();
     await categoryModel.ensureExists(categoryName).catch(() => {});
 
+    const { locationId } = await resolveLocationIdFromPayload(data);
+
     const created = await stockModel.create({
       code,
       name,
       category: categoryName,
       quantity,
       unit: data.unit || 'Units',
-      location_id: data.location_id || data.locationId || null,
-      rack: data.rack || data.location || null,
+      location_id: locationId,
+      rack: data.rack || null,
       status: calculatedStatus,
       min_threshold: threshold,
       expiry_date: data.expiry_date || data.expiryDate || 'Active',
@@ -65,34 +69,44 @@ export const stockService = {
       description: data.description || null,
     });
 
-    // Invalidate stock caches so all users immediately see the new item
+    // Invalidate stock and location caches so all users immediately see the new item
     cache.invalidatePattern('stock:');
+    cache.invalidatePattern('location:');
 
     return created;
   },
 
-  async update(id: string, data: Partial<StockItem>): Promise<StockItem> {
+  async update(id: string, data: Partial<StockItem> & Record<string, any>): Promise<StockItem> {
     const current = await this.getById(id);
 
     const newQuantity = data.quantity !== undefined ? data.quantity : current.quantity;
-    const newThreshold = data.min_threshold !== undefined ? data.min_threshold : (current.min_threshold || 10);
+    const rawThreshold = data.min_threshold ?? data.minThreshold;
+    const newThreshold = rawThreshold !== undefined ? Number(rawThreshold) : (current.min_threshold || 10);
     const newStatus = data.status || this.calculateStatus(newQuantity, newThreshold);
 
     if (data.category) {
       await categoryModel.ensureExists(data.category).catch(() => {});
     }
 
-    const updated = await stockModel.update(id, {
+    const { provided: hasLocationInput, locationId } = await resolveLocationIdFromPayload(data);
+    const normalizedUpdate: Partial<StockItem> = {
       ...data,
+      min_threshold: rawThreshold !== undefined ? newThreshold : data.min_threshold,
+      expiry_date: data.expiry_date ?? data.expiryDate,
+      image_url: data.image_url ?? data.imageUrl,
       status: newStatus,
-    });
+      ...(hasLocationInput ? { location_id: locationId } : {}),
+    };
+
+    const updated = await stockModel.update(id, normalizedUpdate);
 
     if (!updated) {
       throw new NotFoundException(`Inventory item ${id}`);
     }
 
-    // Invalidate stock caches
+    // Invalidate stock and location caches
     cache.invalidatePattern('stock:');
+    cache.invalidatePattern('location:');
 
     return updated;
   },
@@ -116,14 +130,17 @@ export const stockService = {
     }
 
     cache.invalidatePattern('stock:');
+    cache.invalidatePattern('location:');
     return updated;
   },
 
   async delete(id: string): Promise<boolean> {
-    await this.getById(id); // ensure exists
-    const deleted = await stockModel.delete(id);
+    const current = await this.getById(id); // ensure exists and resolve UUID
+    await query('DELETE FROM room_inventory WHERE stock_item_id = $1', [current.id]);
+    const deleted = await stockModel.delete(current.id);
     if (deleted) {
       cache.invalidatePattern('stock:');
+      cache.invalidatePattern('location:');
     }
     return deleted;
   },

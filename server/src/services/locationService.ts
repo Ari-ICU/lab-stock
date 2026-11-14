@@ -1,4 +1,6 @@
 import { locationModel, Location } from '../models/locationModel.js';
+import { stockModel } from '../models/stockModel.js';
+import { assetModel } from '../models/assetModel.js';
 import { NotFoundException, ConflictException, ValidationException } from '../exceptions/errorHandler.js';
 import { cache } from '../utils/cache.js';
 
@@ -49,10 +51,36 @@ export const locationService = {
     return deleted;
   },
 
-  // Room Inventory (Facility Matrix)
+  // Room Inventory (Facility Matrix — strictly linked to an existing Stock item or Hardware Asset)
   async addRoomInventoryItem(roomId: string, item: any): Promise<any> {
     const existing = await this.getById(roomId);
-    const created = await locationModel.addRoomInventoryItem(existing.id, item);
+
+    const stockRef = item.stockItemId || item.stock_item_id || item.stockCode;
+    const assetRef = item.assetId || item.asset_id || item.serialNumber;
+
+    let resolvedStockId: string | null = null;
+    if (stockRef && typeof stockRef === 'string') {
+      const stockRow = await stockModel.findById(stockRef);
+      if (stockRow) resolvedStockId = stockRow.id;
+    }
+
+    let resolvedAssetId: string | null = null;
+    if (assetRef && typeof assetRef === 'string') {
+      const assetRow = await assetModel.findById(assetRef);
+      if (assetRow) resolvedAssetId = assetRow.id;
+    }
+
+    if (!resolvedStockId && !resolvedAssetId) {
+      throw new ValidationException(
+        'Classroom inventory items must be linked to an existing Inventory item (/stock) or Hardware Asset (/assets).'
+      );
+    }
+
+    const created = await locationModel.addRoomInventoryItem(existing.id, {
+      ...item,
+      stockItemId: resolvedStockId,
+      assetId: resolvedAssetId,
+    });
     cache.invalidatePattern('location:');
     return created;
   },

@@ -549,7 +549,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
               <p className="hidden lg:block text-[11px] text-neutral-400 pb-2">
                 {activeTab === 'inventory'
-                  ? 'Room-level fixtures, workstations, AC & supplies audited per room'
+                  ? 'Room-level furniture, fixtures, HVAC & safety equipment audited per room'
                   : 'Individually serialized lab equipment tracked under Hardware Assets'}
               </p>
             </div>

@@ -82,7 +82,8 @@ export function getRoomItemImage(
   stock: MockItem[] = [],
   assets: MockAsset[] = []
 ): string {
-  if ((item as any).imageUrl) return (item as any).imageUrl;
+  const directImageUrl = (item as RoomInventoryItem & { imageUrl?: string }).imageUrl;
+  if (directImageUrl) return directImageUrl;
 
   const linkedStock = findLinkedStock(item, stock);
   if (linkedStock?.imageUrl) return linkedStock.imageUrl;
@@ -99,7 +100,17 @@ export function getRoomItemImage(
 
   // Chairs & Seating
   if (text.includes('chair') || text.includes('seat') || text.includes('swivel') || text.includes('stool')) {
-    return 'https://images.unsplash.com/photo-1580481077195-c228c3070490?auto=format&fit=crop&w=600&q=80';
+    return 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Server Racks & Enclosures
+  if (text.includes('server rack') || text.includes('42u') || text.includes('enclosure')) {
+    return 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80';
+  }
+
+  // Cabinets, Lockers & Storage Shelving
+  if (text.includes('cabinet') || text.includes('locker') || text.includes('storage rack') || text.includes('shelf')) {
+    return 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=600&q=80';
   }
 
   // Desks & Tables
@@ -108,7 +119,7 @@ export function getRoomItemImage(
   }
 
   // Air Conditioners & HVAC
-  if (text.includes('air') || text.includes('conditioner') || text.includes('ac') || text.includes('daikin') || text.includes('panasonic') || text.includes('hvac')) {
+  if (text.includes('air') || text.includes('conditioner') || /\bac\b/.test(text) || text.includes('daikin') || text.includes('panasonic') || text.includes('hvac')) {
     return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
   }
 
@@ -147,7 +158,7 @@ export function getRoomItemImage(
     case 'IT_HARDWARE':
       return 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80';
     case 'FURNITURE':
-      return 'https://images.unsplash.com/photo-1580481077195-c228c3070490?auto=format&fit=crop&w=600&q=80';
+      return 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80';
     case 'ELECTRICAL':
       return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
     case 'SAFETY_MISC':

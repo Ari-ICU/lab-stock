@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import { seedAllData, seedLoans, seedMaintenance, seedPurchaseRequests, seedRoomInventory } from './seedData.js';
+import { seedAllData, seedLoans, seedMaintenance, seedPurchaseRequests } from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -194,44 +194,10 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       console.log('✅ Seeded purchase requisitions into PostgreSQL.');
     }
 
-    // Ensure room facility inventory (furniture & equipment) is populated in PostgreSQL
-    const roomInvCountRes = await pool.query('SELECT COUNT(*)::int as count FROM room_inventory');
-    const roomInvCount = roomInvCountRes.rows[0]?.count || 0;
-    if (roomInvCount === 0) {
-      for (const inv of seedRoomInventory) {
-        const locRes = await query('SELECT id FROM locations WHERE code = $1', [inv.room_code]);
-        const roomId = locRes.rows[0]?.id;
-        if (roomId) {
-          await query(
-            `INSERT INTO room_inventory (room_id, name, group_type, brand_spec, unit, qty_working, qty_broken, qty_maintenance, remarks)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-            [
-              roomId,
-              inv.name,
-              inv.group_type,
-              inv.brand_spec || null,
-              inv.unit || 'pcs',
-              inv.qty_working || 0,
-              inv.qty_broken || 0,
-              inv.qty_maintenance || 0,
-              inv.remarks || null,
-            ]
-          );
-        }
-      }
-      console.log(`✅ Seeded ${seedRoomInventory.length} Room Facility Inventory Records into PostgreSQL.`);
-    }
-
-    // Ensure room_inventory items link with matching stock_items by name or SKU
-    await pool.query(`
-      UPDATE room_inventory ri
-      SET stock_item_id = s.id
-      FROM stock_items s
-      WHERE ri.stock_item_id IS NULL AND (
-        LOWER(TRIM(ri.name)) = LOWER(TRIM(s.name)) OR
-        LOWER(TRIM(ri.name)) = LOWER(TRIM(s.code))
-      )
-    `).catch(() => {});
+    // Purge any unlinked standalone room_inventory rows so classrooms strictly reflect Inventory (/stock) or Hardware Assets (/assets)
+    await pool.query(
+      'DELETE FROM room_inventory WHERE stock_item_id IS NULL AND asset_id IS NULL'
+    ).catch(() => {});
 
     // Sync existing stock_items categories + starter categories into the categories table
     const starterCategories = [

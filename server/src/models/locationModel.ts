@@ -45,6 +45,7 @@ const LOCATION_SELECT_QUERY = `
         )
         FROM room_inventory ri
         WHERE ri.room_id = l.id
+          AND (ri.stock_item_id IS NOT NULL OR ri.asset_id IS NOT NULL)
       ),
       '[]'::json
     ) AS inventories

@@ -9,10 +9,10 @@ export interface StockItem {
   category: string;
   quantity: number;
   unit: string;
-  location_id?: string;
-  location_name?: string;
-  location_room?: string;
-  rack?: string;
+  location_id?: string | null;
+  location_name?: string | null;
+  location_room?: string | null;
+  rack?: string | null;
   status: 'in_stock' | 'low_stock' | 'out_of_stock';
   min_threshold?: number;
   expiry_date?: string;
@@ -107,7 +107,7 @@ export const stockModel = {
         item.description || null,
       ]
     );
-    return res.rows[0];
+    return (await this.findById(res.rows[0].id)) || res.rows[0];
   },
 
   async update(id: string, item: Partial<StockItem>): Promise<StockItem | null> {
@@ -142,7 +142,8 @@ export const stockModel = {
     const idClause = isUuid ? `id = $${values.length}` : `UPPER(code) = UPPER($${values.length})`;
     const sql = `UPDATE stock_items SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE ${idClause} RETURNING *`;
     const res = await query(sql, values);
-    return res.rows[0] || null;
+    if (!res.rows[0]) return null;
+    return (await this.findById(res.rows[0].id)) || res.rows[0];
   },
 
   async delete(id: string): Promise<boolean> {
@@ -173,7 +174,8 @@ export const stockModel = {
       RETURNING *
     `;
     const res = await query(sql, [delta, trimmed]);
-    return res.rows[0] || null;
+    if (!res.rows[0]) return null;
+    return (await this.findById(res.rows[0].id)) || res.rows[0];
   },
 };
 
