@@ -9,6 +9,7 @@ import { useStock } from '@/context/StockContext';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { exportToCsv } from '@/lib/exportCsv';
+import { getRoomInventoryStats } from '@/lib/locationMatch';
 import {
   Package,
   Router,
@@ -58,26 +59,31 @@ export default function DashboardPage() {
   const totalHardwareUnits = useMemo(() => assets.reduce((sum, a) => sum + (a.totalUnits || 1), 0), [assets]);
   const totalStockUnits = useMemo(() => stock.reduce((sum, i) => sum + i.quantity, 0), [stock]);
   
-  const { totalRoomUnits, totalWorkingUnits, totalBrokenUnits, totalMaintenanceUnits } = useMemo(() => {
-    let working = 0;
-    let broken = 0;
-    let maint = 0;
-    locations.forEach((loc) => {
-      (loc.inventories || []).forEach((inv) => {
-        working += inv.qtyWorking || 0;
-        broken += inv.qtyBroken || 0;
-        maint += inv.qtyMaintenance || 0;
-      });
-    });
+  const {
+    perRoomStats,
+    totalRoomUnits,
+    totalWorkingUnits,
+    totalBrokenUnits,
+    totalMaintenanceUnits,
+  } = useMemo(() => {
+    const mapped = locations.map((loc) => ({
+      loc,
+      stats: getRoomInventoryStats(loc, stock, assets),
+    }));
+    const allRoom = mapped.reduce((sum, entry) => sum + entry.stats.totalAllUnits, 0);
+    const working = mapped.reduce((sum, entry) => sum + entry.stats.totalWorkingUnits, 0);
+    const broken = mapped.reduce((sum, entry) => sum + entry.stats.totalBrokenCount, 0);
+    const maint = mapped.reduce((sum, entry) => sum + entry.stats.totalMaintenanceCount, 0);
     return {
-      totalRoomUnits: working + broken + maint,
+      perRoomStats: mapped,
+      totalRoomUnits: allRoom,
       totalWorkingUnits: working,
       totalBrokenUnits: broken,
       totalMaintenanceUnits: maint,
     };
-  }, [locations]);
+  }, [locations, stock, assets]);
 
-  const totalDepartmentUnits = totalStockUnits + totalRoomUnits;
+  const totalDepartmentUnits = totalStockUnits + totalHardwareUnits;
   const operationalFleetRate = totalRoomUnits > 0 ? Math.round((totalWorkingUnits / totalRoomUnits) * 100) : 100;
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -496,12 +502,8 @@ export default function DashboardPage() {
               </div>
 
               <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {locations.map((loc) => {
-                  const invs = loc.inventories || [];
-                  const brokenCount = invs.reduce((sum, i) => sum + (i.qtyBroken || 0), 0);
-                  const maintCount = invs.reduce((sum, i) => sum + (i.qtyMaintenance || 0), 0);
-                  const workingCount = invs.reduce((sum, i) => sum + (i.qtyWorking || 0), 0);
-                  const totalCount = brokenCount + maintCount + workingCount;
+                {perRoomStats.map(({ loc, stats }) => {
+                  const totalCount = stats.totalAllUnits;
 
                   return (
                     <Link
@@ -524,10 +526,20 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
-                        {brokenCount > 0 ? (
+                        {stats.totalBrokenCount > 0 ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            {brokenCount} Broken
+                            {stats.totalBrokenCount} Broken
+                          </span>
+                        ) : stats.totalMaintenanceCount > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            {stats.totalMaintenanceCount} In Repair
+                          </span>
+                        ) : stats.lowStockCount > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            {stats.lowStockCount} Low Stock
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
@@ -539,7 +551,7 @@ export default function DashboardPage() {
 
                       <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500 font-medium">
                         <span>{loc.building} · Floor {loc.floor ?? 1}</span>
-                        <span className="font-mono text-neutral-700">{totalCount} items</span>
+                        <span className="font-mono text-neutral-700">{totalCount} units</span>
                       </div>
                     </Link>
                   );

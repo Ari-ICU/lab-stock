@@ -8,6 +8,7 @@ import { useStock } from '@/context/StockContext';
 import { useAuth } from '@/context/AuthContext';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { findMatchingRoom } from '@/lib/locationMatch';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -75,16 +76,11 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       lastAuditedAt?: string;
     }> = [];
 
-    const assetNameLower = asset.name.toLowerCase();
-
     locations.forEach((loc) => {
       (loc.inventories || []).forEach((inv) => {
-        const invNameLower = inv.name.toLowerCase();
-        const isMatch =
-          (inv.assetId && (inv.assetId === asset.id || inv.assetId === asset.serialNumber)) ||
-          invNameLower === assetNameLower ||
-          assetNameLower.includes(invNameLower) ||
-          invNameLower.includes(assetNameLower);
+        const isMatch = Boolean(
+          inv.assetId && (inv.assetId === asset.id || inv.assetId === asset.serialNumber)
+        );
 
         if (isMatch) {
           const total = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
@@ -108,16 +104,8 @@ export default function AssetDetailsClient({ id: propId }: { id?: string }) {
       });
     });
 
-    // Also check if the asset has a primary assigned location that didn't match via inventories item
-    const matchedLocation = locations.find((l) => {
-      const locKey = l.room.toLowerCase().replace(/^(rm|room)\s*/i, '').trim();
-      const assetLocLower = asset.location.toLowerCase();
-      return (
-        assetLocLower.includes(locKey) ||
-        assetLocLower.includes(l.room.toLowerCase()) ||
-        assetLocLower.includes(l.name.toLowerCase())
-      );
-    });
+    // Check primary assigned classroom via exact word-boundary room matching
+    const matchedLocation = findMatchingRoom(asset.location, locations);
 
     // If no inventory item explicitly matched but the asset is placed in a room
     if (list.length === 0 && matchedLocation) {

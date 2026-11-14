@@ -22,9 +22,64 @@ import {
   Boxes,
   Microscope,
 } from 'lucide-react';
-import {  AssetGroup } from '@/types';
+import { AssetGroup, MockItem, RoomInventoryItem } from '@/types';
 import { getRoomItemImage } from './items/shared';
+import { getRoomInventoryStats } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
+
+type RoomInventoryRow =
+  | {
+      id: string;
+      source: 'stock';
+      stockItem: MockItem;
+      name: string;
+      group: AssetGroup;
+      categoryLabel: string;
+      brandSpec: string;
+      unit: string;
+      total: number;
+      qtyWorking: number;
+      qtyMaintenance: number;
+      qtyBroken: number;
+      remarks?: string;
+      codeBadge?: string;
+      imageUrl?: string;
+      href: string;
+      editHref: string;
+    }
+  | {
+      id: string;
+      source: 'allocation';
+      allocation: RoomInventoryItem;
+      name: string;
+      group: AssetGroup;
+      categoryLabel: string;
+      brandSpec: string;
+      unit: string;
+      total: number;
+      qtyWorking: number;
+      qtyMaintenance: number;
+      qtyBroken: number;
+      remarks?: string;
+      codeBadge?: string;
+      imageUrl?: string;
+      href: string;
+      editHref: string;
+    };
+
+function inferStockGroup(category: string, name: string): AssetGroup {
+  const text = `${category} ${name}`.toLowerCase();
+  if (/(chair|table|desk|cabinet|fixture|bench|whiteboard|seating|locker|furniture)/.test(text)) {
+    return 'FURNITURE';
+  }
+  if (/(electrical|hvac|light|socket|power|cable|cord|surge|battery|ups|adapter)/.test(text)) {
+    return 'ELECTRICAL';
+  }
+  if (/(safety|fire|extinguisher|misc|first aid|stationery|toner|ink|paper)/.test(text)) {
+    return 'SAFETY_MISC';
+  }
+  return 'IT_HARDWARE';
+}
 
 const ASSET_STATUS_META: Record<
   'operational' | 'in_use' | 'maintenance',
@@ -149,39 +204,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
   const isAllowed = isAdmin || (loc ? canManageLocation(loc.room) || canManageLocation(loc.name) : false);
 
-  // Match hardware assets belonging to this lab location using word-boundary room matching
-  const { matchingAssets, matchedHardwareUnits } = useMemo(() => {
-    if (!loc) {
-      return {
-        matchingAssets: [],
-        matchedHardwareUnits: 0,
-      };
-    }
+  const roomStats = useMemo(() => {
+    if (!loc) return null;
+    return getRoomInventoryStats(loc, stock, assets);
+  }, [loc, stock, assets]);
 
-    const roomKey = loc.room.replace(/^(rm|room)\s*/i, '').trim().toLowerCase();
-    const escapedRoomKey = roomKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const roomRegex = escapedRoomKey ? new RegExp(`\\b${escapedRoomKey}\\b`, 'i') : null;
-    const roomLower = loc.room.trim().toLowerCase();
-    const escapedRoomLower = roomLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const fullRoomRegex = escapedRoomLower ? new RegExp(`\\b${escapedRoomLower}\\b`, 'i') : null;
-    const nameLower = loc.name.trim().toLowerCase();
-
-    const mAssets = assets.filter((a) => {
-      const l = a.location.trim().toLowerCase();
-      return (
-        (roomRegex ? roomRegex.test(l) : false) ||
-        (fullRoomRegex ? fullRoomRegex.test(l) : false) ||
-        (nameLower ? l.includes(nameLower) : false)
-      );
-    });
-
-    const hUnits = mAssets.reduce((sum, a) => sum + (a.totalUnits ?? 1), 0);
-
-    return {
-      matchingAssets: mAssets,
-      matchedHardwareUnits: hUnits,
-    };
-  }, [loc, assets]);
+  const matchingAssets = useMemo(() => roomStats?.matchingAssets ?? [], [roomStats]);
+  const matchedHardwareUnits = roomStats?.totalHardwareUnits ?? 0;
 
   const filteredHardwareAssets = useMemo(() => {
     const q = filterText.trim().toLowerCase();
@@ -201,16 +230,65 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     });
   }, [matchingAssets, filterText, selectedAssetStatus]);
 
+  // Unified room inventory strictly from confirmed /stock items in this room + valid linked allocations
+  const roomInventoryRows = useMemo<RoomInventoryRow[]>(() => {
+    if (!loc || !roomStats) return [];
+
+    const directStockRows: RoomInventoryRow[] = roomStats.matchingStock.map((s) => {
+      const group = inferStockGroup(s.category, s.name);
+      return {
+        id: `stock-${s.id}`,
+        source: 'stock',
+        stockItem: s,
+        name: s.name,
+        group,
+        categoryLabel: s.category || getCategoryLabel(group),
+        brandSpec: s.description || s.rack || 'Standard Specification',
+        unit: s.unit || 'Units',
+        total: s.quantity,
+        qtyWorking: s.status === 'out_of_stock' ? 0 : s.quantity,
+        qtyMaintenance: 0,
+        qtyBroken: 0,
+        remarks: s.rack ? `Storage: ${s.rack}` : undefined,
+        codeBadge: s.code,
+        imageUrl: s.imageUrl,
+        href: `/stock/${s.id}`,
+        editHref: `/stock/${s.id}/edit`,
+      };
+    });
+
+    const allocatedRows: RoomInventoryRow[] = roomStats.linkedExtraInvs.map((inv) => ({
+      id: inv.id,
+      source: 'allocation',
+      allocation: inv,
+      name: inv.name,
+      group: inv.group,
+      categoryLabel: getCategoryLabel(inv.group),
+      brandSpec: inv.brandSpec || 'Standard Specification',
+      unit: inv.unit || 'pcs',
+      total: (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0),
+      qtyWorking: inv.qtyWorking || 0,
+      qtyMaintenance: inv.qtyMaintenance || 0,
+      qtyBroken: inv.qtyBroken || 0,
+      remarks: inv.remarks,
+      imageUrl: getRoomItemImage(inv, stock, assets),
+      href: `/locations/${loc.id}/items/view?item=${inv.id}`,
+      editHref: `/locations/${loc.id}/items/edit?item=${inv.id}`,
+    }));
+
+    return [...directStockRows, ...allocatedRows];
+  }, [loc, roomStats, stock, assets]);
+
   // Filtered room inventories based on search, category and condition
   const filteredRoomInventories = useMemo(() => {
-    if (!loc || !loc.inventories) return [];
     const q = filterText.toLowerCase().trim();
-    return loc.inventories.filter((item) => {
+    return roomInventoryRows.filter((item) => {
       const matchesSearch =
         !q ||
         item.name.toLowerCase().includes(q) ||
-        item.brandSpec?.toLowerCase().includes(q) ||
-        item.group.toLowerCase().includes(q) ||
+        item.brandSpec.toLowerCase().includes(q) ||
+        item.categoryLabel.toLowerCase().includes(q) ||
+        (item.codeBadge && item.codeBadge.toLowerCase().includes(q)) ||
         item.remarks?.toLowerCase().includes(q);
 
       const matchesCategory =
@@ -220,31 +298,28 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
         selectedCondition === 'all'
           ? true
           : selectedCondition === 'operational'
-            ? item.qtyBroken === 0 && (item.qtyMaintenance || 0) === 0
+            ? item.qtyBroken === 0 &&
+              item.qtyMaintenance === 0 &&
+              (item.source !== 'stock' || item.stockItem.status === 'in_stock')
             : selectedCondition === 'maintenance'
-              ? (item.qtyMaintenance || 0) > 0
-              : item.qtyBroken > 0;
+              ? item.qtyMaintenance > 0 ||
+                (item.source === 'stock' && item.stockItem.status === 'low_stock')
+              : item.qtyBroken > 0 ||
+                (item.source === 'stock' && item.stockItem.status === 'out_of_stock');
 
       return matchesSearch && matchesCategory && matchesCondition;
     });
-  }, [loc, filterText, selectedCategory, selectedCondition]);
+  }, [roomInventoryRows, filterText, selectedCategory, selectedCondition]);
 
   const inventorySummary = useMemo(() => {
-    const invs = loc?.inventories || [];
-    const totalWorking = invs.reduce((sum, i) => sum + (i.qtyWorking || 0), 0);
-    const totalBroken = invs.reduce((sum, i) => sum + (i.qtyBroken || 0), 0);
-    const totalMaintenance = invs.reduce((sum, i) => sum + (i.qtyMaintenance || 0), 0);
-    const totalUnits = totalWorking + totalBroken + totalMaintenance;
-    const healthRate = totalUnits > 0 ? Math.round((totalWorking / totalUnits) * 100) : 100;
-
     return {
-      totalWorking,
-      totalBroken,
-      totalMaintenance,
-      totalUnits,
-      healthRate,
+      totalWorking: roomStats?.totalWorkingUnits ?? 0,
+      totalBroken: roomStats?.totalBrokenCount ?? 0,
+      totalMaintenance: roomStats?.totalMaintenanceCount ?? 0,
+      totalUnits: roomStats?.totalStockUnits ?? 0,
+      healthRate: roomStats?.healthRate ?? 100,
     };
-  }, [loc]);
+  }, [roomStats]);
 
 
   const copyToClipboard = (text: string, label: string, key: string) => {
@@ -309,19 +384,20 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
   }
 
   const handleExportRoomFleet = () => {
-    const facilityRows = (loc.inventories || []).map((inv) => ({
-      'Record Type': 'Room Facility Inventory',
+    const facilityRows = roomInventoryRows.map((row) => ({
+      'Record Type': row.source === 'stock' ? 'Central Inventory' : 'Allocated Room Stock',
       'Room Number': loc.room,
       'Facility Name': loc.name,
-      'Category Group': inv.group,
-      'Item Name': inv.name,
-      'Brand / Specification': inv.brandSpec || 'Standard',
-      'Working Units': inv.qtyWorking,
-      'Broken Units': inv.qtyBroken,
-      'In Repair Units': inv.qtyMaintenance,
-      Unit: inv.unit,
-      'Defect Notes & Remarks': inv.remarks || '',
-      'Last Audited Date': inv.lastAuditedAt || '',
+      'Category Group': row.categoryLabel,
+      'Item Name': row.name,
+      'Brand / Specification': row.brandSpec || 'Standard',
+      'Working Units': row.qtyWorking,
+      'Broken Units': row.qtyBroken,
+      'In Repair Units': row.qtyMaintenance,
+      Unit: row.unit,
+      'Defect Notes & Remarks': row.remarks || '',
+      'Last Audited Date':
+        row.source === 'allocation' ? row.allocation.lastAuditedAt || '' : row.stockItem.expiryDate || '',
     }));
 
     const hardwareRows = matchingAssets.map((a) => ({
@@ -514,7 +590,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                         : 'bg-neutral-200/80 text-neutral-600'
                     }`}
                   >
-                    {loc.inventories?.length ?? 0}
+                    {roomInventoryRows.length}
                   </span>
                   <span className="hidden sm:inline text-[11px] font-normal text-neutral-400">
                     · {inventorySummary.totalUnits} {inventorySummary.totalUnits === 1 ? 'unit' : 'units'}
@@ -549,7 +625,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
               <p className="hidden lg:block text-[11px] text-neutral-400 pb-2">
                 {activeTab === 'inventory'
-                  ? 'Room-level furniture, fixtures, HVAC & safety equipment audited per room'
+                  ? 'Confirmed inventory items (/stock) stationed or allocated in this classroom'
                   : 'Individually serialized lab equipment tracked under Hardware Assets'}
               </p>
             </div>
@@ -642,13 +718,47 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
             {activeTab === 'inventory' ? (
             <div className="overflow-x-auto rounded-b-2xl">
+              {roomInventoryRows.length === 0 ? (
+                <div className="px-6 py-14 text-center">
+                  <div className="w-11 h-11 rounded-2xl bg-neutral-100 border border-neutral-200/80 flex items-center justify-center mx-auto mb-3">
+                    <Boxes className="w-5 h-5 text-neutral-400" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-neutral-900">
+                    No inventory items assigned to {loc.room}
+                  </h3>
+                  <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1 leading-relaxed">
+                    Items from Inventory (/stock) only appear in {loc.room} when their location is set or allocated to this classroom.
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                    {matchingAssets.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleTabChange('hardware')}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
+                      >
+                        <Microscope className="w-3.5 h-3.5 text-blue-600" />
+                        <span>View Hardware Devices ({matchingAssets.length})</span>
+                      </button>
+                    )}
+                    {isAllowed && (
+                      <Link
+                        href={`/locations/${loc.id}/items/new`}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Allocate from Central Stock</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ) : (
               <table className="w-full text-left text-xs min-w-[900px]">
                 <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-semibold">
                   <tr>
                     <th className="py-3 px-3 w-14 text-center whitespace-nowrap">Visual</th>
-                    <th className="py-3 px-4 min-w-[220px]">Item & Equipment Name</th>
-                    <th className="py-3 px-4 w-36 whitespace-nowrap">Category</th>
-                    <th className="py-3 px-4 min-w-[180px]">Specification / Model</th>
+                    <th className="py-3 px-4 min-w-[220px]">Item &amp; Equipment Name</th>
+                    <th className="py-3 px-4 w-40 whitespace-nowrap">Category</th>
+                    <th className="py-3 px-4 min-w-[180px]">Specification / Storage</th>
                     <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Total</th>
                     <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Working</th>
                     <th className="py-3 px-3 w-20 text-center whitespace-nowrap">Repair</th>
@@ -660,41 +770,23 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   {filteredRoomInventories.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="py-8 text-center text-neutral-500">
-                        No facility or equipment records found matching your filter criteria.
+                        No inventory items found matching your filter criteria.
                       </td>
                     </tr>
                   ) : (
                     filteredRoomInventories.map((item) => {
-                      const total = item.qtyWorking + item.qtyBroken + (item.qtyMaintenance || 0);
-
-                      const linkedStock = stock.find(
-                        (s) =>
-                          (item.stockItemId && (s.id === item.stockItemId || s.code === item.stockItemId)) ||
-                          s.name.toLowerCase() === item.name.toLowerCase() ||
-                          item.name.toLowerCase().includes(s.name.toLowerCase()) ||
-                          s.name.toLowerCase().includes(item.name.toLowerCase())
-                      );
-                      const linkedAsset = assets.find(
-                        (a) =>
-                          (item.assetId && (a.id === item.assetId || a.serialNumber === item.assetId)) ||
-                          a.name.toLowerCase() === item.name.toLowerCase() ||
-                          item.name.toLowerCase().includes(a.name.toLowerCase()) ||
-                          a.name.toLowerCase().includes(item.name.toLowerCase())
-                      );
-                      const itemThumbnail = getRoomItemImage(item, stock, assets);
-
                       return (
                         <tr key={item.id} className="hover:bg-neutral-50/70 transition-colors group">
-                          {/* Visual Product Thumbnail matching /stock & /assets */}
+                          {/* Visual Product Thumbnail */}
                           <td className="py-2.5 px-3 text-center">
                             <Link
-                              href={`/locations/${loc.id}/items/view?item=${item.id}`}
+                              href={item.href}
                               className="w-10 h-10 rounded-lg border border-neutral-200 bg-neutral-100 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs mx-auto hover:opacity-85 transition-opacity block"
-                              title="View equipment details"
+                              title="View item details"
                             >
-                              {itemThumbnail ? (
+                              {item.imageUrl ? (
                                 <LabThumbnail
-                                  src={itemThumbnail}
+                                  src={item.imageUrl}
                                   alt={item.name}
                                   size="thumb"
                                   fallbackType="item"
@@ -712,15 +804,31 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <Link
-                                href={`/locations/${loc.id}/items/view?item=${item.id}`}
+                                href={item.href}
                                 className="font-semibold text-neutral-900 hover:text-emerald-700 text-left cursor-pointer transition-colors"
-                                title="Click to view full equipment details"
+                                title="Click to view full details"
                               >
                                 {item.name}
                               </Link>
                               <span className="text-[10px] font-mono font-medium uppercase bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded border border-neutral-200/70">
                                 {item.unit}
                               </span>
+                              {item.codeBadge && (
+                                <span className="text-[10px] font-mono font-medium bg-neutral-50 text-neutral-500 px-1.5 py-0.5 rounded border border-neutral-200/60">
+                                  {item.codeBadge}
+                                </span>
+                              )}
+                              {item.source === 'stock' && item.stockItem.status !== 'in_stock' && (
+                                <span
+                                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
+                                    item.stockItem.status === 'out_of_stock'
+                                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                                  }`}
+                                >
+                                  {item.stockItem.status === 'out_of_stock' ? 'Out of Stock' : 'Low Stock'}
+                                </span>
+                              )}
                             </div>
 
                             {item.remarks && (
@@ -733,7 +841,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                           {/* Category */}
                           <td className="py-3 px-4">
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200/60 whitespace-nowrap">
-                              {getCategoryLabel(item.group)}
+                              {item.categoryLabel}
                             </span>
                           </td>
 
@@ -744,7 +852,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                           {/* Total Count */}
                           <td className="py-3 px-3 text-center font-mono font-semibold text-neutral-700">
-                            {total}
+                            {item.total}
                           </td>
 
                           {/* Working */}
@@ -754,7 +862,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
 
                           {/* Maintenance */}
                           <td className="py-3 px-3 text-center font-mono font-bold">
-                            {(item.qtyMaintenance || 0) > 0 ? (
+                            {item.qtyMaintenance > 0 ? (
                               <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 {item.qtyMaintenance}
                               </span>
@@ -774,12 +882,19 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                             )}
                           </td>
 
-                          {/* Actions (Three-Dots Menu: View Details & Edit dedicated webpages) */}
+                          {/* Actions */}
                           <td className="py-3 px-4 text-right">
                             <RowActionMenu
-                              onViewDetails={() => router.push(`/locations/${loc.id}/items/view?item=${item.id}`)}
-                              onEdit={isAllowed ? () => router.push(`/locations/${loc.id}/items/edit?item=${item.id}`) : undefined}
-                              onDelete={isAdmin ? () => deleteRoomInventoryItem(loc.id, item.id) : undefined}
+                              onViewDetails={() => router.push(item.href)}
+                              onEdit={isAllowed ? () => router.push(item.editHref) : undefined}
+                              onDelete={
+                                isAdmin
+                                  ? () =>
+                                      item.source === 'stock'
+                                        ? deleteStockItem(item.stockItem.id)
+                                        : deleteRoomInventoryItem(loc.id, item.allocation.id)
+                                  : undefined
+                              }
                             />
                           </td>
                         </tr>
@@ -788,6 +903,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                   )}
                 </tbody>
               </table>
+              )}
             </div>
             ) : (
             <div className="overflow-x-auto rounded-b-2xl">
@@ -809,7 +925,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
                     >
                       <Boxes className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>View Room Inventory ({loc.inventories?.length ?? 0})</span>
+                      <span>View Room Inventory ({roomInventoryRows.length})</span>
                     </button>
                     {isAllowed && (
                       <Link

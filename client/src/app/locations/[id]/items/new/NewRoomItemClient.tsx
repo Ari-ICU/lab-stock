@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { AssetGroup } from '@/types';
 import { Boxes, Microscope, PenLine, Plus, Layers, ClipboardList, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { categoryGroupOptions, findLocation } from '../shared';
+import { doesLocationMatchRoom } from '@/lib/locationMatch';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
 
@@ -17,7 +18,7 @@ type Source = 'stock' | 'asset' | 'custom';
 
 export default function NewRoomItemClient({ id }: { id: string }) {
   const router = useRouter();
-  const { locations, stock, assets, addRoomInventoryItem, addStockItem, updateStockQuantity, showToast, isLoading } = useStock();
+  const { locations, stock, assets, addRoomInventoryItem, addStockItem, updateStockQuantity, transferAsset, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const loc = findLocation(locations, id);
@@ -125,21 +126,43 @@ export default function NewRoomItemClient({ id }: { id: string }) {
 
     setSubmitting(true);
 
-    let linkedStockId: string | undefined = undefined;
+    if (source === 'asset' && selectedAsset) {
+      transferAsset(
+        selectedAsset.id,
+        `${loc.name} (${loc.room})`,
+        remarks.trim() || `Assigned to ${loc.room}`,
+        user?.name || 'Admin'
+      );
+      showToast(`Assigned ${selectedAsset.name} to ${loc.room}`, 'success');
+      setTimeout(() => router.push(`/locations/${loc.id}?tab=hardware`), 200);
+      return;
+    }
 
-    if (source === 'stock') {
-      linkedStockId = selectedStock?.id;
-    } else if (source === 'custom') {
-      // Find if an item with the same name already exists in Central Stock
+    if (source === 'custom') {
       const existingStock = stock.find(
         (s) => s.name.trim().toLowerCase() === name.trim().toLowerCase()
       );
 
       if (existingStock) {
-        linkedStockId = existingStock.id;
-        updateStockQuantity(existingStock.id, -totalAllocated);
+        if (doesLocationMatchRoom(existingStock.location, loc)) {
+          updateStockQuantity(existingStock.id, totalAllocated);
+          showToast(`Increased "${existingStock.name}" stock in ${loc.room} (+${totalAllocated})`, 'success');
+        } else {
+          addRoomInventoryItem(loc.id, {
+            stockItemId: existingStock.id,
+            name: existingStock.name,
+            group,
+            brandSpec: brandSpec.trim() || existingStock.description || undefined,
+            unit: unit.trim() || existingStock.unit || 'pcs',
+            qtyWorking: Number(qtyWorking) || 0,
+            qtyBroken: Number(qtyBroken) || 0,
+            qtyMaintenance: 0,
+            remarks: remarks.trim() || undefined,
+          });
+          updateStockQuantity(existingStock.id, -totalAllocated);
+          showToast(`Allocated ${totalAllocated} ${unit} of "${existingStock.name}" to ${loc.room}`, 'success');
+        }
       } else {
-        // Automatically register new item in Central Stock (/stock)
         const prefix =
           group === 'FURNITURE'
             ? 'FURN'
@@ -161,7 +184,7 @@ export default function NewRoomItemClient({ id }: { id: string }) {
             ? 'Lab & IT Hardware'
             : 'Safety & Miscellaneous';
 
-        const createdStock = addStockItem({
+        addStockItem({
           name: name.trim(),
           code: generatedCode,
           category: categoryLabel,
@@ -170,33 +193,36 @@ export default function NewRoomItemClient({ id }: { id: string }) {
           location: `${loc.name} (${loc.room})`,
           rack: `Room ${loc.room.replace(/^(rm|room)\s*/i, '')} Storage`,
           expiryDate: 'Active',
-          description: brandSpec.trim() || remarks.trim() || `Allocated in ${loc.name} (${loc.room})`,
+          description: brandSpec.trim() || remarks.trim() || `Assigned in ${loc.name} (${loc.room})`,
         });
-
-        linkedStockId = createdStock.id;
+        showToast(`Added "${name}" to ${loc.room} and registered in Central Stock`, 'success');
       }
+
+      setTimeout(() => router.push(backHref), 200);
+      return;
     }
 
-    addRoomInventoryItem(loc.id, {
-      stockItemId: linkedStockId,
-      assetId: source === 'asset' ? selectedAsset?.id : undefined,
-      name: name.trim(),
-      group,
-      brandSpec: brandSpec.trim() || undefined,
-      unit: unit.trim() || 'pcs',
-      qtyWorking: Number(qtyWorking) || 0,
-      qtyBroken: Number(qtyBroken) || 0,
-      qtyMaintenance: 0,
-      remarks: remarks.trim() || undefined,
-    });
-
     if (source === 'stock' && selectedStock) {
+      if (doesLocationMatchRoom(selectedStock.location, loc)) {
+        showToast(`"${selectedStock.name}" is already stored directly in ${loc.room}.`, 'info');
+        setSubmitting(false);
+        return;
+      }
+
+      addRoomInventoryItem(loc.id, {
+        stockItemId: selectedStock.id,
+        name: name.trim(),
+        group,
+        brandSpec: brandSpec.trim() || undefined,
+        unit: unit.trim() || 'pcs',
+        qtyWorking: Number(qtyWorking) || 0,
+        qtyBroken: Number(qtyBroken) || 0,
+        qtyMaintenance: 0,
+        remarks: remarks.trim() || undefined,
+      });
+
       updateStockQuantity(selectedStock.id, -totalAllocated);
       showToast(`Allocated ${totalAllocated} ${unit} of "${name}" from Central Stock to ${loc.room}`, 'success');
-    } else if (source === 'custom') {
-      showToast(`Added "${name}" to ${loc.room} and registered in Central Stock`, 'success');
-    } else {
-      showToast(`Added "${name}" to ${loc.room}`, 'success');
     }
 
     setTimeout(() => router.push(backHref), 200);

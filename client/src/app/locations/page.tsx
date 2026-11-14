@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { RowActionMenu } from '@/components/RowActionMenu';
 import { RoomInventoryItem } from '@/types';
+import { getRoomInventoryStats } from '@/lib/locationMatch';
 
 export default function LocationsPage() {
   const router = useRouter();
@@ -44,76 +45,29 @@ export default function LocationsPage() {
     (l) => canManageLocation(l.room) || canManageLocation(l.name)
   ).length;
 
-  // Compute room statistics and condition health
+  // Compute room statistics strictly from confirmed Inventory (/stock) and Hardware Assets (/assets)
   const enhancedLocations = useMemo(() => {
     return locations.map((loc) => {
-      const roomKey = loc.room.replace(/^(Rm|Room)\s*/i, '').trim().toLowerCase();
-      const roomRegex = roomKey ? new RegExp(`\\b${roomKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') : null;
-      const matchesRoom = (text: string) => {
-        const lower = text.toLowerCase();
-        return (
-          (roomRegex ? roomRegex.test(lower) : false) ||
-          lower.includes(loc.name.toLowerCase())
-        );
-      };
-
-      // Facility Inventory Condition Aggregates
-      const invs = loc.inventories || [];
-      const totalBrokenCount = invs.reduce((sum, item) => sum + (item.qtyBroken || 0), 0);
-      const totalMaintenanceCount = invs.reduce((sum, item) => sum + (item.qtyMaintenance || 0), 0);
-      const totalWorkingCount = invs.reduce((sum, item) => sum + (item.qtyWorking || 0), 0);
-      const invTotalUnits = totalWorkingCount + totalBrokenCount + totalMaintenanceCount;
-
-      const matchingStock = stock.filter((s) => matchesRoom(s.location));
-      const stockItemsCount = invs.length > 0 ? invs.length : matchingStock.length > 0 ? matchingStock.length : loc.totalItems;
-      const totalStockUnits = invTotalUnits > 0 ? invTotalUnits : matchingStock.reduce((acc, s) => acc + (s.quantity || 1), 0);
-
-      const matchingAssets = assets.filter((a) => matchesRoom(a.location));
-      const hardwareAssetsCount = matchingAssets.length > 0 ? matchingAssets.length : loc.totalAssets;
-      const totalHardwareUnits = matchingAssets.reduce(
-        (acc, a) => acc + (a.totalUnits ?? 1),
-        0
-      );
-
-      const hasCriticalBroken = invs.some(
-        (item) =>
-          item.qtyBroken > 0 &&
-          (item.name.toLowerCase().includes('air conditioner') ||
-            item.name.toLowerCase().includes('projector'))
-      );
-
-      let healthStatus: 'good' | 'warning' | 'critical' = 'good';
-      if (hasCriticalBroken || totalBrokenCount >= 4) {
-        healthStatus = 'critical';
-      } else if (totalBrokenCount > 0 || totalMaintenanceCount > 0) {
-        healthStatus = 'warning';
-      }
-
-      // Quick matrix snippets
-      const chairItem = invs.find((i) => i.name.toLowerCase().includes('chair') || i.name.toLowerCase().includes('stool'));
-      const tableItem = invs.find((i) => i.name.toLowerCase().includes('desk') || i.name.toLowerCase().includes('table') || i.name.toLowerCase().includes('bench'));
-      const acItem = invs.find((i) => i.name.toLowerCase().includes('air conditioner'));
-      const pcItem = invs.find((i) => i.name.toLowerCase().includes('desktop') || i.name.toLowerCase().includes('pc'));
+      const stats = getRoomInventoryStats(loc, stock, assets);
 
       return {
         ...loc,
-        stockItemsCount,
-        totalStockUnits: totalStockUnits > 0 ? totalStockUnits : loc.totalItems,
-        hardwareAssetsCount,
-        totalHardwareUnits: totalHardwareUnits > 0 ? totalHardwareUnits : loc.totalAssets,
-        totalBrokenCount,
-        totalMaintenanceCount,
-        totalWorkingCount,
-        healthStatus,
-        chairItem,
-        tableItem,
-        acItem,
-        pcItem,
+        stockItemsCount: stats.stockItemsCount,
+        totalStockUnits: stats.totalStockUnits,
+        hardwareAssetsCount: stats.hardwareAssetsCount,
+        totalHardwareUnits: stats.totalHardwareUnits,
+        totalBrokenCount: stats.totalBrokenCount,
+        totalMaintenanceCount: stats.totalMaintenanceCount,
+        lowStockCount: stats.lowStockCount,
+        totalWorkingCount: stats.totalWorkingUnits,
+        healthStatus: stats.healthStatus,
+        linkedExtraInvs: stats.linkedExtraInvs,
+        matchingAssets: stats.matchingAssets,
       };
     });
   }, [locations, stock, assets]);
 
-  // Department-wide broken & maintenance report
+  // Department-wide broken & maintenance report across confirmed hardware & allocated stock
   const departmentBrokenItems = useMemo(() => {
     const list: Array<{
       roomId: string;
@@ -122,8 +76,8 @@ export default function LocationsPage() {
       item: RoomInventoryItem;
     }> = [];
 
-    locations.forEach((loc) => {
-      (loc.inventories || []).forEach((inv) => {
+    enhancedLocations.forEach((loc) => {
+      loc.linkedExtraInvs.forEach((inv) => {
         if (inv.qtyBroken > 0 || inv.qtyMaintenance > 0) {
           list.push({
             roomId: loc.id,
@@ -133,10 +87,34 @@ export default function LocationsPage() {
           });
         }
       });
+
+      loc.matchingAssets
+        .filter((a) => a.status === 'maintenance')
+        .forEach((asset) => {
+          list.push({
+            roomId: loc.id,
+            roomName: loc.name,
+            roomCode: loc.room,
+            item: {
+              id: asset.id,
+              roomId: loc.id,
+              assetId: asset.id,
+              name: asset.name,
+              group: 'IT_HARDWARE',
+              brandSpec: asset.model || 'Standard Hardware',
+              unit: asset.unitType || 'Units',
+              qtyWorking: 0,
+              qtyBroken: 0,
+              qtyMaintenance: asset.totalUnits ?? 1,
+              remarks: asset.description || `Serial: ${asset.serialNumber}`,
+              lastAuditedAt: asset.nextCalibration,
+            },
+          });
+        });
     });
 
     return list;
-  }, [locations]);
+  }, [enhancedLocations]);
 
   // Overall Department KPIs
   const departmentStats = useMemo(() => {
@@ -144,8 +122,8 @@ export default function LocationsPage() {
     const goodRooms = enhancedLocations.filter((l) => l.healthStatus === 'good').length;
     const warningRooms = enhancedLocations.filter((l) => l.healthStatus === 'warning').length;
     const criticalRooms = enhancedLocations.filter((l) => l.healthStatus === 'critical').length;
-    const totalBrokenUnits = departmentBrokenItems.reduce((sum, d) => sum + d.item.qtyBroken, 0);
-    const totalMaintUnits = departmentBrokenItems.reduce((sum, d) => sum + d.item.qtyMaintenance, 0);
+    const totalBrokenUnits = enhancedLocations.reduce((sum, l) => sum + l.totalBrokenCount, 0);
+    const totalMaintUnits = enhancedLocations.reduce((sum, l) => sum + l.totalMaintenanceCount, 0);
 
     return {
       totalRooms: locations.length,
@@ -156,7 +134,7 @@ export default function LocationsPage() {
       totalBrokenUnits,
       totalMaintUnits,
     };
-  }, [locations, enhancedLocations, departmentBrokenItems]);
+  }, [locations, enhancedLocations]);
 
   const filtered = enhancedLocations
     .filter((loc) => {
@@ -261,9 +239,15 @@ export default function LocationsPage() {
             { label: 'Seats', value: departmentStats.totalCapacity },
             { label: 'Devices', value: totalHardwareDevicesCount, tone: 'emerald' },
             {
-              label: 'Broken',
-              value: departmentStats.totalBrokenUnits,
-              tone: departmentStats.totalBrokenUnits > 0 ? 'amber' : 'default',
+              label: departmentStats.totalBrokenUnits > 0 ? 'Broken' : 'In Repair',
+              value:
+                departmentStats.totalBrokenUnits > 0
+                  ? departmentStats.totalBrokenUnits
+                  : departmentStats.totalMaintUnits,
+              tone:
+                departmentStats.totalBrokenUnits > 0 || departmentStats.totalMaintUnits > 0
+                  ? 'amber'
+                  : 'default',
             },
           ]}
         />
@@ -482,6 +466,20 @@ export default function LocationsPage() {
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                       <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                       {loc.totalBrokenCount} Broken
+                    </span>
+                  </div>
+                ) : loc.totalMaintenanceCount > 0 ? (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      {loc.totalMaintenanceCount} In Repair
+                    </span>
+                  </div>
+                ) : loc.lowStockCount > 0 ? (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      {loc.lowStockCount} Low Stock
                     </span>
                   </div>
                 ) : (

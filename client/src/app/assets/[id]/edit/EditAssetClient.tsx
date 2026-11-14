@@ -44,7 +44,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
   const [serialNumber, setSerialNumber] = useState('');
   const [totalUnits, setTotalUnits] = useState(1);
   const [unitType, setUnitType] = useState('Units');
-  const [location, setLocation] = useState('Computer Lab Room 102B');
+  const [location, setLocation] = useState('Unassigned');
   const [status, setStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [nextCalibration, setNextCalibration] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -60,7 +60,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
       setSerialNumber(asset.serialNumber || '');
       setTotalUnits(asset.totalUnits ?? 1);
       setUnitType(asset.unitType ?? 'Units');
-      setLocation(asset.location || 'Computer Lab Room 102B');
+      setLocation(asset.location || 'Unassigned');
       setStatus(asset.status || 'operational');
       setNextCalibration(asset.nextCalibration || '2027-06-01');
       setImageUrl(asset.imageUrl || '');
@@ -150,10 +150,15 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
 
   // Only allow selecting locations the user is authorized to manage (unless administrator)
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
-  const locationOptions = (managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-    label: `${loc.name} (${loc.room})`,
-    value: `${loc.name} (${loc.room})`,
-  }));
+  const locationOptions = [
+    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: `${loc.name} (${loc.room})`,
+    })),
+    ...(canManageLocation('Unassigned') || asset.location === 'Unassigned'
+      ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }]
+      : []),
+  ];
 
   const handleReset = () => {
     setName(asset.name || '');
@@ -161,7 +166,7 @@ export default function EditAssetClient({ id: propId }: { id?: string }) {
     setSerialNumber(asset.serialNumber || '');
     setTotalUnits(asset.totalUnits ?? 1);
     setUnitType(asset.unitType ?? 'Units');
-    setLocation(asset.location || 'Computer Lab Room 102B');
+    setLocation(asset.location || 'Unassigned');
     setStatus(asset.status || 'operational');
     setNextCalibration(asset.nextCalibration || '2027-06-01');
     setImageUrl(asset.imageUrl || '');

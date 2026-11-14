@@ -8,7 +8,7 @@ import { MockAsset, MockItem, MockLocation, MockLoan, MockTransfer } from '@/typ
 export function mapServerAsset(a: any): MockAsset {
   const locStr = a.location_room
     ? `${a.location_name || a.location || 'Lab'} (${a.location_room})`
-    : a.location_name || a.location || 'Computer Lab Room 102B';
+    : a.location_name || a.location || 'Unassigned';
 
   return {
     id: String(a.id),
@@ -50,7 +50,7 @@ export function toServerAsset(a: Partial<MockAsset>): Record<string, any> {
 export function mapServerStock(s: any): MockItem {
   const locStr = s.location_room
     ? `${s.location_name || s.location || 'Lab'} (${s.location_room})`
-    : s.location_name || s.location || 'Computer Lab Room 102B';
+    : s.location_name || s.location || 'Unassigned';
 
   return {
     id: String(s.id),

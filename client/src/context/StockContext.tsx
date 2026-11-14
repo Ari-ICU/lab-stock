@@ -265,7 +265,16 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       const cachedLocations = localStorage.getItem('csd_cache_locations');
       if (cachedLocations) {
         const parsed = JSON.parse(cachedLocations);
-        if (Array.isArray(parsed) && parsed.length > 0) setLocations(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setLocations(
+            parsed.map((loc: MockLocation) => ({
+              ...loc,
+              inventories: Array.isArray(loc.inventories)
+                ? loc.inventories.filter((inv: RoomInventoryItem) => Boolean(inv.stockItemId))
+                : [],
+            }))
+          );
+        }
       }
       const cachedLoans = localStorage.getItem('csd_cache_loans');
       if (cachedLoans) {
@@ -448,27 +457,59 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         category: itemData.category || 'Hardware',
         quantity: itemData.quantity || 1,
         unit: itemData.unit || 'Units',
-        location: itemData.location || 'Computer Lab Room 102B',
-        rack: itemData.rack || 'MDF Core Server Rack 42U',
+        location: itemData.location || 'Unassigned',
+        rack: itemData.rack || 'Unassigned',
         status: (itemData.quantity || 1) > 5 ? 'in_stock' : 'low_stock',
         expiryDate: itemData.expiryDate || 'N/A',
         imageUrl: itemData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
         description: itemData.description,
       };
-      setStock((prev) => [newItem, ...prev]);
+      setStock((prev) => {
+        const next = [newItem, ...prev];
+        setCachedData('stock', next);
+        return next;
+      });
       showToast(`Added ${newItem.name} to stock`);
       if (getAuthToken()) {
-        stockService.createStockItem(toServerStock(newItem) as any).catch(() => {});
+        stockService
+          .createStockItem(toServerStock(newItem) as any)
+          .then((res) => {
+            if (res?.data?.id) {
+              const saved = mapServerStock(res.data);
+              setStock((prev) => {
+                const next = prev.map((i) => (i.id === newItem.id ? saved : i));
+                setCachedData('stock', next);
+                return next;
+              });
+            }
+          })
+          .catch(() => {});
       }
       return newItem;
     }
   };
 
   const updateStockItem = (updatedItem: MockItem) => {
-    setStock((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+    setStock((prev) => {
+      const next = prev.map((i) => (i.id === updatedItem.id ? updatedItem : i));
+      setCachedData('stock', next);
+      return next;
+    });
     showToast(`Updated ${updatedItem.name}`);
     if (getAuthToken()) {
-      stockService.updateStockItem(updatedItem.id, toServerStock(updatedItem) as any).catch(() => {});
+      stockService
+        .updateStockItem(updatedItem.id, toServerStock(updatedItem) as any)
+        .then((res) => {
+          if (res?.data?.id) {
+            const saved = mapServerStock(res.data);
+            setStock((prev) => {
+              const next = prev.map((i) => (i.id === updatedItem.id ? saved : i));
+              setCachedData('stock', next);
+              return next;
+            });
+          }
+        })
+        .catch(() => {});
     }
   };
 
@@ -496,7 +537,23 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
 
   const deleteStockItem = (id: string) => {
     const target = stock.find((i) => i.id === id);
-    setStock((prev) => prev.filter((i) => i.id !== id));
+    setStock((prev) => {
+      const next = prev.filter((i) => i.id !== id);
+      setCachedData('stock', next);
+      return next;
+    });
+    if (target) {
+      setLocations((prevLocs) => {
+        const nextLocs = prevLocs.map((loc) => ({
+          ...loc,
+          inventories: (loc.inventories || []).filter(
+            (inv) => inv.stockItemId !== target.id && inv.stockItemId !== target.code
+          ),
+        }));
+        setCachedData('locations', nextLocs);
+        return nextLocs;
+      });
+    }
     showToast(`Removed ${target?.name || 'item'} from inventory`);
     if (getAuthToken()) {
       stockService.deleteStockItem(id).catch(() => {});
@@ -509,25 +566,73 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       imageUrl: assetData.imageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
       ...assetData,
     };
-    setAssets((prev) => [newAsset, ...prev]);
+    setAssets((prev) => {
+      const next = [newAsset, ...prev];
+      setCachedData('assets', next);
+      return next;
+    });
     showToast(`Registered network asset ${newAsset.name}`);
     if (getAuthToken()) {
-      assetService.createAsset(toServerAsset(newAsset) as any).catch(() => {});
+      assetService
+        .createAsset(toServerAsset(newAsset) as any)
+        .then((res) => {
+          if (res?.data?.id) {
+            const saved = mapServerAsset(res.data);
+            setAssets((prev) => {
+              const next = prev.map((a) => (a.id === newAsset.id ? saved : a));
+              setCachedData('assets', next);
+              return next;
+            });
+          }
+        })
+        .catch(() => {});
     }
     return newAsset;
   };
 
   const updateAsset = (updatedAsset: MockAsset) => {
-    setAssets((prev) => prev.map((a) => (a.id === updatedAsset.id ? updatedAsset : a)));
+    setAssets((prev) => {
+      const next = prev.map((a) => (a.id === updatedAsset.id ? updatedAsset : a));
+      setCachedData('assets', next);
+      return next;
+    });
     showToast(`Updated ${updatedAsset.name}`);
     if (getAuthToken()) {
-      assetService.updateAsset(updatedAsset.id, toServerAsset(updatedAsset) as any).catch(() => {});
+      assetService
+        .updateAsset(updatedAsset.id, toServerAsset(updatedAsset) as any)
+        .then((res) => {
+          if (res?.data?.id) {
+            const saved = mapServerAsset(res.data);
+            setAssets((prev) => {
+              const next = prev.map((a) => (a.id === updatedAsset.id ? saved : a));
+              setCachedData('assets', next);
+              return next;
+            });
+          }
+        })
+        .catch(() => {});
     }
   };
 
   const deleteAsset = (id: string) => {
     const target = assets.find((a) => a.id === id);
-    setAssets((prev) => prev.filter((a) => a.id !== id));
+    setAssets((prev) => {
+      const next = prev.filter((a) => a.id !== id);
+      setCachedData('assets', next);
+      return next;
+    });
+    if (target) {
+      setLocations((prevLocs) => {
+        const nextLocs = prevLocs.map((loc) => ({
+          ...loc,
+          inventories: (loc.inventories || []).filter(
+            (inv) => inv.assetId !== target.id && inv.assetId !== target.serialNumber
+          ),
+        }));
+        setCachedData('locations', nextLocs);
+        return nextLocs;
+      });
+    }
     showToast(`Deleted asset ${target?.name || ''}`);
     if (getAuthToken()) {
       assetService.deleteAsset(id).catch(() => {});
@@ -768,80 +873,6 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         })
         .catch(() => {});
     }
-
-    // Also update room inventories in locations if matching rooms exist
-    setLocations((prevLocations) => {
-      const fromLocRecord = prevLocations.find((l) =>
-        fromLoc.toLowerCase().includes(l.room.toLowerCase()) ||
-        fromLoc.toLowerCase().includes(l.name.toLowerCase())
-      );
-      const toLocRecord = prevLocations.find((l) =>
-        toLocation.toLowerCase().includes(l.room.toLowerCase()) ||
-        toLocation.toLowerCase().includes(l.name.toLowerCase())
-      );
-
-      if (!fromLocRecord || !toLocRecord || fromLocRecord.id === toLocRecord.id) {
-        return prevLocations;
-      }
-
-      const nextLocations = prevLocations.map((loc) => {
-        if (loc.id === fromLocRecord.id) {
-          const existingInvs = loc.inventories || [];
-          const updatedInvs = existingInvs
-            .map((inv) => {
-              const isMatch =
-                (inv.assetId && inv.assetId === assetId) ||
-                inv.name.toLowerCase() === (asset?.name || '').toLowerCase();
-              if (isMatch) {
-                const newWorking = Math.max(0, (inv.qtyWorking || 0) - moveQty);
-                return { ...inv, qtyWorking: newWorking };
-              }
-              return inv;
-            })
-            .filter((inv) => (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0) > 0);
-          return { ...loc, inventories: updatedInvs };
-        }
-
-        if (loc.id === toLocRecord.id) {
-          const existingInvs = loc.inventories || [];
-          const matchIndex = existingInvs.findIndex(
-            (inv) =>
-              (inv.assetId && inv.assetId === assetId) ||
-              inv.name.toLowerCase() === (asset?.name || '').toLowerCase()
-          );
-
-          if (matchIndex >= 0) {
-            const updatedInvs = [...existingInvs];
-            const target = updatedInvs[matchIndex];
-            updatedInvs[matchIndex] = {
-              ...target,
-              qtyWorking: (target.qtyWorking || 0) + moveQty,
-            };
-            return { ...loc, inventories: updatedInvs };
-          } else {
-            const newInv: RoomInventoryItem = {
-              id: `inv-move-${Date.now()}`,
-              roomId: loc.id,
-              assetId: assetId,
-              name: asset?.name || 'Transferred Equipment',
-              group: 'IT_HARDWARE',
-              brandSpec: asset?.model || 'Standard Specification',
-              unit: asset?.unitType || 'Units',
-              qtyWorking: moveQty,
-              qtyBroken: 0,
-              qtyMaintenance: 0,
-              remarks: `Transferred from ${fromLocRecord.room} (${newTransfer.transferDate})`,
-              lastAuditedAt: new Date().toISOString(),
-            };
-            return { ...loc, inventories: [newInv, ...existingInvs] };
-          }
-        }
-
-        return loc;
-      });
-      setCachedData('locations', nextLocations);
-      return nextLocations;
-    });
 
     showToast(`Relocated ${asset?.name || 'Device'} from ${fromLoc} to ${toLocation}`);
     return newTransfer;

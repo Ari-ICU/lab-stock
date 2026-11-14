@@ -30,36 +30,40 @@ function CreateAssetForm() {
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
   const defaultLocation = managedLocations.length > 0
     ? `${managedLocations[0].name} (${managedLocations[0].room})`
-    : 'Computer Lab Room 102B';
+    : 'Unassigned';
 
   const [name, setName] = useState('');
   const [model, setModel] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [totalUnits, setTotalUnits] = useState(1);
   const [unitType, setUnitType] = useState('Units');
-  const [location, setLocation] = useState(defaultLocation);
+  const [location, setLocation] = useState('');
   const [status, setStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [nextCalibration, setNextCalibration] = useState('2027-06-01');
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const paramLocation = searchParams.get('location') || '';
+  const activeLocation = location || paramLocation || defaultLocation;
+
   // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
     const paramSerial = searchParams.get('serial');
     const paramModel = searchParams.get('model');
     const paramName = searchParams.get('name');
-    const paramLocation = searchParams.get('location');
     if (paramSerial) setSerialNumber(paramSerial);
     if (paramModel) setModel(paramModel);
     if (paramName) setName(paramName);
-    if (paramLocation) setLocation(paramLocation);
   }, [searchParams]);
 
-  const locationOptions = (managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-    label: `${loc.name} (${loc.room})`,
-    value: `${loc.name} (${loc.room})`,
-  }));
+  const locationOptions = [
+    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: `${loc.name} (${loc.room})`,
+    })),
+    ...(canManageLocation('Unassigned') ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }] : []),
+  ];
 
   const handleGenerateTag = () => {
     const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -70,7 +74,7 @@ function CreateAssetForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!canManageLocation(location)) {
+    if (!canManageLocation(activeLocation)) {
       showToast(`You can only register items within your assigned laboratories (${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'})`, 'warning');
       return;
     }
@@ -93,7 +97,7 @@ function CreateAssetForm() {
         serialNumber: serialNumber.trim().toUpperCase(),
         totalUnits: Number(totalUnits) || 1,
         unitType: unitType.trim() || 'Units',
-        location: location.trim(),
+        location: activeLocation.trim(),
         status,
         nextCalibration: nextCalibration || '2027-01-01',
         imageUrl: imageUrl.trim() || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
@@ -250,7 +254,7 @@ function CreateAssetForm() {
                   Assigned Lab Location
                 </label>
                 <Dropdown
-                  value={location}
+                  value={activeLocation}
                   options={locationOptions}
                   onChange={(val) => setLocation(val)}
                   className="w-full"

@@ -13,6 +13,7 @@ import { exportToCsv } from '@/lib/exportCsv';
 import { LabThumbnail } from '@/components/LabThumbnail';
 import { Search, Shield, Layers, Eye, Package, Laptop, X, Plus } from 'lucide-react';
 import { MockItem } from '@/types/stock';
+import { findLinkedStockItem } from '@/lib/locationMatch';
 
 export default function StockPage() {
   const router = useRouter();
@@ -98,9 +99,10 @@ export default function StockPage() {
       countItem(item.name, item.category || '', Number(item.quantity) || 0);
     });
 
-    // 2. Classroom & Laboratory Facility Equipment
+    // 2. Valid linked classroom stock allocations only (excludes deleted or unlinked rows)
     (locations || []).forEach((loc) => {
       (loc.inventories || []).forEach((inv) => {
+        if (!findLinkedStockItem(inv, stock)) return;
         const qty = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
         countItem(inv.name, inv.group || '', qty);
       });
@@ -113,19 +115,15 @@ export default function StockPage() {
   const allocatedMap = useMemo(() => {
     const map: Record<string, { total: number; roomBreakdown: Array<{ room: string; qty: number }> }> = {};
     stock.forEach((s) => {
-      const sNameLower = s.name.toLowerCase();
       let total = 0;
       const breakdown: Array<{ room: string; qty: number }> = [];
 
       (locations || []).forEach((loc) => {
         let roomTotal = 0;
         (loc.inventories || []).forEach((inv) => {
-          const invNameLower = inv.name.toLowerCase();
-          const isMatch =
-            (inv.stockItemId && (inv.stockItemId === s.id || inv.stockItemId === s.code)) ||
-            invNameLower === sNameLower ||
-            sNameLower.includes(invNameLower) ||
-            invNameLower.includes(sNameLower);
+          const isMatch = Boolean(
+            inv.stockItemId && (inv.stockItemId === s.id || inv.stockItemId === s.code)
+          );
           if (isMatch) {
             const count = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
             roomTotal += count;

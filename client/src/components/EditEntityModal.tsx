@@ -26,10 +26,13 @@ export function EditEntityModal() {
     assets,
   } = useStock();
 
-  const locationOptions = locations.map((loc) => ({
-    label: `${loc.name} (${loc.room})`,
-    value: `${loc.name} (${loc.room})`,
-  }));
+  const locationOptions = [
+    ...locations.map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: `${loc.name} (${loc.room})`,
+    })),
+    { label: 'Unassigned / No Classroom', value: 'Unassigned' },
+  ];
 
   const stockCategoryOptions = React.useMemo(
     () => buildStockCategoryOptions(stock, categories),

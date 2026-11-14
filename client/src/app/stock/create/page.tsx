@@ -48,16 +48,17 @@ function CreateStockForm() {
 
   // Find first manageable location for default
   const managedLocations = locations.filter((loc) => canManageLocation(`${loc.name} (${loc.room})`));
-  const defaultLocation = managedLocations.length > 0
-    ? `${managedLocations[0].name} (${managedLocations[0].room})`
-    : 'Computer Lab Room 102B';
+  const depotFirst = managedLocations.find((loc) => loc.type === 'STORAGE') || managedLocations[0];
+  const defaultLocation = depotFirst
+    ? `${depotFirst.name} (${depotFirst.room})`
+    : 'Unassigned';
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [category, setCategory] = useState('Cables & Accessories');
   const [quantity, setQuantity] = useState(10);
   const [unit, setUnit] = useState('Units');
-  const [location, setLocation] = useState(defaultLocation);
+  const [location, setLocation] = useState('');
   const [rack, setRack] = useState('');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [expiryDate, setExpiryDate] = useState('Active');
@@ -65,22 +66,26 @@ function CreateStockForm() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const paramLocation = searchParams.get('location') || '';
+  const activeLocation = location || paramLocation || defaultLocation;
+
   // Sync incoming search query parameters (e.g. from Barcode/QR Scanner modal or Location details)
   useEffect(() => {
     const paramCode = searchParams.get('code');
     const paramName = searchParams.get('name');
     const paramCategory = searchParams.get('category');
-    const paramLocation = searchParams.get('location');
     if (paramCode) setCode(paramCode);
     if (paramName) setName(paramName);
     if (paramCategory) setCategory(paramCategory);
-    if (paramLocation) setLocation(paramLocation);
   }, [searchParams]);
 
-  const locationOptions = (managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
-    label: `${loc.name} (${loc.room})`,
-    value: `${loc.name} (${loc.room})`,
-  }));
+  const locationOptions = [
+    ...(managedLocations.length > 0 ? managedLocations : locations).map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: `${loc.name} (${loc.room})`,
+    })),
+    ...(canManageLocation('Unassigned') ? [{ label: 'Unassigned / No Classroom', value: 'Unassigned' }] : []),
+  ];
 
   const handleGenerateSKU = () => {
     const prefix = category.substring(0, 3).toUpperCase();
@@ -92,7 +97,7 @@ function CreateStockForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!canManageLocation(location)) {
+    if (!canManageLocation(activeLocation)) {
       showToast(`You can only register items within your assigned laboratories (${user?.assignedLabs?.join(', ') || 'Room 102B, Room 206'})`, 'warning');
       return;
     }
@@ -115,7 +120,7 @@ function CreateStockForm() {
         category: category.trim() || 'General Inventory',
         quantity: Number(quantity) || 0,
         unit: unit.trim() || 'Units',
-        location: location.trim(),
+        location: activeLocation.trim(),
         rack: rack.trim() || 'Storage Shelf',
         status,
         expiryDate: expiryDate.trim() || 'Active',
@@ -329,7 +334,7 @@ function CreateStockForm() {
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold text-neutral-900">Assigned Laboratory Room</label>
                     <Dropdown
-                      value={location}
+                      value={activeLocation}
                       options={locationOptions}
                       onChange={setLocation}
                       placeholder="Select Lab Room"

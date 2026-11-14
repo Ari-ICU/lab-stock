@@ -46,10 +46,17 @@ export function AddEntityModal() {
     [stock, categories]
   );
 
-  const locationOptions = locations.map((loc) => ({
-    label: `${loc.name} (${loc.room})`,
-    value: `${loc.name} (${loc.room})`,
-  }));
+  const defaultLocation = locations.length > 0
+    ? `${locations[0].name} (${locations[0].room})`
+    : 'Unassigned';
+
+  const locationOptions = [
+    ...locations.map((loc) => ({
+      label: `${loc.name} (${loc.room})`,
+      value: `${loc.name} (${loc.room})`,
+    })),
+    { label: 'Unassigned / No Classroom', value: 'Unassigned' },
+  ];
 
   // Stock Form State
   const [stockName, setStockName] = useState('');
@@ -58,11 +65,7 @@ export function AddEntityModal() {
   const [stockStatus, setStockStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockUnit, setStockUnit] = useState('Units');
-  const [stockLocation, setStockLocation] = useState(
-    locations.length > 0
-      ? `${locations[0].name} (${locations[0].room})`
-      : 'Computer & Network Lab 102B (Room 102B)'
-  );
+  const [stockLocation, setStockLocation] = useState('');
   const [stockImageUrl, setStockImageUrl] = useState('');
   const [stockDescription, setStockDescription] = useState('');
   const [stockExpiryDate, setStockExpiryDate] = useState('Active');
@@ -71,7 +74,7 @@ export function AddEntityModal() {
   const [assetName, setAssetName] = useState('');
   const [assetModel, setAssetModel] = useState('');
   const [assetSerial, setAssetSerial] = useState('');
-  const [assetLocation, setAssetLocation] = useState('Cisco Networking Lab Room 301');
+  const [assetLocation, setAssetLocation] = useState('');
   const [assetStatus, setAssetStatus] = useState<'operational' | 'in_use' | 'maintenance'>('operational');
   const [assetImageUrl, setAssetImageUrl] = useState('');
   const [assetDescription, setAssetDescription] = useState('');
@@ -92,7 +95,11 @@ export function AddEntityModal() {
   const [rackCode, setRackCode] = useState('');
   const [rackType, setRackType] = useState<'42U Server Rack' | '24U Wall Mount' | 'IDF Distribution' | 'Storage Shelf'>('42U Server Rack');
   const [rackSlots, setRackSlots] = useState(42);
-  const [rackLocation, setRackLocation] = useState('Computer Lab Room 102B');
+  const [rackLocation, setRackLocation] = useState('');
+
+  const effectiveStockLocation = stockLocation || defaultLocation;
+  const effectiveAssetLocation = assetLocation || defaultLocation;
+  const effectiveRackLocation = rackLocation || defaultLocation;
 
   // Location Form State
   const [locName, setLocName] = useState('');
@@ -110,8 +117,8 @@ export function AddEntityModal() {
       category: stockCategory,
       quantity: Number(stockQuantity) || 1,
       unit: stockUnit,
-      location: stockLocation,
-      rack: stockLocation,
+      location: effectiveStockLocation,
+      rack: effectiveStockLocation,
       expiryDate: stockExpiryDate.trim() || 'Active',
       imageUrl: stockImageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
       description: stockDescription,
@@ -132,7 +139,7 @@ export function AddEntityModal() {
       name: assetName,
       model: assetModel || 'Standard Model',
       serialNumber: assetSerial,
-      location: assetLocation,
+      location: effectiveAssetLocation,
       status: assetStatus,
       nextCalibration: '2027-04-01',
       imageUrl: assetImageUrl || 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&q=80',
@@ -155,7 +162,7 @@ export function AddEntityModal() {
       type: rackType,
       totalSlots: Number(rackSlots) || 42,
       usedSlots: 0,
-      location: rackLocation,
+      location: effectiveRackLocation,
     });
     setRackName('');
     setRackCode('');
@@ -281,7 +288,7 @@ export function AddEntityModal() {
             <div>
               <label className="block font-semibold text-neutral-800 mb-1">Assigned Location</label>
               <Dropdown
-                value={stockLocation}
+                value={effectiveStockLocation}
                 options={locationOptions}
                 onChange={setStockLocation}
                 className="w-full"
@@ -392,7 +399,7 @@ export function AddEntityModal() {
               <div>
                 <label className="block font-semibold text-neutral-800 mb-1">Assigned Location</label>
                 <Dropdown
-                  value={assetLocation}
+                  value={effectiveAssetLocation}
                   options={locationOptions}
                   onChange={setAssetLocation}
                   className="w-full"
@@ -492,7 +499,7 @@ export function AddEntityModal() {
               <label className="block font-semibold text-neutral-800 mb-1">Room / Facility</label>
               <input
                 type="text"
-                value={rackLocation}
+                value={effectiveRackLocation}
                 onChange={(e) => setRackLocation(e.target.value)}
                 className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
               />

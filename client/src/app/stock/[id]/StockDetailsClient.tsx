@@ -88,16 +88,11 @@ export default function StockDetailsClient({ id: propId }: { id?: string }) {
       lastAuditedAt?: string;
     }> = [];
 
-    const itemNameLower = item.name.toLowerCase();
-
     locations.forEach((loc) => {
       (loc.inventories || []).forEach((inv) => {
-        const invNameLower = inv.name.toLowerCase();
-        const isMatch =
-          (inv.stockItemId && (inv.stockItemId === item.id || inv.stockItemId === item.code)) ||
-          invNameLower === itemNameLower ||
-          itemNameLower.includes(invNameLower) ||
-          invNameLower.includes(itemNameLower);
+        const isMatch = Boolean(
+          inv.stockItemId && (inv.stockItemId === item.id || inv.stockItemId === item.code)
+        );
 
         if (isMatch) {
           const total = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);

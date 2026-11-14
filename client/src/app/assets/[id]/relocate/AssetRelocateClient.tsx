@@ -10,6 +10,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { DatePicker } from '@/components/DatePicker';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { LabThumbnail } from '@/components/LabThumbnail';
+import { findMatchingRoom } from '@/lib/locationMatch';
 import {
   ArrowLeft,
   ArrowRight,
@@ -78,16 +79,11 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
       unit: string;
     }> = [];
 
-    const assetNameLower = asset.name.toLowerCase();
-
     locations.forEach((loc) => {
       (loc.inventories || []).forEach((inv) => {
-        const invNameLower = inv.name.toLowerCase();
-        const isMatch =
-          (inv.assetId && (inv.assetId === asset.id || inv.assetId === asset.serialNumber)) ||
-          invNameLower === assetNameLower ||
-          assetNameLower.includes(invNameLower) ||
-          invNameLower.includes(assetNameLower);
+        const isMatch = Boolean(
+          inv.assetId && (inv.assetId === asset.id || inv.assetId === asset.serialNumber)
+        );
 
         if (isMatch) {
           const total = (inv.qtyWorking || 0) + (inv.qtyBroken || 0) + (inv.qtyMaintenance || 0);
@@ -109,15 +105,7 @@ function RelocateContent({ id: propId, returnTo: propReturnTo }: AssetRelocateCl
       });
     });
 
-    const matchedLocation = locations.find((l) => {
-      const locKey = l.room.toLowerCase().replace(/^(rm|room)\s*/i, '').trim();
-      const assetLocLower = asset.location.toLowerCase();
-      return (
-        assetLocLower.includes(locKey) ||
-        assetLocLower.includes(l.room.toLowerCase()) ||
-        assetLocLower.includes(l.name.toLowerCase())
-      );
-    });
+    const matchedLocation = findMatchingRoom(asset.location, locations);
 
     if (list.length === 0 && matchedLocation) {
       list.push({
