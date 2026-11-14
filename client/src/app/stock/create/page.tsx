@@ -10,14 +10,13 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { Dropdown } from '@/components/Dropdown';
 import { NumberInput } from '@/components/NumberInput';
 import { buildStockCategoryOptions } from '@/lib/categories';
-import { collectShelfSuggestions, getSafeLocationReturnPath } from '@/lib/locationMatch';
+import { collectShelfSuggestions } from '@/lib/locationMatch';
 import {
   Save,
   Cable,
   MapPin,
   Hash,
   Layers,
-  Plus,
 } from 'lucide-react';
 
 const statusOptions = [
@@ -29,9 +28,8 @@ const statusOptions = [
 function CreateStockForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addStockItem, stock, categories, createCategory, locations, openModal, showToast } = useStock();
+  const { addStockItem, stock, categories, createCategory, locations, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
-  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
 
   const categoryOptions = React.useMemo(
     () => buildStockCategoryOptions(stock, categories),
@@ -60,8 +58,6 @@ function CreateStockForm() {
 
   const paramLocation = searchParams.get('location') || '';
   const activeLocation = location || paramLocation || defaultLocation;
-  const backHref = getSafeLocationReturnPath(searchParams.get('returnTo'), '/stock');
-  const backLabel = backHref === '/stock' ? 'Inventory' : 'Back to Room';
   const shelfSuggestions = React.useMemo(
     () => collectShelfSuggestions(stock, activeLocation),
     [stock, activeLocation]
@@ -127,7 +123,7 @@ function CreateStockForm() {
       });
 
       setTimeout(() => {
-        router.push(backHref);
+        router.push('/stock');
       }, 250);
     } catch {
       showToast('Failed to register stock item', 'error');
@@ -140,13 +136,13 @@ function CreateStockForm() {
       <Header
         title="Add Inventory Item"
         subtitle="Stationery, Printer Ink, Hardware Tools, Consumables & Spares"
-        backHref={backHref}
-        backLabel={backLabel}
+        backHref="/stock"
+        backLabel="Inventory"
         showExport={false}
         actions={
           <div className="flex items-center gap-2">
             <Link
-              href={backHref}
+              href="/stock"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 rounded-xl text-xs font-medium transition-colors"
             >
               Cancel
@@ -319,23 +315,11 @@ function CreateStockForm() {
 
               {/* Location & Storage Details */}
               <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-neutral-700" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                      Location &amp; Shelf Placement
-                    </h3>
-                  </div>
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => openModal('add_location')}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>New Room</span>
-                    </button>
-                  )}
+                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                  <MapPin className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Location &amp; Shelf Placement
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">

@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   ArrowLeftRight,
   Search,
-  Plus,
   AlertTriangle,
   Edit3,
   Trash2,
@@ -27,7 +26,6 @@ import {
 import { AssetGroup, MockItem, RoomInventoryItem } from '@/types';
 import { getRoomItemImage } from './items/shared';
 import {
-  buildRoomLabel,
   findLinkedStockItem,
   getRoomInventoryStats,
   inferAssetGroup,
@@ -370,10 +368,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     );
   }
 
-  const roomLocationParam = encodeURIComponent(buildRoomLabel(loc));
-  const createStockInRoomHref = `/stock/create?location=${roomLocationParam}&returnTo=${encodeURIComponent(`/locations/${loc.id}?tab=inventory`)}`;
-  const createAssetInRoomHref = `/assets/create?location=${roomLocationParam}&returnTo=${encodeURIComponent(`/locations/${loc.id}?tab=hardware`)}`;
-
   const handleExportRoomFleet = () => {
     const facilityRows = roomInventoryRows.map((row) => ({
       'Record Type': row.source === 'stock' ? 'Central Inventory' : 'Allocated Room Stock',
@@ -688,26 +682,19 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                     : 'devices'}
                 </div>
                 {isAllowed && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Link
-                      href={activeTab === 'inventory' ? createStockInRoomHref : createAssetInRoomHref}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-800 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl transition-colors cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5 text-neutral-600" />
-                      <span>{activeTab === 'inventory' ? 'New Item' : 'New Device'}</span>
-                    </Link>
-                    <Link
-                      href={
-                        activeTab === 'inventory'
-                          ? `/locations/${loc.id}/items/new?source=stock`
-                          : `/locations/${loc.id}/items/new?source=asset`
-                      }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Assign Existing</span>
-                    </Link>
-                  </div>
+                  <Link
+                    href={
+                      activeTab === 'inventory'
+                        ? `/locations/${loc.id}/items/new?source=stock`
+                        : `/locations/${loc.id}/items/new?source=asset`
+                    }
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>
+                      {activeTab === 'inventory' ? 'Assign from Inventory' : 'Assign Hardware Device'}
+                    </span>
+                  </Link>
                 )}
               </div>
             </div>
@@ -737,22 +724,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                       </button>
                     )}
                     {isAllowed && (
-                      <>
-                        <Link
-                          href={createStockInRoomHref}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Register New Item in {loc.room}</span>
-                        </Link>
-                        <Link
-                          href={`/locations/${loc.id}/items/new?source=stock`}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl transition-colors"
-                        >
-                          <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
-                          <span>Assign from Existing Inventory</span>
-                        </Link>
-                      </>
+                      <Link
+                        href={`/locations/${loc.id}/items/new?source=stock`}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
+                      >
+                        <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Assign from Inventory</span>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -962,22 +940,13 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                       <span>View Room Inventory ({roomInventoryRows.length})</span>
                     </button>
                     {isAllowed && (
-                      <>
-                        <Link
-                          href={createAssetInRoomHref}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Register New Device in {loc.room}</span>
-                        </Link>
-                        <Link
-                          href={`/locations/${loc.id}/items/new?source=asset`}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-700 bg-white border border-neutral-300 hover:bg-neutral-50 rounded-xl transition-colors"
-                        >
-                          <ArrowLeftRight className="w-3.5 h-3.5 text-neutral-500" />
-                          <span>Assign from Existing Assets</span>
-                        </Link>
-                      </>
+                      <Link
+                        href={`/locations/${loc.id}/items/new?source=asset`}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors"
+                      >
+                        <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Assign Hardware Device</span>
+                      </Link>
                     )}
                   </div>
                 </div>

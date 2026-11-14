@@ -76,16 +76,16 @@ export function Sidebar() {
         }`}
       >
         {/* Brand Header with University Seal Logo */}
-        <div className="h-16 border-b border-neutral-200 px-4 flex items-center justify-between">
+        <div className="h-16 border-b border-neutral-200 px-3.5 flex items-center justify-between gap-2">
           <Link
             href="/"
             onClick={closeMobileSidebar}
-            className="flex items-center gap-2.5 min-w-0"
+            className="group flex items-center gap-2.5 min-w-0 flex-1 rounded-xl p-1 -ml-1 hover:bg-neutral-50/90 transition-colors"
           >
-            <div className="w-10 h-10 rounded-md bg-neutral-50 border border-neutral-200 flex items-center justify-center p-1 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white border border-neutral-200/90 shadow-2xs group-hover:border-neutral-300 transition-colors flex items-center justify-center p-1.5 shrink-0">
               <img
                 src={getAssetPath('/logo.png')}
-                alt="CSD Stock Emblem"
+                alt="CSD Inventory Emblem"
                 className="w-full h-full object-contain"
                 onError={(e) => {
                   const img = e.currentTarget;
@@ -98,25 +98,27 @@ export function Sidebar() {
                 }}
               />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-[15px] text-neutral-900 tracking-tight leading-tight truncate">
-                  CSD Stock
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-bold text-sm text-neutral-900 tracking-tight leading-none truncate">
+                  CSD Inventory
                 </span>
-                <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs leading-none shrink-0">
-                  v1.0 Beta
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200/80 leading-none shrink-0">
+                  v1.0
                 </span>
               </div>
-              <span className="text-[11px] text-neutral-500 font-medium truncate block mt-0.5">
+              <span className="text-[11px] text-neutral-500 font-medium leading-tight truncate block mt-1">
                 Dept. of Computer Science
               </span>
             </div>
           </Link>
 
           <button
+            type="button"
             onClick={closeMobileSidebar}
-            className="lg:hidden p-1 text-neutral-400 hover:text-neutral-900 rounded"
+            aria-label="Close navigation menu"
             title="Close menu"
+            className="lg:hidden p-1.5 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

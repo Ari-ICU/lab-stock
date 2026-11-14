@@ -22,7 +22,6 @@ import {
   MapPin,
   Hash,
   Layers,
-  Plus,
   Shield,
 } from 'lucide-react';
 
@@ -37,9 +36,8 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { stock, categories, createCategory, updateStockItem, deleteStockItem, locations, openModal, showToast, isLoading } = useStock();
+  const { stock, categories, createCategory, updateStockItem, deleteStockItem, locations, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
-  const isAdmin = user?.roleBadge === 'Admin' || user?.role === 'Primary Lab Administrator';
 
   const categoryOptions = React.useMemo(
     () => buildStockCategoryOptions(stock, categories),
@@ -453,23 +451,11 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
 
               {/* Location & Storage Details */}
               <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-neutral-700" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                      Location &amp; Shelf Placement
-                    </h3>
-                  </div>
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => openModal('add_location')}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-600 hover:text-neutral-900 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>New Room</span>
-                    </button>
-                  )}
+                <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                  <MapPin className="w-4 h-4 text-neutral-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Location &amp; Shelf Placement
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -109,24 +109,6 @@ export interface ConsolidatedRoomInventoryItem extends RoomInventoryItem {
   sourceIds: string[];
 }
 
-/** Combine non-empty room remarks while removing exact duplicate segments. */
-export function buildRoomLabel(loc: Pick<MockLocation, 'name' | 'room'>): string {
-  return `${loc.name} (${loc.room})`;
-}
-
-/** Validate optional returnTo path so room redirects stay strictly on internal /locations/* routes. */
-export function getSafeLocationReturnPath(
-  rawReturnTo: string | null | undefined,
-  fallback: string
-): string {
-  if (!rawReturnTo) return fallback;
-  const trimmed = rawReturnTo.trim();
-  if (trimmed.startsWith('/locations/') && !trimmed.startsWith('//')) {
-    return trimmed;
-  }
-  return fallback;
-}
-
 /** Collect distinct shelf / cabinet / bin labels used in stock, prioritizing the selected room. */
 export function collectShelfSuggestions(
   stock: MockItem[],
