@@ -3,10 +3,10 @@ import { AssetGroup, MockAsset, MockItem, MockLocation, RoomInventoryItem } from
 /** Infer classroom equipment category group from central inventory category & item name. */
 export function inferAssetGroup(category: string, name: string): AssetGroup {
   const text = `${category} ${name}`.toLowerCase();
-  if (/(chair|table|desk|cabinet|fixture|bench|whiteboard|seating|locker|furniture)/.test(text)) {
+  if (/(chair|table|desk|cabinet|fixture|bench|whiteboard|seating|locker|furniture|podium)/.test(text)) {
     return 'FURNITURE';
   }
-  if (/(electrical|hvac|light|socket|power|cable|cord|surge|battery|ups|adapter)/.test(text)) {
+  if (/(electrical|hvac|light|socket|power|cable|cord|surge|battery|ups|adapter|fan|air\s*cond|climate|cooling|ventilat)/.test(text)) {
     return 'ELECTRICAL';
   }
   if (/(safety|fire|extinguisher|misc|first aid|stationery|toner|ink|paper|tool)/.test(text)) {

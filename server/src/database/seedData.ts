@@ -283,10 +283,171 @@ export const seedAssets = [
 ];
 
 /**
- * Central Depot Stock Inventory (Consumables, Cables, Optical Spares, Peripherals, Toner & Hand Tools).
- * Stationed exclusively in Room 102 (Staging & Supply Depot) with zero overlap with Hardware Assets or Room Inventory.
+ * Central Depot Stock Inventory (Classroom Furniture, Fans & Climate, Electrical, Safety,
+ * Consumables, Cables, Optical Spares, Peripherals, Toner & Hand Tools).
+ * Stationed initially in Room 102 (Staging & Supply Depot) with zero overlap with Hardware Assets (`seedAssets`),
+ * and ready to be assigned to classrooms & labs via /locations/[id]/items/new.
  */
 export const seedStock = [
+  // Classroom & Lab Furniture, Climate (Fans/AC), Power & Safety Stock
+  {
+    code: 'FUR-CHR-STD-MESH',
+    name: 'Student Ergonomic Mesh Swivel Chairs',
+    category: 'Furniture & Fixtures',
+    quantity: 120,
+    unit: 'Pieces',
+    room: 'Room 102',
+    rack: 'Depot Bay F1 - Seating Stack',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=600&q=80',
+    description: 'Height-adjustable heavy-duty ergonomic mesh student chairs ready for classroom and lab seating.',
+  },
+  {
+    code: 'FUR-CHR-LEC-HIGH',
+    name: 'Lecturer Executive Swivel Chairs',
+    category: 'Furniture & Fixtures',
+    quantity: 8,
+    unit: 'Pieces',
+    room: 'Room 102',
+    rack: 'Depot Bay F1 - Seating Stack',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=600&q=80',
+    description: 'High-back lumbar support chairs designated for lecturer podiums across teaching rooms.',
+  },
+  {
+    code: 'FUR-DSK-COMP-DUAL',
+    name: 'Dual-Station Student Computer Desks',
+    category: 'Furniture & Fixtures',
+    quantity: 60,
+    unit: 'Sets',
+    room: 'Room 102',
+    rack: 'Depot Bay F2 - Desk Flatpacks',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80',
+    description: 'Reinforced dual-workstation computer lab desks with integrated under-desk cable management trays.',
+  },
+  {
+    code: 'FUR-DSK-LECTURER',
+    name: 'Instructor Teaching Desks & Podiums',
+    category: 'Furniture & Fixtures',
+    quantity: 6,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Bay F2 - Desk Flatpacks',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80',
+    description: 'Lockable instructor podium desks with built-in HDMI and AC power grommets for front-of-class delivery.',
+  },
+  {
+    code: 'FUR-WBD-MAG-240',
+    name: 'Porcelain Magnetic Whiteboards & Marker Trays (2.4m)',
+    category: 'Furniture & Fixtures',
+    quantity: 6,
+    unit: 'Sets',
+    room: 'Room 102',
+    rack: 'Depot Bay F3 - Wall Mount Rack',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=600&q=80',
+    description: 'Wide porcelain wall-mounted dry-erase whiteboards (2.4m x 1.2m) for lectures and lab walkthroughs.',
+  },
+  {
+    code: 'FUR-CAB-STEEL-4S',
+    name: 'Dual-Door Steel Storage Cabinets (4-Shelf)',
+    category: 'Furniture & Fixtures',
+    quantity: 8,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Bay F3 - Heavy Fixtures',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=600&q=80',
+    description: 'Key-locked 4-shelf steel perimeter cabinets for securing lab kits and classroom peripherals.',
+  },
+  {
+    code: 'CLM-FAN-CEIL-56',
+    name: 'Industrial 56" Classroom Ceiling Fans',
+    category: 'Power & Climate',
+    quantity: 24,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Bay E1 - Cooling & HVAC',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+    description: 'Heavy-duty 3-blade 56-inch ceiling fans with 5-speed wall regulators for classrooms and labs.',
+  },
+  {
+    code: 'CLM-FAN-STAND-18',
+    name: 'Oscillating Standing Cooling Fans (18-Inch)',
+    category: 'Power & Climate',
+    quantity: 10,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Bay E1 - Cooling & HVAC',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+    description: 'Portable 18-inch heavy-base stand fans for supplemental airflow in labs and exam halls.',
+  },
+  {
+    code: 'CLM-AC-SPLIT-25HP',
+    name: 'Panasonic 2.5HP Inverter Split Air Conditioners',
+    category: 'Power & Climate',
+    quantity: 6,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Bay E1 - Cooling & HVAC',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80',
+    description: 'High-efficiency inverter split air conditioning units held in reserve for computer labs.',
+  },
+  {
+    code: 'ELEC-LED-TUBE-36W',
+    name: 'Philips 36W Daylight LED Ceiling Tube Lights',
+    category: 'Power & Climate',
+    quantity: 60,
+    unit: 'Pieces',
+    room: 'Room 102',
+    rack: 'Depot Shelf E2 - Lighting Spares',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=80',
+    description: 'Flicker-free 4000K neutral-white T8 LED ceiling tube lights for classrooms and lab ceilings.',
+  },
+  {
+    code: 'ELEC-PWR-STRIP-8W',
+    name: 'Schneider 8-Way Surge-Protected Power Strips (3m)',
+    category: 'Power & Climate',
+    quantity: 45,
+    unit: 'Pieces',
+    room: 'Room 102',
+    rack: 'Depot Shelf E2 - Power Distribution',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    description: 'Heavy-duty 8-outlet surge-protected bench power strips with master breaker switch.',
+  },
+  {
+    code: 'SAFE-EXT-CO2-5KG',
+    name: 'CO2 5KG Clean-Agent Fire Extinguishers',
+    category: 'Safety & Misc',
+    quantity: 10,
+    unit: 'Units',
+    room: 'Room 102',
+    rack: 'Depot Locker S1 - Campus Safety',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80',
+    description: 'Electrical-safe 5KG CO2 fire extinguishers inspected for computer laboratories and server closets.',
+  },
+  {
+    code: 'SAFE-FIRSTAID-KIT',
+    name: 'Laboratory Wall-Mount First Aid Medical Kits',
+    category: 'Safety & Misc',
+    quantity: 6,
+    unit: 'Kits',
+    room: 'Room 102',
+    rack: 'Depot Locker S1 - Campus Safety',
+    status: 'in_stock',
+    image_url: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80',
+    description: 'Restockable classroom & workshop first aid medical cabinets with burn & electrical safety supplies.',
+  },
+
+  // Central IT Spares, Cabling, Peripherals & Maintenance Kits
   {
     code: 'CBL-CAT6-BLU-1M',
     name: 'Cat6 UTP RJ45 Patch Cables 1-Meter (Blue)',
@@ -756,6 +917,50 @@ export const LEGACY_OVERLAPPING_STOCK_CODES = [
   'MON-201-U2724K',
   'MS-201-MX3S',
 ];
+
+/**
+ * Idempotently add initial classroom/lab furniture, fan, climate, power, and safety stock items
+ * to existing databases that were initialized prior to this starter set without overwriting user edits.
+ */
+export async function ensureClassroomStockSeeded(): Promise<void> {
+  const existingCountRes = await query(
+    `SELECT COUNT(*)::int AS count FROM stock_items WHERE code LIKE 'FUR-%' OR code LIKE 'CLM-%'`
+  );
+  if ((existingCountRes.rows[0]?.count || 0) > 0) return;
+
+  const locRes = await query(
+    `SELECT id FROM locations WHERE UPPER(room) = 'ROOM 102' OR UPPER(code) = 'LOC-102' LIMIT 1`
+  );
+  const depotLocId = locRes.rows[0]?.id || null;
+
+  const starterItems = seedStock.filter((s) =>
+    /^(FUR-|CLM-|ELEC-|SAFE-)/.test(s.code)
+  );
+
+  for (const s of starterItems) {
+    await query(
+      `INSERT INTO stock_items (
+         code, name, category, quantity, unit,
+         location_id, rack, status, image_url, description
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (code) DO NOTHING`,
+      [
+        s.code,
+        s.name,
+        s.category,
+        s.quantity,
+        s.unit,
+        depotLocId,
+        s.rack,
+        s.status,
+        s.image_url,
+        s.description,
+      ]
+    );
+  }
+  console.log(`✅ Added ${starterItems.length} initial classroom & lab stock items to Central Depot.`);
+}
 
 export async function seedAllData(): Promise<void> {
   console.log('🌱 Populating database tables with clean, non-overlapping fleet records...');

@@ -105,8 +105,8 @@ export function getRoomItemImage(
     return 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80';
   }
 
-  // Air Conditioners & HVAC
-  if (text.includes('air') || text.includes('conditioner') || /\bac\b/.test(text) || text.includes('daikin') || text.includes('panasonic') || text.includes('hvac')) {
+  // Air Conditioners, Fans & HVAC
+  if (text.includes('air') || text.includes('conditioner') || text.includes('fan') || /\bac\b/.test(text) || text.includes('daikin') || text.includes('panasonic') || text.includes('hvac')) {
     return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80';
   }
 

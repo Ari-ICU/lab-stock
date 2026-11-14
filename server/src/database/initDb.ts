@@ -3,7 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool, query } from '../config/database.js';
 import { hashPassword } from '../utils/password.js';
-import { seedAllData, seedLoans, seedMaintenance, seedPurchaseRequests } from './seedData.js';
+import {
+  seedAllData,
+  seedLoans,
+  seedMaintenance,
+  seedPurchaseRequests,
+  ensureClassroomStockSeeded,
+} from './seedData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,6 +90,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
     if (assetCount === 0) {
       await seedAllData();
+    } else {
+      await ensureClassroomStockSeeded().catch(() => {});
     }
 
     // Ensure loans and transfers are populated in PostgreSQL
@@ -254,13 +262,15 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
     // Sync existing stock_items categories + starter categories into the categories table
     const starterCategories = [
+      'Furniture & Fixtures',
+      'Power & Climate',
+      'Safety & Misc',
       'Office Stationery',
       'Printer Ink & Toner',
       'Tools & Equipment',
       'Monitors',
       'Mice & Keyboards',
       'Cables & Accessories',
-      'Power & Climate',
       'Network Spares',
       'Networking Equipment',
       'Electronics & Tools',

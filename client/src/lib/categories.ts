@@ -2,13 +2,15 @@ import { DropdownOption } from '@/types';
 import { MockItem } from '@/types/stock';
 
 export const DEFAULT_STOCK_CATEGORIES: DropdownOption[] = [
+  { label: 'Furniture & Fixtures', value: 'Furniture & Fixtures' },
+  { label: 'Power & Climate Spares', value: 'Power & Climate' },
+  { label: 'Safety & First Aid', value: 'Safety & Misc' },
   { label: 'Office Stationery & Paper', value: 'Office Stationery' },
   { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
   { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
   { label: 'Monitors & Displays', value: 'Monitors' },
   { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
   { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Power & Climate Spares', value: 'Power & Climate' },
   { label: 'Network Spares & Transceivers', value: 'Network Spares' },
   { label: 'Networking Equipment', value: 'Networking Equipment' },
   { label: 'Electronics & Tools', value: 'Electronics & Tools' },
