@@ -26,7 +26,7 @@ const statusOptions = [
 function CreateStockForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addStockItem, stock, categories, createCategory, locations, showToast } = useStock();
+  const { addStockItem, stock, categories, locations, showToast } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const categoryOptions = React.useMemo(
@@ -46,7 +46,7 @@ function CreateStockForm() {
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [category, setCategory] = useState('Cables & Accessories');
+  const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState(10);
   const [unit, setUnit] = useState('Units');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
@@ -69,7 +69,8 @@ function CreateStockForm() {
   }, [searchParams]);
 
   const handleGenerateSKU = () => {
-    const prefix = category.substring(0, 3).toUpperCase();
+    const cleanCat = category.replace(/[^a-zA-Z0-9]/g, '');
+    const prefix = (cleanCat.substring(0, 3) || 'ITM').toUpperCase();
     const rand = Math.floor(1000 + Math.random() * 9000);
     setCode(`STK-${prefix}-${rand}`);
     showToast('Generated item SKU / Part Code', 'success');
@@ -91,6 +92,10 @@ function CreateStockForm() {
       showToast('Please enter a Part / SKU code', 'warning');
       return;
     }
+    if (!category.trim()) {
+      showToast('Please enter a category', 'warning');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -98,7 +103,7 @@ function CreateStockForm() {
       addStockItem({
         name: name.trim(),
         code: code.trim().toUpperCase(),
-        category: category.trim() || 'General Inventory',
+        category: category.trim(),
         quantity: Number(quantity) || 0,
         unit: unit.trim() || 'Units',
         location: activeLocation.trim(),
@@ -209,21 +214,23 @@ function CreateStockForm() {
                   {/* Category & Status */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold text-neutral-900">Category</label>
-                      <Dropdown
+                      <label className="block text-xs font-semibold text-neutral-900">
+                        Category <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        list="stock-category-suggestions"
                         value={category}
-                        options={categoryOptions}
-                        onChange={(val) => {
-                          setCategory(val);
-                          if (!categoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
-                            void createCategory(val);
-                          }
-                        }}
-                        allowCustom
-                        searchPlaceholder="Search or type new category..."
-                        placeholder="Select Category"
-                        buttonClassName="rounded-xl py-2"
+                        onChange={(e) => setCategory(e.target.value)}
+                        placeholder="e.g. Networking, Stationery, Printer Ink"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
+                      <datalist id="stock-category-suggestions">
+                        {categoryOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value} />
+                        ))}
+                      </datalist>
                     </div>
 
                     <div className="space-y-1.5">

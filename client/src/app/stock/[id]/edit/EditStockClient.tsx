@@ -34,7 +34,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const router = useRouter();
   const id = propId || (params?.id as string);
 
-  const { stock, categories, createCategory, updateStockItem, deleteStockItem, showToast, isLoading } = useStock();
+  const { stock, categories, updateStockItem, deleteStockItem, showToast, isLoading } = useStock();
   const { user, canManageLocation } = useAuth();
 
   const categoryOptions = React.useMemo(
@@ -47,7 +47,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [category, setCategory] = useState('Cables & Accessories');
+  const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState(0);
   const [unit, setUnit] = useState('Units');
   const [status, setStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
@@ -61,7 +61,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
     if (item) {
       setName(item.name || '');
       setCode(item.code || '');
-      setCategory(item.category || 'Cables & Accessories');
+      setCategory(item.category || '');
       setQuantity(item.quantity ?? 0);
       setUnit(item.unit || 'Units');
       setStatus(item.status || 'in_stock');
@@ -154,7 +154,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   const handleReset = () => {
     setName(item.name || '');
     setCode(item.code || '');
-    setCategory(item.category || 'Cables & Accessories');
+    setCategory(item.category || '');
     setQuantity(item.quantity ?? 0);
     setUnit(item.unit || 'Units');
     setStatus(item.status || 'in_stock');
@@ -165,7 +165,8 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
   };
 
   const handleGenerateSKU = () => {
-    const prefix = category.substring(0, 3).toUpperCase();
+    const cleanCat = category.replace(/[^a-zA-Z0-9]/g, '');
+    const prefix = (cleanCat.substring(0, 3) || 'ITM').toUpperCase();
     const rand = Math.floor(1000 + Math.random() * 9000);
     setCode(`STK-${prefix}-${rand}`);
     showToast('Generated item SKU / Part Code', 'success');
@@ -187,6 +188,10 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
       showToast('Please enter a Part / SKU code', 'warning');
       return;
     }
+    if (!category.trim()) {
+      showToast('Please enter a category', 'warning');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -195,7 +200,7 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
         id: item.id,
         name: name.trim(),
         code: code.trim().toUpperCase(),
-        category: category.trim() || 'General Inventory',
+        category: category.trim(),
         quantity: Number(quantity) || 0,
         unit: unit.trim() || 'Units',
         location: item.location || 'Unassigned',
@@ -328,22 +333,22 @@ export default function EditStockClient({ id: propId }: { id?: string }) {
 
                     <div className="space-y-1.5">
                       <label className="block text-xs font-semibold text-neutral-900">
-                        Category
+                        Category <span className="text-rose-500">*</span>
                       </label>
-                      <Dropdown
+                      <input
+                        type="text"
+                        required
+                        list="edit-stock-category-suggestions"
                         value={category}
-                        options={categoryOptions}
-                        onChange={(val) => {
-                          setCategory(val);
-                          if (!categoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
-                            void createCategory(val);
-                          }
-                        }}
-                        allowCustom
-                        searchPlaceholder="Search or type new category..."
-                        placeholder="Select Category"
-                        buttonClassName="rounded-xl py-2"
+                        onChange={(e) => setCategory(e.target.value)}
+                        placeholder="e.g. Networking, Stationery, Printer Ink"
+                        className="w-full bg-white border border-neutral-300 text-neutral-900 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors"
                       />
+                      <datalist id="edit-stock-category-suggestions">
+                        {categoryOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value} />
+                        ))}
+                      </datalist>
                     </div>
                   </div>
 

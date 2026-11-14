@@ -1,33 +1,16 @@
 import { DropdownOption } from '@/types';
 import { MockItem } from '@/types/stock';
 
-export const DEFAULT_STOCK_CATEGORIES: DropdownOption[] = [
-  { label: 'Furniture & Fixtures', value: 'Furniture & Fixtures' },
-  { label: 'Power & Climate Spares', value: 'Power & Climate' },
-  { label: 'Safety & First Aid', value: 'Safety & Misc' },
-  { label: 'Office Stationery & Paper', value: 'Office Stationery' },
-  { label: 'Printer Ink & Toner Cartridges', value: 'Printer Ink & Toner' },
-  { label: 'Hardware Tools & Equipment', value: 'Tools & Equipment' },
-  { label: 'Monitors & Displays', value: 'Monitors' },
-  { label: 'Mice, Keyboards & Peripherals', value: 'Mice & Keyboards' },
-  { label: 'Cables & Accessories', value: 'Cables & Accessories' },
-  { label: 'Network Spares & Transceivers', value: 'Network Spares' },
-  { label: 'Networking Equipment', value: 'Networking Equipment' },
-  { label: 'Electronics & Tools', value: 'Electronics & Tools' },
-];
+export const DEFAULT_STOCK_CATEGORIES: DropdownOption[] = [];
 
 /**
- * Merges default starter categories with categories stored in PostgreSQL and inventory stock.
+ * Merges real categories from PostgreSQL and inventory stock, deduplicated case-insensitively and sorted.
  */
 export function buildStockCategoryOptions(
   stock: MockItem[],
   dbCategories: string[] = []
 ): DropdownOption[] {
   const map = new Map<string, DropdownOption>();
-
-  for (const opt of DEFAULT_STOCK_CATEGORIES) {
-    map.set(opt.value.toLowerCase(), opt);
-  }
 
   for (const cat of dbCategories) {
     const raw = cat?.trim();
@@ -47,5 +30,5 @@ export function buildStockCategoryOptions(
     }
   }
 
-  return Array.from(map.values());
+  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
 }

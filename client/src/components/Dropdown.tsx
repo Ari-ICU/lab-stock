@@ -240,7 +240,7 @@ export function Dropdown({
           <div className="overflow-y-auto flex-1 py-1">
             {allowCustom && !searchQuery.trim() && (
               <div className="px-3 py-1.5 text-[11px] text-neutral-500 bg-neutral-50 border-b border-neutral-100">
-                Type a new name above to create a custom category
+                Type a new value above to add it
               </div>
             )}
             {allowCustom &&

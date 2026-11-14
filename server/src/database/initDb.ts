@@ -149,27 +149,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
       await query('DELETE FROM room_inventory WHERE id = ANY($1::uuid[])', [ids.slice(1)]);
     }
 
-    // Sync existing stock_items categories + starter categories into the categories table
-    const starterCategories = [
-      'Furniture & Fixtures',
-      'Power & Climate',
-      'Safety & Misc',
-      'Office Stationery',
-      'Printer Ink & Toner',
-      'Tools & Equipment',
-      'Monitors',
-      'Mice & Keyboards',
-      'Cables & Accessories',
-      'Network Spares',
-      'Networking Equipment',
-      'Electronics & Tools',
-    ];
-    for (const cat of starterCategories) {
-      await query(
-        `INSERT INTO categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
-        [cat]
-      ).catch(() => {});
-    }
+    // Remove unused/seeded categories not referenced by any stock item, then sync real categories
+    await pool.query(`
+      DELETE FROM categories c
+      WHERE NOT EXISTS (
+        SELECT 1 FROM stock_items s
+        WHERE s.category IS NOT NULL
+          AND TRIM(s.category) <> ''
+          AND LOWER(TRIM(s.category)) = LOWER(TRIM(c.name))
+      )
+    `).catch(() => {});
     await pool.query(`
       INSERT INTO categories (name)
       SELECT DISTINCT TRIM(category) FROM stock_items

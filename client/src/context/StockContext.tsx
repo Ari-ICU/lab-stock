@@ -444,13 +444,21 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     setPrefillData(null);
   };
 
-  const createCategory = async (name: string) => {
-    const trimmed = name.trim();
+  const syncCategoryName = (name?: string) => {
+    const trimmed = name?.trim();
     if (!trimmed) return;
     setCategories((prev) => {
       if (prev.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return prev;
-      return [...prev, trimmed].sort((a, b) => a.localeCompare(b));
+      const next = [...prev, trimmed].sort((a, b) => a.localeCompare(b));
+      setCachedData('categories', next);
+      return next;
     });
+  };
+
+  const createCategory = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    syncCategoryName(trimmed);
     if (getAuthToken()) {
       try {
         await categoryService.create(trimmed);
@@ -480,7 +488,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         id: itemData.id || String(Date.now()),
         name: itemData.name,
         code: itemData.code,
-        category: itemData.category || 'Hardware',
+        category: itemData.category?.trim() || 'General Inventory',
         quantity: itemData.quantity || 1,
         unit: itemData.unit || 'Units',
         location: itemData.location || 'Unassigned',
@@ -495,6 +503,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         setCachedData('stock', next);
         return next;
       });
+      syncCategoryName(newItem.category);
       showToast(`Added ${newItem.name} to stock`);
       if (getAuthToken()) {
         stockService
@@ -507,6 +516,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
                 setCachedData('stock', next);
                 return next;
               });
+              syncCategoryName(saved.category);
             }
           })
           .catch(() => {});
@@ -521,6 +531,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       setCachedData('stock', next);
       return next;
     });
+    syncCategoryName(updatedItem.category);
     showToast(`Updated ${updatedItem.name}`);
     if (getAuthToken()) {
       stockService
@@ -533,6 +544,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
               setCachedData('stock', next);
               return next;
             });
+            syncCategoryName(saved.category);
           }
         })
         .catch(() => {});

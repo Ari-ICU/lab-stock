@@ -49,7 +49,7 @@ export const stockService = {
     const threshold = Number(data.min_threshold ?? data.minThreshold ?? 10);
     const calculatedStatus = data.status || this.calculateStatus(quantity, threshold);
 
-    const categoryName = (data.category || 'Office Stationery').trim();
+    const categoryName = (data.category || 'General Inventory').trim();
     await categoryModel.ensureExists(categoryName).catch(() => {});
 
     const { locationId } = await resolveLocationIdFromPayload(data);

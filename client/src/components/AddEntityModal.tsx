@@ -39,7 +39,6 @@ export function AddEntityModal() {
     locations,
     stock,
     categories,
-    createCategory,
   } = useStock();
 
   const stockCategoryOptions = React.useMemo(
@@ -62,7 +61,7 @@ export function AddEntityModal() {
   // Stock Form State
   const [stockName, setStockName] = useState('');
   const [stockCode, setStockCode] = useState('');
-  const [stockCategory, setStockCategory] = useState('Monitors');
+  const [stockCategory, setStockCategory] = useState('');
   const [stockStatus, setStockStatus] = useState<'in_stock' | 'low_stock' | 'out_of_stock'>('in_stock');
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockUnit, setStockUnit] = useState('Units');
@@ -111,13 +110,13 @@ export function AddEntityModal() {
 
   const handleStockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stockName || !stockCode) return;
+    if (!stockName.trim() || !stockCode.trim() || !stockCategory.trim()) return;
     addStockItem({
-      name: stockName,
-      code: stockCode,
-      category: stockCategory,
+      name: stockName.trim(),
+      code: stockCode.trim().toUpperCase(),
+      category: stockCategory.trim(),
       quantity: Number(stockQuantity) || 1,
-      unit: stockUnit,
+      unit: stockUnit.trim() || 'Units',
       location: effectiveStockLocation,
       rack: effectiveStockLocation,
       expiryDate: stockExpiryDate.trim() || 'Active',
@@ -126,6 +125,7 @@ export function AddEntityModal() {
     });
     setStockName('');
     setStockCode('');
+    setStockCategory('');
     setStockQuantity(1);
     setStockExpiryDate('Active');
     setStockImageUrl('');
@@ -247,21 +247,23 @@ export function AddEntityModal() {
               </div>
 
               <div>
-                <label className="block font-semibold text-neutral-800 mb-1">Category</label>
-                <Dropdown
+                <label className="block font-semibold text-neutral-800 mb-1">
+                  Category <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="modal-stock-category-suggestions"
                   value={stockCategory}
-                  options={stockCategoryOptions}
-                  onChange={(val) => {
-                    setStockCategory(val);
-                    if (!stockCategoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
-                      void createCategory(val);
-                    }
-                  }}
-                  allowCustom
-                  searchPlaceholder="Search or type new category..."
-                  className="w-full"
-                  buttonClassName="rounded-xl py-2"
+                  onChange={(e) => setStockCategory(e.target.value)}
+                  placeholder="e.g. Networking, Stationery, Printer Ink"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                 />
+                <datalist id="modal-stock-category-suggestions">
+                  {stockCategoryOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value} />
+                  ))}
+                </datalist>
               </div>
             </div>
 

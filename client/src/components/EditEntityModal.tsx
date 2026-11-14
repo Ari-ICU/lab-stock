@@ -23,7 +23,6 @@ export function EditEntityModal() {
     locations,
     stock,
     categories,
-    createCategory,
     assets,
   } = useStock();
 
@@ -190,7 +189,7 @@ export function EditEntityModal() {
         code,
         quantity: Number(quantity),
         unit,
-        category: category || item.category,
+        category: category.trim() || item.category,
         rack,
         location,
         status,
@@ -662,21 +661,23 @@ export function EditEntityModal() {
               {isStock && (
                 <>
                   <div>
-                    <label className="block font-semibold text-neutral-800 mb-1">Category</label>
-                    <Dropdown
+                    <label className="block font-semibold text-neutral-800 mb-1">
+                      Category <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      list="edit-modal-stock-category-suggestions"
                       value={category}
-                      options={stockCategoryOptions}
-                      onChange={(val) => {
-                        setCategory(val);
-                        if (!stockCategoryOptions.some((o) => o.value.toLowerCase() === val.toLowerCase())) {
-                          void createCategory(val);
-                        }
-                      }}
-                      allowCustom
-                      searchPlaceholder="Search or type new category..."
-                      className="w-full"
-                      buttonClassName="rounded-xl py-2"
+                      onChange={(e) => setCategory(e.target.value)}
+                      placeholder="e.g. Networking, Stationery, Printer Ink"
+                      className="w-full bg-white border border-neutral-300 text-neutral-900 px-3 py-2 rounded-xl focus:outline-none focus:border-neutral-900"
                     />
+                    <datalist id="edit-modal-stock-category-suggestions">
+                      {stockCategoryOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
