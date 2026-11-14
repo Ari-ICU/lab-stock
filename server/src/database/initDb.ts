@@ -80,6 +80,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     // Ensure backward-compatible columns exist on older database instances
     await pool.query(`
       ALTER TABLE locations DROP COLUMN IF EXISTS image_url;
+      ALTER TABLE locations DROP COLUMN IF EXISTS floor;
+      ALTER TABLE locations DROP COLUMN IF EXISTS capacity;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS image_url TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS location TEXT;
       ALTER TABLE maintenance_records ADD COLUMN IF NOT EXISTS cost NUMERIC(12, 2);

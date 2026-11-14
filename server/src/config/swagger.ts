@@ -209,7 +209,6 @@ export const openApiSpec = {
           name: { type: 'string', example: 'Computer & Network Lab 102B' },
           room: { type: 'string', example: 'Room 102B' },
           building: { type: 'string', example: 'Engineering Block A' },
-          capacity: { type: 'integer', example: 35 },
           created_at: { type: 'string', format: 'date-time' },
         },
       },
@@ -221,7 +220,6 @@ export const openApiSpec = {
           name: { type: 'string', example: 'Network & Server Lab 206' },
           room: { type: 'string', example: 'Room 206' },
           building: { type: 'string', example: 'Engineering Block A' },
-          capacity: { type: 'integer', example: 30 },
         },
       },
 

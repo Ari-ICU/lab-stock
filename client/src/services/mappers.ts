@@ -111,8 +111,6 @@ export function mapServerLocation(l: any): MockLocation {
     name: l.name || 'Laboratory Room',
     room: l.room || 'Room 101',
     building: l.building || 'Engineering Block A',
-    floor: Number(l.floor ?? 1),
-    capacity: Number(l.capacity ?? 30),
     type: l.room_type || l.type || 'COMPUTER_LAB',
     totalAssets: Number(l.total_assets ?? l.totalAssets ?? 0),
     totalItems: Number(l.total_items ?? l.totalItems ?? 0),
@@ -149,12 +147,6 @@ export function toServerLocation(l: Partial<MockLocation>): Record<string, unkno
   const code = buildLocationCode(l.room, l.code);
   if (code) payload.code = code;
 
-  if (l.capacity !== undefined && Number.isInteger(Number(l.capacity)) && Number(l.capacity) >= 1) {
-    payload.capacity = Number(l.capacity);
-  }
-  if (l.floor !== undefined && Number.isInteger(Number(l.floor))) {
-    payload.floor = Number(l.floor);
-  }
   if (l.type !== undefined) {
     payload.room_type = l.type;
   }

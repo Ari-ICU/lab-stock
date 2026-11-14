@@ -3,6 +3,5 @@ export interface CreateLocationDto {
   name: string;
   room: string;
   building: string;
-  capacity?: number;
 }
 

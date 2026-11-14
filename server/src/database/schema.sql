@@ -27,9 +27,7 @@ CREATE TABLE IF NOT EXISTS locations (
     name VARCHAR(150) NOT NULL,
     room VARCHAR(50) NOT NULL,
     building VARCHAR(100) NOT NULL,
-    floor INT DEFAULT 1,
     room_type VARCHAR(50) DEFAULT 'COMPUTER_LAB',
-    capacity INT DEFAULT 30,
     last_audited_at TIMESTAMP WITH TIME ZONE,
     audited_by VARCHAR(150),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

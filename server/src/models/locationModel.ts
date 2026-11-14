@@ -8,8 +8,6 @@ export interface Location {
   name: string;
   room: string;
   building: string;
-  capacity?: number;
-  floor?: number;
   room_type?: string;
   last_audited_at?: Date | string;
   audited_by?: string;
@@ -117,16 +115,14 @@ export const locationModel = {
 
   async create(loc: Omit<Location, 'id' | 'created_at'>): Promise<Location> {
     const res = await query(
-      `INSERT INTO locations (code, name, room, building, capacity, floor, room_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO locations (code, name, room, building, room_type)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
       [
         loc.code.trim().toUpperCase(),
         loc.name.trim(),
         loc.room.trim(),
         loc.building.trim(),
-        loc.capacity || 30,
-        loc.floor || 1,
         loc.room_type || 'COMPUTER_LAB',
       ]
     );
@@ -148,14 +144,6 @@ export const locationModel = {
     if (loc.building !== undefined) {
       values.push(loc.building.trim());
       fields.push(`building = $${values.length}`);
-    }
-    if (loc.capacity !== undefined) {
-      values.push(loc.capacity);
-      fields.push(`capacity = $${values.length}`);
-    }
-    if (loc.floor !== undefined) {
-      values.push(loc.floor);
-      fields.push(`floor = $${values.length}`);
     }
     if (loc.room_type !== undefined) {
       values.push(loc.room_type);

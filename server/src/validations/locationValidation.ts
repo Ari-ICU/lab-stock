@@ -10,7 +10,7 @@ const MAX_COUNT = 100_000;
  * Validate laboratory location creation
  */
 export function validateCreateLocation(req: Request, _res: Response, next: NextFunction) {
-  const { code, name, room, building, capacity } = req.body;
+  const { code, name, room, building } = req.body;
   const errors: Record<string, string> = {};
 
   if (!code || typeof code !== 'string' || code.trim().length < 2) {
@@ -29,13 +29,6 @@ export function validateCreateLocation(req: Request, _res: Response, next: NextF
     errors.building = 'Building designation is required';
   }
 
-  if (capacity !== undefined) {
-    const parsedCap = Number(capacity);
-    if (!Number.isInteger(parsedCap) || parsedCap < 1 || parsedCap > 10_000) {
-      errors.capacity = 'Capacity must be an integer between 1 and 10000';
-    }
-  }
-
   if (Object.keys(errors).length > 0) {
     return next(new ValidationException('Location validation failed', errors));
   }
@@ -51,7 +44,7 @@ export function validateCreateLocation(req: Request, _res: Response, next: NextF
  * Validate laboratory location update
  */
 export function validateUpdateLocation(req: Request, _res: Response, next: NextFunction) {
-  const { name, room, building, capacity, floor } = req.body;
+  const { name, room, building } = req.body;
   const errors: Record<string, string> = {};
 
   if (name !== undefined && (typeof name !== 'string' || name.trim().length < 2)) {
@@ -64,20 +57,6 @@ export function validateUpdateLocation(req: Request, _res: Response, next: NextF
 
   if (building !== undefined && (typeof building !== 'string' || building.trim().length === 0)) {
     errors.building = 'Building designation cannot be empty';
-  }
-
-  if (capacity !== undefined) {
-    const parsedCap = Number(capacity);
-    if (!Number.isInteger(parsedCap) || parsedCap < 1 || parsedCap > 10_000) {
-      errors.capacity = 'Capacity must be an integer between 1 and 10000';
-    }
-  }
-
-  if (floor !== undefined) {
-    const parsedFloor = Number(floor);
-    if (!Number.isInteger(parsedFloor) || parsedFloor < -10 || parsedFloor > 100) {
-      errors.floor = 'Floor must be a valid integer';
-    }
   }
 
   if (Object.keys(errors).length > 0) {

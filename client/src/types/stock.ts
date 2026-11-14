@@ -112,8 +112,6 @@ export interface MockLocation {
   building: string;
   room: string;
   type?: RoomType;
-  floor?: number;
-  capacity?: number;
   totalAssets: number;
   totalItems: number;
   lastAuditedAt?: string;

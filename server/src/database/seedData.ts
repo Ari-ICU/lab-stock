@@ -3,9 +3,7 @@ export const seedLocations: Array<{
   name: string;
   building: string;
   room: string;
-  floor: number;
   room_type: string;
-  capacity: number;
   last_audited_at?: string;
   audited_by?: string;
 }> = [];

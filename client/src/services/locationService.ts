@@ -9,9 +9,7 @@ export interface CreateLocationInput {
   name: string;
   room: string;
   building: string;
-  capacity?: number;
   description?: string;
-  floor?: number;
   room_type?: string;
   image_url?: string;
 }
