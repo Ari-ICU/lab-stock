@@ -401,7 +401,7 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
     const ok = exportToCsv(filename, [...facilityRows, ...hardwareRows], {
       sheetTitle: loc.room || 'Room Audit',
       reportTitle: 'Laboratory Room Condition & Equipment Audit',
-      reportSubtitle: `${loc.name} (${loc.building} • ${loc.room} • Capacity: ${loc.capacity || 0} seats)`,
+      reportSubtitle: `${loc.name} (${loc.building} • ${loc.room} • Floor ${loc.floor ?? 1})`,
     });
     if (ok) {
       showToast(`Exported room condition inventory for ${loc.name} to Excel (.xlsx)`);
@@ -493,12 +493,6 @@ export default function LocationDetailsClient({ id: propId }: { id?: string }) {
                 <span className="text-neutral-900 font-semibold">{loc.building}</span>
                 <span className="text-neutral-300">·</span>
                 <span>Floor {loc.floor ?? 1}</span>
-                {loc.type !== 'STORAGE' && (
-                  <>
-                    <span className="text-neutral-300">·</span>
-                    <span>{loc.capacity || 30} Student Workstations</span>
-                  </>
-                )}
                 {loc.lastAuditedAt && (
                   <>
                     <span className="text-neutral-300 hidden sm:inline">·</span>
